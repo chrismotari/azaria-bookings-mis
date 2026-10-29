@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { Airport, Offering } from '../../api/types';
+import { useAuthGate } from '../../auth/gate';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Screen } from '../../components/Screen';
@@ -17,7 +18,8 @@ export function OfferingDetailScreen({
   navigation,
   route,
 }: NativeStackScreenProps<RootStackParamList, 'OfferingDetail'>) {
-  const { id } = route.params;
+  const { id, query } = route.params;
+  const requireAuth = useAuthGate();
   const offering = useQuery({
     queryKey: ['offerings', id],
     queryFn: async () => (await api.get<Offering>(`/offerings/${id}`)).data,
@@ -57,7 +59,16 @@ export function OfferingDetailScreen({
         <Detail label="Class" value={ticketClassLabel(data.ticket_class)} />
         <Detail label="Stopovers" value={stopoversLabel(data.stopovers)} />
         <Detail label="Offer valid until" value={formatDate(data.valid_until)} />
-        {!data.is_bookable ? <Text style={styles.notice}>This offer can no longer be booked.</Text> : null}
+        {data.is_bookable ? (
+          <Button
+            title="Book"
+            onPress={() =>
+              requireAuth({ screen: 'BookingNew', params: query ? { offering: id, query } : { offering: id } })
+            }
+          />
+        ) : (
+          <Text style={styles.notice}>This offer can no longer be booked.</Text>
+        )}
       </Card>
       <Button title="Back to deals" variant="secondary" onPress={backToExplore} />
     </Screen>

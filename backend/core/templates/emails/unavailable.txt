@@ -1,0 +1,8 @@
+Hello {{ booking.user.full_name }},
+
+We are sorry: the seats you booked for {{ route }} on {{ departure }} are no longer available, so we could not confirm your booking.
+
+You can ask us for other options in the app and we will find you alternatives:
+{{ frontend_url }}/requests/new
+
+Azaria Bookings

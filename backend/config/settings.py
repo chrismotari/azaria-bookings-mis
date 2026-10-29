@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "accounts",
     "catalog",
     "customer_requests.apps.RequestsConfig",
+    "bookings",
     "core",
 ]
 

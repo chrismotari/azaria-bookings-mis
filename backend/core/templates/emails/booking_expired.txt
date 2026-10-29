@@ -1,0 +1,8 @@
+Hello {{ booking.user.full_name }},
+
+The hold on your booking for {{ route }} on {{ departure }} has lapsed because we did not receive your payment in time.
+
+If the offer is still available, you can book it again in the app:
+{{ frontend_url }}/offerings/{{ booking.offering_id }}
+
+Azaria Bookings

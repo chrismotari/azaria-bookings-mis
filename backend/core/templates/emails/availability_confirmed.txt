@@ -1,0 +1,18 @@
+Hello {{ booking.user.full_name }},
+
+Good news: seats are available for your booking.
+
+Route: {{ route }}
+Departure: {{ departure }}
+Passengers: {{ booking.passenger_count }}
+Total price: {{ total }}
+
+How to pay:
+{{ payment_instructions }}
+
+Please pay by {{ deadline }}. If we have not received your payment by then, the hold on these seats will lapse.
+
+View your booking:
+{{ frontend_url }}/bookings/{{ booking.id }}
+
+Azaria Bookings

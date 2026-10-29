@@ -78,7 +78,7 @@ export function QueryDetailScreen({ navigation, route }: NativeStackScreenProps<
                 <View key={offering.id} style={styles.gridItem}>
                   <OfferingCard
                     offering={offering}
-                    onPress={() => navigation.navigate('OfferingDetail', { id: offering.id })}
+                    onPress={() => navigation.navigate('OfferingDetail', { id: offering.id, query: id })}
                   />
                 </View>
               ))}

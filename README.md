@@ -24,3 +24,9 @@ Flight-offerings and booking portal for a Nairobi travel agency. Django REST API
 - Query airports are written by id and returned as nested airport objects, like offerings.
 - Closing an already closed query, or responding to a closed one, returns 409 Conflict; open and responded queries can both be closed.
 - A response's `offering_ids` must refer to currently bookable offerings (active, not past `valid_until`, and not yet departed).
+- Booking an offering that is not bookable or not visible to the customer returns 400 on `offering`; a second active booking of the same offering returns 409.
+- A booking's optional `query` must be one of the customer's own queries; the app sets it when the booking starts from a request's options.
+- The customer booking detail includes `payment_instructions` (from AppSettings) only while the booking is `availability_confirmed`, and `null` otherwise.
+- A status change by the wrong actor is refused with 409, like any other invalid move.
+- "Payment deadline has passed" means now is later than `payment_deadline`; marking paid at the deadline itself is allowed.
+- The booking timeline exposes each event's statuses and time, not the actor.

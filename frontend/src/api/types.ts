@@ -86,3 +86,49 @@ export type QueryDetail = Query & { responses: QueryResponse[] };
 export type AdminQuery = Query & { user: User };
 
 export type AdminQueryDetail = AdminQuery & { responses: QueryResponse[] };
+
+export type BookingStatus =
+  | 'requested'
+  | 'availability_confirmed'
+  | 'paid'
+  | 'completed'
+  | 'unavailable'
+  | 'cancelled'
+  | 'expired';
+
+export type BookingEvent = {
+  id: number;
+  from_status: BookingStatus | '';
+  to_status: BookingStatus;
+  created_at: string;
+};
+
+export type Booking = {
+  id: number;
+  offering: Offering;
+  query: number | null;
+  passenger_count: number;
+  notes: string;
+  unit_price: string;
+  total_price: string;
+  status: BookingStatus;
+  payment_deadline: string | null;
+  created_at: string;
+};
+
+export type BookingDetail = Booking & {
+  events: BookingEvent[];
+  /** Set only while the booking is availability_confirmed. */
+  payment_instructions: string | null;
+};
+
+export type AdminBooking = Booking & { user: User };
+
+export type AdminBookingDetail = AdminBooking & { events: BookingEvent[] };
+
+export type Dashboard = {
+  open_queries: number;
+  bookings_requested: number;
+  bookings_awaiting_payment: number;
+  bookings_paid_awaiting_boarding_pass: number;
+};

@@ -1,0 +1,8 @@
+Hello {{ booking.user.full_name }},
+
+We have received your payment of {{ total }} for {{ route }} on {{ departure }}. Your order is complete.
+
+We will email your boarding pass once it is ready. It will also be available to download from your booking in the app:
+{{ frontend_url }}/bookings/{{ booking.id }}
+
+Azaria Bookings

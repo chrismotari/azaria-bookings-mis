@@ -10,11 +10,20 @@ export const linking: LinkingOptions<RootStackParamList> = {
         screens: {
           Explore: '',
           Requests: 'requests',
+          Bookings: 'bookings',
           Account: 'account',
         },
       },
       OfferingDetail: {
         path: 'offerings/:id',
+        parse: { id: Number, query: Number },
+      },
+      BookingNew: {
+        path: 'offerings/:offering/book',
+        parse: { offering: Number, query: Number },
+      },
+      BookingDetail: {
+        path: 'bookings/:id',
         parse: { id: Number },
       },
       QueryNew: 'requests/new',
@@ -32,8 +41,10 @@ export const linking: LinkingOptions<RootStackParamList> = {
       AdminTabs: {
         path: 'admin',
         screens: {
+          AdminDashboard: '',
           AdminOfferings: 'offerings',
           AdminRequests: 'requests',
+          AdminBookings: 'bookings',
         },
       },
       AdminOfferingNew: 'admin/offerings/new',
@@ -47,6 +58,10 @@ export const linking: LinkingOptions<RootStackParamList> = {
       },
       AdminQueryRespond: {
         path: 'admin/requests/:id/respond',
+        parse: { id: Number },
+      },
+      AdminBookingDetail: {
+        path: 'admin/bookings/:id',
         parse: { id: Number },
       },
     },

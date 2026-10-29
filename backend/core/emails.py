@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template import engines
+from django.utils import timezone
 
 # Options shared by every email task.
 EMAIL_TASK_OPTIONS = {
@@ -26,3 +27,9 @@ def format_price(amount):
 
 def format_date(value):
     return f"{value:%a}, {value.day} {value:%b %Y}"
+
+
+def format_datetime(value):
+    """A timestamp in Nairobi time (the project's TIME_ZONE)."""
+    local = timezone.localtime(value)
+    return f"{format_date(local)} at {local:%H:%M} (Nairobi time)"
