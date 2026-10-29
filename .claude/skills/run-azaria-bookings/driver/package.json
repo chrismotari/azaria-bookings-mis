@@ -1,0 +1,9 @@
+{
+  "name": "azaria-run-driver",
+  "private": true,
+  "type": "module",
+  "description": "Agent tooling: drives the Azaria Bookings web app in headless Chrome. Not part of the product.",
+  "dependencies": {
+    "playwright-core": "1.49.1"
+  }
+}
