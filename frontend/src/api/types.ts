@@ -38,7 +38,7 @@ export const TICKET_CLASSES: { value: TicketClass; label: string }[] = [
   { value: 'first', label: 'First' },
 ];
 
-export type AdminOffering = {
+export type Offering = {
   id: number;
   origin: Airport;
   destination: Airport;
@@ -48,8 +48,11 @@ export type AdminOffering = {
   stopovers: number;
   airline: string;
   valid_until: string;
+  is_bookable: boolean;
+};
+
+export type AdminOffering = Offering & {
   is_public: boolean;
   is_active: boolean;
-  is_bookable: boolean;
   created_at: string;
 };

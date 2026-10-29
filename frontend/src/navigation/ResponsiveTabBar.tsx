@@ -4,12 +4,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, useIsWide } from '../theme';
 
+type Props = BottomTabBarProps & {
+  /** Routes not offered in the bar (still reachable by URL). */
+  hiddenRoutes?: string[];
+};
+
 /** Left sidebar on wide viewports, bottom tabs on narrow ones. */
-export function ResponsiveTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+export function ResponsiveTabBar({ state, descriptors, navigation, hiddenRoutes = [] }: Props) {
   const isWide = useIsWide();
   const insets = useSafeAreaInsets();
 
   const items = state.routes.map((route, index) => {
+    if (hiddenRoutes.includes(route.name)) {
+      return null;
+    }
     const { options } = descriptors[route.key];
     const label = typeof options.tabBarLabel === 'string' ? options.tabBarLabel : (options.title ?? route.name);
     const focused = state.index === index;

@@ -1,14 +1,18 @@
 import { ReactNode } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { Card } from '../../components/Card';
 import { Screen } from '../../components/Screen';
 import { colors } from '../../theme';
 
 export function AuthLayout({ title, children }: { title: string; children: ReactNode }) {
+  const navigation = useNavigation();
   return (
     <Screen maxWidth={440}>
-      <Text style={styles.brand}>Azaria Bookings</Text>
+      <Pressable accessibilityRole="link" onPress={() => navigation.navigate('Main', { screen: 'Explore' })}>
+        <Text style={styles.brand}>Azaria Bookings</Text>
+      </Pressable>
       <Card>
         <Text style={styles.title}>{title}</Text>
         {children}

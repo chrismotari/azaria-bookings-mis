@@ -18,3 +18,5 @@ Flight-offerings and booking portal for a Nairobi travel agency. Django REST API
 - Offering detail returns any active public offering, with an `is_bookable` flag; only browse is limited to bookable ones.
 - The admin offering list includes every offering (private, deactivated and lapsed), filterable by `is_active` and `is_public`.
 - The frontend uses React Navigation as the spec requires, not Expo Router (which `frontend/AGENTS.md` suggests).
+- Explore's From/To send the chosen airport's code when picked from the suggestions, otherwise the typed text.
+- Explore and the admin offerings list apply filters on "Search"/"Apply filters", not on every keystroke.

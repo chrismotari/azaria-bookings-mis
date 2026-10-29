@@ -7,10 +7,14 @@ export const linking: LinkingOptions<RootStackParamList> = {
   config: {
     screens: {
       Main: {
-        path: '',
         screens: {
+          Explore: '',
           Account: 'account',
         },
+      },
+      OfferingDetail: {
+        path: 'offerings/:id',
+        parse: { id: Number },
       },
       Login: {
         path: 'login',

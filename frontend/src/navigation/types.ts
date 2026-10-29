@@ -1,6 +1,7 @@
 import { NavigatorScreenParams } from '@react-navigation/native';
 
 export type MainTabParamList = {
+  Explore: undefined;
   Account: undefined;
 };
 
@@ -10,6 +11,7 @@ export type AdminTabParamList = {
 
 export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
+  OfferingDetail: { id: number };
   Login: { passwordReset?: boolean } | undefined;
   Register: undefined;
   ForgotPassword: undefined;

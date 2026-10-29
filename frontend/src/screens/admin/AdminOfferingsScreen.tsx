@@ -1,75 +1,33 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
 import { StyleSheet, Text, View } from 'react-native';
-import { z } from 'zod';
 
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
-import { AdminOffering, Paginated, TICKET_CLASSES, TicketClass } from '../../api/types';
+import { AdminOffering, Paginated } from '../../api/types';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
-import { DateField } from '../../components/DateField';
 import { FieldGrid, FormError } from '../../components/Field';
+import {
+  EMPTY_OFFERING_FILTERS,
+  OfferingFilterErrors,
+  OfferingFilterFields,
+  OfferingFilterValues,
+  offeringFilterParams,
+  validateOfferingFilters,
+} from '../../components/OfferingFilterFields';
 import { OptionChips } from '../../components/OptionChips';
 import { Pagination } from '../../components/Pagination';
 import { Screen } from '../../components/Screen';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
-import { TextField } from '../../components/TextField';
 import { Toggle } from '../../components/Toggle';
 import { colors, useIsWide } from '../../theme';
-import { formatDate, formatPrice, ticketClassLabel } from '../../utils/format';
+import { formatDate, formatPrice, stopoversLabel, ticketClassLabel } from '../../utils/format';
 
-const optionalAmount = z
-  .string()
-  .trim()
-  .regex(/^(\d{1,8}(\.\d{1,2})?)?$/, 'Enter an amount, e.g. 500.');
+type AdminFilters = OfferingFilterValues & { is_active: '' | 'true' | 'false'; is_public: '' | 'true' | 'false' };
 
-const filterSchema = z
-  .object({
-    origin: z.string(),
-    destination: z.string(),
-    date_from: z.string(),
-    date_to: z.string(),
-    price_min: optionalAmount,
-    price_max: optionalAmount,
-    ticket_class: z.enum(['', 'economy', 'premium_economy', 'business', 'first']),
-    max_stopovers: z
-      .string()
-      .trim()
-      .regex(/^(\d{1,2})?$/, 'Enter a whole number.'),
-    is_active: z.enum(['', 'true', 'false']),
-    is_public: z.enum(['', 'true', 'false']),
-  })
-  .superRefine((values, ctx) => {
-    if (values.date_from && values.date_to && values.date_from > values.date_to) {
-      ctx.addIssue({ code: 'custom', path: ['date_to'], message: 'Must be on or after the start date.' });
-    }
-    if (values.price_min && values.price_max && Number(values.price_min) > Number(values.price_max)) {
-      ctx.addIssue({ code: 'custom', path: ['price_max'], message: 'Must be at least the minimum price.' });
-    }
-  });
-
-type Filters = z.infer<typeof filterSchema>;
-
-const EMPTY_FILTERS: Filters = {
-  origin: '',
-  destination: '',
-  date_from: '',
-  date_to: '',
-  price_min: '',
-  price_max: '',
-  ticket_class: '',
-  max_stopovers: '',
-  is_active: '',
-  is_public: '',
-};
-
-const FILTER_LABELS = { price_min: 'Min price (USD)', price_max: 'Max price (USD)', max_stopovers: 'Max stopovers' };
-
-const CLASS_OPTIONS: { value: '' | TicketClass; label: string }[] = [{ value: '', label: 'Any' }, ...TICKET_CLASSES];
+const EMPTY_FILTERS: AdminFilters = { ...EMPTY_OFFERING_FILTERS, is_active: '', is_public: '' };
 
 const YES_NO_ANY = (yes: string, no: string): { value: '' | 'true' | 'false'; label: string }[] => [
   { value: '', label: 'All' },
@@ -81,17 +39,22 @@ export function AdminOfferingsScreen() {
   const navigation = useNavigation();
   const queryClient = useQueryClient();
   const isWide = useIsWide();
-  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [draft, setDraft] = useState<AdminFilters>(EMPTY_FILTERS);
+  const [errors, setErrors] = useState<OfferingFilterErrors>({});
+  const [filters, setFilters] = useState<AdminFilters>(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
-
-  const form = useForm<Filters>({ resolver: zodResolver(filterSchema), defaultValues: EMPTY_FILTERS });
 
   const offerings = useQuery({
     queryKey: ['admin', 'offerings', filters, page],
     queryFn: async () => {
-      const params = Object.fromEntries(Object.entries(filters).filter(([, value]) => value.trim() !== ''));
-      return (await api.get<Paginated<AdminOffering>>('/admin/offerings', { params: { ...params, page } })).data;
+      const params = {
+        ...offeringFilterParams(filters),
+        ...(filters.is_active ? { is_active: filters.is_active } : {}),
+        ...(filters.is_public ? { is_public: filters.is_public } : {}),
+        page,
+      };
+      return (await api.get<Paginated<AdminOffering>>('/admin/offerings', { params })).data;
     },
     placeholderData: keepPreviousData,
   });
@@ -102,13 +65,18 @@ export function AdminOfferingsScreen() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'offerings'] }),
   });
 
-  const apply = form.handleSubmit((values) => {
-    setFilters(values);
-    setPage(1);
-  });
+  const apply = () => {
+    const found = validateOfferingFilters(draft);
+    setErrors(found);
+    if (Object.keys(found).length === 0) {
+      setFilters(draft);
+      setPage(1);
+    }
+  };
 
   const clear = () => {
-    form.reset(EMPTY_FILTERS);
+    setDraft(EMPTY_FILTERS);
+    setErrors({});
     setFilters(EMPTY_FILTERS);
     setPage(1);
   };
@@ -130,87 +98,24 @@ export function AdminOfferingsScreen() {
 
       {isWide || filtersOpen ? (
         <Card>
-          <FieldGrid>
-            {(['origin', 'destination'] as const).map((name) => (
-              <Controller
-                key={name}
-                control={form.control}
-                name={name}
-                render={({ field }) => (
-                  <TextField
-                    label={name === 'origin' ? 'From' : 'To'}
-                    placeholder="City, country or code"
-                    value={field.value}
-                    onChangeText={field.onChange}
-                    onSubmitEditing={() => apply()}
-                  />
-                )}
-              />
-            ))}
-            {(['date_from', 'date_to'] as const).map((name) => (
-              <Controller
-                key={name}
-                control={form.control}
-                name={name}
-                render={({ field, fieldState }) => (
-                  <DateField
-                    label={name === 'date_from' ? 'Departing from' : 'Departing until'}
-                    value={field.value}
-                    onChange={field.onChange}
-                    error={fieldState.error?.message}
-                  />
-                )}
-              />
-            ))}
-            {(['price_min', 'price_max', 'max_stopovers'] as const).map((name) => (
-              <Controller
-                key={name}
-                control={form.control}
-                name={name}
-                render={({ field, fieldState }) => (
-                  <TextField
-                    label={FILTER_LABELS[name]}
-                    value={field.value}
-                    onChangeText={field.onChange}
-                    error={fieldState.error?.message}
-                    keyboardType={name === 'max_stopovers' ? 'number-pad' : 'decimal-pad'}
-                    onSubmitEditing={() => apply()}
-                  />
-                )}
-              />
-            ))}
-          </FieldGrid>
-          <Controller
-            control={form.control}
-            name="ticket_class"
-            render={({ field }) => (
-              <OptionChips label="Class" options={CLASS_OPTIONS} value={field.value} onChange={field.onChange} />
-            )}
+          <OfferingFilterFields
+            value={draft}
+            onChange={(base) => setDraft({ ...draft, ...base })}
+            errors={errors}
+            onSubmit={apply}
           />
           <FieldGrid>
-            <Controller
-              control={form.control}
-              name="is_active"
-              render={({ field }) => (
-                <OptionChips
-                  label="Active"
-                  options={YES_NO_ANY('Active', 'Deactivated')}
-                  value={field.value}
-                  onChange={field.onChange}
-                />
-              )}
+            <OptionChips
+              label="Active"
+              options={YES_NO_ANY('Active', 'Deactivated')}
+              value={draft.is_active}
+              onChange={(is_active) => setDraft({ ...draft, is_active })}
             />
-            <Controller
-              control={form.control}
-              name="is_public"
-              render={({ field }) => (
-                <OptionChips
-                  label="Visibility"
-                  options={YES_NO_ANY('Public', 'Private')}
-                  value={field.value}
-                  onChange={field.onChange}
-                />
-              )}
+            <OptionChips
+              label="Visibility"
+              options={YES_NO_ANY('Public', 'Private')}
+              value={draft.is_public}
+              onChange={(is_public) => setDraft({ ...draft, is_public })}
             />
           </FieldGrid>
           <View style={styles.actions}>
@@ -277,9 +182,7 @@ type RowProps = {
 function OfferingRow({ offering, wide, toggling, onToggleActive, onEdit }: RowProps) {
   const route = `${offering.origin.code} → ${offering.destination.code}`;
   const cities = `${offering.origin.city} → ${offering.destination.city}`;
-  const flight = `${offering.airline} · ${ticketClassLabel(offering.ticket_class)} · ${
-    offering.stopovers === 0 ? 'Direct' : `${offering.stopovers} stop${offering.stopovers === 1 ? '' : 's'}`
-  }`;
+  const flight = `${offering.airline} · ${ticketClassLabel(offering.ticket_class)} · ${stopoversLabel(offering.stopovers)}`;
   const status = [
     offering.is_public ? 'Public' : 'Private',
     offering.is_bookable ? 'Bookable' : offering.is_active ? 'Lapsed' : 'Deactivated',

@@ -1,6 +1,7 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '../auth/AuthContext';
 import { RequireAuth } from '../auth/gate';
@@ -12,6 +13,8 @@ import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { ResetPasswordScreen } from '../screens/auth/ResetPasswordScreen';
 import { AccountScreen } from '../screens/customer/AccountScreen';
+import { ExploreScreen } from '../screens/explore/ExploreScreen';
+import { OfferingDetailScreen } from '../screens/explore/OfferingDetailScreen';
 import { colors, useIsWide } from '../theme';
 import { ResponsiveTabBar } from './ResponsiveTabBar';
 import { AdminTabParamList, MainTabParamList, RootStackParamList } from './types';
@@ -28,25 +31,47 @@ function GatedAccount() {
   );
 }
 
+// Login-required tabs, left out of the bar for guests.
+const GATED_TABS: (keyof MainTabParamList)[] = ['Account'];
+
+function GuestHeaderActions() {
+  const navigation = useNavigation();
+  return (
+    <View style={styles.headerActions}>
+      <HeaderButton title="Sign in" onPress={() => navigation.navigate('Login')} />
+      <HeaderButton title="Create account" onPress={() => navigation.navigate('Register')} />
+    </View>
+  );
+}
+
 function MainTabsNavigator() {
   const isWide = useIsWide();
+  const { user } = useAuth();
   return (
     <MainTabs.Navigator
-      tabBar={(props) => <ResponsiveTabBar {...props} />}
-      screenOptions={{ tabBarPosition: isWide ? 'left' : 'bottom' }}
+      tabBar={(props) => <ResponsiveTabBar {...props} hiddenRoutes={user ? [] : GATED_TABS} />}
+      screenOptions={{
+        tabBarPosition: isWide ? 'left' : 'bottom',
+        headerRight: user ? undefined : () => <GuestHeaderActions />,
+      }}
     >
+      <MainTabs.Screen name="Explore" component={ExploreScreen} options={{ title: 'Explore' }} />
       <MainTabs.Screen name="Account" component={GatedAccount} options={{ title: 'Account' }} />
     </MainTabs.Navigator>
   );
 }
 
-function LogoutButton() {
-  const signOut = useSignOut();
+function HeaderButton({ title, onPress }: { title: string; onPress: () => void }) {
   return (
-    <Pressable accessibilityRole="button" onPress={signOut} style={styles.headerButton}>
-      <Text style={styles.headerButtonText}>Log out</Text>
+    <Pressable accessibilityRole="button" onPress={onPress} style={styles.headerButton}>
+      <Text style={styles.headerButtonText}>{title}</Text>
     </Pressable>
   );
+}
+
+function LogoutButton() {
+  const signOut = useSignOut();
+  return <HeaderButton title="Log out" onPress={signOut} />;
 }
 
 function AdminTabsNavigator() {
@@ -79,8 +104,9 @@ export function RootNavigator() {
   }
 
   return (
-    <Stack.Navigator initialRouteName={user ? 'Main' : 'Login'}>
+    <Stack.Navigator>
       <Stack.Screen name="Main" component={MainTabsNavigator} options={{ headerShown: false }} />
+      <Stack.Screen name="OfferingDetail" component={OfferingDetailScreen} options={{ title: 'Flight deal' }} />
       <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Sign in', headerShown: false }} />
       <Stack.Screen
         name="Register"
@@ -102,6 +128,7 @@ export function RootNavigator() {
 }
 
 const styles = StyleSheet.create({
-  headerButton: { paddingHorizontal: 16, paddingVertical: 8 },
+  headerActions: { flexDirection: 'row' },
+  headerButton: { paddingHorizontal: 12, paddingVertical: 8 },
   headerButtonText: { color: colors.primary, fontWeight: '600' },
 });

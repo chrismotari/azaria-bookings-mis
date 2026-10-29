@@ -24,6 +24,13 @@ export function todayInNairobi(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Nairobi' }).format(new Date());
 }
 
+export function stopoversLabel(stopovers: number): string {
+  if (stopovers === 0) {
+    return 'Direct';
+  }
+  return `${stopovers} stop${stopovers === 1 ? '' : 's'}`;
+}
+
 export function ticketClassLabel(value: TicketClass): string {
   return TICKET_CLASSES.find((option) => option.value === value)?.label ?? value;
 }

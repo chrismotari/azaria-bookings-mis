@@ -7,7 +7,8 @@ import { NavigationTarget } from '../navigation/types';
 import { useAuth } from './AuthContext';
 import { setPendingAction, takePendingAction } from './pendingAction';
 
-const toLogin = CommonActions.reset({ index: 0, routes: [{ name: 'Login' }] });
+// Login on top of a fresh Main, so going back lands on Explore rather than the gated screen.
+const toLogin = CommonActions.reset({ index: 1, routes: [{ name: 'Main' }, { name: 'Login' }] });
 
 /**
  * The auth gate. Wraps a login-required screen: a guest who opens it has the target
