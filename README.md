@@ -12,3 +12,9 @@ Flight-offerings and booking portal for a Nairobi travel agency. Django REST API
 - Python 3.12+ is supported; the development virtualenv runs Python 3.14 (Django 6.1).
 - Email settings use Django 6.1's `MAILERS` setting (console backend when `EMAIL_HOST` is empty, SMTP otherwise).
 - Plain-text email templates render through a separate template engine with autoescaping off, so links are not HTML-escaped.
+- Offering airports are written by id and returned as nested airport objects.
+- Airport text filters on offerings match the code case-insensitively and exactly; city, country and name match by "contains".
+- "valid_until >= today" is enforced on offering create only; edits re-check the other rules against the stored values.
+- Offering detail returns any active public offering, with an `is_bookable` flag; only browse is limited to bookable ones.
+- The admin offering list includes every offering (private, deactivated and lapsed), filterable by `is_active` and `is_public`.
+- The frontend uses React Navigation as the spec requires, not Expo Router (which `frontend/AGENTS.md` suggests).
