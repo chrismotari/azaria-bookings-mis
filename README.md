@@ -30,3 +30,8 @@ Flight-offerings and booking portal for a Nairobi travel agency. Django REST API
 - A status change by the wrong actor is refused with 409, like any other invalid move.
 - "Payment deadline has passed" means now is later than `payment_deadline`; marking paid at the deadline itself is allowed.
 - The booking timeline exposes each event's statuses and time, not the actor.
+- A boarding pass upload must agree on all three: extension (.pdf, .png, .jpg, .jpeg), declared content type, and the file's leading bytes.
+- Uploading or deleting a pass outside the paid status returns 409; an 11th file, a wrong type or an oversize file returns 400 on `file`.
+- The pass delete endpoint is `/api/admin/boarding-passes/{id}` (it is listed under the admin API); its file is removed from disk once the delete commits.
+- The customer booking detail has no `boarding_passes` key until the booking is completed.
+- The admin may pick several files at once; the app uploads them one per request.

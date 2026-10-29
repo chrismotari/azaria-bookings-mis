@@ -1,19 +1,23 @@
+from django.http import FileResponse, Http404
 from rest_framework import generics, status
+from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from core.permissions import IsAdminRole
 from customer_requests.models import Query
 
-from .models import Booking
+from .models import BoardingPass, Booking
 from .serializers import (
     AdminBookingDetailSerializer,
     AdminBookingSerializer,
+    BoardingPassSerializer,
+    BoardingPassUploadSerializer,
     BookingCreateSerializer,
     BookingDetailSerializer,
     BookingSerializer,
 )
-from .services import create_booking, transition
+from .services import add_boarding_pass, create_booking, delete_boarding_pass, transition
 
 BOOKING_RELATED = ["offering__origin", "offering__destination"]
 
@@ -59,7 +63,7 @@ class AdminBookingListView(generics.ListAPIView):
 class AdminBookingDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAdminRole]
     serializer_class = AdminBookingDetailSerializer
-    queryset = Booking.objects.select_related("user", *BOOKING_RELATED).prefetch_related("events")
+    queryset = Booking.objects.select_related("user", *BOOKING_RELATED).prefetch_related("events", "boarding_passes")
 
 
 class AdminBookingTransitionView(APIView):
@@ -72,6 +76,40 @@ class AdminBookingTransitionView(APIView):
         generics.get_object_or_404(Booking, pk=pk)
         booking = transition(pk, self.to_status, request.user)
         return Response(AdminBookingDetailSerializer(booking).data)
+
+
+class AdminBoardingPassUploadView(APIView):
+    """POST /admin/bookings/{id}/boarding-passes: one file per request, field "file"."""
+
+    permission_classes = [IsAdminRole]
+    parser_classes = [MultiPartParser]
+
+    def post(self, request, pk):
+        generics.get_object_or_404(Booking, pk=pk)
+        serializer = BoardingPassUploadSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        boarding_pass = add_boarding_pass(pk, serializer.validated_data["file"])
+        return Response(BoardingPassSerializer(boarding_pass).data, status=status.HTTP_201_CREATED)
+
+
+class AdminBoardingPassDeleteView(APIView):
+    permission_classes = [IsAdminRole]
+
+    def delete(self, request, pk):
+        delete_boarding_pass(generics.get_object_or_404(BoardingPass, pk=pk))
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class BoardingPassDownloadView(APIView):
+    """The admin may download any pass; a customer only their own, once the booking is completed."""
+
+    def get(self, request, pk):
+        boarding_pass = generics.get_object_or_404(BoardingPass.objects.select_related("booking"), pk=pk)
+        booking = boarding_pass.booking
+        is_admin = request.user.role == request.user.Role.ADMIN
+        if not is_admin and (booking.user_id != request.user.pk or booking.status != Booking.Status.COMPLETED):
+            raise Http404
+        return FileResponse(boarding_pass.file.open("rb"), as_attachment=True, filename=boarding_pass.original_name)
 
 
 class AdminDashboardView(APIView):

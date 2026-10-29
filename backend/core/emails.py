@@ -11,12 +11,17 @@ EMAIL_TASK_OPTIONS = {
 }
 
 
-def send_email(template, subject, to, context):
-    """Render core/templates/emails/<template>.txt and send it as plain text."""
+def send_email(template, subject, to, context, attachments=()):
+    """Render core/templates/emails/<template>.txt and send it as plain text.
+
+    attachments: (filename, content, mimetype) tuples.
+    """
     body = engines["emails"].get_template(f"emails/{template}.txt").render(
         {**context, "frontend_url": settings.FRONTEND_URL}
     )
     message = EmailMessage(subject=subject, body=body, to=[to])
+    for attachment in attachments:
+        message.attach(*attachment)
     message.send()
     return message
 

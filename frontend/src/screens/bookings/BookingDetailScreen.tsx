@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
 import { BookingDetail, BookingStatus } from '../../api/types';
+import { BoardingPassList } from '../../components/BoardingPassList';
 import { BookingSummary } from '../../components/BookingSummary';
 import { BookingTimeline } from '../../components/BookingTimeline';
 import { Button } from '../../components/Button';
@@ -83,6 +84,14 @@ export function BookingDetailScreen({ navigation, route }: NativeStackScreenProp
           ) : null}
           <Text style={styles.text}>{data.payment_instructions}</Text>
           <Text style={styles.muted}>If payment is not received by the deadline, the hold on these seats lapses.</Text>
+        </Card>
+      ) : null}
+
+      {data.status === 'completed' && data.boarding_passes ? (
+        <Card>
+          <Text style={styles.section}>Boarding passes</Text>
+          <Text style={styles.muted}>We have also emailed these to you.</Text>
+          <BoardingPassList passes={data.boarding_passes} />
         </Card>
       ) : null}
 

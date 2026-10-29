@@ -11,7 +11,7 @@ from core.exceptions import Conflict
 from core.models import AppSettings
 
 from . import tasks
-from .models import Booking, BookingEvent
+from .models import BoardingPass, Booking, BookingEvent
 
 Status = Booking.Status
 
@@ -27,6 +27,7 @@ TRANSITIONS = {
     (Status.AVAILABILITY_CONFIRMED, Status.UNAVAILABLE): ADMIN,
     (Status.AVAILABILITY_CONFIRMED, Status.CANCELLED): CUSTOMER,
     (Status.AVAILABILITY_CONFIRMED, Status.EXPIRED): SYSTEM,
+    (Status.PAID, Status.COMPLETED): ADMIN,
 }
 
 # The email each new status queues; cancelled queues none.
@@ -35,6 +36,7 @@ EMAILS = {
     Status.UNAVAILABLE: tasks.notify_customer_unavailable,
     Status.PAID: tasks.notify_customer_payment_received,
     Status.EXPIRED: tasks.notify_customer_booking_expired,
+    Status.COMPLETED: tasks.notify_customer_boarding_passes,
 }
 
 
@@ -103,6 +105,8 @@ def transition(booking_id, to_status, actor):
             booking.reminder_sent_at = None
         elif to_status == Status.PAID and now > booking.payment_deadline:
             raise InvalidTransition("The payment deadline has passed; the booking will expire.")
+        elif to_status == Status.COMPLETED and not booking.boarding_passes.exists():
+            raise InvalidTransition("Upload at least one boarding pass before sending them.")
 
         booking.status = to_status
         booking.save()
@@ -110,3 +114,28 @@ def transition(booking_id, to_status, actor):
         if to_status in EMAILS:
             _queue_email(EMAILS[to_status], booking.pk)
     return booking
+
+
+def _lock_paid_booking(booking_id):
+    booking = Booking.objects.select_for_update().get(pk=booking_id)
+    if booking.status != Status.PAID:
+        raise Conflict("Boarding passes can only be changed while the booking is paid.")
+    return booking
+
+
+def add_boarding_pass(booking_id, uploaded_file):
+    """uploaded_file has already passed the type and size checks."""
+    with transaction.atomic():
+        booking = _lock_paid_booking(booking_id)
+        if booking.boarding_passes.count() >= BoardingPass.MAX_PER_BOOKING:
+            raise ValidationError({"file": f"A booking can have at most {BoardingPass.MAX_PER_BOOKING} boarding passes."})
+        return BoardingPass.objects.create(booking=booking, file=uploaded_file, original_name=uploaded_file.name)
+
+
+def delete_boarding_pass(boarding_pass):
+    with transaction.atomic():
+        _lock_paid_booking(boarding_pass.booking_id)
+        storage, name = boarding_pass.file.storage, boarding_pass.file.name
+        boarding_pass.delete()
+        # Remove the file only once the row is gone for good.
+        transaction.on_commit(lambda: storage.delete(name))

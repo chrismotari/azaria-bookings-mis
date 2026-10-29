@@ -3,6 +3,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from catalog.models import Offering
+from core.storage import private_storage
 from customer_requests.models import Query
 
 
@@ -60,3 +61,28 @@ class BookingEvent(models.Model):
 
     def __str__(self):
         return f"{self.from_status or 'new'} → {self.to_status}"
+
+
+def boarding_pass_path(instance, filename):
+    # The private storage replaces the file name with a random UUID.
+    return f"boarding_passes/{instance.booking_id}/{filename}"
+
+
+class BoardingPass(models.Model):
+    """Uploaded and deleted only while the booking is paid; served only by the authenticated download view."""
+
+    MAX_PER_BOOKING = 10
+    MAX_SIZE = 5 * 1024 * 1024
+    # Allowed extension -> the content type it must be uploaded with.
+    CONTENT_TYPES = {".pdf": "application/pdf", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg"}
+
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name="boarding_passes")
+    file = models.FileField(storage=private_storage, upload_to=boarding_pass_path, max_length=255)
+    original_name = models.CharField(max_length=255)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["uploaded_at", "pk"]
+
+    def __str__(self):
+        return self.original_name

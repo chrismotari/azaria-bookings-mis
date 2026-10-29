@@ -1,14 +1,17 @@
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
-import { AdminBookingDetail, BookingStatus } from '../../api/types';
+import { AdminBookingDetail, BoardingPass, BookingStatus } from '../../api/types';
+import { BoardingPassList } from '../../components/BoardingPassList';
 import { BookingSummary } from '../../components/BookingSummary';
 import { BookingTimeline } from '../../components/BookingTimeline';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
+import { FileField } from '../../components/FileField';
 import { FormError } from '../../components/Field';
 import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
@@ -20,7 +23,7 @@ import { confirmAction } from '../../utils/confirm';
 import { formatDateTime } from '../../utils/format';
 
 type Action = {
-  path: 'confirm-availability' | 'mark-unavailable' | 'mark-paid';
+  path: 'confirm-availability' | 'mark-unavailable' | 'mark-paid' | 'complete';
   title: string;
   confirm: string;
   variant: 'primary' | 'secondary';
@@ -44,6 +47,31 @@ const MARK_PAID: Action = {
   confirm: 'Only do this once the payment has reached you. The customer will be emailed a receipt.',
   variant: 'primary',
 };
+
+const SEND_PASSES: Action = {
+  path: 'complete',
+  title: 'Send boarding passes',
+  confirm: 'The customer will be emailed every file listed. Files cannot be changed afterwards.',
+  variant: 'primary',
+};
+
+// Mirrors the server's upload rules.
+const MAX_PASSES = 10;
+const MAX_SIZE = 5 * 1024 * 1024;
+const ACCEPT = '.pdf,.png,.jpg,.jpeg';
+const ALLOWED_TYPES = ['application/pdf', 'image/png', 'image/jpeg'];
+
+/** Why the file cannot be uploaded, or null. */
+function fileProblem(file: File): string | null {
+  const extension = file.name.toLowerCase().split('.').pop() ?? '';
+  if (!['pdf', 'png', 'jpg', 'jpeg'].includes(extension) || !ALLOWED_TYPES.includes(file.type)) {
+    return `${file.name}: upload a PDF, PNG or JPEG file.`;
+  }
+  if (file.size > MAX_SIZE) {
+    return `${file.name}: the file is larger than 5 MB.`;
+  }
+  return null;
+}
 
 // The admin actions valid from each status.
 const ACTIONS: Partial<Record<BookingStatus, Action[]>> = {
@@ -122,11 +150,113 @@ export function AdminBookingDetailScreen({ route }: NativeStackScreenProps<RootS
       ) : null}
       <FormError message={act.isError ? errorMessage(act.error) : null} />
 
+      {data.status === 'paid' ? (
+        <BoardingPassUploads
+          booking={data}
+          onSend={() => run(SEND_PASSES)}
+          sending={act.isPending && act.variables?.path === 'complete'}
+        />
+      ) : null}
+      {data.status === 'completed' ? (
+        <Card>
+          <Text style={styles.section}>Boarding passes sent</Text>
+          <BoardingPassList passes={data.boarding_passes} />
+        </Card>
+      ) : null}
+
       <Card>
         <Text style={styles.section}>Timeline</Text>
         <BookingTimeline events={data.events} />
       </Card>
     </Screen>
+  );
+}
+
+type UploadsProps = { booking: AdminBookingDetail; onSend: () => void; sending: boolean };
+
+/** Paid bookings: upload, list and delete boarding passes, then send them. */
+function BoardingPassUploads({ booking, onSend, sending }: UploadsProps) {
+  const queryClient = useQueryClient();
+  const [problems, setProblems] = useState<string[]>([]);
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', 'bookings', 'detail', booking.id] });
+
+  const upload = useMutation({
+    // One file per request, as the API expects.
+    mutationFn: async (files: File[]) => {
+      const failed: string[] = [];
+      for (const file of files) {
+        const body = new FormData();
+        body.append('file', file);
+        try {
+          await api.post(`/admin/bookings/${booking.id}/boarding-passes`, body);
+        } catch (error) {
+          failed.push(`${file.name}: ${errorMessage(error)}`);
+        }
+      }
+      return failed;
+    },
+    onSuccess: (failed) => setProblems(failed),
+    onSettled: refresh,
+  });
+  const remove = useMutation({
+    mutationFn: async (boardingPass: BoardingPass) => api.delete(`/admin/boarding-passes/${boardingPass.id}`),
+    onSettled: refresh,
+  });
+
+  const onSelect = (files: File[]) => {
+    const rejected = files.map(fileProblem).filter((problem): problem is string => problem !== null);
+    const accepted = files.filter((file) => fileProblem(file) === null);
+    const room = MAX_PASSES - booking.boarding_passes.length;
+    if (accepted.length > room) {
+      rejected.push(`A booking can have at most ${MAX_PASSES} boarding passes.`);
+    }
+    setProblems(rejected);
+    if (accepted.length && room > 0) {
+      upload.mutate(accepted.slice(0, room));
+    }
+  };
+  const onDelete = async (boardingPass: BoardingPass) => {
+    if (await confirmAction('Delete this file?', boardingPass.original_name, 'Delete')) {
+      remove.mutate(boardingPass);
+    }
+  };
+
+  const passes = booking.boarding_passes;
+  return (
+    <Card>
+      <Text style={styles.section}>Boarding passes</Text>
+      <Text style={styles.muted}>
+        Upload one file per passenger if needed: PDF, PNG or JPEG, up to 5 MB each, at most {MAX_PASSES} files.
+      </Text>
+      <FileField
+        label="Add files"
+        accept={ACCEPT}
+        onSelect={onSelect}
+        disabled={upload.isPending || passes.length >= MAX_PASSES}
+      />
+      {upload.isPending ? <Text style={styles.muted}>Uploading…</Text> : null}
+      {problems.map((problem) => (
+        <FormError key={problem} message={problem} />
+      ))}
+      <FormError message={remove.isError ? errorMessage(remove.error) : null} />
+      {passes.length ? (
+        <BoardingPassList
+          passes={passes}
+          onDelete={onDelete}
+          deletingId={remove.isPending ? remove.variables?.id : null}
+        />
+      ) : (
+        <Text style={styles.muted}>No files uploaded yet.</Text>
+      )}
+      <View style={styles.actions}>
+        <Button
+          title="Send boarding passes"
+          onPress={onSend}
+          disabled={passes.length === 0 || upload.isPending}
+          loading={sending}
+        />
+      </View>
+    </Card>
   );
 }
 

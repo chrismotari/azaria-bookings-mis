@@ -9,6 +9,7 @@ urlpatterns = [
     path("bookings", views.BookingListCreateView.as_view()),
     path("bookings/<int:pk>", views.BookingDetailView.as_view()),
     path("bookings/<int:pk>/cancel", views.BookingCancelView.as_view()),
+    path("boarding-passes/<int:pk>/download", views.BoardingPassDownloadView.as_view()),
     path("admin/dashboard", views.AdminDashboardView.as_view()),
     path("admin/bookings", views.AdminBookingListView.as_view()),
     path("admin/bookings/<int:pk>", views.AdminBookingDetailView.as_view()),
@@ -21,4 +22,8 @@ urlpatterns = [
         views.AdminBookingTransitionView.as_view(to_status=Status.UNAVAILABLE),
     ),
     path("admin/bookings/<int:pk>/mark-paid", views.AdminBookingTransitionView.as_view(to_status=Status.PAID)),
+    # "Send boarding passes".
+    path("admin/bookings/<int:pk>/complete", views.AdminBookingTransitionView.as_view(to_status=Status.COMPLETED)),
+    path("admin/bookings/<int:pk>/boarding-passes", views.AdminBoardingPassUploadView.as_view()),
+    path("admin/boarding-passes/<int:pk>", views.AdminBoardingPassDeleteView.as_view()),
 ]

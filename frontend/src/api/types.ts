@@ -116,15 +116,23 @@ export type Booking = {
   created_at: string;
 };
 
+export type BoardingPass = {
+  id: number;
+  original_name: string;
+  uploaded_at: string;
+};
+
 export type BookingDetail = Booking & {
   events: BookingEvent[];
   /** Set only while the booking is availability_confirmed. */
   payment_instructions: string | null;
+  /** Present only once the booking is completed. */
+  boarding_passes?: BoardingPass[];
 };
 
 export type AdminBooking = Booking & { user: User };
 
-export type AdminBookingDetail = AdminBooking & { events: BookingEvent[] };
+export type AdminBookingDetail = AdminBooking & { events: BookingEvent[]; boarding_passes: BoardingPass[] };
 
 export type Dashboard = {
   open_queries: number;

@@ -3,11 +3,12 @@ from decimal import Decimal
 
 import pytest
 from django.core import mail
+from django.core.files.base import ContentFile
 from django.utils import timezone
 from freezegun import freeze_time
 
 from bookings import tasks
-from bookings.models import Booking, BookingEvent
+from bookings.models import BoardingPass, Booking, BookingEvent
 from bookings.services import TRANSITIONS, InvalidTransition, create_booking, transition
 from core.models import AppSettings
 from customer_requests.models import Query, QueryResponse
@@ -35,7 +36,11 @@ def make_booking(customer, offering):
         fields = {"passenger_count": 2, "unit_price": offering.price, **kwargs}
         if status == Status.AVAILABILITY_CONFIRMED:
             fields.setdefault("payment_deadline", timezone.now() + timedelta(hours=24))
-        return Booking.objects.create(user=user or customer, offering=offering, status=status, **fields)
+        booking = Booking.objects.create(user=user or customer, offering=offering, status=status, **fields)
+        if status == Status.PAID:
+            # Ready to complete.
+            BoardingPass(booking=booking, original_name="pass.pdf").file.save("pass.pdf", ContentFile(b"%PDF-"))
+        return booking
 
     return make
 
@@ -254,6 +259,7 @@ EXPECTED_EMAILS = {
     Status.UNAVAILABLE: "could not be confirmed",
     Status.PAID: "Payment received",
     Status.EXPIRED: "has expired",
+    Status.COMPLETED: "boarding pass",
 }
 
 

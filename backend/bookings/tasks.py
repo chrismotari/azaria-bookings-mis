@@ -1,3 +1,5 @@
+import mimetypes
+
 from celery import shared_task
 
 from core.emails import EMAIL_TASK_OPTIONS, format_date, format_datetime, format_price, send_email
@@ -81,3 +83,23 @@ def notify_customer_booking_expired(booking_id):
     if booking is None:
         return
     send_email("booking_expired", "Your booking has expired", booking.user.email, describe_booking(booking))
+
+
+@shared_task(**EMAIL_TASK_OPTIONS)
+def notify_customer_boarding_passes(booking_id):
+    booking = _booking_in(booking_id, Booking.Status.COMPLETED)
+    if booking is None:
+        return
+    attachments = []
+    for boarding_pass in booking.boarding_passes.all():
+        with boarding_pass.file.open("rb") as file:
+            content = file.read()
+        mimetype = mimetypes.guess_type(boarding_pass.original_name)[0] or "application/octet-stream"
+        attachments.append((boarding_pass.original_name, content, mimetype))
+    send_email(
+        "boarding_passes",
+        f"Your boarding pass{'es' if len(attachments) > 1 else ''}: {describe_booking(booking)['route']}",
+        booking.user.email,
+        {**describe_booking(booking), "pass_count": len(attachments)},
+        attachments,
+    )

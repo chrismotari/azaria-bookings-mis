@@ -18,6 +18,16 @@ def _fast_password_hashing(settings):
 
 
 @pytest.fixture(autouse=True)
+def private_media(tmp_path, monkeypatch):
+    """Keeps files that tests store out of the real private_media directory."""
+    from core.storage import private_storage
+
+    monkeypatch.setattr(private_storage, "base_location", str(tmp_path))
+    monkeypatch.setattr(private_storage, "location", str(tmp_path))
+    return tmp_path
+
+
+@pytest.fixture(autouse=True)
 def _clear_throttle_cache():
     cache.clear()
 

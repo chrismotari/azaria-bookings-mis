@@ -1,0 +1,10 @@
+Hello {{ booking.user.full_name }},
+
+Your boarding pass{{ pass_count|pluralize:"es" }} for {{ route }} on {{ departure }} {{ pass_count|pluralize:"is,are" }} attached to this email.
+
+You can also download {{ pass_count|pluralize:"it,them" }} from your booking in the app:
+{{ frontend_url }}/bookings/{{ booking.id }}
+
+Have a good flight!
+
+Azaria Bookings
