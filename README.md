@@ -35,3 +35,6 @@ Flight-offerings and booking portal for a Nairobi travel agency. Django REST API
 - The pass delete endpoint is `/api/admin/boarding-passes/{id}` (it is listed under the admin API); its file is removed from disk once the delete commits.
 - The customer booking detail has no `boarding_passes` key until the booking is completed.
 - The admin may pick several files at once; the app uploads them one per request.
+- Payment hold hours and reminder hours must each be at least 1; the settings endpoint accepts GET and PATCH only.
+- The payment reminder email is skipped if, when it is sent, the booking is no longer awaiting payment or its deadline has passed.
+- Stale requested bookings (flight already departed) get the same "booking expired" email 7 as lapsed payment holds, since the spec defines one expiry email.

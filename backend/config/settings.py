@@ -148,3 +148,17 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TIMEZONE = TIME_ZONE
+CELERY_BEAT_SCHEDULE = {
+    "expire-unpaid-bookings": {
+        "task": "bookings.tasks.expire_unpaid_bookings",
+        "schedule": timedelta(minutes=5),
+    },
+    "send-payment-reminders": {
+        "task": "bookings.tasks.send_payment_reminders",
+        "schedule": timedelta(minutes=15),
+    },
+    "expire-stale-requests": {
+        "task": "bookings.tasks.expire_stale_requests",
+        "schedule": timedelta(hours=1),
+    },
+}

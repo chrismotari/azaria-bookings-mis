@@ -140,3 +140,10 @@ export type Dashboard = {
   bookings_awaiting_payment: number;
   bookings_paid_awaiting_boarding_pass: number;
 };
+
+export type AppSettings = {
+  payment_instructions: string;
+  payment_hold_hours: number;
+  reminder_hours_before: number;
+  admin_notification_email: string;
+};

@@ -26,6 +26,7 @@ export type AdminTabParamList = {
   AdminOfferings: undefined;
   AdminRequests: { status?: QueryStatus | 'all' } | undefined;
   AdminBookings: { status?: BookingStatus | 'all' } | undefined;
+  AdminSettings: undefined;
 };
 
 export type RootStackParamList = {

@@ -14,6 +14,7 @@ import { AdminOfferingsScreen } from '../screens/admin/AdminOfferingsScreen';
 import { AdminQueryDetailScreen } from '../screens/admin/AdminQueryDetailScreen';
 import { AdminQueryRespondScreen } from '../screens/admin/AdminQueryRespondScreen';
 import { AdminRequestsScreen } from '../screens/admin/AdminRequestsScreen';
+import { AdminSettingsScreen } from '../screens/admin/AdminSettingsScreen';
 import { BookingDetailScreen } from '../screens/bookings/BookingDetailScreen';
 import { BookingNewScreen } from '../screens/bookings/BookingNewScreen';
 import { BookingsScreen } from '../screens/bookings/BookingsScreen';
@@ -147,6 +148,7 @@ function AdminTabsNavigator() {
       <AdminTabs.Screen name="AdminOfferings" component={AdminOfferingsScreen} options={{ title: 'Offerings' }} />
       <AdminTabs.Screen name="AdminRequests" component={AdminRequestsScreen} options={{ title: 'Requests' }} />
       <AdminTabs.Screen name="AdminBookings" component={AdminBookingsScreen} options={{ title: 'Bookings' }} />
+      <AdminTabs.Screen name="AdminSettings" component={AdminSettingsScreen} options={{ title: 'Settings' }} />
     </AdminTabs.Navigator>
   );
 }

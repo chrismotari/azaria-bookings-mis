@@ -1,0 +1,17 @@
+Hello {{ booking.user.full_name }},
+
+This is a reminder that payment for your booking is due by {{ deadline }}.
+
+Route: {{ route }}
+Departure: {{ departure }}
+Total price: {{ total }}
+
+How to pay:
+{{ payment_instructions }}
+
+If we have not received your payment by then, the hold on these seats will lapse.
+
+View your booking:
+{{ frontend_url }}/bookings/{{ booking.id }}
+
+Azaria Bookings
