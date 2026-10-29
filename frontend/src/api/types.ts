@@ -56,3 +56,33 @@ export type AdminOffering = Offering & {
   is_active: boolean;
   created_at: string;
 };
+
+export type QueryStatus = 'open' | 'responded' | 'closed';
+
+export type QueryResponse = {
+  id: number;
+  message: string;
+  offerings: Offering[];
+  created_at: string;
+};
+
+export type Query = {
+  id: number;
+  origin: Airport | null;
+  destination: Airport | null;
+  date_from: string;
+  date_to: string | null;
+  price_min: string | null;
+  price_max: string | null;
+  ticket_class: TicketClass | '';
+  max_stopovers: number | null;
+  message: string;
+  status: QueryStatus;
+  created_at: string;
+};
+
+export type QueryDetail = Query & { responses: QueryResponse[] };
+
+export type AdminQuery = Query & { user: User };
+
+export type AdminQueryDetail = AdminQuery & { responses: QueryResponse[] };

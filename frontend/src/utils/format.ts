@@ -34,3 +34,17 @@ export function stopoversLabel(stopovers: number): string {
 export function ticketClassLabel(value: TicketClass): string {
   return TICKET_CLASSES.find((option) => option.value === value)?.label ?? value;
 }
+
+const dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  timeZone: 'Africa/Nairobi',
+});
+
+/** Formats a timestamp in Nairobi time. */
+export function formatDateTime(isoDateTime: string): string {
+  return `${dateTimeFormat.format(new Date(isoDateTime))} (Nairobi)`;
+}

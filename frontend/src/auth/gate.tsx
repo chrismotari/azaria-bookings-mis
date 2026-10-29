@@ -11,7 +11,27 @@ import { setPendingAction, takePendingAction } from './pendingAction';
 const toLogin = CommonActions.reset({ index: 1, routes: [{ name: 'Main' }, { name: 'Login' }] });
 
 /**
- * The auth gate. Wraps a login-required screen: a guest who opens it has the target
+ * The auth gate for login-required actions (e.g. "Request options"): opens the target
+ * for a signed-in user; otherwise remembers it and sends the guest to Login, from where
+ * they return to it after signing in.
+ */
+export function useAuthGate() {
+  const { user } = useAuth();
+  return useCallback(
+    (target: NavigationTarget) => {
+      if (user) {
+        navigateTo(target);
+      } else {
+        setPendingAction(target);
+        navigationRef.dispatch(toLogin);
+      }
+    },
+    [user],
+  );
+}
+
+/**
+ * The same gate for login-required screens. Wraps a login-required screen: a guest who opens it has the target
  * remembered and is sent to Login, and returns to it after signing in.
  */
 export function RequireAuth({ target, children }: { target: NavigationTarget; children: ReactNode }) {

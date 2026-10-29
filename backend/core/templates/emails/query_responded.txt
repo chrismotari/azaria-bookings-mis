@@ -1,0 +1,11 @@
+Hello {{ query.user.full_name }},
+
+We have replied to your request for {{ route }} ({{ dates }}) with {{ option_count }} option{{ option_count|pluralize }}.
+{% if response.message %}
+Our message:
+{{ response.message }}
+{% endif %}
+Open the app to view them:
+{{ frontend_url }}/requests/{{ query.id }}
+
+Azaria Bookings

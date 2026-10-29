@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "accounts",
     "catalog",
+    "customer_requests.apps.RequestsConfig",
     "core",
 ]
 

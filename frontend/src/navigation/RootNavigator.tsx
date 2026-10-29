@@ -1,5 +1,5 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createNativeStackNavigator, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -8,6 +8,9 @@ import { RequireAuth } from '../auth/gate';
 import { useSignOut } from '../auth/useSignOut';
 import { AdminOfferingEditScreen, AdminOfferingNewScreen } from '../screens/admin/AdminOfferingFormScreen';
 import { AdminOfferingsScreen } from '../screens/admin/AdminOfferingsScreen';
+import { AdminQueryDetailScreen } from '../screens/admin/AdminQueryDetailScreen';
+import { AdminQueryRespondScreen } from '../screens/admin/AdminQueryRespondScreen';
+import { AdminRequestsScreen } from '../screens/admin/AdminRequestsScreen';
 import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
 import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
@@ -15,6 +18,9 @@ import { ResetPasswordScreen } from '../screens/auth/ResetPasswordScreen';
 import { AccountScreen } from '../screens/customer/AccountScreen';
 import { ExploreScreen } from '../screens/explore/ExploreScreen';
 import { OfferingDetailScreen } from '../screens/explore/OfferingDetailScreen';
+import { QueryDetailScreen } from '../screens/requests/QueryDetailScreen';
+import { QueryNewScreen } from '../screens/requests/QueryNewScreen';
+import { RequestsScreen } from '../screens/requests/RequestsScreen';
 import { colors, useIsWide } from '../theme';
 import { ResponsiveTabBar } from './ResponsiveTabBar';
 import { AdminTabParamList, MainTabParamList, RootStackParamList } from './types';
@@ -31,8 +37,32 @@ function GatedAccount() {
   );
 }
 
+function GatedRequests() {
+  return (
+    <RequireAuth target={{ screen: 'Main', params: { screen: 'Requests' } }}>
+      <RequestsScreen />
+    </RequireAuth>
+  );
+}
+
+function GatedQueryNew(props: NativeStackScreenProps<RootStackParamList, 'QueryNew'>) {
+  return (
+    <RequireAuth target={{ screen: 'QueryNew', params: props.route.params }}>
+      <QueryNewScreen {...props} />
+    </RequireAuth>
+  );
+}
+
+function GatedQueryDetail(props: NativeStackScreenProps<RootStackParamList, 'QueryDetail'>) {
+  return (
+    <RequireAuth target={{ screen: 'QueryDetail', params: props.route.params }}>
+      <QueryDetailScreen {...props} />
+    </RequireAuth>
+  );
+}
+
 // Login-required tabs, left out of the bar for guests.
-const GATED_TABS: (keyof MainTabParamList)[] = ['Account'];
+const GATED_TABS: (keyof MainTabParamList)[] = ['Requests', 'Account'];
 
 function GuestHeaderActions() {
   const navigation = useNavigation();
@@ -56,6 +86,7 @@ function MainTabsNavigator() {
       }}
     >
       <MainTabs.Screen name="Explore" component={ExploreScreen} options={{ title: 'Explore' }} />
+      <MainTabs.Screen name="Requests" component={GatedRequests} options={{ title: 'Requests' }} />
       <MainTabs.Screen name="Account" component={GatedAccount} options={{ title: 'Account' }} />
     </MainTabs.Navigator>
   );
@@ -82,6 +113,7 @@ function AdminTabsNavigator() {
       screenOptions={{ tabBarPosition: isWide ? 'left' : 'bottom', headerRight: () => <LogoutButton /> }}
     >
       <AdminTabs.Screen name="AdminOfferings" component={AdminOfferingsScreen} options={{ title: 'Offerings' }} />
+      <AdminTabs.Screen name="AdminRequests" component={AdminRequestsScreen} options={{ title: 'Requests' }} />
     </AdminTabs.Navigator>
   );
 }
@@ -99,6 +131,12 @@ export function RootNavigator() {
           component={AdminOfferingEditScreen}
           options={{ title: 'Edit offering' }}
         />
+        <Stack.Screen name="AdminQueryDetail" component={AdminQueryDetailScreen} options={{ title: 'Request' }} />
+        <Stack.Screen
+          name="AdminQueryRespond"
+          component={AdminQueryRespondScreen}
+          options={{ title: 'Respond to request' }}
+        />
       </Stack.Navigator>
     );
   }
@@ -107,6 +145,8 @@ export function RootNavigator() {
     <Stack.Navigator>
       <Stack.Screen name="Main" component={MainTabsNavigator} options={{ headerShown: false }} />
       <Stack.Screen name="OfferingDetail" component={OfferingDetailScreen} options={{ title: 'Flight deal' }} />
+      <Stack.Screen name="QueryNew" component={GatedQueryNew} options={{ title: 'Request options' }} />
+      <Stack.Screen name="QueryDetail" component={GatedQueryDetail} options={{ title: 'Request' }} />
       <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Sign in', headerShown: false }} />
       <Stack.Screen
         name="Register"

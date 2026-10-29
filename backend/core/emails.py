@@ -18,3 +18,11 @@ def send_email(template, subject, to, context):
     message = EmailMessage(subject=subject, body=body, to=[to])
     message.send()
     return message
+
+
+def format_price(amount):
+    return f"{settings.CURRENCY} {amount:,.2f}"
+
+
+def format_date(value):
+    return f"{value:%a}, {value.day} {value:%b %Y}"

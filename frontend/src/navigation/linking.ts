@@ -9,11 +9,17 @@ export const linking: LinkingOptions<RootStackParamList> = {
       Main: {
         screens: {
           Explore: '',
+          Requests: 'requests',
           Account: 'account',
         },
       },
       OfferingDetail: {
         path: 'offerings/:id',
+        parse: { id: Number },
+      },
+      QueryNew: 'requests/new',
+      QueryDetail: {
+        path: 'requests/:id',
         parse: { id: Number },
       },
       Login: {
@@ -27,11 +33,20 @@ export const linking: LinkingOptions<RootStackParamList> = {
         path: 'admin',
         screens: {
           AdminOfferings: 'offerings',
+          AdminRequests: 'requests',
         },
       },
       AdminOfferingNew: 'admin/offerings/new',
       AdminOfferingEdit: {
         path: 'admin/offerings/:id',
+        parse: { id: Number },
+      },
+      AdminQueryDetail: {
+        path: 'admin/requests/:id',
+        parse: { id: Number },
+      },
+      AdminQueryRespond: {
+        path: 'admin/requests/:id/respond',
         parse: { id: Number },
       },
     },

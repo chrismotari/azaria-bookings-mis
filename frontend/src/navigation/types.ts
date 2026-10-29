@@ -1,17 +1,35 @@
 import { NavigatorScreenParams } from '@react-navigation/native';
 
+import { QueryStatus, TicketClass } from '../api/types';
+
+/** Prefilled request-for-options criteria (airports as IATA codes), e.g. from Explore's filters. */
+export type QueryPrefill = {
+  origin?: string;
+  destination?: string;
+  date_from?: string;
+  date_to?: string;
+  price_min?: string;
+  price_max?: string;
+  ticket_class?: TicketClass;
+  max_stopovers?: string;
+};
+
 export type MainTabParamList = {
   Explore: undefined;
+  Requests: undefined;
   Account: undefined;
 };
 
 export type AdminTabParamList = {
   AdminOfferings: undefined;
+  AdminRequests: { status?: QueryStatus | 'all' } | undefined;
 };
 
 export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
   OfferingDetail: { id: number };
+  QueryNew: QueryPrefill | undefined;
+  QueryDetail: { id: number };
   Login: { passwordReset?: boolean } | undefined;
   Register: undefined;
   ForgotPassword: undefined;
@@ -19,6 +37,8 @@ export type RootStackParamList = {
   AdminTabs: NavigatorScreenParams<AdminTabParamList> | undefined;
   AdminOfferingNew: undefined;
   AdminOfferingEdit: { id: number };
+  AdminQueryDetail: { id: number };
+  AdminQueryRespond: { id: number };
 };
 
 /** A screen and its params, e.g. what a guest was trying to open before signing in. */

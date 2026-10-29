@@ -23,6 +23,13 @@ class OfferingQuerySet(models.QuerySet):
     def publicly_visible(self):
         return self.filter(is_active=True, is_public=True)
 
+    def visible_to(self, user):
+        """Public active offerings, plus those sent to this customer in a query response."""
+        if not user.is_authenticated:
+            return self.publicly_visible()
+        sent_to_user = self.filter(query_responses__query__user=user).values("pk")
+        return self.filter(models.Q(is_active=True, is_public=True) | models.Q(pk__in=sent_to_user))
+
 
 class Offering(models.Model):
     class TicketClass(models.TextChoices):

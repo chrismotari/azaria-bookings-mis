@@ -62,3 +62,15 @@ export function offeringSchema(isCreate: boolean) {
       }
     });
 }
+
+/** The API body for a validated form. */
+export function toOfferingBody(values: OfferingFormValues) {
+  return {
+    ...values,
+    origin: values.origin?.id,
+    destination: values.destination?.id,
+    price: values.price.trim(),
+    stopovers: Number(values.stopovers),
+    airline: values.airline.trim(),
+  };
+}

@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { Offering, Paginated } from '../../api/types';
+import { useAuthGate } from '../../auth/gate';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { OptionChips } from '../../components/OptionChips';
@@ -20,9 +21,25 @@ import { OfferingCard } from '../../components/OfferingCard';
 import { Pagination } from '../../components/Pagination';
 import { Screen } from '../../components/Screen';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
+import { QueryPrefill } from '../../navigation/types';
 import { colors, useIsWide } from '../../theme';
 
 type Ordering = 'departure_date' | 'price' | '-price';
+
+/** The applied filters as a request for options; airports only when chosen from the suggestions. */
+function queryPrefill(filters: OfferingFilterValues): QueryPrefill {
+  const prefill: QueryPrefill = {
+    origin: filters.origin.airport?.code,
+    destination: filters.destination.airport?.code,
+    date_from: filters.date_from,
+    date_to: filters.date_to,
+    price_min: filters.price_min.trim(),
+    price_max: filters.price_max.trim(),
+    ticket_class: filters.ticket_class || undefined,
+    max_stopovers: filters.max_stopovers.trim(),
+  };
+  return Object.fromEntries(Object.entries(prefill).filter(([, value]) => value)) as QueryPrefill;
+}
 
 const ORDERING_OPTIONS: { value: Ordering; label: string }[] = [
   { value: 'departure_date', label: 'Soonest departure' },
@@ -39,6 +56,7 @@ export function ExploreScreen() {
   const [ordering, setOrdering] = useState<Ordering>('departure_date');
   const [page, setPage] = useState(1);
   const [moreFilters, setMoreFilters] = useState(false);
+  const requireAuth = useAuthGate();
 
   const offerings = useQuery({
     queryKey: ['offerings', filters, ordering, page],
@@ -106,7 +124,13 @@ export function ExploreScreen() {
       ) : offerings.isError ? (
         <ErrorState error={offerings.error} onRetry={() => offerings.refetch()} />
       ) : offerings.data.results.length === 0 ? (
-        <EmptyState message="No flight deals match your search right now." />
+        <View style={styles.empty}>
+          <EmptyState message="No flight deals match your search right now. Tell us what you need and we will find options for you." />
+          <Button
+            title="Request options"
+            onPress={() => requireAuth({ screen: 'QueryNew', params: queryPrefill(filters) })}
+          />
+        </View>
       ) : (
         <>
           <Text style={styles.count}>
@@ -133,6 +157,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: '700', color: colors.text },
   actions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', alignItems: 'center' },
   count: { color: colors.muted },
+  empty: { alignItems: 'center', gap: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   gridItem: { flexGrow: 1, flexBasis: 300, minWidth: 0 },
 });

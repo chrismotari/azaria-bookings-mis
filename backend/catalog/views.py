@@ -51,7 +51,7 @@ class OfferingDetailView(generics.RetrieveAPIView):
     serializer_class = OfferingSerializer
 
     def get_queryset(self):
-        return Offering.objects.publicly_visible().select_related("origin", "destination")
+        return Offering.objects.visible_to(self.request.user).select_related("origin", "destination")
 
 
 class AdminOfferingListView(generics.ListCreateAPIView):

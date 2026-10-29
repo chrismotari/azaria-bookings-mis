@@ -20,3 +20,7 @@ Flight-offerings and booking portal for a Nairobi travel agency. Django REST API
 - The frontend uses React Navigation as the spec requires, not Expo Router (which `frontend/AGENTS.md` suggests).
 - Explore's From/To send the chosen airport's code when picked from the suggestions, otherwise the typed text.
 - Explore and the admin offerings list apply filters on "Search"/"Apply filters", not on every keystroke.
+- The spec's `requests` app lives in the `customer_requests` package (app label `requests`) so it does not shadow the PyPI `requests` library.
+- Query airports are written by id and returned as nested airport objects, like offerings.
+- Closing an already closed query, or responding to a closed one, returns 409 Conflict; open and responded queries can both be closed.
+- A response's `offering_ids` must refer to currently bookable offerings (active, not past `valid_until`, and not yet departed).

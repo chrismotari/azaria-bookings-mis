@@ -1,0 +1,12 @@
+A customer has asked for flight options.
+
+Customer: {{ query.user.full_name }} <{{ query.user.email }}>
+Route: {{ route }}
+Dates: {{ dates }}
+Price per person: {{ prices }}
+Class: {{ ticket_class }}
+Max stopovers: {{ max_stopovers }}
+Message: {{ query.message|default:"(none)" }}
+
+Respond in the app:
+{{ frontend_url }}/admin/requests/{{ query.id }}

@@ -4,7 +4,7 @@ from decimal import Decimal
 import pytest
 from freezegun import freeze_time
 
-from catalog.models import Airport, Offering
+from catalog.models import Offering
 
 pytestmark = pytest.mark.django_db
 
@@ -16,21 +16,6 @@ def _frozen():
     # Noon in Nairobi.
     with freeze_time("2026-03-10 09:00:00"):
         yield
-
-
-@pytest.fixture
-def airports():
-    return {
-        a.code: a
-        for a in Airport.objects.bulk_create(
-            [
-                Airport(code="NBO", name="Jomo Kenyatta International Airport", city="Nairobi", country="Kenya"),
-                Airport(code="MBA", name="Moi International Airport", city="Mombasa", country="Kenya"),
-                Airport(code="LHR", name="London Heathrow Airport", city="London", country="United Kingdom"),
-                Airport(code="DXB", name="Dubai International Airport", city="Dubai", country="United Arab Emirates"),
-            ]
-        )
-    }
 
 
 def make_offering(airports, origin="NBO", destination="LHR", **kwargs):
