@@ -4,3 +4,5 @@ node_modules/
 __pycache__/
 .expo/
 dist/
+private_media/
+celerybeat-schedule*
