@@ -1,21 +1,25 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { Booking, Paginated } from '../../api/types';
+import { AirlineBadge } from '../../components/AirlineBadge';
 import { DetailLayout } from '../../components/DetailLayout';
+import { Icon, IconName } from '../../components/Icon';
 import { Pagination } from '../../components/Pagination';
+import { PriceTag } from '../../components/PriceTag';
+import { RouteLine } from '../../components/RouteLine';
 import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
+import { TripCard } from '../../components/TripCard';
 import { MainTabParamList } from '../../navigation/types';
-import { colors, font, radius, shadow, weight } from '../../theme';
+import { colors, font, space, weight } from '../../theme';
 import { BOOKING_STATUS, bookingRoute, passengersLabel } from '../../utils/bookings';
-import { formatDate, formatPrice } from '../../utils/format';
+import { formatDate } from '../../utils/format';
 import { BookingDetailView } from './BookingDetailView';
-import { PressState } from '../../components/pressState';
 
 export function BookingsScreen({ navigation, route }: BottomTabScreenProps<MainTabParamList, 'Bookings'>) {
   const selected = route.params?.id;
@@ -69,49 +73,51 @@ export function BookingsScreen({ navigation, route }: BottomTabScreenProps<MainT
 
 function BookingRow({ booking, selected, onPress }: { booking: Booking; selected: boolean; onPress: () => void }) {
   const status = BOOKING_STATUS[booking.status];
+  const { offer } = booking;
   return (
-    <Pressable
-      accessibilityRole="link"
-      aria-current={selected}
+    <TripCard
+      tone={status.tone}
+      selected={selected}
       onPress={onPress}
-      style={({ pressed, hovered }: PressState) => [
-        styles.row,
-        (pressed || hovered || selected) && styles.pressed,
-        selected && styles.selected,
-      ]}
+      accessibilityLabel={`${bookingRoute(booking)}, ${formatDate(offer.departure_date)}, ${status.label}`}
     >
-      <View style={styles.rowMain}>
-        <Text style={styles.route}>{bookingRoute(booking)}</Text>
-        <Text style={styles.text}>
-          {formatDate(booking.offer.departure_date)} · {booking.offer.airline} ·{' '}
-          {passengersLabel(booking.passenger_count)}
-        </Text>
-        <Text style={styles.price}>{formatPrice(booking.total_price)}</Text>
+      <View style={styles.between}>
+        <View style={styles.airline}>
+          <AirlineBadge airline={offer.airline} />
+          <Text style={styles.airlineName} numberOfLines={1}>
+            {offer.airline}
+          </Text>
+        </View>
+        <StatusChip label={status.label} tone={status.tone} />
       </View>
-      <StatusChip label={status.label} tone={status.tone} />
-    </Pressable>
+      <RouteLine origin={offer.origin} destination={offer.destination} stopovers={offer.stopovers} />
+      <View style={styles.between}>
+        <View style={styles.facts}>
+          <Fact icon="calendar-outline" text={formatDate(offer.departure_date)} />
+          <Fact icon="people-outline" text={passengersLabel(booking.passenger_count)} />
+        </View>
+        <PriceTag amount={booking.total_price} />
+      </View>
+    </TripCard>
+  );
+}
+
+function Fact({ icon, text }: { icon: IconName; text: string }) {
+  return (
+    <View style={styles.fact}>
+      <Icon name={icon} size={16} color={colors.muted} />
+      <Text style={styles.text}>{text}</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
-  list: { gap: 12 },
-  row: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 12,
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 16,
-    ...shadow,
-  },
-  pressed: { borderColor: colors.primary },
-  selected: { backgroundColor: colors.primaryTint },
-  rowMain: { flexShrink: 1, gap: 2 },
-  route: { fontSize: font.body, fontWeight: weight.bold, color: colors.text },
-  text: { color: colors.text },
-  price: { color: colors.primary, fontWeight: weight.bold },
+  list: { gap: space.md },
+  between: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: space.sm },
+  airline: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexShrink: 1, minWidth: 0 },
+  airlineName: { fontSize: font.body, fontWeight: weight.bold, color: colors.text, flexShrink: 1 },
+  facts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.lg },
+  fact: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  text: { fontSize: font.body, color: colors.text },
 });

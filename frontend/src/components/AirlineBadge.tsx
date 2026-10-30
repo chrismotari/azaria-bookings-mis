@@ -24,6 +24,9 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     backgroundColor: colors.primaryTint,
+    // Keeps the circle visible on a selected (tinted) card.
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },

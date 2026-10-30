@@ -48,3 +48,5 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - Offer detail has no full-screen view on wide screens (it opens in the drawer), so the price summary sits on the right, sticky, whenever the detail is at least 640 px wide, which includes the drawer.
 - Explore's filter chips apply at once and the price fields on Enter or when leaving the field; "Clear all" clears the sidebar filters only, and the search bar applies with its Search button.
 - While a detail is open, Explore uses its narrow layout (stacked search bar, Filters button, stacked rows), as the list column is too narrow for the sidebar.
+- A booking that ended (unavailable, cancelled, expired) shows its status only as the banner, without the status chip above it; the banner carries the existing help text.
+- The restyled booking summary, request criteria and boarding pass rows are shared components, so the admin detail screens show them too.

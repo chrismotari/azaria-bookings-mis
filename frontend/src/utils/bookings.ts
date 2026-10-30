@@ -30,3 +30,13 @@ export function bookingRoute(booking: Booking): string {
 export function passengersLabel(count: number): string {
   return `${count} passenger${count === 1 ? '' : 's'}`;
 }
+
+/** "12 h 30 min left" until the deadline, or "Deadline passed". */
+export function timeLeft(deadline: string, now: number): string {
+  const minutes = Math.floor((new Date(deadline).getTime() - now) / 60_000);
+  if (minutes < 0) {
+    return 'Deadline passed';
+  }
+  const hours = Math.floor(minutes / 60);
+  return hours > 0 ? `${hours} h ${minutes % 60} min left` : `${minutes} min left`;
+}

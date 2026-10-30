@@ -4,7 +4,8 @@ import { colors, font, radius, weight } from '../theme';
 
 export type Tone = 'info' | 'success' | 'warning' | 'neutral' | 'danger';
 
-const TONES: Record<Tone, { background: string; color: string }> = {
+/** Tint and text colour per tone; the text colour is also the tone's accent (dots, edges). */
+export const TONES: Record<Tone, { background: string; color: string }> = {
   info: { background: colors.infoTint, color: colors.infoText },
   success: { background: colors.successTint, color: colors.successText },
   warning: { background: colors.warningTint, color: colors.warningText },

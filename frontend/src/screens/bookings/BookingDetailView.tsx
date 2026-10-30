@@ -1,24 +1,29 @@
 import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
 import { BookingDetail, BookingStatus } from '../../api/types';
 import { BoardingPassList } from '../../components/BoardingPassList';
+import { BookingProgress } from '../../components/BookingProgress';
 import { BookingSummary } from '../../components/BookingSummary';
 import { BookingTimeline } from '../../components/BookingTimeline';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { FormError } from '../../components/Field';
+import { Icon } from '../../components/Icon';
 import { StatusChip } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
-import { colors, font, weight } from '../../theme';
-import { BOOKING_STATUS } from '../../utils/bookings';
+import { colors, font, radius, space, weight } from '../../theme';
+import { BOOKING_STATUS, timeLeft } from '../../utils/bookings';
 import { confirmAction } from '../../utils/confirm';
 import { formatDateTime } from '../../utils/format';
 
 const CANCELLABLE: BookingStatus[] = ['requested', 'availability_confirmed'];
+
+const TERMINAL_STATUSES: BookingStatus[] = ['unavailable', 'cancelled', 'expired'];
 
 const STATUS_HELP: Partial<Record<BookingStatus, string>> = {
   requested: 'We are checking availability with the airline and will email you shortly.',
@@ -63,10 +68,11 @@ export function BookingDetailView({ id }: { id: number }) {
       <Card>
         <View style={styles.header}>
           <Text style={styles.muted}>Booked {formatDateTime(data.created_at)}</Text>
-          <StatusChip label={status.label} tone={status.tone} />
+          {/* A status that ends the booking shows as the banner below instead. */}
+          {TERMINAL_STATUSES.includes(data.status) ? null : <StatusChip label={status.label} tone={status.tone} />}
         </View>
-        <BookingSummary booking={data} />
-        {help ? <Text style={styles.text}>{help}</Text> : null}
+        <BookingProgress status={data.status} message={help} />
+        {help && !TERMINAL_STATUSES.includes(data.status) ? <Text style={styles.text}>{help}</Text> : null}
         {data.status === 'unavailable' ? (
           <View style={styles.actions}>
             <Button title="Request other options" variant="secondary" onPress={() => navigation.navigate('QueryNew')} />
@@ -75,15 +81,12 @@ export function BookingDetailView({ id }: { id: number }) {
       </Card>
 
       {data.status === 'availability_confirmed' ? (
-        <Card>
-          <Text style={styles.section}>Seats confirmed: please pay</Text>
-          {data.payment_deadline ? (
-            <Text style={styles.deadline}>Pay by {formatDateTime(data.payment_deadline)}</Text>
-          ) : null}
-          <Text style={styles.text}>{data.payment_instructions}</Text>
-          <Text style={styles.muted}>If payment is not received by the deadline, the hold on these seats lapses.</Text>
-        </Card>
+        <PaymentBox deadline={data.payment_deadline} instructions={data.payment_instructions} />
       ) : null}
+
+      <Card>
+        <BookingSummary booking={data} />
+      </Card>
 
       {data.status === 'completed' && data.boarding_passes ? (
         <Card>
@@ -94,7 +97,7 @@ export function BookingDetailView({ id }: { id: number }) {
       ) : null}
 
       <Card>
-        <Text style={styles.section}>Timeline</Text>
+        <Text style={styles.section}>History</Text>
         <BookingTimeline events={data.events} />
       </Card>
 
@@ -108,10 +111,65 @@ export function BookingDetailView({ id }: { id: number }) {
   );
 }
 
+/** Payment instructions and the deadline with a countdown, refreshed each minute. */
+function PaymentBox({ deadline, instructions }: { deadline: string | null; instructions: string | null }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+  const passed = deadline !== null && new Date(deadline).getTime() <= now;
+
+  return (
+    <View style={styles.payment}>
+      <View style={styles.paymentTitle}>
+        <Icon name="card-outline" size={22} color={colors.primary} />
+        <Text style={styles.section}>Seats confirmed: please pay</Text>
+      </View>
+      {deadline ? (
+        <View style={styles.deadlineRow}>
+          <Text style={styles.deadline}>Pay by {formatDateTime(deadline)}</Text>
+          <View style={[styles.countdown, passed && styles.countdownPassed]}>
+            <Icon name="time-outline" size={14} color={passed ? colors.dangerText : colors.warningText} />
+            <Text style={[styles.countdownText, passed && styles.countdownTextPassed]}>{timeLeft(deadline, now)}</Text>
+          </View>
+        </View>
+      ) : null}
+      <Text style={styles.instructions}>{instructions}</Text>
+      <Text style={styles.muted}>If payment is not received by the deadline, the hold on these seats lapses.</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  payment: {
+    gap: space.md,
+    padding: space.lg,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.primary,
+    backgroundColor: colors.primaryTint,
+  },
+  paymentTitle: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  deadlineRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
+  countdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.xs,
+    paddingVertical: 3,
+    paddingHorizontal: 10,
+    borderRadius: radius.pill,
+    backgroundColor: colors.warningTint,
+  },
+  countdownPassed: { backgroundColor: colors.dangerTint },
+  countdownText: { fontSize: font.small, fontWeight: weight.bold, color: colors.warningText },
+  countdownTextPassed: { color: colors.dangerText },
+  instructions: { fontSize: font.body, color: colors.text, padding: space.md, borderRadius: radius.sm, backgroundColor: colors.surface },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   section: { fontSize: font.heading, fontWeight: weight.bold, color: colors.tertiary },
-  deadline: { color: colors.danger, fontWeight: weight.bold },
+  deadline: { color: colors.text, fontWeight: weight.bold },
   actions: { flexDirection: 'row' },
   text: { color: colors.text },
   muted: { color: colors.muted },

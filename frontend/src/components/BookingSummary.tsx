@@ -1,26 +1,36 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Booking } from '../api/types';
-import { colors, font, weight } from '../theme';
-import { bookingRoute, passengersLabel } from '../utils/bookings';
-import { formatDate, formatPrice, stopoversLabel, ticketClassLabel } from '../utils/format';
+import { colors, font, space, weight } from '../theme';
+import { passengersLabel } from '../utils/bookings';
+import { formatDate, formatPrice, ticketClassLabel } from '../utils/format';
+import { AirlineBadge } from './AirlineBadge';
+import { PriceTag } from './PriceTag';
+import { RouteLine } from './RouteLine';
 
 /** The flight, passengers and price of a booking. */
 export function BookingSummary({ booking }: { booking: Booking }) {
   const { offer } = booking;
   return (
     <View style={styles.box}>
-      <Text style={styles.route}>{bookingRoute(booking)}</Text>
+      <View style={styles.airline}>
+        <AirlineBadge airline={offer.airline} />
+        <View style={styles.shrink}>
+          <Text style={styles.airlineName}>{offer.airline}</Text>
+          <Text style={styles.muted}>{ticketClassLabel(offer.ticket_class)}</Text>
+        </View>
+      </View>
+      <RouteLine origin={offer.origin} destination={offer.destination} stopovers={offer.stopovers} />
       <Row label="Departure" value={formatDate(offer.departure_date)} />
-      <Row label="Airline" value={offer.airline} />
-      <Row label="Class" value={ticketClassLabel(offer.ticket_class)} />
-      <Row label="Stopovers" value={stopoversLabel(offer.stopovers)} />
       <Row
         label="Passengers"
         value={`${passengersLabel(booking.passenger_count)} × ${formatPrice(booking.unit_price)}`}
       />
       {booking.notes ? <Row label="Notes" value={booking.notes} /> : null}
-      <Text style={styles.total}>Total {formatPrice(booking.total_price)}</Text>
+      <View style={styles.total}>
+        <Text style={styles.totalLabel}>Total</Text>
+        <PriceTag amount={booking.total_price} />
+      </View>
     </View>
   );
 }
@@ -35,10 +45,21 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  box: { gap: 6 },
-  route: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  box: { gap: space.md },
+  airline: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  shrink: { flexShrink: 1 },
+  airlineName: { fontSize: font.body, fontWeight: weight.bold, color: colors.text },
+  muted: { fontSize: font.small, color: colors.muted },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   label: { color: colors.muted, minWidth: 110 },
-  value: { color: colors.text, flexShrink: 1 },
-  total: { fontSize: font.heading, fontWeight: weight.bold, color: colors.primary },
+  value: { color: colors.text, fontWeight: weight.semibold, flexShrink: 1 },
+  total: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: space.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  totalLabel: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text },
 });

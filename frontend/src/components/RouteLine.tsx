@@ -3,11 +3,14 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Airport } from '../api/types';
 import { colors, font, radius, space, weight } from '../theme';
 import { stopoversLabel } from '../utils/format';
+import { Icon } from './Icon';
 
 type Props = {
-  origin: Airport;
-  destination: Airport;
-  stopovers: number;
+  /** Null for "anywhere" (a request for options without that airport). */
+  origin: Airport | null;
+  destination: Airport | null;
+  /** Leave out for a route without a known flight (a request); the line then shows a plane. */
+  stopovers?: number;
   /** Large also shows the airport names (offer detail header). */
   size?: 'regular' | 'large';
 };
@@ -19,21 +22,39 @@ export function RouteLine({ origin, destination, stopovers, size = 'regular' }: 
     <View style={styles.row}>
       <End airport={origin} large={large} />
       <View style={styles.middle}>
-        <Text style={[styles.stops, stopovers === 0 && styles.direct]}>{stopoversLabel(stopovers)}</Text>
-        <View style={styles.track}>
-          <View style={styles.line} />
-          {Array.from({ length: stopovers }, (_, index) => (
-            <View key={index} style={styles.dot} />
-          ))}
-        </View>
+        {stopovers === undefined ? null : (
+          <Text style={[styles.stops, stopovers === 0 && styles.direct]}>{stopoversLabel(stopovers)}</Text>
+        )}
+        {stopovers === undefined ? (
+          <View style={styles.track}>
+            <View style={styles.half} />
+            <Icon name="airplane" size={14} color={colors.primary} />
+            <View style={styles.half} />
+          </View>
+        ) : (
+          <View style={styles.track}>
+            <View style={styles.line} />
+            {Array.from({ length: stopovers }, (_, index) => (
+              <View key={index} style={styles.dot} />
+            ))}
+          </View>
+        )}
       </View>
       <End airport={destination} large={large} alignEnd />
     </View>
   );
 }
 
-function End({ airport, large, alignEnd }: { airport: Airport; large: boolean; alignEnd?: boolean }) {
+function End({ airport, large, alignEnd }: { airport: Airport | null; large: boolean; alignEnd?: boolean }) {
   const align = alignEnd && styles.alignEnd;
+  if (!airport) {
+    return (
+      <View style={[styles.end, large && styles.endLarge, alignEnd && styles.endRight]}>
+        <Text style={[styles.code, large && styles.codeLarge, styles.anywhere, align]}>Any</Text>
+        <Text style={[styles.city, align]}>Anywhere</Text>
+      </View>
+    );
+  }
   return (
     <View style={[styles.end, large && styles.endLarge, alignEnd && styles.endRight]}>
       <Text style={[styles.code, large && styles.codeLarge, align]}>{airport.code}</Text>
@@ -58,6 +79,7 @@ const styles = StyleSheet.create({
   endRight: { alignItems: 'flex-end' },
   alignEnd: { textAlign: 'right' },
   code: { fontSize: font.heading, fontWeight: weight.heavy, color: colors.text },
+  anywhere: { color: colors.muted },
   codeLarge: { fontSize: font.display },
   city: { fontSize: font.small, color: colors.text },
   name: { fontSize: font.caption, color: colors.muted },
@@ -66,7 +88,7 @@ const styles = StyleSheet.create({
   direct: { color: colors.successText },
   track: {
     alignSelf: 'stretch',
-    height: DOT,
+    minHeight: DOT,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-evenly',
@@ -80,6 +102,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: colors.light,
   },
+  half: { flex: 1, height: 2, marginHorizontal: space.xs, borderRadius: radius.pill, backgroundColor: colors.light },
   dot: {
     width: DOT,
     height: DOT,

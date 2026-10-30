@@ -158,7 +158,7 @@ await run(`customer-${stamp}`, async ({ page, shot }) => {
   await seen(page, 'Book this flight').waitFor();
   await button(page, 'Add a passenger').click();
   await button(page, 'Request booking').click();
-  await seen(page, 'Timeline').waitFor();
+  await seen(page, 'History').waitFor();
   bookingId = Number(new URL(page.url()).pathname.split('/').pop());
   await shot('booking-requested');
   console.log('booking', bookingId);
