@@ -9,6 +9,7 @@ from django.utils import timezone
 from bookings import tasks
 from bookings.models import BoardingPass, Booking
 from bookings.services import InvalidTransition, transition
+from core.tests.helpers import html_part
 
 pytestmark = pytest.mark.django_db
 
@@ -187,6 +188,10 @@ def test_complete_sends_every_file_attached(
     assert "Nairobi (NBO) → London (LHR)" in email.body
     assert "are attached" in email.body
     assert f"/bookings/{booking.id}" in email.body
+    html = html_part(email)
+    assert "Nairobi (NBO) → London (LHR)" in html
+    assert "are attached" in html
+    assert f"/bookings/{booking.id}" in html
 
 
 def test_completion_email_skipped_unless_completed(make_booking, add_pass):

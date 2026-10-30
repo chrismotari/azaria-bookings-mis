@@ -1,0 +1,11 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hello {{ booking.user.full_name }},</p>
+<p style="margin:0 0 16px 0;">We are sorry: the seats you booked are no longer available, so we could not confirm your booking.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
+  {% include "emails/_row.html" with label="Route" value=route %}
+  {% include "emails/_row.html" with label="Departure" value=departure %}
+</table>
+<p style="margin:0 0 16px 0;">You can ask us for other options in the app and we will find you alternatives.</p>
+{% include "emails/_button.html" with url=frontend_url|add:"/requests/new" label="Request other options" %}
+{% endblock %}

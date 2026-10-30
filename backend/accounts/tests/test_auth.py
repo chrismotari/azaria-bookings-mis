@@ -2,9 +2,11 @@ import pytest
 from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
 from django.utils.encoding import force_bytes
+from django.utils.html import escape
 from django.utils.http import urlsafe_base64_encode
 
 from accounts.models import User
+from core.tests.helpers import html_part
 
 pytestmark = pytest.mark.django_db
 
@@ -117,6 +119,7 @@ def test_password_reset_email_link(api, customer, settings, django_capture_on_co
     assert link.startswith(f"{settings.FRONTEND_URL}/reset-password?uid=")
     assert uid == urlsafe_base64_encode(force_bytes(customer.pk))
     assert default_token_generator.check_token(customer, token)
+    assert f'href="{escape(link)}"' in html_part(mail.outbox[0])
 
 
 def test_password_reset_confirm_sets_password_and_token_is_single_use(api, customer):

@@ -1,0 +1,17 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p style="margin:0 0 16px 0;">A customer has asked for flight options.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
+  <tr>
+    <td valign="top" style="padding:8px 12px 8px 0; border-bottom:1px solid {{ brand.border }}; color:{{ brand.muted }}; font-size:14px; width:40%;">Customer</td>
+    <td valign="top" style="padding:8px 0; border-bottom:1px solid {{ brand.border }}; color:{{ brand.text }}; font-size:14px;">{{ query.user.full_name }}<br><a href="mailto:{{ query.user.email }}" style="color:{{ brand.primary }};">{{ query.user.email }}</a></td>
+  </tr>
+  {% include "emails/_row.html" with label="Route" value=route %}
+  {% include "emails/_row.html" with label="Dates" value=dates %}
+  {% include "emails/_row.html" with label="Price per person" value=prices price=True %}
+  {% include "emails/_row.html" with label="Class" value=ticket_class %}
+  {% include "emails/_row.html" with label="Max stopovers" value=max_stopovers %}
+  {% include "emails/_row.html" with label="Message" value=query.message|default:"(none)" %}
+</table>
+{% with query_id=query.id|stringformat:"s" %}{% include "emails/_button.html" with url=frontend_url|add:"/admin/requests/"|add:query_id label="Respond in the app" %}{% endwith %}
+{% endblock %}

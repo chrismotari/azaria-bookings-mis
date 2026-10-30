@@ -1,7 +1,21 @@
 from django.conf import settings
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMultiAlternatives
 from django.template import engines
 from django.utils import timezone
+
+# Brand colours for the HTML emails (the app's theme.ts), passed to every template as `brand`.
+BRAND = {
+    "primary": "#1800d2",
+    "primary_text": "#ffffff",
+    "accent": "#ffb400",
+    "accent_text": "#252525",
+    "text": "#252525",
+    "muted": "#6c7171",
+    "border": "#dde2e5",
+    "background": "#f2f4f7",
+    "surface": "#ffffff",
+    "highlight": "#ebe8fd",
+}
 
 # Options shared by every email task.
 EMAIL_TASK_OPTIONS = {
@@ -12,14 +26,15 @@ EMAIL_TASK_OPTIONS = {
 
 
 def send_email(template, subject, to, context, attachments=()):
-    """Render core/templates/emails/<template>.txt and send it as plain text.
+    """Render core/templates/emails/<template>.txt and .html and send them as text plus an HTML alternative.
 
     attachments: (filename, content, mimetype) tuples.
     """
-    body = engines["emails"].get_template(f"emails/{template}.txt").render(
-        {**context, "frontend_url": settings.FRONTEND_URL}
-    )
-    message = EmailMessage(subject=subject, body=body, to=[to])
+    context = {**context, "frontend_url": settings.FRONTEND_URL, "brand": BRAND}
+    body = engines["emails"].get_template(f"emails/{template}.txt").render(context)
+    html = engines["django"].get_template(f"emails/{template}.html").render(context)
+    message = EmailMultiAlternatives(subject=subject, body=body, to=[to])
+    message.attach_alternative(html, "text/html")
     for attachment in attachments:
         message.attach(*attachment)
     message.send()

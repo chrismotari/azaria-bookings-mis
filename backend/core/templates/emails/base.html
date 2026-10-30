@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Azaria Bookings</title>
+</head>
+<body style="margin:0; padding:0; background-color:{{ brand.background }};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:{{ brand.background }};">
+  <tr>
+    <td align="center" style="padding:24px 12px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; width:100%;">
+        <tr>
+          <td style="background-color:{{ brand.primary }}; color:{{ brand.primary_text }}; padding:20px 24px; border-radius:8px 8px 0 0; font-family:Arial, Helvetica, sans-serif; font-size:20px; font-weight:bold;">
+            Azaria Bookings
+          </td>
+        </tr>
+        <tr>
+          <td style="background-color:{{ brand.surface }}; color:{{ brand.text }}; padding:24px; border:1px solid {{ brand.border }}; border-top:0; border-radius:0 0 8px 8px; font-family:Arial, Helvetica, sans-serif; font-size:15px; line-height:22px;">
+            {% block content %}{% endblock %}
+          </td>
+        </tr>
+        <tr>
+          <td align="center" style="padding:16px 24px; color:{{ brand.muted }}; font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:18px;">
+            Azaria Bookings &middot; <a href="https://azariabookings.com" style="color:{{ brand.muted }}; text-decoration:underline;">azariabookings.com</a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

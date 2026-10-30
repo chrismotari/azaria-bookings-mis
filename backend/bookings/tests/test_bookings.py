@@ -11,6 +11,7 @@ from bookings import tasks
 from bookings.models import BoardingPass, Booking, BookingEvent
 from bookings.services import TRANSITIONS, InvalidTransition, create_booking, transition
 from core.models import AppSettings
+from core.tests.helpers import html_part
 from customer_requests.models import Query, QueryResponse
 
 pytestmark = pytest.mark.django_db
@@ -112,6 +113,18 @@ def test_customer_books_and_admin_is_emailed(customer_api, customer, offer, djan
         f"/admin/bookings/{booking.id}",
     ]:
         assert expected in email.body
+    html = html_part(email)
+    for expected in [
+        "Cara Customer",
+        "customer@example.com",
+        "+254700000001",
+        "Nairobi (NBO) → London (LHR)",
+        "Kenya Airways",
+        "USD 1,950.00",
+        "Window seats please.",
+        f"/admin/bookings/{booking.id}",
+    ]:
+        assert expected in html
 
 
 def test_unit_price_is_copied_at_creation(customer, offer):
@@ -419,6 +432,15 @@ def test_availability_email_has_instructions_and_deadline_in_nairobi_time(make_b
         f"/bookings/{booking.id}",
     ]:
         assert expected in email.body
+    html = html_part(email)
+    for expected in [
+        "Nairobi (NBO) → London (LHR)",
+        "USD 1,300.00",
+        "M-Pesa paybill 123456, account AZARIA.",
+        "Tue, 3 Mar 2026 at 09:00 (Nairobi time)",
+        f"/bookings/{booking.id}",
+    ]:
+        assert expected in html
 
 
 @pytest.mark.parametrize(
@@ -437,6 +459,9 @@ def test_customer_email_content(make_booking, task, status, expected):
     assert "Hello Cara Customer" in email.body
     assert "Nairobi (NBO) → London (LHR)" in email.body
     assert expected in email.body
+    html = html_part(email)
+    assert "Hello Cara Customer" in html
+    assert "Nairobi (NBO) → London (LHR)" in html
 
 
 @pytest.mark.parametrize(

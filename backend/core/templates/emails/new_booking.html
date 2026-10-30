@@ -1,0 +1,18 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p style="margin:0 0 16px 0;">A customer has booked a flight deal.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
+  <tr>
+    <td valign="top" style="padding:8px 12px 8px 0; border-bottom:1px solid {{ brand.border }}; color:{{ brand.muted }}; font-size:14px; width:40%;">Customer</td>
+    <td valign="top" style="padding:8px 0; border-bottom:1px solid {{ brand.border }}; color:{{ brand.text }}; font-size:14px;">{{ booking.user.full_name }}<br><a href="mailto:{{ booking.user.email }}" style="color:{{ brand.primary }};">{{ booking.user.email }}</a>{% if booking.user.phone %}<br>{{ booking.user.phone }}{% endif %}</td>
+  </tr>
+  {% include "emails/_row.html" with label="Route" value=route %}
+  {% include "emails/_row.html" with label="Departure" value=departure %}
+  {% include "emails/_row.html" with label="Class" value=ticket_class %}
+  {% include "emails/_row.html" with label="Airline" value=booking.offer.airline %}
+  {% include "emails/_row.html" with label="Passengers" value=booking.passenger_count %}
+  {% include "emails/_row.html" with label="Total price" value=total price=True %}
+  {% include "emails/_row.html" with label="Notes" value=booking.notes|default:"(none)" %}
+</table>
+{% with booking_id=booking.id|stringformat:"s" %}{% include "emails/_button.html" with url=frontend_url|add:"/admin/bookings/"|add:booking_id label="Confirm availability in the app" %}{% endwith %}
+{% endblock %}

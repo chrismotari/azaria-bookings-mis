@@ -43,3 +43,4 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - Opening a detail replaces the browser history entry (React Navigation's tab router does this for parameter changes), so browser back leaves the list; the panel closes with its close button, Escape, the narrow-screen back link, or by pressing the list's tab again.
 - An offer opened from a request's response shows on Explore (with that offer's panel open), since offer detail lives on Explore.
 - Admin Offers shows cards instead of the table while the edit panel is open, as the narrowed list has no room for the table's columns.
+- The "highlighted box" in HTML emails (payment instructions, the admin's reply message) is the app's light indigo tint with an indigo left edge; shared pieces (details row, button, box) are small includes under emails/.

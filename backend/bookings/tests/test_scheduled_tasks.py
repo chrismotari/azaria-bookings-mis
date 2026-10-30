@@ -12,6 +12,7 @@ from bookings import tasks
 from bookings.models import Booking, BookingEvent
 from bookings.services import InvalidTransition, transition
 from core.models import AppSettings
+from core.tests.helpers import html_part
 
 Status = Booking.Status
 
@@ -127,6 +128,10 @@ def test_reminder_window(make_booking, instructions, django_capture_on_commit_ca
         assert email.subject == "Reminder: your payment is due soon"
         assert "Mon, 2 Mar 2026 at 18:00 (Nairobi time)" in email.body
         assert "M-Pesa paybill 123456, account AZARIA." in email.body
+        html = html_part(email)
+        assert "Mon, 2 Mar 2026 at 18:00 (Nairobi time)" in html
+        assert "M-Pesa paybill 123456, account AZARIA." in html
+        assert "USD " in html
     else:
         assert booking.reminder_sent_at is None
         assert mail.outbox == []

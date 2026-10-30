@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from catalog.models import Offer
 from core.models import AppSettings
+from core.tests.helpers import html_part
 from customer_requests.models import Query, QueryResponse
 from customer_requests.tasks import notify_admin_new_query, notify_customer_query_responded
 
@@ -105,6 +106,17 @@ def test_customer_creates_query_and_admin_is_emailed(
         f"/admin/requests/{query.id}",
     ]:
         assert expected in email.body
+    html = html_part(email)
+    for expected in [
+        "Cara Customer",
+        "customer@example.com",
+        "Nairobi (NBO) → Dubai (DXB)",
+        "USD 300.00 to USD 900.50",
+        "Business",
+        "Two adults, flexible on dates.",
+        f"/admin/requests/{query.id}",
+    ]:
+        assert expected in html
 
 
 def test_query_with_destination_only_and_any_class(customer_api, airports):
@@ -204,6 +216,10 @@ def test_admin_responds_with_existing_and_new_offers(
     assert "Here are two good options." in email.body
     assert "2 options" in email.body
     assert f"/requests/{query.id}" in email.body
+    html = html_part(email)
+    assert "Here are two good options." in html
+    assert "2 options" in html
+    assert f"/requests/{query.id}" in html
 
 
 def test_admin_may_respond_more_than_once(admin_api, query, make_offer):

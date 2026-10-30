@@ -1,0 +1,11 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hello {{ booking.user.full_name }},</p>
+<p style="margin:0 0 16px 0;">The hold on your booking has lapsed because we did not receive your payment in time.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
+  {% include "emails/_row.html" with label="Route" value=route %}
+  {% include "emails/_row.html" with label="Departure" value=departure %}
+</table>
+<p style="margin:0 0 16px 0;">If the offer is still available, you can book it again in the app.</p>
+{% with booking_offer_id=booking.offer_id|stringformat:"s" %}{% include "emails/_button.html" with url=frontend_url|add:"/offers/"|add:booking_offer_id label="View the offer" %}{% endwith %}
+{% endblock %}
