@@ -11,12 +11,14 @@ type Props<T extends string> = {
   options: Option<T>[];
   value: T;
   onChange: (value: T) => void;
+  /** Lets the segments wrap onto more rows (many options, e.g. status filters). */
+  wrap?: boolean;
 };
 
 /** Single choice as equal segments in one row. */
-export function SegmentedControl<T extends string>({ label, options, value, onChange }: Props<T>) {
+export function SegmentedControl<T extends string>({ label, options, value, onChange, wrap }: Props<T>) {
   return (
-    <View style={styles.track} accessibilityRole="radiogroup" aria-label={label}>
+    <View style={[styles.track, wrap && styles.wrap]} accessibilityRole="radiogroup" aria-label={label}>
       {options.map((option) => {
         const selected = option.value === value;
         return (
@@ -27,6 +29,7 @@ export function SegmentedControl<T extends string>({ label, options, value, onCh
             onPress={() => onChange(option.value)}
             style={({ hovered, focused }: PressState) => [
               styles.segment,
+              wrap && styles.segmentWrap,
               hovered && !selected && styles.hovered,
               selected && styles.selected,
               focused && styles.focused,
@@ -59,6 +62,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.xs,
     borderRadius: radius.sm,
   },
+  wrap: { flexWrap: 'wrap', alignSelf: 'flex-start' },
+  segmentWrap: { flexGrow: 0, paddingHorizontal: space.md },
   hovered: { backgroundColor: colors.surface },
   selected: { backgroundColor: colors.primary },
   focused: { outlineColor: colors.primary, outlineStyle: 'solid', outlineWidth: 2, outlineOffset: 2 },

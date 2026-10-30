@@ -14,12 +14,15 @@ export function Field({ label, error, children }: { label: string; error?: strin
   );
 }
 
-/** Lays fields out side by side, wrapping onto new rows when space runs out. */
-export function FieldGrid({ children }: { children: ReactNode }) {
+/**
+ * Lays fields out side by side, wrapping onto new rows when space runs out.
+ * `columns={2}`: at most two per row, one per row on a phone.
+ */
+export function FieldGrid({ children, columns }: { children: ReactNode; columns?: 2 }) {
   return (
     <View style={styles.grid}>
       {Children.map(children, (child) => (
-        <View style={styles.gridItem}>{child}</View>
+        <View style={[styles.gridItem, columns === 2 && styles.twoColumns]}>{child}</View>
       ))}
     </View>
   );
@@ -46,6 +49,7 @@ const styles = StyleSheet.create({
   field: { gap: 4, minWidth: 0 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   gridItem: { flexGrow: 1, flexBasis: 180, minWidth: 0 },
+  twoColumns: { flexBasis: 260 },
   label: { fontSize: font.small, fontWeight: weight.semibold, color: colors.muted },
   error: { fontSize: font.small, color: colors.danger },
   formError: { fontSize: font.small },

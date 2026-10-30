@@ -1,10 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
 import { AdminBookingDetail, BoardingPass, BookingStatus } from '../../api/types';
+import { ActionBar } from '../../components/ActionBar';
 import { BoardingPassList } from '../../components/BoardingPassList';
 import { BookingSummary } from '../../components/BookingSummary';
 import { BookingTimeline } from '../../components/BookingTimeline';
@@ -74,10 +75,14 @@ function fileProblem(file: File): string | null {
 const ACTIONS: Partial<Record<BookingStatus, Action[]>> = {
   requested: [CONFIRM_AVAILABILITY, MARK_UNAVAILABLE],
   availability_confirmed: [MARK_PAID, MARK_UNAVAILABLE],
+  paid: [SEND_PASSES],
 };
+
+const uploadKey = (id: number) => ['admin', 'boarding-passes', 'upload', id];
 
 export function AdminBookingDetailView({ id }: { id: number }) {
   const queryClient = useQueryClient();
+  const uploading = useIsMutating({ mutationKey: uploadKey(id) }) > 0;
   const booking = useQuery({
     queryKey: ['admin', 'bookings', 'detail', id],
     queryFn: async () => (await api.get<AdminBookingDetail>(`/admin/bookings/${id}`)).data,
@@ -110,8 +115,28 @@ export function AdminBookingDetailView({ id }: { id: number }) {
     }
   };
 
+  // Sending needs at least one uploaded file and no upload in progress.
+  const blocked = (action: Action) =>
+    action === SEND_PASSES && (data.boarding_passes.length === 0 || uploading);
+
   return (
     <>
+      {actions.length ? (
+        <ActionBar>
+          {actions.map((action) => (
+            <Button
+              key={action.path}
+              title={action.title}
+              variant={action.variant}
+              onPress={() => run(action)}
+              disabled={act.isPending || blocked(action)}
+              loading={act.isPending && act.variables?.path === action.path}
+            />
+          ))}
+        </ActionBar>
+      ) : null}
+      <FormError message={act.isError ? errorMessage(act.error) : null} />
+
       <Card>
         <View style={styles.header}>
           <Text style={styles.muted}>Booked {formatDateTime(data.created_at)}</Text>
@@ -130,29 +155,7 @@ export function AdminBookingDetailView({ id }: { id: number }) {
         {data.user.phone ? <Text style={styles.text}>{data.user.phone}</Text> : null}
       </Card>
 
-      {actions.length ? (
-        <View style={styles.actions}>
-          {actions.map((action) => (
-            <Button
-              key={action.path}
-              title={action.title}
-              variant={action.variant}
-              onPress={() => run(action)}
-              disabled={act.isPending}
-              loading={act.isPending && act.variables?.path === action.path}
-            />
-          ))}
-        </View>
-      ) : null}
-      <FormError message={act.isError ? errorMessage(act.error) : null} />
-
-      {data.status === 'paid' ? (
-        <BoardingPassUploads
-          booking={data}
-          onSend={() => run(SEND_PASSES)}
-          sending={act.isPending && act.variables?.path === 'complete'}
-        />
-      ) : null}
+      {data.status === 'paid' ? <BoardingPassUploads booking={data} /> : null}
       {data.status === 'completed' ? (
         <Card>
           <Text style={styles.section}>Boarding passes sent</Text>
@@ -168,15 +171,14 @@ export function AdminBookingDetailView({ id }: { id: number }) {
   );
 }
 
-type UploadsProps = { booking: AdminBookingDetail; onSend: () => void; sending: boolean };
-
-/** Paid bookings: upload, list and delete boarding passes, then send them. */
-function BoardingPassUploads({ booking, onSend, sending }: UploadsProps) {
+/** Paid bookings: upload, list and delete boarding passes (sent from the action bar). */
+function BoardingPassUploads({ booking }: { booking: AdminBookingDetail }) {
   const queryClient = useQueryClient();
   const [problems, setProblems] = useState<string[]>([]);
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', 'bookings', 'detail', booking.id] });
 
   const upload = useMutation({
+    mutationKey: uploadKey(booking.id),
     // One file per request, as the API expects.
     mutationFn: async (files: File[]) => {
       const failed: string[] = [];
@@ -221,11 +223,9 @@ function BoardingPassUploads({ booking, onSend, sending }: UploadsProps) {
   return (
     <Card>
       <Text style={styles.section}>Boarding passes</Text>
-      <Text style={styles.muted}>
-        Upload one file per passenger if needed: PDF, PNG or JPEG, up to 5 MB each, at most {MAX_PASSES} files.
-      </Text>
       <FileField
         label="Add files"
+        hint={`Click to choose files. One per passenger if needed: PDF, PNG or JPEG, up to 5 MB each, at most ${MAX_PASSES} files.`}
         accept={ACCEPT}
         onSelect={onSelect}
         disabled={upload.isPending || passes.length >= MAX_PASSES}
@@ -242,16 +242,8 @@ function BoardingPassUploads({ booking, onSend, sending }: UploadsProps) {
           deletingId={remove.isPending ? remove.variables?.id : null}
         />
       ) : (
-        <Text style={styles.muted}>No files uploaded yet.</Text>
+        <Text style={styles.muted}>No files uploaded yet. Send boarding passes from the actions above once they are here.</Text>
       )}
-      <View style={styles.actions}>
-        <Button
-          title="Send boarding passes"
-          onPress={onSend}
-          disabled={passes.length === 0 || upload.isPending}
-          loading={sending}
-        />
-      </View>
     </Card>
   );
 }
@@ -260,7 +252,6 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   section: { fontSize: font.heading, fontWeight: weight.bold, color: colors.tertiary },
   deadline: { color: colors.text, fontWeight: weight.bold },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   text: { color: colors.text },
   muted: { color: colors.muted },
 });

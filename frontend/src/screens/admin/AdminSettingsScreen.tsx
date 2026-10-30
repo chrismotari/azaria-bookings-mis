@@ -2,15 +2,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { z } from 'zod';
 
 import { api } from '../../api/client';
 import { applyServerErrors } from '../../api/errors';
 import { AppSettings } from '../../api/types';
 import { Button } from '../../components/Button';
-import { Card } from '../../components/Card';
 import { FieldGrid, FormError } from '../../components/Field';
+import { FormFooter, FormSection } from '../../components/FormSection';
 import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
@@ -86,7 +86,10 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
   return (
     <Screen maxWidth={760}>
       <Text style={styles.title}>Settings</Text>
-      <Card>
+      <FormSection
+        title="Payment instructions"
+        description="Sent to customers when you confirm availability and in payment reminders."
+      >
         <Controller
           control={control}
           name="payment_instructions"
@@ -109,8 +112,12 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
         {!settings.payment_instructions.trim() ? (
           <Text style={styles.warning}>Add payment instructions before confirming any booking.</Text>
         ) : null}
-        <Text style={styles.muted}>Sent to customers when you confirm availability and in payment reminders.</Text>
-        <FieldGrid>
+      </FormSection>
+      <FormSection
+        title="Payment hold"
+        description="After you confirm availability, the customer has the hold period to pay before the booking expires."
+      >
+        <FieldGrid columns={2}>
           <Controller
             control={control}
             name="payment_hold_hours"
@@ -146,9 +153,8 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
             )}
           />
         </FieldGrid>
-        <Text style={styles.muted}>
-          After you confirm availability, the customer has the hold period to pay before the booking expires.
-        </Text>
+      </FormSection>
+      <FormSection title="Notifications" description="New requests and bookings are emailed here.">
         <Controller
           control={control}
           name="admin_notification_email"
@@ -167,21 +173,18 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
             />
           )}
         />
-        <Text style={styles.muted}>New requests and bookings are emailed here.</Text>
-        <FormError message={formError} />
+      </FormSection>
+      <FormError message={formError} />
+      <FormFooter>
         {saved ? <Text style={styles.saved}>Settings saved.</Text> : null}
-        <View style={styles.actions}>
-          <Button title="Save settings" onPress={onSubmit} loading={formState.isSubmitting} />
-        </View>
-      </Card>
+        <Button title="Save settings" onPress={onSubmit} loading={formState.isSubmitting} />
+      </FormFooter>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
-  muted: { color: colors.muted, fontSize: font.small },
   warning: { color: colors.danger },
   saved: { color: colors.success, fontWeight: weight.semibold },
-  actions: { flexDirection: 'row' },
 });

@@ -10,8 +10,8 @@ import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
 import { AdminOffer, AdminQueryDetail, Paginated } from '../../api/types';
 import { Button } from '../../components/Button';
-import { Card } from '../../components/Card';
 import { Field, FormError, inputStyle } from '../../components/Field';
+import { FormFooter, FormSection } from '../../components/FormSection';
 import {
   OfferFilterErrors,
   OfferFilterFields,
@@ -176,12 +176,11 @@ function RespondForm({ query, onSent }: { query: AdminQueryDetail; onSent: () =>
   return (
     <Screen maxWidth={1000}>
       <Text style={styles.title}>Respond to {query.user.full_name}</Text>
-      <Card>
+      <FormSection title="The request">
         <QuerySummary query={query} />
-      </Card>
+      </FormSection>
 
-      <Text style={styles.section}>Existing offers</Text>
-      <Card>
+      <FormSection title="Existing offers" description="Active offers, starting from the customer's criteria.">
         <OfferFilterFields value={draft} onChange={setDraft} errors={filterErrors} onSubmit={search} />
         <View style={styles.actions}>
           <Button title="Search offers" variant="secondary" onPress={search} />
@@ -209,19 +208,16 @@ function RespondForm({ query, onSent }: { query: AdminQueryDetail; onSent: () =>
             <Pagination page={page} count={offers.data.count} onChange={setPage} />
           </>
         )}
-      </Card>
+      </FormSection>
 
-      <Text style={styles.section}>Custom offers</Text>
-      <Text style={styles.muted}>Created only for this customer; they never appear in Explore.</Text>
-      <Card>
-        <OfferFields control={customForm.control} showPublicToggle={false} />
+      <FormSection title="Custom offers" description="Created only for this customer; they never appear in Explore.">
+        <OfferFields control={customForm.control} showPublicToggle={false} plain />
         <View style={styles.actions}>
           <Button title="Add custom offer" variant="secondary" onPress={addCustom} />
         </View>
-      </Card>
+      </FormSection>
 
-      <Text style={styles.section}>Your response</Text>
-      <Card>
+      <FormSection title="Your response">
         {selected.size === 0 && custom.length === 0 ? <Text style={styles.muted}>No offers chosen yet.</Text> : null}
         {[...selected.values()].map((offer) => (
           <View key={offer.id} style={styles.chosen}>
@@ -254,11 +250,11 @@ function RespondForm({ query, onSent }: { query: AdminQueryDetail; onSent: () =>
             placeholderTextColor={colors.placeholder}
           />
         </Field>
-        <FormError message={formError} />
-        <View style={styles.actions}>
-          <Button title="Send response" onPress={send} loading={sending} />
-        </View>
-      </Card>
+      </FormSection>
+      <FormError message={formError} />
+      <FormFooter>
+        <Button title="Send response" onPress={send} loading={sending} />
+      </FormFooter>
     </Screen>
   );
 }
@@ -302,7 +298,6 @@ function SelectableOffer({ offer, selected, onToggle }: SelectableProps) {
 
 const styles = StyleSheet.create({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
-  section: { fontSize: font.heading, fontWeight: weight.bold, color: colors.tertiary },
   actions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   option: {
     flexDirection: 'row',

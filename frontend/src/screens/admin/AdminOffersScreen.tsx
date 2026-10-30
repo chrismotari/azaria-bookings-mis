@@ -10,7 +10,7 @@ import { AdminOffer, Paginated } from '../../api/types';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { DetailLayout } from '../../components/DetailLayout';
-import { FieldGrid, FormError } from '../../components/Field';
+import { Field, FieldGrid, FormError } from '../../components/Field';
 import {
   EMPTY_OFFER_FILTERS,
   OfferFilterErrors,
@@ -19,14 +19,17 @@ import {
   offerFilterParams,
   validateOfferFilters,
 } from '../../components/OfferFilterFields';
-import { OptionChips } from '../../components/OptionChips';
 import { Pagination } from '../../components/Pagination';
+import { PriceTag } from '../../components/PriceTag';
 import { Screen } from '../../components/Screen';
+import { SegmentedControl } from '../../components/SegmentedControl';
+import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
+import { Column, RouteCell, Table, TableRow, TwoLineCell } from '../../components/Table';
 import { Toggle } from '../../components/Toggle';
 import { AdminTabParamList } from '../../navigation/types';
-import { colors, font, radius, shadow, useIsWide, weight } from '../../theme';
-import { formatDate, formatPrice, stopoversLabel, ticketClassLabel } from '../../utils/format';
+import { colors, font, space, useIsWide, weight } from '../../theme';
+import { formatDate, stopoversLabel, ticketClassLabel } from '../../utils/format';
 import { AdminOfferEditView } from './AdminOfferFormScreen';
 
 type AdminFilters = OfferFilterValues & { is_active: '' | 'true' | 'false'; is_public: '' | 'true' | 'false' };
@@ -82,6 +85,18 @@ export function AdminOffersScreen({ navigation, route }: BottomTabScreenProps<Ad
     }
   };
 
+  const rows = offers.data?.results.map((offer) => (
+    <OfferRow
+      key={offer.id}
+      offer={offer}
+      wide={asTable}
+      selected={offer.id === selected}
+      toggling={setActive.isPending && setActive.variables?.id === offer.id}
+      onToggleActive={(is_active) => setActive.mutate({ id: offer.id, is_active })}
+      onEdit={() => navigation.setParams({ id: offer.id })}
+    />
+  ));
+
   const clear = () => {
     setDraft(EMPTY_FILTERS);
     setErrors({});
@@ -119,18 +134,22 @@ export function AdminOffersScreen({ navigation, route }: BottomTabScreenProps<Ad
                 onSubmit={apply}
               />
               <FieldGrid>
-                <OptionChips
-                  label="Active"
-                  options={YES_NO_ANY('Active', 'Deactivated')}
-                  value={draft.is_active}
-                  onChange={(is_active) => setDraft({ ...draft, is_active })}
-                />
-                <OptionChips
-                  label="Visibility"
-                  options={YES_NO_ANY('Public', 'Private')}
-                  value={draft.is_public}
-                  onChange={(is_public) => setDraft({ ...draft, is_public })}
-                />
+                <Field label="Active">
+                  <SegmentedControl
+                    label="Active"
+                    options={YES_NO_ANY('Active', 'Deactivated')}
+                    value={draft.is_active}
+                    onChange={(is_active) => setDraft({ ...draft, is_active })}
+                  />
+                </Field>
+                <Field label="Visibility">
+                  <SegmentedControl
+                    label="Visibility"
+                    options={YES_NO_ANY('Public', 'Private')}
+                    value={draft.is_public}
+                    onChange={(is_public) => setDraft({ ...draft, is_public })}
+                  />
+                </Field>
               </FieldGrid>
               <View style={styles.actions}>
                 <Button title="Apply filters" onPress={apply} />
@@ -152,20 +171,7 @@ export function AdminOffersScreen({ navigation, route }: BottomTabScreenProps<Ad
               <Text style={styles.count}>
                 {offers.data.count} offer{offers.data.count === 1 ? '' : 's'}
               </Text>
-              <View style={asTable ? styles.table : styles.cards}>
-                {asTable ? <TableHeader /> : null}
-                {offers.data.results.map((offer) => (
-                  <OfferRow
-                    key={offer.id}
-                    offer={offer}
-                    wide={asTable}
-                    selected={offer.id === selected}
-                    toggling={setActive.isPending && setActive.variables?.id === offer.id}
-                    onToggleActive={(is_active) => setActive.mutate({ id: offer.id, is_active })}
-                    onEdit={() => navigation.setParams({ id: offer.id })}
-                  />
-                ))}
-              </View>
+              {asTable ? <Table columns={COLUMNS}>{rows}</Table> : <View style={styles.cards}>{rows}</View>}
               <Pagination page={page} count={offers.data.count} onChange={setPage} />
             </>
           )}
@@ -175,18 +181,14 @@ export function AdminOffersScreen({ navigation, route }: BottomTabScreenProps<Ad
   );
 }
 
-function TableHeader() {
-  return (
-    <View style={[styles.tableRow, styles.tableHeader]}>
-      <Text style={[styles.th, styles.colRoute]}>Route</Text>
-      <Text style={[styles.th, styles.colDates]}>Departure / valid until</Text>
-      <Text style={[styles.th, styles.colFlight]}>Flight</Text>
-      <Text style={[styles.th, styles.colPrice]}>Price</Text>
-      <Text style={[styles.th, styles.colStatus]}>Status</Text>
-      <Text style={[styles.th, styles.colActions]}>Active</Text>
-    </View>
-  );
-}
+const COLUMNS: Column[] = [
+  { label: 'Route', flex: 2 },
+  { label: 'Departure / valid until', flex: 2 },
+  { label: 'Flight', flex: 2.6 },
+  { label: 'Price', flex: 1.4 },
+  { label: 'Status', flex: 2 },
+  { label: 'Active', flex: 2.2 },
+];
 
 type RowProps = {
   offer: AdminOffer;
@@ -198,13 +200,16 @@ type RowProps = {
 };
 
 function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: RowProps) {
-  const route = `${offer.origin.code} → ${offer.destination.code}`;
-  const cities = `${offer.origin.city} → ${offer.destination.city}`;
-  const flight = `${offer.airline} · ${ticketClassLabel(offer.ticket_class)} · ${stopoversLabel(offer.stopovers)}`;
-  const status = [
-    offer.is_public ? 'Public' : 'Private',
-    offer.is_bookable ? 'Bookable' : offer.is_active ? 'Lapsed' : 'Deactivated',
-  ].join(' · ');
+  const flight = `${ticketClassLabel(offer.ticket_class)} · ${stopoversLabel(offer.stopovers)}`;
+  const chips = (
+    <View style={styles.chips}>
+      <StatusChip label={offer.is_public ? 'Public' : 'Private'} tone={offer.is_public ? 'info' : 'neutral'} />
+      <StatusChip
+        label={offer.is_bookable ? 'Bookable' : offer.is_active ? 'Lapsed' : 'Deactivated'}
+        tone={offer.is_bookable ? 'success' : offer.is_active ? 'warning' : 'neutral'}
+      />
+    </View>
+  );
   const toggle = (
     <Toggle
       label={offer.is_active ? 'Active' : 'Inactive'}
@@ -216,40 +221,41 @@ function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: R
 
   if (wide) {
     return (
-      <View style={[styles.tableRow, selected && styles.selected]} aria-current={selected}>
-        <View style={styles.colRoute}>
-          <Text style={styles.strong}>{route}</Text>
-          <Text style={styles.muted}>{cities}</Text>
-        </View>
-        <View style={styles.colDates}>
-          <Text style={styles.cell}>{formatDate(offer.departure_date)}</Text>
-          <Text style={styles.muted}>until {formatDate(offer.valid_until)}</Text>
-        </View>
-        <Text style={[styles.cell, styles.colFlight]}>{flight}</Text>
-        <Text style={[styles.strong, styles.colPrice]}>{formatPrice(offer.price)}</Text>
-        <Text style={[styles.cell, styles.colStatus]}>{status}</Text>
-        <View style={[styles.colActions, styles.rowActions]}>
-          {toggle}
-          <Button title="Edit" variant="link" onPress={onEdit} />
-        </View>
-      </View>
+      <TableRow
+        columns={COLUMNS}
+        selected={selected}
+        cells={[
+          <RouteCell key="route" origin={offer.origin} destination={offer.destination} />,
+          <TwoLineCell
+            key="dates"
+            primary={formatDate(offer.departure_date)}
+            secondary={`until ${formatDate(offer.valid_until)}`}
+          />,
+          <TwoLineCell key="flight" primary={offer.airline} secondary={flight} />,
+          <PriceTag key="price" amount={offer.price} />,
+          chips,
+          <View key="actions" style={styles.rowActions}>
+            {toggle}
+            <Button title="Edit" variant="link" onPress={onEdit} />
+          </View>,
+        ]}
+      />
     );
   }
 
   return (
     <Card selected={selected}>
       <View style={styles.cardTop}>
-        <View style={styles.shrink}>
-          <Text style={styles.strong}>{route}</Text>
-          <Text style={styles.muted}>{cities}</Text>
-        </View>
-        <Text style={styles.strong}>{formatPrice(offer.price)}</Text>
+        <RouteCell origin={offer.origin} destination={offer.destination} />
+        <PriceTag amount={offer.price} />
       </View>
       <Text style={styles.cell}>
         {formatDate(offer.departure_date)} · valid until {formatDate(offer.valid_until)}
       </Text>
-      <Text style={styles.cell}>{flight}</Text>
-      <Text style={styles.muted}>{status}</Text>
+      <Text style={styles.cell}>
+        {offer.airline} · {flight}
+      </Text>
+      {chips}
       <View style={styles.cardTop}>
         {toggle}
         <Button title="Edit" variant="secondary" onPress={onEdit} />
@@ -259,42 +265,13 @@ function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: R
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
-  actions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  actions: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
   count: { color: colors.muted },
-  cards: { gap: 12 },
-  table: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    overflow: 'hidden',
-    backgroundColor: colors.surface,
-    ...shadow,
-  },
-  tableHeader: { backgroundColor: colors.background },
-  selected: { backgroundColor: colors.primaryTint },
-  tableRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderColor: colors.border,
-  },
-  th: { fontSize: font.caption, fontWeight: weight.bold, color: colors.muted, textTransform: 'uppercase' },
-  colRoute: { flex: 2, minWidth: 0 },
-  colDates: { flex: 2, minWidth: 0 },
-  colFlight: { flex: 3, minWidth: 0 },
-  colPrice: { flex: 1.3, minWidth: 0 },
-  colStatus: { flex: 2, minWidth: 0 },
-  colActions: { flex: 2.2, minWidth: 0 },
-  rowActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' },
+  cards: { gap: space.md },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
+  rowActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm, flexWrap: 'wrap' },
   cell: { color: colors.text },
-  strong: { color: colors.text, fontWeight: weight.bold },
-  muted: { color: colors.muted, fontSize: font.small },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  shrink: { flexShrink: 1 },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
 });

@@ -3,14 +3,14 @@ import { useNavigation } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 import { api } from '../../api/client';
 import { applyServerErrors } from '../../api/errors';
 import { AdminOffer } from '../../api/types';
 import { Button } from '../../components/Button';
-import { Card } from '../../components/Card';
 import { FormError } from '../../components/Field';
+import { FormFooter } from '../../components/FormSection';
 import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { colors, font, weight } from '../../theme';
@@ -109,22 +109,21 @@ function OfferForm({ id, initial, onDone }: FormProps) {
   });
 
   return (
-    <Card>
+    <>
       <OfferFields control={control} />
       <FormError message={formError} />
-      <View style={styles.actions}>
+      <FormFooter>
+        <Button title="Cancel" variant="secondary" onPress={onDone} />
         <Button
           title={isCreate ? 'Create offer' : 'Save changes'}
           onPress={onSubmit}
           loading={formState.isSubmitting}
         />
-        <Button title="Cancel" variant="secondary" onPress={onDone} />
-      </View>
-    </Card>
+      </FormFooter>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
-  actions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
 });

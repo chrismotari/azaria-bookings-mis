@@ -1,22 +1,25 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { AdminQuery, Paginated, QueryStatus } from '../../api/types';
 import { DetailLayout } from '../../components/DetailLayout';
-import { OptionChips } from '../../components/OptionChips';
+import { Icon } from '../../components/Icon';
 import { Pagination } from '../../components/Pagination';
+import { RouteLine } from '../../components/RouteLine';
 import { Screen } from '../../components/Screen';
+import { SegmentedControl } from '../../components/SegmentedControl';
 import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
+import { Column, RouteCell, Table, TableRow, TwoLineCell } from '../../components/Table';
+import { TripCard } from '../../components/TripCard';
 import { AdminTabParamList } from '../../navigation/types';
-import { colors, font, radius, shadow, weight } from '../../theme';
+import { colors, font, space, useIsWide, weight } from '../../theme';
 import { formatDateTime } from '../../utils/format';
 import { QUERY_STATUS, describeQuery } from '../../utils/queries';
 import { AdminQueryDetailView } from './AdminQueryDetailView';
-import { PressState } from '../../components/pressState';
 
 const STATUS_OPTIONS: { value: QueryStatus | 'all'; label: string }[] = [
   { value: 'open', label: 'Open' },
@@ -25,9 +28,29 @@ const STATUS_OPTIONS: { value: QueryStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
 ];
 
+const COLUMNS: Column[] = [
+  { label: 'Customer', flex: 2 },
+  { label: 'Route', flex: 2 },
+  { label: 'Dates', flex: 2.2 },
+  { label: 'Criteria', flex: 2.2 },
+  { label: 'Status', flex: 1.8 },
+  { label: 'Received', flex: 1.6 },
+];
+
+/** Class and price, e.g. "Business · Up to $3,000.00". */
+function criteria(query: AdminQuery): string {
+  const details = describeQuery(query);
+  return [
+    details.ticketClass === 'Any' ? 'Any class' : details.ticketClass,
+    details.prices === 'Any' ? 'Any price' : details.prices,
+  ].join(' · ');
+}
+
 export function AdminRequestsScreen({ navigation, route }: BottomTabScreenProps<AdminTabParamList, 'AdminRequests'>) {
   const selected = route.params?.id;
   const close = useCallback(() => navigation.setParams({ id: undefined }), [navigation]);
+  // With a request open the list is too narrow for the table.
+  const asTable = useIsWide() && selected === undefined;
   const status = route.params?.status ?? 'open';
   const [page, setPage] = useState(1);
   const queries = useQuery({
@@ -38,6 +61,7 @@ export function AdminRequestsScreen({ navigation, route }: BottomTabScreenProps<
     },
     placeholderData: keepPreviousData,
   });
+  const open = (query: AdminQuery) => navigation.setParams({ id: query.id });
 
   return (
     <DetailLayout
@@ -48,7 +72,7 @@ export function AdminRequestsScreen({ navigation, route }: BottomTabScreenProps<
       list={
         <Screen card>
           <Text style={styles.title}>Requests</Text>
-          <OptionChips
+          <SegmentedControl
             label="Status"
             options={STATUS_OPTIONS}
             value={status}
@@ -56,6 +80,7 @@ export function AdminRequestsScreen({ navigation, route }: BottomTabScreenProps<
               setPage(1);
               navigation.setParams({ status: value });
             }}
+            wrap
           />
           {queries.isPending ? (
             <LoadingState />
@@ -65,17 +90,24 @@ export function AdminRequestsScreen({ navigation, route }: BottomTabScreenProps<
             <EmptyState icon="chatbubbles-outline" title="Nothing here" message="No requests here." />
           ) : (
             <>
-              <View style={styles.grid}>
-                {queries.data.results.map((query) => (
-                  <View key={query.id} style={styles.gridItem}>
+              {asTable ? (
+                <Table columns={COLUMNS}>
+                  {queries.data.results.map((query) => (
+                    <QueryTableRow key={query.id} query={query} onPress={() => open(query)} />
+                  ))}
+                </Table>
+              ) : (
+                <View style={styles.cards}>
+                  {queries.data.results.map((query) => (
                     <AdminQueryCard
+                      key={query.id}
                       query={query}
                       selected={query.id === selected}
-                      onPress={() => navigation.setParams({ id: query.id })}
+                      onPress={() => open(query)}
                     />
-                  </View>
-                ))}
-              </View>
+                  ))}
+                </View>
+              )}
               <Pagination page={page} count={queries.data.count} onChange={setPage} />
             </>
           )}
@@ -85,53 +117,68 @@ export function AdminRequestsScreen({ navigation, route }: BottomTabScreenProps<
   );
 }
 
+function QueryTableRow({ query, onPress }: { query: AdminQuery; onPress: () => void }) {
+  const status = QUERY_STATUS[query.status];
+  const details = describeQuery(query);
+  return (
+    <TableRow
+      columns={COLUMNS}
+      onPress={onPress}
+      accessibilityLabel={`${query.user.full_name}, ${details.route}, ${status.label}`}
+      cells={[
+        <TwoLineCell key="customer" primary={query.user.full_name} secondary={query.user.email} />,
+        <RouteCell key="route" origin={query.origin} destination={query.destination} />,
+        details.dates,
+        <TwoLineCell
+          key="criteria"
+          primary={criteria(query)}
+          secondary={details.maxStopovers === 'Any' ? undefined : `Max stopovers: ${details.maxStopovers}`}
+        />,
+        <StatusChip key="status" label={status.label} tone={status.tone} />,
+        <Text key="received" style={styles.small}>
+          {formatDateTime(query.created_at)}
+        </Text>,
+      ]}
+    />
+  );
+}
+
 function AdminQueryCard({ query, selected, onPress }: { query: AdminQuery; selected: boolean; onPress: () => void }) {
   const details = describeQuery(query);
   const status = QUERY_STATUS[query.status];
   return (
-    <Pressable
-      accessibilityRole="link"
-      aria-current={selected}
+    <TripCard
+      tone={status.tone}
+      selected={selected}
       onPress={onPress}
-      style={({ pressed, hovered }: PressState) => [
-        styles.card,
-        (pressed || hovered || selected) && styles.pressed,
-        selected && styles.selected,
-      ]}
+      accessibilityLabel={`${query.user.full_name}, ${details.route}, ${status.label}`}
     >
-      <View style={styles.cardTop}>
+      <View style={styles.between}>
         <Text style={styles.customer} numberOfLines={1}>
           {query.user.full_name}
         </Text>
         <StatusChip label={status.label} tone={status.tone} />
       </View>
-      <Text style={styles.route}>{details.route}</Text>
-      <Text style={styles.text}>
-        {details.dates} · {details.ticketClass} · {details.prices}
-      </Text>
-      <Text style={styles.muted}>Received {formatDateTime(query.created_at)}</Text>
-    </Pressable>
+      <RouteLine origin={query.origin} destination={query.destination} />
+      <View style={styles.fact}>
+        <Icon name="calendar-outline" size={16} color={colors.muted} />
+        <Text style={styles.text}>{details.dates}</Text>
+      </View>
+      <View style={styles.fact}>
+        <Icon name="options-outline" size={16} color={colors.muted} />
+        <Text style={styles.text}>{criteria(query)}</Text>
+      </View>
+      <Text style={styles.small}>Received {formatDateTime(query.created_at)}</Text>
+    </TripCard>
   );
 }
 
 const styles = StyleSheet.create({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  gridItem: { flexGrow: 1, flexBasis: 340, minWidth: 0 },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 16,
-    gap: 4,
-    ...shadow,
-  },
-  pressed: { borderColor: colors.primary },
-  selected: { backgroundColor: colors.primaryTint },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  customer: { flexShrink: 1, color: colors.muted, fontWeight: weight.semibold },
-  route: { fontSize: font.body, fontWeight: weight.bold, color: colors.text },
-  text: { color: colors.text },
-  muted: { color: colors.muted, fontSize: font.small },
+  cards: { gap: space.md },
+  between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
+  customer: { flexShrink: 1, fontSize: font.body, fontWeight: weight.bold, color: colors.text },
+  fact: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  text: { fontSize: font.body, color: colors.text, flexShrink: 1 },
+  small: { fontSize: font.small, color: colors.muted },
 });

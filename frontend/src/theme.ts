@@ -48,6 +48,9 @@ export const radius = { sm: 6, md: 8, lg: 12, pill: 999 };
 
 export const shadow = { boxShadow: '0 1px 3px rgba(37, 37, 37, 0.08)' } as const;
 
+/** Lifted look for a hovered tile. */
+export const shadowRaised = { boxShadow: '0 4px 12px rgba(37, 37, 37, 0.12)' } as const;
+
 export const WIDE_BREAKPOINT = 900;
 
 export function useIsWide(): boolean {

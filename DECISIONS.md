@@ -50,3 +50,7 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - While a detail is open, Explore uses its narrow layout (stacked search bar, Filters button, stacked rows), as the list column is too narrow for the sidebar.
 - A booking that ended (unavailable, cancelled, expired) shows its status only as the banner, without the status chip above it; the banner carries the existing help text.
 - The restyled booking summary, request criteria and boarding pass rows are shared components, so the admin detail screens show them too.
+- Admin Requests and Bookings show tables only on wide screens with no detail open, as Admin Offers does; otherwise they show the same trip cards as the customer lists.
+- Booking status filters (eight options) use the segmented control wrapping onto a second row when they do not fit.
+- On a paid booking, "Send boarding passes" sits in the drawer's action bar with the other status actions; it stays disabled until a file is uploaded and while uploads are running.
+- The request drawer's Respond / Send more options button is its action bar.

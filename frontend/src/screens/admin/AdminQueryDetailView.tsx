@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { AdminQueryDetail } from '../../api/types';
+import { ActionBar } from '../../components/ActionBar';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { QuerySummary } from '../../components/QuerySummary';
@@ -35,6 +36,17 @@ export function AdminQueryDetailView({ id }: { id: number }) {
   const status = QUERY_STATUS[data.status];
   return (
     <>
+      {data.status === 'closed' ? (
+        <Text style={styles.muted}>The customer closed this request.</Text>
+      ) : (
+        <ActionBar>
+          <Button
+            title={data.responses.length ? 'Send more options' : 'Respond'}
+            onPress={() => navigation.navigate('AdminQueryRespond', { id })}
+          />
+        </ActionBar>
+      )}
+
       <Card>
         <View style={styles.header}>
           <Text style={styles.muted}>Received {formatDateTime(data.created_at)}</Text>
@@ -49,17 +61,6 @@ export function AdminQueryDetailView({ id }: { id: number }) {
         <Text style={styles.text}>{data.user.email}</Text>
         {data.user.phone ? <Text style={styles.text}>{data.user.phone}</Text> : null}
       </Card>
-
-      {data.status === 'closed' ? (
-        <Text style={styles.muted}>The customer closed this request.</Text>
-      ) : (
-        <View style={styles.actions}>
-          <Button
-            title={data.responses.length ? 'Send more options' : 'Respond'}
-            onPress={() => navigation.navigate('AdminQueryRespond', { id })}
-          />
-        </View>
-      )}
 
       <Text style={styles.section}>Responses sent</Text>
       {data.responses.length === 0 ? (
@@ -85,7 +86,6 @@ export function AdminQueryDetailView({ id }: { id: number }) {
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   section: { fontSize: font.heading, fontWeight: weight.bold, color: colors.tertiary },
-  actions: { flexDirection: 'row' },
   text: { color: colors.text },
   muted: { color: colors.muted },
 });

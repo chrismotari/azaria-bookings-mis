@@ -1,22 +1,26 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { AdminBooking, BookingStatus, Paginated } from '../../api/types';
 import { DetailLayout } from '../../components/DetailLayout';
-import { OptionChips } from '../../components/OptionChips';
+import { Icon } from '../../components/Icon';
 import { Pagination } from '../../components/Pagination';
+import { PriceTag } from '../../components/PriceTag';
+import { RouteLine } from '../../components/RouteLine';
 import { Screen } from '../../components/Screen';
+import { SegmentedControl } from '../../components/SegmentedControl';
 import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
+import { Column, RouteCell, Table, TableRow, TwoLineCell } from '../../components/Table';
+import { TripCard } from '../../components/TripCard';
 import { AdminTabParamList } from '../../navigation/types';
-import { colors, font, radius, shadow, weight } from '../../theme';
+import { colors, font, space, useIsWide, weight } from '../../theme';
 import { BOOKING_STATUS, bookingRoute, passengersLabel } from '../../utils/bookings';
-import { formatDate, formatDateTime, formatPrice } from '../../utils/format';
+import { formatDate, formatDateTime } from '../../utils/format';
 import { AdminBookingDetailView } from './AdminBookingDetailView';
-import { PressState } from '../../components/pressState';
 
 const STATUS_OPTIONS: { value: BookingStatus | 'all'; label: string }[] = [
   { value: 'requested', label: 'Requested' },
@@ -29,9 +33,21 @@ const STATUS_OPTIONS: { value: BookingStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
 ];
 
+const COLUMNS: Column[] = [
+  { label: 'Customer', flex: 2 },
+  { label: 'Route', flex: 2 },
+  { label: 'Departure', flex: 1.6 },
+  { label: 'Passengers', flex: 1.2 },
+  { label: 'Total', flex: 1.4 },
+  { label: 'Status', flex: 1.6 },
+  { label: 'Booked', flex: 1.6 },
+];
+
 export function AdminBookingsScreen({ navigation, route }: BottomTabScreenProps<AdminTabParamList, 'AdminBookings'>) {
   const selected = route.params?.id;
   const close = useCallback(() => navigation.setParams({ id: undefined }), [navigation]);
+  // With a booking open the list is too narrow for the table.
+  const asTable = useIsWide() && selected === undefined;
   const status = route.params?.status ?? 'requested';
   const [page, setPage] = useState(1);
   const bookings = useQuery({
@@ -42,6 +58,7 @@ export function AdminBookingsScreen({ navigation, route }: BottomTabScreenProps<
     },
     placeholderData: keepPreviousData,
   });
+  const open = (booking: AdminBooking) => navigation.setParams({ id: booking.id });
 
   return (
     <DetailLayout
@@ -52,7 +69,7 @@ export function AdminBookingsScreen({ navigation, route }: BottomTabScreenProps<
       list={
         <Screen card>
           <Text style={styles.title}>Bookings</Text>
-          <OptionChips
+          <SegmentedControl
             label="Status"
             options={STATUS_OPTIONS}
             value={status}
@@ -60,6 +77,7 @@ export function AdminBookingsScreen({ navigation, route }: BottomTabScreenProps<
               setPage(1);
               navigation.setParams({ status: value });
             }}
+            wrap
           />
           {bookings.isPending ? (
             <LoadingState />
@@ -69,22 +87,51 @@ export function AdminBookingsScreen({ navigation, route }: BottomTabScreenProps<
             <EmptyState icon="ticket-outline" title="Nothing here" message="No bookings here." />
           ) : (
             <>
-              <View style={styles.grid}>
-                {bookings.data.results.map((booking) => (
-                  <View key={booking.id} style={styles.gridItem}>
+              {asTable ? (
+                <Table columns={COLUMNS}>
+                  {bookings.data.results.map((booking) => (
+                    <BookingTableRow key={booking.id} booking={booking} onPress={() => open(booking)} />
+                  ))}
+                </Table>
+              ) : (
+                <View style={styles.cards}>
+                  {bookings.data.results.map((booking) => (
                     <AdminBookingCard
+                      key={booking.id}
                       booking={booking}
                       selected={booking.id === selected}
-                      onPress={() => navigation.setParams({ id: booking.id })}
+                      onPress={() => open(booking)}
                     />
-                  </View>
-                ))}
-              </View>
+                  ))}
+                </View>
+              )}
               <Pagination page={page} count={bookings.data.count} onChange={setPage} />
             </>
           )}
         </Screen>
       }
+    />
+  );
+}
+
+function BookingTableRow({ booking, onPress }: { booking: AdminBooking; onPress: () => void }) {
+  const status = BOOKING_STATUS[booking.status];
+  return (
+    <TableRow
+      columns={COLUMNS}
+      onPress={onPress}
+      accessibilityLabel={`${booking.user.full_name}, ${bookingRoute(booking)}, ${status.label}`}
+      cells={[
+        <TwoLineCell key="customer" primary={booking.user.full_name} secondary={booking.user.email} />,
+        <RouteCell key="route" origin={booking.offer.origin} destination={booking.offer.destination} />,
+        formatDate(booking.offer.departure_date),
+        passengersLabel(booking.passenger_count),
+        <PriceTag key="total" amount={booking.total_price} />,
+        <StatusChip key="status" label={status.label} tone={status.tone} />,
+        <Text key="booked" style={styles.small}>
+          {formatDateTime(booking.created_at)}
+        </Text>,
+      ]}
     />
   );
 }
@@ -99,51 +146,46 @@ function AdminBookingCard({
   onPress: () => void;
 }) {
   const status = BOOKING_STATUS[booking.status];
+  const { offer } = booking;
   return (
-    <Pressable
-      accessibilityRole="link"
-      aria-current={selected}
+    <TripCard
+      tone={status.tone}
+      selected={selected}
       onPress={onPress}
-      style={({ pressed, hovered }: PressState) => [
-        styles.card,
-        (pressed || hovered || selected) && styles.pressed,
-        selected && styles.selected,
-      ]}
+      accessibilityLabel={`${booking.user.full_name}, ${bookingRoute(booking)}, ${status.label}`}
     >
-      <View style={styles.cardTop}>
+      <View style={styles.between}>
         <Text style={styles.customer} numberOfLines={1}>
           {booking.user.full_name}
         </Text>
         <StatusChip label={status.label} tone={status.tone} />
       </View>
-      <Text style={styles.route}>{bookingRoute(booking)}</Text>
-      <Text style={styles.text}>
-        {formatDate(booking.offer.departure_date)} · {passengersLabel(booking.passenger_count)} ·{' '}
-        {formatPrice(booking.total_price)}
-      </Text>
-      <Text style={styles.muted}>Booked {formatDateTime(booking.created_at)}</Text>
-    </Pressable>
+      <RouteLine origin={offer.origin} destination={offer.destination} stopovers={offer.stopovers} />
+      <View style={styles.between}>
+        <View style={styles.facts}>
+          <View style={styles.fact}>
+            <Icon name="calendar-outline" size={16} color={colors.muted} />
+            <Text style={styles.text}>{formatDate(offer.departure_date)}</Text>
+          </View>
+          <View style={styles.fact}>
+            <Icon name="people-outline" size={16} color={colors.muted} />
+            <Text style={styles.text}>{passengersLabel(booking.passenger_count)}</Text>
+          </View>
+        </View>
+        <PriceTag amount={booking.total_price} />
+      </View>
+      <Text style={styles.small}>Booked {formatDateTime(booking.created_at)}</Text>
+    </TripCard>
   );
 }
 
 const styles = StyleSheet.create({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  gridItem: { flexGrow: 1, flexBasis: 340, minWidth: 0 },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 16,
-    gap: 4,
-    ...shadow,
-  },
-  pressed: { borderColor: colors.primary },
-  selected: { backgroundColor: colors.primaryTint },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  customer: { flexShrink: 1, color: colors.muted, fontWeight: weight.semibold },
-  route: { fontSize: font.body, fontWeight: weight.bold, color: colors.text },
-  text: { color: colors.text },
-  muted: { color: colors.muted, fontSize: font.small },
+  cards: { gap: space.md },
+  between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
+  customer: { flexShrink: 1, fontSize: font.body, fontWeight: weight.bold, color: colors.text },
+  facts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.lg },
+  fact: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  text: { fontSize: font.body, color: colors.text },
+  small: { fontSize: font.small, color: colors.muted },
 });
