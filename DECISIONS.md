@@ -37,3 +37,4 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - The payment reminder email is skipped if, when it is sent, the booking is no longer awaiting payment or its deadline has passed.
 - Stale requested bookings (flight already departed) get the same "booking expired" email 7 as lapsed payment holds, since the spec defines one expiry email.
 - Decisions are kept in this file, linked from README.md, rather than as a section of README.md.
+- Sign in, Create account, Forgot password and Reset password are guest-only screens; a signed-in user opening their URLs lands on home (Explore, or the Dashboard for the admin). To use a reset link, sign out first.

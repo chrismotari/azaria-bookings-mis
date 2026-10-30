@@ -185,22 +185,15 @@ export function RootNavigator() {
       <Stack.Screen name="QueryDetail" component={GatedQueryDetail} options={{ title: 'Request' }} />
       <Stack.Screen name="BookingNew" component={GatedBookingNew} options={{ title: 'Book' }} />
       <Stack.Screen name="BookingDetail" component={GatedBookingDetail} options={{ title: 'Booking' }} />
-      <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Sign in', headerShown: false }} />
-      <Stack.Screen
-        name="Register"
-        component={RegisterScreen}
-        options={{ title: 'Create account', headerShown: false }}
-      />
-      <Stack.Screen
-        name="ForgotPassword"
-        component={ForgotPasswordScreen}
-        options={{ title: 'Forgot password', headerShown: false }}
-      />
-      <Stack.Screen
-        name="ResetPassword"
-        component={ResetPasswordScreen}
-        options={{ title: 'Reset password', headerShown: false }}
-      />
+      {/* Guests only: for a signed-in customer these URLs match no screen and open Explore. */}
+      {user ? null : (
+        <Stack.Group screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Sign in' }} />
+          <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Create account' }} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ title: 'Forgot password' }} />
+          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ title: 'Reset password' }} />
+        </Stack.Group>
+      )}
     </Stack.Navigator>
   );
 }
