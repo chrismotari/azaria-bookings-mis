@@ -9,22 +9,27 @@ import { z } from 'zod';
 import { api } from '../../api/client';
 import { applyServerErrors } from '../../api/errors';
 import { BookingDetail, Offer } from '../../api/types';
+import { AirlineBadge } from '../../components/AirlineBadge';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { FormError } from '../../components/Field';
+import { Icon } from '../../components/Icon';
+import { PriceTag } from '../../components/PriceTag';
+import { RouteLine } from '../../components/RouteLine';
 import { Screen } from '../../components/Screen';
+import { Stepper } from '../../components/Stepper';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
 import { RootStackParamList } from '../../navigation/types';
-import { colors, font, weight } from '../../theme';
-import { formatDate, formatPrice, stopoversLabel, ticketClassLabel } from '../../utils/format';
+import { colors, font, space, weight } from '../../theme';
+import { formatDate, formatPrice, ticketClassLabel } from '../../utils/format';
 
 // Mirrors the server's rules: 1 to 9 passengers.
+const MIN_PASSENGERS = 1;
+const MAX_PASSENGERS = 9;
+
 const schema = z.object({
-  passenger_count: z
-    .string()
-    .trim()
-    .regex(/^[1-9]$/, 'Enter a number of passengers from 1 to 9.'),
+  passenger_count: z.number().int().min(MIN_PASSENGERS).max(MAX_PASSENGERS),
   notes: z.string().max(2000),
 });
 
@@ -42,7 +47,7 @@ export function BookingNewScreen({ navigation, route }: NativeStackScreenProps<R
   });
   const { control, handleSubmit, setError, formState } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { passenger_count: '1', notes: '' },
+    defaultValues: { passenger_count: 1, notes: '' },
   });
   const passengerCount = useWatch({ control, name: 'passenger_count' });
 
@@ -54,13 +59,12 @@ export function BookingNewScreen({ navigation, route }: NativeStackScreenProps<R
   }
 
   const data = offer.data;
-  const count = Number(passengerCount);
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
     try {
       const { data: booking } = await api.post<BookingDetail>('/bookings', {
         offer: offerId,
-        passenger_count: Number(values.passenger_count),
+        passenger_count: values.passenger_count,
         notes: values.notes.trim(),
         query: query ?? null,
       });
@@ -75,28 +79,35 @@ export function BookingNewScreen({ navigation, route }: NativeStackScreenProps<R
     <Screen maxWidth={640}>
       <Text style={styles.title}>Book this flight</Text>
       <Card>
-        <Text style={styles.route}>
-          {data.origin.city} ({data.origin.code}) → {data.destination.city} ({data.destination.code})
-        </Text>
-        <Text style={styles.text}>
-          {formatDate(data.departure_date)} · {data.airline} · {ticketClassLabel(data.ticket_class)} ·{' '}
-          {stopoversLabel(data.stopovers)}
-        </Text>
-        <Text style={styles.text}>{formatPrice(data.price)} per person</Text>
+        <RouteLine origin={data.origin} destination={data.destination} stopovers={data.stopovers} />
+        <View style={styles.summary}>
+          <View style={styles.summaryItem}>
+            <Icon name="calendar-outline" size={18} color={colors.primary} />
+            <Text style={styles.text}>{formatDate(data.departure_date)}</Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <AirlineBadge airline={data.airline} />
+            <View>
+              <Text style={styles.airline}>{data.airline}</Text>
+              <Text style={styles.muted}>{ticketClassLabel(data.ticket_class)}</Text>
+            </View>
+          </View>
+        </View>
       </Card>
       <Card>
         <Controller
           control={control}
           name="passenger_count"
           render={({ field, fieldState }) => (
-            <TextField
+            <Stepper
               label="Passengers"
               value={field.value}
-              onChangeText={field.onChange}
-              onBlur={field.onBlur}
+              min={MIN_PASSENGERS}
+              max={MAX_PASSENGERS}
+              onChange={field.onChange}
+              decreaseLabel="Remove a passenger"
+              increaseLabel="Add a passenger"
               error={fieldState.error?.message}
-              keyboardType="number-pad"
-              maxLength={1}
             />
           )}
         />
@@ -116,16 +127,20 @@ export function BookingNewScreen({ navigation, route }: NativeStackScreenProps<R
             />
           )}
         />
-        {count >= 1 && count <= 9 ? (
-          <Text style={styles.total}>Total: {formatPrice(Number(data.price) * count)}</Text>
-        ) : null}
+        <View style={styles.total}>
+          <View>
+            <Text style={styles.totalLabel}>Total</Text>
+            <Text style={styles.muted}>
+              {passengerCount} × {formatPrice(data.price)}
+            </Text>
+          </View>
+          <PriceTag amount={Number(data.price) * passengerCount} size="large" />
+        </View>
         <Text style={styles.muted}>
           We will check availability and email you payment instructions. Nothing is charged now.
         </Text>
         <FormError message={formError} />
-        <View style={styles.actions}>
-          <Button title="Request booking" variant="accent" onPress={onSubmit} loading={formState.isSubmitting} />
-        </View>
+        <Button title="Request booking" variant="accent" onPress={onSubmit} loading={formState.isSubmitting} />
       </Card>
     </Screen>
   );
@@ -133,9 +148,19 @@ export function BookingNewScreen({ navigation, route }: NativeStackScreenProps<R
 
 const styles = StyleSheet.create({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
-  route: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text },
-  text: { color: colors.text },
-  total: { fontSize: font.heading, fontWeight: weight.bold, color: colors.primary },
-  muted: { color: colors.muted },
-  actions: { flexDirection: 'row' },
+  summary: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: space.md },
+  summaryItem: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  airline: { fontSize: font.body, fontWeight: weight.bold, color: colors.text },
+  text: { fontSize: font.body, color: colors.text },
+  total: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.md,
+    paddingTop: space.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  totalLabel: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text },
+  muted: { fontSize: font.small, color: colors.muted },
 });

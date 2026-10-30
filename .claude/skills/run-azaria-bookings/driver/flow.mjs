@@ -93,7 +93,7 @@ let bookingId;
 console.log('== guest -> register -> request');
 await run(`customer-${stamp}`, async ({ page, shot }) => {
   await page.goto(APP);
-  await seen(page, 'Find a flight deal').waitFor();
+  await seen(page, 'Find your next flight deal').waitFor();
   await pickAirport(page, 'From', FROM);
   await pickAirport(page, 'To', TO);
   await button(page, 'Search').click();
@@ -156,7 +156,7 @@ await run(`customer-${stamp}`, async ({ page, shot }) => {
   await page.getByRole('link', { name: / to / }).first().click();
   await button(page, 'Book').click();
   await seen(page, 'Book this flight').waitFor();
-  await field(page, 'Passengers').fill('2');
+  await button(page, 'Add a passenger').click();
   await button(page, 'Request booking').click();
   await seen(page, 'Timeline').waitFor();
   bookingId = Number(new URL(page.url()).pathname.split('/').pop());

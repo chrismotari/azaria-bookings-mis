@@ -45,3 +45,6 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - Admin Offers shows cards instead of the table while the edit panel is open, as the narrowed list has no room for the table's columns.
 - The "highlighted box" in HTML emails (payment instructions, the admin's reply message) is the app's light indigo tint with an indigo left edge; shared pieces (details row, button, box) are small includes under emails/.
 - The auth screens show the brand bar without its Sign in / Create account controls, which would repeat the form's own button; the brand still links home.
+- Offer detail has no full-screen view on wide screens (it opens in the drawer), so the price summary sits on the right, sticky, whenever the detail is at least 640 px wide, which includes the drawer.
+- Explore's filter chips apply at once and the price fields on Enter or when leaving the field; "Clear all" clears the sidebar filters only, and the search bar applies with its Search button.
+- While a detail is open, Explore uses its narrow layout (stacked search bar, Filters button, stacked rows), as the list column is too narrow for the sidebar.
