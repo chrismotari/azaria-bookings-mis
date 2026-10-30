@@ -112,7 +112,7 @@ Which email each event queues:
 ======================================================================
 CELERY TASKS
 ======================================================================
-Email tasks take only IDs, use autoretry_for=(Exception,), retry_backoff=True, max_retries=5, and reload the object and check it is still in the state the email describes before sending (retries and late deliveries are therefore safe). Plain-text templates in core/templates/emails/. Sent with Django's EmailMessage.
+Email tasks take only IDs, use autoretry_for=(Exception,), retry_backoff=True, max_retries=5, and reload the object and check it is still in the state the email describes before sending (retries and late deliveries are therefore safe). Plain-text templates in core/templates/emails/. Sent with Django's EmailMessage (replaced by HTML plus plain-text emails in step 12, see HTML EMAILS).
 1. notify_admin_new_query(query_id) -> admin_notification_email. Customer name and email, route, date range, price range, class, max stopovers, message.
 2. notify_customer_query_responded(query_response_id) -> customer. Admin message, number of options, "open the app to view them".
 3. notify_admin_new_booking(booking_id) -> admin_notification_email. Customer, route, date, class, airline, passenger count, total price, notes.
@@ -182,7 +182,7 @@ Libraries: React Navigation (with linking configured so every screen has a real 
 - Token storage: a small storage module using localStorage on web and expo-secure-store on native. axios interceptor refreshes once on 401, then logs out.
 - Dates: use a web-native date input on web (<input type="date"> through a small cross-platform DateField component). Native fallback uses a plain text input in YYYY-MM-DD format validated by zod.
 - File upload and download are web-only for now: upload through <input type="file"> in a small FileField component, download by fetching the file with the auth header as a blob and triggering a browser download. On native these controls show a short notice that the feature is available on the web app.
-- Responsive layout: on wide viewports (>= 900 px) navigation is a left sidebar and content is centred with a max width; on narrow viewports it collapses to bottom tabs. Lists become tables or multi-column grids on wide screens where it helps.
+- Responsive layout: on wide viewports (>= 900 px) navigation is a top bar and content is centred with a max width; on narrow viewports it collapses to bottom tabs. Lists become tables or multi-column grids on wide screens where it helps. See LOOK AND LAYOUT for the details (this replaces the earlier left sidebar).
 
 Guest, customer and admin navigation
 - Guest (not logged in): Explore and offer detail only, plus Sign in and Create account in the header or sidebar.
@@ -225,6 +225,67 @@ TESTS (backend, pytest)
 - The frontend needs only type-checking (tsc --noEmit) and a successful web export (npx expo export --platform web).
 
 ======================================================================
+LOOK AND LAYOUT (UI refresh)
+======================================================================
+Goal: the app should look like part of azariabookings.com instead of a single-colour admin tool, use a top bar instead of a sidebar, and let users read an item's details without losing the list. Frontend only: no backend, API or data changes, and no new screens or features.
+
+Colours (taken from azariabookings.com, assets/css/sections/variables.css)
+- Primary (brand indigo) #1800d2: top bar, primary buttons, links, focused navigation item, active filters.
+- Secondary (amber) #ffb400: prices and the main call to action on an offer (Book, Request options), with dark text (#252525) on it for contrast.
+- Tertiary (slate green) #4a6660: secondary buttons and section headings.
+- Neutrals: text #252525, dark #2d3434, muted #6c7171, light #a8b1b5, page background #f2f4f7, surface #ffffff, borders derived from the light grey.
+- Status: success #51d77a, warning #faba2f, danger #fe455f, info #2275ff. Status chips use a light tint of the colour as background and a darker shade as text so the text meets WCAG AA contrast (4.5:1).
+- All colours are defined once in src/theme.ts as named tokens. No hex values in screens or components outside theme.ts.
+- The site's heading font (Gilroy) is proprietary and is not used. Keep the system font; headings get a heavier weight.
+
+Navigation layout
+- Wide (>= 900 px): a full-width top bar in the primary colour: "Azaria Bookings" on the left (links home), the navigation items next to it, and on the right the signed-in user's name with a menu (Account, Sign out) or, for guests, Sign in and Create account. The focused item is underlined or highlighted in amber. Content sits below, centred with a max width. The left sidebar is removed.
+- Narrow (< 900 px): a slim top bar with the brand and the Sign in / account control, and bottom tabs for the navigation items (customer: Explore, Requests, Bookings, Account; admin: Dashboard, Offers, Requests, Bookings, Settings).
+- Customer and admin use the same bar component; only the items differ.
+
+Detail drawer (list stays visible)
+- Applies to these list -> detail pairs: Explore -> offer detail; customer Requests -> request detail; customer Bookings -> booking detail; admin Offers -> offer edit; admin Requests -> request detail; admin Bookings -> booking detail.
+- Wide (>= 900 px): selecting a row opens the detail in a panel sliding in from the right (about 480 px wide, full height under the top bar). The list stays visible and usable on the left; the selected row is highlighted; choosing another row swaps the panel content. The panel closes with a close button, the Escape key, or a click on the list's empty area. While it is open the list area narrows rather than being covered, so no content is hidden and nothing scrolls horizontally.
+- Narrow (< 900 px): there is no room for both, so the detail opens full screen as it does today (with a back button to the list). This is the expected mobile behaviour, not a missing feature.
+- URLs: the open detail keeps its own URL (for example /offers/12, /bookings/7), so reloads, the back button and shared links work. Opening that URL directly on a wide screen shows the list with the panel open.
+- Forms that start new work stay full-page screens, not drawers: Book, Request options, admin New offer, admin Respond to a request. Buttons inside a drawer that open them navigate as today.
+- Actions inside a drawer (cancel booking, confirm availability, mark paid, upload or delete boarding passes, send, deactivate) refresh both the panel and the list behind it.
+
+General polish
+- Cards and table rows: white surface, subtle border and shadow, 8 px radius, consistent spacing scale (4, 8, 12, 16, 24, 32).
+- Explore: a primary-coloured search header holding From, To and the filters, with offer results as cards showing the price in amber.
+- Buttons: primary (indigo), call to action (amber), secondary (outline tertiary), danger (red). Visible focus outline on web for keyboard users.
+- Loading, empty and error states keep working and use the new colours.
+
+Delivery (each is its own step and commit; see DELIVERY ORDER 9 to 11)
+- [ ] 9. Theme: new colour tokens in theme.ts, every component and screen moved onto them (no stray hex values), buttons, chips, cards and Explore header restyled.
+- [ ] 10. Top bar navigation replacing the sidebar on wide screens; slim top bar plus bottom tabs on narrow screens; guest and signed-in controls in the bar.
+- [ ] 11. Detail drawer on wide screens for the six list -> detail pairs above, with URLs, Escape and close handling and list refresh after actions; full-screen detail on narrow screens. Browser check at 1280 px and 390 px widths.
+
+======================================================================
+HTML EMAILS
+======================================================================
+Goal: every email (1 to 10) is sent as formatted HTML that matches the app's theme, with the existing plain-text version kept as the fallback part.
+- Send with Django's EmailMultiAlternatives: body = the existing .txt template, plus an HTML alternative rendered from a matching .html template in core/templates/emails/. Attachments (email 9) work as before.
+- One base HTML layout (emails/base.html) that every HTML email extends: an indigo (#1800d2) header band with "Azaria Bookings", a white content card on a light grey (#f2f4f7) background, and a short footer (agency name, azariabookings.com link).
+- Details such as route, dates, passengers and total price are laid out as a two-column table; prices are shown in amber (#ffb400) with dark text; payment instructions sit in a highlighted box; links (password reset, open the app) are amber buttons.
+- Email-client safe: table-based layout, inline CSS only (no <style> blocks relied on for layout, no external CSS, no web fonts, no JavaScript), max width 600 px, readable on phones. No images, so nothing breaks when a client blocks them.
+- The brand colours are written once as template context or a base-template block, not repeated per template.
+- Content and recipients are unchanged; only the presentation changes. No new email types.
+- Tests: each email has both a text and an HTML part, the HTML part contains the key details (route, total, deadline, reset link as applicable), and email 9 still carries every boarding pass attachment.
+
+======================================================================
+UUID IDENTIFIERS (after the frontend work is done)
+======================================================================
+Goal: replace sequential numeric ids with UUIDs so ids in URLs and the API cannot be guessed or counted.
+- Primary keys of User, Airport, Offer, Query, QueryResponse, Booking, BookingEvent and BoardingPass become UUIDField(primary_key=True, default=uuid.uuid4, editable=False). AppSettings stays an integer singleton with pk=1. Airport's public identifier in the API is still its IATA code where it is used today.
+- All foreign keys and many-to-many links follow automatically. API URLs, request bodies and responses carry UUID strings (for example /api/bookings/<uuid>); URL patterns use the uuid path converter.
+- Frontend: id types become string; navigation linking paths and params use the UUID strings (for example /bookings/<uuid>).
+- Boarding pass upload path becomes boarding_passes/<booking uuid>/. The password reset uid is the urlsafe base64 of the UUID pk.
+- Migrations: there is no production data yet, so the migrations are regenerated from scratch rather than converting existing rows. After this step the local database is reset (drop, migrate, seed_airports, create_admin), and README.md says so.
+- Tests updated to use UUIDs; a request with a malformed id returns 404, not 500.
+
+======================================================================
 DELIVERY ORDER (commit after each step; the app must run at each step)
 ======================================================================
 1. Backend foundation: settings from .env, DRF/JWT/CORS/Celery wiring, accounts app with register, login, refresh, me, password reset and email task 10, create_admin, core AppSettings and migration, catalog.Airport and seed_airports, /django-admin/ mount, private storage setup, migrate and tests passing.
@@ -240,5 +301,10 @@ DELIVERY ORDER (commit after each step; the app must run at each step)
    - cd backend && celery -A config beat -l info
    - cd frontend && npx expo start --web
    Also: create_admin, seed_airports, running tests, and the Decisions list.
+9. Look and layout: theme colours (see LOOK AND LAYOUT).
+10. Look and layout: top bar navigation.
+11. Look and layout: detail drawer for list screens.
+12. HTML emails (see HTML EMAILS).
+13. UUID identifiers (see UUID IDENTIFIERS). Only after steps 9 to 12 are done.
 
 Finish each step before starting the next. At the end, run the full test suite and do a manual browser walkthrough of the entire flow as guest and as customer (browse as a guest -> no result -> sign up -> query -> admin responds -> book -> confirm -> pay -> upload pass -> send -> customer downloads, plus an expiry case and a password reset) and report any deviations from this spec.
