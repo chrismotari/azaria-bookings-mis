@@ -9,16 +9,16 @@ import { OptionChips } from '../../components/OptionChips';
 import { TextField } from '../../components/TextField';
 import { Toggle } from '../../components/Toggle';
 import { colors } from '../../theme';
-import { OfferingFormValues } from './offeringSchema';
+import { OfferFormValues } from './offerSchema';
 
 type Props = {
-  control: Control<OfferingFormValues>;
-  /** False for offerings that are always private (custom offerings in a response). */
+  control: Control<OfferFormValues>;
+  /** False for offers that are always private (custom offers in a response). */
   showPublicToggle?: boolean;
 };
 
-/** The offering fields shared by the create/edit form and the respond screen. */
-export function OfferingFields({ control, showPublicToggle = true }: Props) {
+/** The offer fields shared by the create/edit form and the respond screen. */
+export function OfferFields({ control, showPublicToggle = true }: Props) {
   return (
     <>
       <FieldGrid>
@@ -119,7 +119,7 @@ export function OfferingFields({ control, showPublicToggle = true }: Props) {
             <View style={styles.toggle}>
               <Toggle label="Public (listed in Explore)" value={field.value} onChange={field.onChange} />
               {!field.value ? (
-                <Text style={styles.help}>Private offerings are only shown to customers you send them to.</Text>
+                <Text style={styles.help}>Private offers are only shown to customers you send them to.</Text>
               ) : null}
             </View>
           )}

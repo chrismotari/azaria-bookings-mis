@@ -23,7 +23,7 @@ export const BOOKING_EVENT_LABELS: Record<BookingStatus, string> = {
 };
 
 export function bookingRoute(booking: Booking): string {
-  const { origin, destination } = booking.offering;
+  const { origin, destination } = booking.offer;
   return `${origin.city} (${origin.code}) → ${destination.city} (${destination.code})`;
 }
 

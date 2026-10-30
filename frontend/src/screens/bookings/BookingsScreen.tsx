@@ -60,7 +60,7 @@ function BookingRow({ booking, onPress }: { booking: Booking; onPress: () => voi
       <View style={styles.rowMain}>
         <Text style={styles.route}>{bookingRoute(booking)}</Text>
         <Text style={styles.text}>
-          {formatDate(booking.offering.departure_date)} · {booking.offering.airline} ·{' '}
+          {formatDate(booking.offer.departure_date)} · {booking.offer.airline} ·{' '}
           {passengersLabel(booking.passenger_count)}
         </Text>
         <Text style={styles.price}>{formatPrice(booking.total_price)}</Text>

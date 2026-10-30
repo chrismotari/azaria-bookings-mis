@@ -11,7 +11,7 @@ const dateString = (message: string) =>
     .regex(DATE, message)
     .refine((value) => !Number.isNaN(Date.parse(value)), message);
 
-export type OfferingFormValues = {
+export type OfferFormValues = {
   origin: Airport | null;
   destination: Airport | null;
   departure_date: string;
@@ -25,8 +25,8 @@ export type OfferingFormValues = {
 
 const airport = z.custom<Airport | null>().refine((value) => value !== null, 'Choose an airport.');
 
-/** Mirrors the server's offering rules; "valid until" may not be in the past on create only. */
-export function offeringSchema(isCreate: boolean) {
+/** Mirrors the server's offer rules; "valid until" may not be in the past on create only. */
+export function offerSchema(isCreate: boolean) {
   return z
     .object({
       origin: airport,
@@ -64,7 +64,7 @@ export function offeringSchema(isCreate: boolean) {
 }
 
 /** The API body for a validated form. */
-export function toOfferingBody(values: OfferingFormValues) {
+export function toOfferBody(values: OfferFormValues) {
   return {
     ...values,
     origin: values.origin?.id,

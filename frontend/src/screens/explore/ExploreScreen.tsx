@@ -4,20 +4,20 @@ import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
-import { Offering, Paginated } from '../../api/types';
+import { Offer, Paginated } from '../../api/types';
 import { useAuthGate } from '../../auth/gate';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { OptionChips } from '../../components/OptionChips';
 import {
-  EMPTY_OFFERING_FILTERS,
-  OfferingFilterErrors,
-  OfferingFilterFields,
-  OfferingFilterValues,
-  offeringFilterParams,
-  validateOfferingFilters,
-} from '../../components/OfferingFilterFields';
-import { OfferingCard } from '../../components/OfferingCard';
+  EMPTY_OFFER_FILTERS,
+  OfferFilterErrors,
+  OfferFilterFields,
+  OfferFilterValues,
+  offerFilterParams,
+  validateOfferFilters,
+} from '../../components/OfferFilterFields';
+import { OfferCard } from '../../components/OfferCard';
 import { Pagination } from '../../components/Pagination';
 import { Screen } from '../../components/Screen';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
@@ -27,7 +27,7 @@ import { colors, useIsWide } from '../../theme';
 type Ordering = 'departure_date' | 'price' | '-price';
 
 /** The applied filters as a request for options; airports only when chosen from the suggestions. */
-function queryPrefill(filters: OfferingFilterValues): QueryPrefill {
+function queryPrefill(filters: OfferFilterValues): QueryPrefill {
   const prefill: QueryPrefill = {
     origin: filters.origin.airport?.code,
     destination: filters.destination.airport?.code,
@@ -50,25 +50,25 @@ const ORDERING_OPTIONS: { value: Ordering; label: string }[] = [
 export function ExploreScreen() {
   const navigation = useNavigation();
   const isWide = useIsWide();
-  const [draft, setDraft] = useState<OfferingFilterValues>(EMPTY_OFFERING_FILTERS);
-  const [errors, setErrors] = useState<OfferingFilterErrors>({});
-  const [filters, setFilters] = useState<OfferingFilterValues>(EMPTY_OFFERING_FILTERS);
+  const [draft, setDraft] = useState<OfferFilterValues>(EMPTY_OFFER_FILTERS);
+  const [errors, setErrors] = useState<OfferFilterErrors>({});
+  const [filters, setFilters] = useState<OfferFilterValues>(EMPTY_OFFER_FILTERS);
   const [ordering, setOrdering] = useState<Ordering>('departure_date');
   const [page, setPage] = useState(1);
   const [moreFilters, setMoreFilters] = useState(false);
   const requireAuth = useAuthGate();
 
-  const offerings = useQuery({
-    queryKey: ['offerings', filters, ordering, page],
+  const offers = useQuery({
+    queryKey: ['offers', filters, ordering, page],
     queryFn: async () => {
-      const params = { ...offeringFilterParams(filters), ordering, page };
-      return (await api.get<Paginated<Offering>>('/offerings', { params })).data;
+      const params = { ...offerFilterParams(filters), ordering, page };
+      return (await api.get<Paginated<Offer>>('/offers', { params })).data;
     },
     placeholderData: keepPreviousData,
   });
 
   const search = () => {
-    const found = validateOfferingFilters(draft);
+    const found = validateOfferFilters(draft);
     setErrors(found);
     if (Object.keys(found).length > 0) {
       setMoreFilters(true);
@@ -79,9 +79,9 @@ export function ExploreScreen() {
   };
 
   const clear = () => {
-    setDraft(EMPTY_OFFERING_FILTERS);
+    setDraft(EMPTY_OFFER_FILTERS);
     setErrors({});
-    setFilters(EMPTY_OFFERING_FILTERS);
+    setFilters(EMPTY_OFFER_FILTERS);
     setPage(1);
   };
 
@@ -89,7 +89,7 @@ export function ExploreScreen() {
     <Screen>
       <Text style={styles.title}>Find a flight deal</Text>
       <Card>
-        <OfferingFilterFields
+        <OfferFilterFields
           value={draft}
           onChange={setDraft}
           errors={errors}
@@ -119,11 +119,11 @@ export function ExploreScreen() {
         }}
       />
 
-      {offerings.isPending ? (
+      {offers.isPending ? (
         <LoadingState />
-      ) : offerings.isError ? (
-        <ErrorState error={offerings.error} onRetry={() => offerings.refetch()} />
-      ) : offerings.data.results.length === 0 ? (
+      ) : offers.isError ? (
+        <ErrorState error={offers.error} onRetry={() => offers.refetch()} />
+      ) : offers.data.results.length === 0 ? (
         <View style={styles.empty}>
           <EmptyState message="No flight deals match your search right now. Tell us what you need and we will find options for you." />
           <Button
@@ -134,19 +134,19 @@ export function ExploreScreen() {
       ) : (
         <>
           <Text style={styles.count}>
-            {offerings.data.count} deal{offerings.data.count === 1 ? '' : 's'}
+            {offers.data.count} deal{offers.data.count === 1 ? '' : 's'}
           </Text>
           <View style={styles.grid}>
-            {offerings.data.results.map((offering) => (
-              <View key={offering.id} style={styles.gridItem}>
-                <OfferingCard
-                  offering={offering}
-                  onPress={() => navigation.navigate('OfferingDetail', { id: offering.id })}
+            {offers.data.results.map((offer) => (
+              <View key={offer.id} style={styles.gridItem}>
+                <OfferCard
+                  offer={offer}
+                  onPress={() => navigation.navigate('OfferDetail', { id: offer.id })}
                 />
               </View>
             ))}
           </View>
-          <Pagination page={page} count={offerings.data.count} onChange={setPage} />
+          <Pagination page={page} count={offers.data.count} onChange={setPage} />
         </>
       )}
     </Screen>

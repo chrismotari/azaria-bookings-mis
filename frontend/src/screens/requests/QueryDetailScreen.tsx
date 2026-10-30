@@ -8,7 +8,7 @@ import { QueryDetail } from '../../api/types';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { FormError } from '../../components/Field';
-import { OfferingCard } from '../../components/OfferingCard';
+import { OfferCard } from '../../components/OfferCard';
 import { QuerySummary } from '../../components/QuerySummary';
 import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
@@ -74,11 +74,11 @@ export function QueryDetailScreen({ navigation, route }: NativeStackScreenProps<
             <Text style={styles.muted}>{formatDateTime(response.created_at)}</Text>
             {response.message ? <Text style={styles.message}>{response.message}</Text> : null}
             <View style={styles.grid}>
-              {response.offerings.map((offering) => (
-                <View key={offering.id} style={styles.gridItem}>
-                  <OfferingCard
-                    offering={offering}
-                    onPress={() => navigation.navigate('OfferingDetail', { id: offering.id, query: id })}
+              {response.offers.map((offer) => (
+                <View key={offer.id} style={styles.gridItem}>
+                  <OfferCard
+                    offer={offer}
+                    onPress={() => navigation.navigate('OfferDetail', { id: offer.id, query: id })}
                   />
                 </View>
               ))}

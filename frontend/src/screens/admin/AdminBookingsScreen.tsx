@@ -93,7 +93,7 @@ function AdminBookingCard({ booking, onPress }: { booking: AdminBooking; onPress
       </View>
       <Text style={styles.route}>{bookingRoute(booking)}</Text>
       <Text style={styles.text}>
-        {formatDate(booking.offering.departure_date)} · {passengersLabel(booking.passenger_count)} ·{' '}
+        {formatDate(booking.offer.departure_date)} · {passengersLabel(booking.passenger_count)} ·{' '}
         {formatPrice(booking.total_price)}
       </Text>
       <Text style={styles.muted}>Booked {formatDateTime(booking.created_at)}</Text>

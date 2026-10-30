@@ -5,18 +5,18 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
-import { AdminOffering, Paginated } from '../../api/types';
+import { AdminOffer, Paginated } from '../../api/types';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { FieldGrid, FormError } from '../../components/Field';
 import {
-  EMPTY_OFFERING_FILTERS,
-  OfferingFilterErrors,
-  OfferingFilterFields,
-  OfferingFilterValues,
-  offeringFilterParams,
-  validateOfferingFilters,
-} from '../../components/OfferingFilterFields';
+  EMPTY_OFFER_FILTERS,
+  OfferFilterErrors,
+  OfferFilterFields,
+  OfferFilterValues,
+  offerFilterParams,
+  validateOfferFilters,
+} from '../../components/OfferFilterFields';
 import { OptionChips } from '../../components/OptionChips';
 import { Pagination } from '../../components/Pagination';
 import { Screen } from '../../components/Screen';
@@ -25,9 +25,9 @@ import { Toggle } from '../../components/Toggle';
 import { colors, useIsWide } from '../../theme';
 import { formatDate, formatPrice, stopoversLabel, ticketClassLabel } from '../../utils/format';
 
-type AdminFilters = OfferingFilterValues & { is_active: '' | 'true' | 'false'; is_public: '' | 'true' | 'false' };
+type AdminFilters = OfferFilterValues & { is_active: '' | 'true' | 'false'; is_public: '' | 'true' | 'false' };
 
-const EMPTY_FILTERS: AdminFilters = { ...EMPTY_OFFERING_FILTERS, is_active: '', is_public: '' };
+const EMPTY_FILTERS: AdminFilters = { ...EMPTY_OFFER_FILTERS, is_active: '', is_public: '' };
 
 const YES_NO_ANY = (yes: string, no: string): { value: '' | 'true' | 'false'; label: string }[] => [
   { value: '', label: 'All' },
@@ -35,38 +35,38 @@ const YES_NO_ANY = (yes: string, no: string): { value: '' | 'true' | 'false'; la
   { value: 'false', label: no },
 ];
 
-export function AdminOfferingsScreen() {
+export function AdminOffersScreen() {
   const navigation = useNavigation();
   const queryClient = useQueryClient();
   const isWide = useIsWide();
   const [draft, setDraft] = useState<AdminFilters>(EMPTY_FILTERS);
-  const [errors, setErrors] = useState<OfferingFilterErrors>({});
+  const [errors, setErrors] = useState<OfferFilterErrors>({});
   const [filters, setFilters] = useState<AdminFilters>(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const offerings = useQuery({
-    queryKey: ['admin', 'offerings', filters, page],
+  const offers = useQuery({
+    queryKey: ['admin', 'offers', filters, page],
     queryFn: async () => {
       const params = {
-        ...offeringFilterParams(filters),
+        ...offerFilterParams(filters),
         ...(filters.is_active ? { is_active: filters.is_active } : {}),
         ...(filters.is_public ? { is_public: filters.is_public } : {}),
         page,
       };
-      return (await api.get<Paginated<AdminOffering>>('/admin/offerings', { params })).data;
+      return (await api.get<Paginated<AdminOffer>>('/admin/offers', { params })).data;
     },
     placeholderData: keepPreviousData,
   });
 
   const setActive = useMutation({
     mutationFn: ({ id, is_active }: { id: number; is_active: boolean }) =>
-      api.patch(`/admin/offerings/${id}`, { is_active }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'offerings'] }),
+      api.patch(`/admin/offers/${id}`, { is_active }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'offers'] }),
   });
 
   const apply = () => {
-    const found = validateOfferingFilters(draft);
+    const found = validateOfferFilters(draft);
     setErrors(found);
     if (Object.keys(found).length === 0) {
       setFilters(draft);
@@ -84,8 +84,8 @@ export function AdminOfferingsScreen() {
   return (
     <Screen>
       <View style={styles.header}>
-        <Text style={styles.title}>Offerings</Text>
-        <Button title="New offering" onPress={() => navigation.navigate('AdminOfferingNew')} />
+        <Text style={styles.title}>Offers</Text>
+        <Button title="New offer" onPress={() => navigation.navigate('AdminOfferNew')} />
       </View>
 
       {!isWide ? (
@@ -98,7 +98,7 @@ export function AdminOfferingsScreen() {
 
       {isWide || filtersOpen ? (
         <Card>
-          <OfferingFilterFields
+          <OfferFilterFields
             value={draft}
             onChange={(base) => setDraft({ ...draft, ...base })}
             errors={errors}
@@ -127,31 +127,31 @@ export function AdminOfferingsScreen() {
 
       <FormError message={setActive.isError ? errorMessage(setActive.error) : null} />
 
-      {offerings.isPending ? (
+      {offers.isPending ? (
         <LoadingState />
-      ) : offerings.isError ? (
-        <ErrorState error={offerings.error} onRetry={() => offerings.refetch()} />
-      ) : offerings.data.results.length === 0 ? (
-        <EmptyState message="No offerings match these filters." />
+      ) : offers.isError ? (
+        <ErrorState error={offers.error} onRetry={() => offers.refetch()} />
+      ) : offers.data.results.length === 0 ? (
+        <EmptyState message="No offers match these filters." />
       ) : (
         <>
           <Text style={styles.count}>
-            {offerings.data.count} offering{offerings.data.count === 1 ? '' : 's'}
+            {offers.data.count} offer{offers.data.count === 1 ? '' : 's'}
           </Text>
           <View style={isWide ? styles.table : styles.cards}>
             {isWide ? <TableHeader /> : null}
-            {offerings.data.results.map((offering) => (
-              <OfferingRow
-                key={offering.id}
-                offering={offering}
+            {offers.data.results.map((offer) => (
+              <OfferRow
+                key={offer.id}
+                offer={offer}
                 wide={isWide}
-                toggling={setActive.isPending && setActive.variables?.id === offering.id}
-                onToggleActive={(is_active) => setActive.mutate({ id: offering.id, is_active })}
-                onEdit={() => navigation.navigate('AdminOfferingEdit', { id: offering.id })}
+                toggling={setActive.isPending && setActive.variables?.id === offer.id}
+                onToggleActive={(is_active) => setActive.mutate({ id: offer.id, is_active })}
+                onEdit={() => navigation.navigate('AdminOfferEdit', { id: offer.id })}
               />
             ))}
           </View>
-          <Pagination page={page} count={offerings.data.count} onChange={setPage} />
+          <Pagination page={page} count={offers.data.count} onChange={setPage} />
         </>
       )}
     </Screen>
@@ -172,25 +172,25 @@ function TableHeader() {
 }
 
 type RowProps = {
-  offering: AdminOffering;
+  offer: AdminOffer;
   wide: boolean;
   toggling: boolean;
   onToggleActive: (value: boolean) => void;
   onEdit: () => void;
 };
 
-function OfferingRow({ offering, wide, toggling, onToggleActive, onEdit }: RowProps) {
-  const route = `${offering.origin.code} → ${offering.destination.code}`;
-  const cities = `${offering.origin.city} → ${offering.destination.city}`;
-  const flight = `${offering.airline} · ${ticketClassLabel(offering.ticket_class)} · ${stopoversLabel(offering.stopovers)}`;
+function OfferRow({ offer, wide, toggling, onToggleActive, onEdit }: RowProps) {
+  const route = `${offer.origin.code} → ${offer.destination.code}`;
+  const cities = `${offer.origin.city} → ${offer.destination.city}`;
+  const flight = `${offer.airline} · ${ticketClassLabel(offer.ticket_class)} · ${stopoversLabel(offer.stopovers)}`;
   const status = [
-    offering.is_public ? 'Public' : 'Private',
-    offering.is_bookable ? 'Bookable' : offering.is_active ? 'Lapsed' : 'Deactivated',
+    offer.is_public ? 'Public' : 'Private',
+    offer.is_bookable ? 'Bookable' : offer.is_active ? 'Lapsed' : 'Deactivated',
   ].join(' · ');
   const toggle = (
     <Toggle
-      label={offering.is_active ? 'Active' : 'Inactive'}
-      value={offering.is_active}
+      label={offer.is_active ? 'Active' : 'Inactive'}
+      value={offer.is_active}
       onChange={onToggleActive}
       disabled={toggling}
     />
@@ -204,11 +204,11 @@ function OfferingRow({ offering, wide, toggling, onToggleActive, onEdit }: RowPr
           <Text style={styles.muted}>{cities}</Text>
         </View>
         <View style={styles.colDates}>
-          <Text style={styles.cell}>{formatDate(offering.departure_date)}</Text>
-          <Text style={styles.muted}>until {formatDate(offering.valid_until)}</Text>
+          <Text style={styles.cell}>{formatDate(offer.departure_date)}</Text>
+          <Text style={styles.muted}>until {formatDate(offer.valid_until)}</Text>
         </View>
         <Text style={[styles.cell, styles.colFlight]}>{flight}</Text>
-        <Text style={[styles.strong, styles.colPrice]}>{formatPrice(offering.price)}</Text>
+        <Text style={[styles.strong, styles.colPrice]}>{formatPrice(offer.price)}</Text>
         <Text style={[styles.cell, styles.colStatus]}>{status}</Text>
         <View style={[styles.colActions, styles.rowActions]}>
           {toggle}
@@ -225,10 +225,10 @@ function OfferingRow({ offering, wide, toggling, onToggleActive, onEdit }: RowPr
           <Text style={styles.strong}>{route}</Text>
           <Text style={styles.muted}>{cities}</Text>
         </View>
-        <Text style={styles.strong}>{formatPrice(offering.price)}</Text>
+        <Text style={styles.strong}>{formatPrice(offer.price)}</Text>
       </View>
       <Text style={styles.cell}>
-        {formatDate(offering.departure_date)} · valid until {formatDate(offering.valid_until)}
+        {formatDate(offer.departure_date)} · valid until {formatDate(offer.valid_until)}
       </Text>
       <Text style={styles.cell}>{flight}</Text>
       <Text style={styles.muted}>{status}</Text>

@@ -15,7 +15,7 @@ class Airport(models.Model):
         return f"{self.code} – {self.city}"
 
 
-class OfferingQuerySet(models.QuerySet):
+class OfferQuerySet(models.QuerySet):
     def bookable(self):
         today = timezone.localdate()
         return self.filter(is_active=True, valid_until__gte=today, departure_date__gte=today)
@@ -24,14 +24,14 @@ class OfferingQuerySet(models.QuerySet):
         return self.filter(is_active=True, is_public=True)
 
     def visible_to(self, user):
-        """Public active offerings, plus those sent to this customer in a query response."""
+        """Public active offers, plus those sent to this customer in a query response."""
         if not user.is_authenticated:
             return self.publicly_visible()
         sent_to_user = self.filter(query_responses__query__user=user).values("pk")
         return self.filter(models.Q(is_active=True, is_public=True) | models.Q(pk__in=sent_to_user))
 
 
-class Offering(models.Model):
+class Offer(models.Model):
     class TicketClass(models.TextChoices):
         ECONOMY = "economy", "Economy"
         PREMIUM_ECONOMY = "premium_economy", "Premium economy"
@@ -48,12 +48,12 @@ class Offering(models.Model):
     airline = models.CharField(max_length=100)
     # Inclusive through that day in Nairobi time.
     valid_until = models.DateField()
-    # False for offerings created for one specific query response.
+    # False for offers created for one specific query response.
     is_public = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    objects = OfferingQuerySet.as_manager()
+    objects = OfferQuerySet.as_manager()
 
     class Meta:
         ordering = ["departure_date", "price"]

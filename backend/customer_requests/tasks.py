@@ -64,7 +64,7 @@ def notify_customer_query_responded(query_response_id):
         {
             "query": query,
             "response": response,
-            "option_count": response.offerings.count(),
+            "option_count": response.offers.count(),
             **describe_query(query),
         },
     )

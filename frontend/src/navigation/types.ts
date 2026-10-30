@@ -23,7 +23,7 @@ export type MainTabParamList = {
 
 export type AdminTabParamList = {
   AdminDashboard: undefined;
-  AdminOfferings: undefined;
+  AdminOffers: undefined;
   AdminRequests: { status?: QueryStatus | 'all' } | undefined;
   AdminBookings: { status?: BookingStatus | 'all' } | undefined;
   AdminSettings: undefined;
@@ -32,8 +32,8 @@ export type AdminTabParamList = {
 export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
   /** query: the request whose response led here; passed on to the booking. */
-  OfferingDetail: { id: number; query?: number };
-  BookingNew: { offering: number; query?: number };
+  OfferDetail: { id: number; query?: number };
+  BookingNew: { offer: number; query?: number };
   BookingDetail: { id: number };
   QueryNew: QueryPrefill | undefined;
   QueryDetail: { id: number };
@@ -42,8 +42,8 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: { uid?: string; token?: string } | undefined;
   AdminTabs: NavigatorScreenParams<AdminTabParamList> | undefined;
-  AdminOfferingNew: undefined;
-  AdminOfferingEdit: { id: number };
+  AdminOfferNew: undefined;
+  AdminOfferEdit: { id: number };
   AdminQueryDetail: { id: number };
   AdminQueryRespond: { id: number };
   AdminBookingDetail: { id: number };

@@ -12,7 +12,7 @@ class BookingEventInline(admin.TabularInline):
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "user", "offering", "status", "created_at"]
+    list_display = ["__str__", "user", "offer", "status", "created_at"]
     list_filter = ["status"]
-    raw_id_fields = ["user", "offering", "query"]
+    raw_id_fields = ["user", "offer", "query"]
     inlines = [BookingEventInline]

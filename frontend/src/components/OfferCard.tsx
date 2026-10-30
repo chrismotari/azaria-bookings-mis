@@ -1,37 +1,37 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Offering } from '../api/types';
+import { Offer } from '../api/types';
 import { colors } from '../theme';
 import { formatDate, formatPrice, stopoversLabel, ticketClassLabel } from '../utils/format';
 
-/** Summary of an offering that opens its detail when pressed. */
-export function OfferingCard({ offering, onPress }: { offering: Offering; onPress: () => void }) {
+/** Summary of an offer that opens its detail when pressed. */
+export function OfferCard({ offer, onPress }: { offer: Offer; onPress: () => void }) {
   return (
     <Pressable
       accessibilityRole="link"
-      accessibilityLabel={`${offering.origin.city} to ${offering.destination.city}, ${formatDate(offering.departure_date)}`}
+      accessibilityLabel={`${offer.origin.city} to ${offer.destination.city}, ${formatDate(offer.departure_date)}`}
       onPress={onPress}
       style={({ pressed }) => [styles.card, pressed && styles.pressed]}
     >
       <View style={styles.top}>
         <View style={styles.shrink}>
           <Text style={styles.route}>
-            {offering.origin.code} → {offering.destination.code}
+            {offer.origin.code} → {offer.destination.code}
           </Text>
           <Text style={styles.muted} numberOfLines={1}>
-            {offering.origin.city} → {offering.destination.city}
+            {offer.origin.city} → {offer.destination.city}
           </Text>
         </View>
         <View style={styles.priceBox}>
-          <Text style={styles.price}>{formatPrice(offering.price)}</Text>
+          <Text style={styles.price}>{formatPrice(offer.price)}</Text>
           <Text style={styles.muted}>per person</Text>
         </View>
       </View>
-      <Text style={styles.text}>{formatDate(offering.departure_date)}</Text>
+      <Text style={styles.text}>{formatDate(offer.departure_date)}</Text>
       <Text style={styles.text}>
-        {offering.airline} · {ticketClassLabel(offering.ticket_class)} · {stopoversLabel(offering.stopovers)}
+        {offer.airline} · {ticketClassLabel(offer.ticket_class)} · {stopoversLabel(offer.stopovers)}
       </Text>
-      <Text style={styles.muted}>Offer valid until {formatDate(offering.valid_until)}</Text>
+      <Text style={styles.muted}>Offer valid until {formatDate(offer.valid_until)}</Text>
     </Pressable>
   );
 }

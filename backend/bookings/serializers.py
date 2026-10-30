@@ -3,7 +3,7 @@ import os
 from rest_framework import serializers
 
 from accounts.serializers import UserSerializer
-from catalog.serializers import OfferingSerializer
+from catalog.serializers import OfferSerializer
 from core.models import AppSettings
 from customer_requests.models import Query
 
@@ -50,14 +50,14 @@ class BoardingPassUploadSerializer(serializers.Serializer):
 
 
 class BookingCreateSerializer(serializers.ModelSerializer):
-    """Input for create_booking; the offering's visibility and bookability are checked there, under lock."""
+    """Input for create_booking; the offer's visibility and bookability are checked there, under lock."""
 
-    offering = serializers.IntegerField()
+    offer = serializers.IntegerField()
     query = serializers.PrimaryKeyRelatedField(queryset=Query.objects.none(), required=False, allow_null=True)
 
     class Meta:
         model = Booking
-        fields = ["offering", "passenger_count", "notes", "query"]
+        fields = ["offer", "passenger_count", "notes", "query"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -66,14 +66,14 @@ class BookingCreateSerializer(serializers.ModelSerializer):
 
 
 class BookingSerializer(serializers.ModelSerializer):
-    offering = OfferingSerializer(read_only=True)
+    offer = OfferSerializer(read_only=True)
     total_price = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
 
     class Meta:
         model = Booking
         fields = [
             "id",
-            "offering",
+            "offer",
             "query",
             "passenger_count",
             "notes",

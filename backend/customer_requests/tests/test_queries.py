@@ -4,7 +4,7 @@ import pytest
 from django.core import mail
 from django.utils import timezone
 
-from catalog.models import Offering
+from catalog.models import Offer
 from core.models import AppSettings
 from customer_requests.models import Query, QueryResponse
 from customer_requests.tasks import notify_admin_new_query, notify_customer_query_responded
@@ -38,7 +38,7 @@ def query(customer, airports):
     )
 
 
-def new_offering_payload(airports, **overrides):
+def new_offer_payload(airports, **overrides):
     return {
         "origin": airports["NBO"].id,
         "destination": airports["DXB"].id,
@@ -175,14 +175,14 @@ def test_admin_lists_queries_with_customer_and_status_filter(admin_api, query, o
     ]
 
 
-def test_admin_responds_with_existing_and_new_offerings(
-    admin_api, query, airports, make_offering, django_capture_on_commit_callbacks
+def test_admin_responds_with_existing_and_new_offers(
+    admin_api, query, airports, make_offer, django_capture_on_commit_callbacks
 ):
-    existing = make_offering(destination="DXB")
+    existing = make_offer(destination="DXB")
     payload = {
         "message": "Here are two good options.",
-        "offering_ids": [existing.id],
-        "new_offerings": [new_offering_payload(airports)],
+        "offer_ids": [existing.id],
+        "new_offers": [new_offer_payload(airports)],
     }
     with django_capture_on_commit_callbacks(execute=True):
         response = admin_api.post(f"/api/admin/queries/{query.id}/respond", payload, format="json")
@@ -190,9 +190,9 @@ def test_admin_responds_with_existing_and_new_offerings(
     assert response.data["status"] == "responded"
     [query_response] = response.data["responses"]
     assert query_response["message"] == "Here are two good options."
-    assert len(query_response["offerings"]) == 2
+    assert len(query_response["offers"]) == 2
 
-    created = Offering.objects.exclude(pk=existing.pk).get()
+    created = Offer.objects.exclude(pk=existing.pk).get()
     assert created.is_public is False
     assert created.airline == "Emirates"
     query.refresh_from_db()
@@ -206,91 +206,91 @@ def test_admin_responds_with_existing_and_new_offerings(
     assert f"/requests/{query.id}" in email.body
 
 
-def test_admin_may_respond_more_than_once(admin_api, query, make_offering):
-    offering = make_offering(destination="DXB")
+def test_admin_may_respond_more_than_once(admin_api, query, make_offer):
+    offer = make_offer(destination="DXB")
     for _ in range(2):
         response = admin_api.post(
-            f"/api/admin/queries/{query.id}/respond", {"offering_ids": [offering.id]}, format="json"
+            f"/api/admin/queries/{query.id}/respond", {"offer_ids": [offer.id]}, format="json"
         )
         assert response.status_code == 201
     assert QueryResponse.objects.filter(query=query).count() == 2
 
 
-def test_respond_requires_at_least_one_offering(admin_api, query):
+def test_respond_requires_at_least_one_offer(admin_api, query):
     response = admin_api.post(f"/api/admin/queries/{query.id}/respond", {"message": "Sorry"}, format="json")
     assert response.status_code == 400
     query.refresh_from_db()
     assert query.status == Query.Status.OPEN
 
 
-def test_respond_rejects_unknown_or_unbookable_offerings(admin_api, query, make_offering):
-    inactive = make_offering(is_active=False)
+def test_respond_rejects_unknown_or_unbookable_offers(admin_api, query, make_offer):
+    inactive = make_offer(is_active=False)
     for ids in ([inactive.id], [999999]):
-        response = admin_api.post(f"/api/admin/queries/{query.id}/respond", {"offering_ids": ids}, format="json")
+        response = admin_api.post(f"/api/admin/queries/{query.id}/respond", {"offer_ids": ids}, format="json")
         assert response.status_code == 400
-        assert "offering_ids" in response.data
+        assert "offer_ids" in response.data
 
 
-def test_respond_is_all_or_nothing_when_a_new_offering_is_invalid(admin_api, query, airports, make_offering):
-    existing = make_offering()
+def test_respond_is_all_or_nothing_when_a_new_offer_is_invalid(admin_api, query, airports, make_offer):
+    existing = make_offer()
     payload = {
-        "offering_ids": [existing.id],
-        "new_offerings": [
-            new_offering_payload(airports),
-            new_offering_payload(airports, destination=airports["NBO"].id),
+        "offer_ids": [existing.id],
+        "new_offers": [
+            new_offer_payload(airports),
+            new_offer_payload(airports, destination=airports["NBO"].id),
         ],
     }
     response = admin_api.post(f"/api/admin/queries/{query.id}/respond", payload, format="json")
     assert response.status_code == 400
-    errors = response.data["new_offerings"]
+    errors = response.data["new_offers"]
     assert errors[0] == {}
     assert "destination" in errors[1]
-    assert Offering.objects.count() == 1
+    assert Offer.objects.count() == 1
     assert QueryResponse.objects.count() == 0
 
 
-def test_respond_to_closed_query_returns_409(admin_api, query, make_offering):
+def test_respond_to_closed_query_returns_409(admin_api, query, make_offer):
     query.status = Query.Status.CLOSED
     query.save()
     response = admin_api.post(
-        f"/api/admin/queries/{query.id}/respond", {"offering_ids": [make_offering().id]}, format="json"
+        f"/api/admin/queries/{query.id}/respond", {"offer_ids": [make_offer().id]}, format="json"
     )
     assert response.status_code == 409
     assert QueryResponse.objects.count() == 0
 
 
-def test_customer_detail_includes_responses_with_full_offerings(customer_api, admin_api, query, airports):
+def test_customer_detail_includes_responses_with_full_offers(customer_api, admin_api, query, airports):
     admin_api.post(
         f"/api/admin/queries/{query.id}/respond",
-        {"message": "Try this", "new_offerings": [new_offering_payload(airports)]},
+        {"message": "Try this", "new_offers": [new_offer_payload(airports)]},
         format="json",
     )
     response = customer_api.get(f"/api/queries/{query.id}")
     assert response.status_code == 200
-    [offering] = response.data["responses"][0]["offerings"]
-    assert offering["origin"]["code"] == "NBO"
-    assert offering["destination"]["city"] == "Dubai"
-    assert offering["airline"] == "Emirates"
-    assert offering["is_bookable"] is True
+    [offer] = response.data["responses"][0]["offers"]
+    assert offer["origin"]["code"] == "NBO"
+    assert offer["destination"]["city"] == "Dubai"
+    assert offer["airline"] == "Emirates"
+    assert offer["is_bookable"] is True
 
 
-# Visibility of offerings sent in a response
+# Visibility of offers sent in a response
 
 
-def test_non_public_offering_visible_only_to_the_customer_it_was_sent_to(
+def test_non_public_offer_visible_only_to_the_customer_it_was_sent_to(
     api, customer_api, other_customer_api, admin_api, query, airports
 ):
     admin_api.post(
         f"/api/admin/queries/{query.id}/respond",
-        {"new_offerings": [new_offering_payload(airports)]},
+        {"new_offers": [new_offer_payload(airports)]},
         format="json",
     )
-    offering = Offering.objects.get()
-    assert customer_api.get(f"/api/offerings/{offering.id}").status_code == 200
-    assert other_customer_api.get(f"/api/offerings/{offering.id}").status_code == 404
-    assert api.get(f"/api/offerings/{offering.id}").status_code == 404
+    offer = Offer.objects.get()
+    assert customer_api.get(f"/api/offers/{offer.id}").status_code == 200
+    assert other_customer_api.get(f"/api/offers/{offer.id}").status_code == 404
+    assert api.get(f"/api/offers/{offer.id}").status_code == 404
     # Never listed in browse, not even for the customer it was sent to.
-    assert customer_api.get("/api/offerings").data["results"] == []
+    assert customer_api.get("/api/offers").data["results"] == []
 
 
 # Email tasks skip when the state has changed
@@ -303,9 +303,9 @@ def test_new_query_email_skipped_when_query_no_longer_open(query):
     assert mail.outbox == []
 
 
-def test_responded_email_skipped_when_query_closed(query, make_offering):
+def test_responded_email_skipped_when_query_closed(query, make_offer):
     response = QueryResponse.objects.create(query=query, message="Hi")
-    response.offerings.set([make_offering()])
+    response.offers.set([make_offer()])
     query.status = Query.Status.CLOSED
     query.save()
     notify_customer_query_responded(response.id)

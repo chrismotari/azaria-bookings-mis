@@ -6,7 +6,7 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from catalog.models import Offering
+from catalog.models import Offer
 from core.exceptions import Conflict
 from core.models import AppSettings
 
@@ -59,23 +59,23 @@ def _queue_email(task, booking_id):
 
 
 def create_booking(user, data):
-    """data: offering (id), passenger_count, notes and optionally query, already validated by the serializer."""
+    """data: offer (id), passenger_count, notes and optionally query, already validated by the serializer."""
     with transaction.atomic():
-        # Locking the offering serialises concurrent bookings of it, so the duplicate check holds.
-        offering = (
-            Offering.objects.visible_to(user).bookable().select_for_update().filter(pk=data["offering"]).first()
+        # Locking the offer serialises concurrent bookings of it, so the duplicate check holds.
+        offer = (
+            Offer.objects.visible_to(user).bookable().select_for_update().filter(pk=data["offer"]).first()
         )
-        if offering is None:
-            raise ValidationError({"offering": "This offering is not available to book."})
-        if Booking.objects.filter(user=user, offering=offering, status__in=Booking.ACTIVE_STATUSES).exists():
-            raise Conflict("You already have an active booking for this offering.")
+        if offer is None:
+            raise ValidationError({"offer": "This offer is not available to book."})
+        if Booking.objects.filter(user=user, offer=offer, status__in=Booking.ACTIVE_STATUSES).exists():
+            raise Conflict("You already have an active booking for this offer.")
         booking = Booking.objects.create(
             user=user,
-            offering=offering,
+            offer=offer,
             query=data.get("query"),
             passenger_count=data["passenger_count"],
             notes=data.get("notes", ""),
-            unit_price=offering.price,
+            unit_price=offer.price,
         )
         BookingEvent.objects.create(booking=booking, to_status=Status.REQUESTED, actor=user)
         _queue_email(tasks.notify_admin_new_booking, booking.pk)

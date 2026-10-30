@@ -1,6 +1,6 @@
 // End-to-end flow in the browser:
 // guest searches (no results) -> Request options -> gate -> register -> request sent
-// -> admin responds with a custom offering -> customer books it -> admin confirms, marks paid,
+// -> admin responds with a custom offer -> customer books it -> admin confirms, marks paid,
 // uploads a PDF and a PNG, sends them -> customer downloads both and they match.
 //
 // Usage: AZARIA_ADMIN_EMAIL=... AZARIA_ADMIN_PASSWORD=... node flow.mjs
@@ -131,16 +131,16 @@ await run('admin', async ({ page, shot }) => {
     console.log('payment instructions were empty: saved sample text');
   }
   await page.goto(`${APP}/admin/requests/${queryId}/respond`);
-  await seen(page, 'Custom offerings').waitFor();
+  await seen(page, 'Custom offers').waitFor();
   await page.waitForTimeout(1000);
-  // The custom offering form is prefilled with the request's airports.
+  // The custom offer form is prefilled with the request's airports.
   await field(page, 'Departure date').fill(nairobiDate(21));
   await field(page, 'Valid until (inclusive)').fill(nairobiDate(10));
   await page.getByRole('radio', { name: 'Economy' }).nth(1).click();
   await field(page, 'Airline').fill('Flow Air');
   await field(page, 'Price per person (USD)').fill('500');
   await field(page, 'Stopovers').fill('0');
-  await button(page, 'Add custom offering').click();
+  await button(page, 'Add custom offer').click();
   await seen(page, 'Custom:').waitFor();
   await field(page, 'Message to the customer').fill('Option from the run skill flow.');
   await button(page, 'Send response').click();
@@ -152,7 +152,7 @@ console.log('== customer books');
 await run(`customer-${stamp}`, async ({ page, shot }) => {
   await page.goto(`${APP}/requests/${queryId}`);
   await seen(page, 'Option from the run skill flow.').waitFor();
-  // Offering cards are links labelled "<city> to <city>, <date>".
+  // Offer cards are links labelled "<city> to <city>, <date>".
   await page.getByRole('link', { name: / to / }).first().click();
   await button(page, 'Book').click();
   await seen(page, 'Book this flight').waitFor();

@@ -1,6 +1,6 @@
 # Azaria Bookings
 
-A flight-offerings and booking portal for a Nairobi travel agency ([azariabookings.com](https://azariabookings.com)).
+A flight-offers and booking portal for a Nairobi travel agency ([azariabookings.com](https://azariabookings.com)).
 
 The agency owner (the **admin**) lists flight deals. Anyone can browse them. Registered **customers** can ask for options when nothing fits and can book a deal. The admin then confirms availability, the customer pays outside the system, the admin marks the booking paid, uploads the boarding passes and sends them. The customer receives them by email and can also download them in the app.
 
@@ -26,7 +26,7 @@ The app is **web first**: it is developed and checked in the browser. It still c
 ```
 backend/                 Django project "config"
   accounts/              Custom user (login by email, role customer/admin), auth endpoints, create_admin
-  catalog/               Airports (seed_airports) and flight offerings
+  catalog/               Airports (seed_airports) and flight offers
   customer_requests/     Customer requests for options and the admin's responses (app label "requests")
   bookings/              Bookings, the status state machine (services.py), boarding passes, scheduled tasks
   core/                  App settings, permissions, private storage, email templates
@@ -156,9 +156,9 @@ Everything is under `/api/`. Authenticate with `Authorization: Bearer <access to
 | Area | Endpoints |
 | --- | --- |
 | Auth (public) | `POST auth/register`, `auth/login`, `auth/refresh`, `auth/password-reset`, `auth/password-reset-confirm`; `GET auth/me` |
-| Browse (public) | `GET airports?search=`, `GET offerings` (filters: origin, destination, date range, price range, class, max stopovers; ordering), `GET offerings/{id}` |
+| Browse (public) | `GET airports?search=`, `GET offers` (filters: origin, destination, date range, price range, class, max stopovers; ordering), `GET offers/{id}` |
 | Customer | `queries` (list, create, detail, `close`), `bookings` (list, create, detail, `cancel`), `GET boarding-passes/{id}/download` |
-| Admin | `admin/dashboard`, `admin/offerings`, `admin/queries` (+ `respond`), `admin/bookings` (+ `confirm-availability`, `mark-unavailable`, `mark-paid`, `complete`, `boarding-passes` upload), `DELETE admin/boarding-passes/{id}`, `admin/settings` |
+| Admin | `admin/dashboard`, `admin/offers`, `admin/queries` (+ `respond`), `admin/bookings` (+ `confirm-availability`, `mark-unavailable`, `mark-paid`, `complete`, `boarding-passes` upload), `DELETE admin/boarding-passes/{id}`, `admin/settings` |
 
 Errors use DRF's standard format.
 

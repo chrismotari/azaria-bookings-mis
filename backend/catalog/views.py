@@ -6,9 +6,9 @@ from rest_framework.views import APIView
 
 from core.permissions import IsAdminRole
 
-from .filters import AdminOfferingFilter, OfferingFilter
-from .models import Airport, Offering
-from .serializers import AdminOfferingSerializer, AirportSerializer, OfferingSerializer
+from .filters import AdminOfferFilter, OfferFilter
+from .models import Airport, Offer
+from .serializers import AdminOfferSerializer, AirportSerializer, OfferSerializer
 
 AIRPORT_SEARCH_LIMIT = 20
 
@@ -35,34 +35,34 @@ class AirportSearchView(APIView):
         return Response(AirportSerializer(airports, many=True).data)
 
 
-class OfferingListView(generics.ListAPIView):
-    """Browse: bookable public offerings only."""
+class OfferListView(generics.ListAPIView):
+    """Browse: bookable public offers only."""
 
     permission_classes = [AllowAny]
-    serializer_class = OfferingSerializer
-    filterset_class = OfferingFilter
+    serializer_class = OfferSerializer
+    filterset_class = OfferFilter
 
     def get_queryset(self):
-        return Offering.objects.publicly_visible().bookable().select_related("origin", "destination")
+        return Offer.objects.publicly_visible().bookable().select_related("origin", "destination")
 
 
-class OfferingDetailView(generics.RetrieveAPIView):
+class OfferDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
-    serializer_class = OfferingSerializer
+    serializer_class = OfferSerializer
 
     def get_queryset(self):
-        return Offering.objects.visible_to(self.request.user).select_related("origin", "destination")
+        return Offer.objects.visible_to(self.request.user).select_related("origin", "destination")
 
 
-class AdminOfferingListView(generics.ListCreateAPIView):
+class AdminOfferListView(generics.ListCreateAPIView):
     permission_classes = [IsAdminRole]
-    serializer_class = AdminOfferingSerializer
-    filterset_class = AdminOfferingFilter
-    queryset = Offering.objects.select_related("origin", "destination")
+    serializer_class = AdminOfferSerializer
+    filterset_class = AdminOfferFilter
+    queryset = Offer.objects.select_related("origin", "destination")
 
 
-class AdminOfferingDetailView(generics.RetrieveUpdateAPIView):
+class AdminOfferDetailView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAdminRole]
-    serializer_class = AdminOfferingSerializer
-    queryset = Offering.objects.select_related("origin", "destination")
+    serializer_class = AdminOfferSerializer
+    queryset = Offer.objects.select_related("origin", "destination")
     http_method_names = ["get", "patch", "head", "options"]

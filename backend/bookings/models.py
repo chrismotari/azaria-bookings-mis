@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from catalog.models import Offering
+from catalog.models import Offer
 from core.storage import private_storage
 from customer_requests.models import Query
 
@@ -19,15 +19,15 @@ class Booking(models.Model):
         CANCELLED = "cancelled", "Cancelled"
         EXPIRED = "expired", "Expired"
 
-    # A customer may hold only one booking in these statuses per offering.
+    # A customer may hold only one booking in these statuses per offer.
     ACTIVE_STATUSES = [Status.REQUESTED, Status.AVAILABILITY_CONFIRMED, Status.PAID]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="bookings")
-    offering = models.ForeignKey(Offering, on_delete=models.PROTECT, related_name="bookings")
+    offer = models.ForeignKey(Offer, on_delete=models.PROTECT, related_name="bookings")
     query = models.ForeignKey(Query, on_delete=models.SET_NULL, null=True, blank=True, related_name="bookings")
     passenger_count = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(9)])
     notes = models.TextField(blank=True)
-    # Per person, copied from the offering at creation.
+    # Per person, copied from the offer at creation.
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=30, choices=Status.choices, default=Status.REQUESTED)
     payment_deadline = models.DateTimeField(null=True, blank=True)

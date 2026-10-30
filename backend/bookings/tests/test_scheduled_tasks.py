@@ -27,14 +27,14 @@ def instructions(db):
 
 
 @pytest.fixture
-def make_booking(customer, make_offering):
-    def make(status=Status.AVAILABILITY_CONFIRMED, payment_deadline=DEADLINE, **offering_fields):
-        offering = make_offering(**offering_fields)
+def make_booking(customer, make_offer):
+    def make(status=Status.AVAILABILITY_CONFIRMED, payment_deadline=DEADLINE, **offer_fields):
+        offer = make_offer(**offer_fields)
         return Booking.objects.create(
             user=customer,
-            offering=offering,
+            offer=offer,
             passenger_count=1,
-            unit_price=offering.price,
+            unit_price=offer.price,
             status=status,
             payment_deadline=payment_deadline if status == Status.AVAILABILITY_CONFIRMED else None,
         )

@@ -17,21 +17,21 @@ logger = logging.getLogger(__name__)
 def _booking_in(booking_id, status):
     """The booking, or None when it is gone or no longer in the status the email describes."""
     return (
-        Booking.objects.select_related("user", "offering__origin", "offering__destination")
+        Booking.objects.select_related("user", "offer__origin", "offer__destination")
         .filter(pk=booking_id, status=status)
         .first()
     )
 
 
 def describe_booking(booking):
-    offering = booking.offering
+    offer = booking.offer
     return {
         "booking": booking,
         "route": (
-            f"{offering.origin.city} ({offering.origin.code}) → {offering.destination.city} ({offering.destination.code})"
+            f"{offer.origin.city} ({offer.origin.code}) → {offer.destination.city} ({offer.destination.code})"
         ),
-        "departure": format_date(offering.departure_date),
-        "ticket_class": offering.get_ticket_class_display(),
+        "departure": format_date(offer.departure_date),
+        "ticket_class": offer.get_ticket_class_display(),
         "total": format_price(booking.total_price),
     }
 
@@ -161,7 +161,7 @@ def expire_unpaid_bookings():
 def expire_stale_requests():
     """Requested bookings whose flight has already departed."""
     booking_ids = Booking.objects.filter(
-        status=Booking.Status.REQUESTED, offering__departure_date__lt=timezone.localdate()
+        status=Booking.Status.REQUESTED, offer__departure_date__lt=timezone.localdate()
     ).values_list("pk", flat=True)
     expired = _expire(list(booking_ids))
     logger.info("Expired %d stale booking request(s).", expired)

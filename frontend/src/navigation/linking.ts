@@ -14,13 +14,13 @@ export const linking: LinkingOptions<RootStackParamList> = {
           Account: 'account',
         },
       },
-      OfferingDetail: {
-        path: 'offerings/:id',
+      OfferDetail: {
+        path: 'offers/:id',
         parse: { id: Number, query: Number },
       },
       BookingNew: {
-        path: 'offerings/:offering/book',
-        parse: { offering: Number, query: Number },
+        path: 'offers/:offer/book',
+        parse: { offer: Number, query: Number },
       },
       BookingDetail: {
         path: 'bookings/:id',
@@ -42,15 +42,15 @@ export const linking: LinkingOptions<RootStackParamList> = {
         path: 'admin',
         screens: {
           AdminDashboard: '',
-          AdminOfferings: 'offerings',
+          AdminOffers: 'offers',
           AdminRequests: 'requests',
           AdminBookings: 'bookings',
           AdminSettings: 'settings',
         },
       },
-      AdminOfferingNew: 'admin/offerings/new',
-      AdminOfferingEdit: {
-        path: 'admin/offerings/:id',
+      AdminOfferNew: 'admin/offers/new',
+      AdminOfferEdit: {
+        path: 'admin/offers/:id',
         parse: { id: Number },
       },
       AdminQueryDetail: {

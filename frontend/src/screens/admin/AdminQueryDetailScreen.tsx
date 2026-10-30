@@ -74,11 +74,11 @@ export function AdminQueryDetailScreen({
           <Card key={response.id}>
             <Text style={styles.muted}>{formatDateTime(response.created_at)}</Text>
             {response.message ? <Text style={styles.text}>{response.message}</Text> : null}
-            {response.offerings.map((offering) => (
-              <Text key={offering.id} style={styles.text}>
-                • {offering.origin.code} → {offering.destination.code}, {formatDate(offering.departure_date)},{' '}
-                {offering.airline}, {ticketClassLabel(offering.ticket_class)}, {stopoversLabel(offering.stopovers)},{' '}
-                {formatPrice(offering.price)}
+            {response.offers.map((offer) => (
+              <Text key={offer.id} style={styles.text}>
+                • {offer.origin.code} → {offer.destination.code}, {formatDate(offer.departure_date)},{' '}
+                {offer.airline}, {ticketClassLabel(offer.ticket_class)}, {stopoversLabel(offer.stopovers)},{' '}
+                {formatPrice(offer.price)}
               </Text>
             ))}
           </Card>

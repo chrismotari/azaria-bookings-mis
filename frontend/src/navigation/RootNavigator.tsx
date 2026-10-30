@@ -9,8 +9,8 @@ import { useSignOut } from '../auth/useSignOut';
 import { AdminBookingDetailScreen } from '../screens/admin/AdminBookingDetailScreen';
 import { AdminBookingsScreen } from '../screens/admin/AdminBookingsScreen';
 import { AdminDashboardScreen } from '../screens/admin/AdminDashboardScreen';
-import { AdminOfferingEditScreen, AdminOfferingNewScreen } from '../screens/admin/AdminOfferingFormScreen';
-import { AdminOfferingsScreen } from '../screens/admin/AdminOfferingsScreen';
+import { AdminOfferEditScreen, AdminOfferNewScreen } from '../screens/admin/AdminOfferFormScreen';
+import { AdminOffersScreen } from '../screens/admin/AdminOffersScreen';
 import { AdminQueryDetailScreen } from '../screens/admin/AdminQueryDetailScreen';
 import { AdminQueryRespondScreen } from '../screens/admin/AdminQueryRespondScreen';
 import { AdminRequestsScreen } from '../screens/admin/AdminRequestsScreen';
@@ -24,7 +24,7 @@ import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { ResetPasswordScreen } from '../screens/auth/ResetPasswordScreen';
 import { AccountScreen } from '../screens/customer/AccountScreen';
 import { ExploreScreen } from '../screens/explore/ExploreScreen';
-import { OfferingDetailScreen } from '../screens/explore/OfferingDetailScreen';
+import { OfferDetailScreen } from '../screens/explore/OfferDetailScreen';
 import { QueryDetailScreen } from '../screens/requests/QueryDetailScreen';
 import { QueryNewScreen } from '../screens/requests/QueryNewScreen';
 import { RequestsScreen } from '../screens/requests/RequestsScreen';
@@ -145,7 +145,7 @@ function AdminTabsNavigator() {
       screenOptions={{ tabBarPosition: isWide ? 'left' : 'bottom', headerRight: () => <LogoutButton /> }}
     >
       <AdminTabs.Screen name="AdminDashboard" component={AdminDashboardScreen} options={{ title: 'Dashboard' }} />
-      <AdminTabs.Screen name="AdminOfferings" component={AdminOfferingsScreen} options={{ title: 'Offerings' }} />
+      <AdminTabs.Screen name="AdminOffers" component={AdminOffersScreen} options={{ title: 'Offers' }} />
       <AdminTabs.Screen name="AdminRequests" component={AdminRequestsScreen} options={{ title: 'Requests' }} />
       <AdminTabs.Screen name="AdminBookings" component={AdminBookingsScreen} options={{ title: 'Bookings' }} />
       <AdminTabs.Screen name="AdminSettings" component={AdminSettingsScreen} options={{ title: 'Settings' }} />
@@ -160,11 +160,11 @@ export function RootNavigator() {
     return (
       <Stack.Navigator>
         <Stack.Screen name="AdminTabs" component={AdminTabsNavigator} options={{ headerShown: false }} />
-        <Stack.Screen name="AdminOfferingNew" component={AdminOfferingNewScreen} options={{ title: 'New offering' }} />
+        <Stack.Screen name="AdminOfferNew" component={AdminOfferNewScreen} options={{ title: 'New offer' }} />
         <Stack.Screen
-          name="AdminOfferingEdit"
-          component={AdminOfferingEditScreen}
-          options={{ title: 'Edit offering' }}
+          name="AdminOfferEdit"
+          component={AdminOfferEditScreen}
+          options={{ title: 'Edit offer' }}
         />
         <Stack.Screen name="AdminQueryDetail" component={AdminQueryDetailScreen} options={{ title: 'Request' }} />
         <Stack.Screen
@@ -180,7 +180,7 @@ export function RootNavigator() {
   return (
     <Stack.Navigator>
       <Stack.Screen name="Main" component={MainTabsNavigator} options={{ headerShown: false }} />
-      <Stack.Screen name="OfferingDetail" component={OfferingDetailScreen} options={{ title: 'Flight deal' }} />
+      <Stack.Screen name="OfferDetail" component={OfferDetailScreen} options={{ title: 'Flight deal' }} />
       <Stack.Screen name="QueryNew" component={GatedQueryNew} options={{ title: 'Request options' }} />
       <Stack.Screen name="QueryDetail" component={GatedQueryDetail} options={{ title: 'Request' }} />
       <Stack.Screen name="BookingNew" component={GatedBookingNew} options={{ title: 'Book' }} />

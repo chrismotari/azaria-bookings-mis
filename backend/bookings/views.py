@@ -19,7 +19,7 @@ from .serializers import (
 )
 from .services import add_boarding_pass, create_booking, delete_boarding_pass, transition
 
-BOOKING_RELATED = ["offering__origin", "offering__destination"]
+BOOKING_RELATED = ["offer__origin", "offer__destination"]
 
 
 class BookingListCreateView(generics.ListAPIView):

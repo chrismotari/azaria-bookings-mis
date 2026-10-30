@@ -83,14 +83,14 @@ def airports(db):
 
 
 @pytest.fixture
-def make_offering(airports):
-    """Creates a bookable public NBO → LHR offering unless told otherwise."""
+def make_offer(airports):
+    """Creates a bookable public NBO → LHR offer unless told otherwise."""
     from datetime import timedelta
     from decimal import Decimal
 
     from django.utils import timezone
 
-    from catalog.models import Offering
+    from catalog.models import Offer
 
     def make(origin="NBO", destination="LHR", **kwargs):
         today = timezone.localdate()
@@ -102,7 +102,7 @@ def make_offering(airports):
             "valid_until": today + timedelta(days=10),
             **kwargs,
         }
-        return Offering.objects.create(origin=airports[origin], destination=airports[destination], **fields)
+        return Offer.objects.create(origin=airports[origin], destination=airports[destination], **fields)
 
     return make
 

@@ -20,7 +20,7 @@ cd .claude/skills/run-azaria-bookings/driver && npm install
 Check first: the user often already runs the API and the web app in their own terminals. Reuse them if they answer.
 
 ```bash
-curl -s -o /dev/null -w 'api %{http_code}\n' http://localhost:8000/api/offerings
+curl -s -o /dev/null -w 'api %{http_code}\n' http://localhost:8000/api/offers
 curl -s -o /dev/null -w 'web %{http_code}\n' http://localhost:8081
 ```
 
@@ -32,7 +32,7 @@ mkdir -p /tmp/azaria-run
 (cd backend && source .venv/bin/activate && nohup celery -A config worker -l info > /tmp/azaria-run/worker.log 2>&1 &)
 (cd backend && source .venv/bin/activate && nohup celery -A config beat -l info -s /tmp/azaria-run/beat-schedule > /tmp/azaria-run/beat.log 2>&1 &)
 (cd frontend && CI=1 nohup npx expo start --web --port 8081 > /tmp/azaria-run/expo.log 2>&1 &)
-timeout 120 bash -c 'until curl -sf http://localhost:8081 >/dev/null && curl -sf http://localhost:8000/api/offerings >/dev/null; do sleep 1; done' && echo ready
+timeout 120 bash -c 'until curl -sf http://localhost:8081 >/dev/null && curl -sf http://localhost:8000/api/offers >/dev/null; do sleep 1; done' && echo ready
 ```
 
 You need an admin account (the user's admin password is unknown to you). Create one; it refuses an email that exists, so reuse it next time:
@@ -47,7 +47,7 @@ All driver commands run from `.claude/skills/run-azaria-bookings/driver/`. Scree
 
 | command | what it does |
 |---|---|
-| `AZARIA_ADMIN_EMAIL=... AZARIA_ADMIN_PASSWORD=... node flow.mjs` | Full flow with a fresh customer: guest search with no results → Request options → gate → register → request → admin responds with a custom offering → book 2 passengers → confirm → mark paid → upload PDF + PNG → send → customer downloads both and checks the bytes. Prints `FLOW OK (request N, booking M)`. About 1 minute. |
+| `AZARIA_ADMIN_EMAIL=... AZARIA_ADMIN_PASSWORD=... node flow.mjs` | Full flow with a fresh customer: guest search with no results → Request options → gate → register → request → admin responds with a custom offer → book 2 passengers → confirm → mark paid → upload PDF + PNG → send → customer downloads both and checks the bytes. Prints `FLOW OK (request N, booking M)`. About 1 minute. |
 | `node login.mjs <role> <email> <password>` | Signs in and saves the session as `/tmp/azaria-run/profiles/<role>.json` |
 | `node shot.mjs <role> <path> [width]` | Screenshots `http://localhost:8081<path>` as `<role>` (`guest` = signed out) and prints horizontal overflow. Use width `390` for the phone layout (bottom tabs). |
 
@@ -113,7 +113,7 @@ About 400 backend tests in ~15 s. They need PostgreSQL only, not the worker, Red
 - **Hidden stack screens match selectors.** React Navigation keeps earlier screens mounted (Login stays under Register). `getByLabel`/`getByText` then resolve to the invisible copy and time out. Use `field`/`seen` from `lib.mjs` (`:visible` selectors); `getByRole` already skips hidden nodes.
 - **The auth gate's pending action lives in memory.** Guest → "Request options" → register must happen in one page session, without a reload or a new browser, or the app lands on Explore instead of the prefilled form.
 - **Inputs are found by `aria-label` = their visible label** (`TextField`, `DateField`, `AirportPicker` set it). Date inputs take `YYYY-MM-DD` via `fill`.
-- **Respond screen has two From/To pairs.** Filter search on top, custom offering below. The custom pair is prefilled with the request's airports; class chips appear twice, so use `getByRole('radio', { name }).nth(1)` for the custom one.
+- **Respond screen has two From/To pairs.** Filter search on top, custom offer below. The custom pair is prefilled with the request's airports; class chips appear twice, so use `getByRole('radio', { name }).nth(1)` for the custom one.
 - **Admin URLs as a guest show Explore.** If a saved admin session is missing or expired, `/admin/...` silently renders the guest navigator. Sign in first (`signIn` or `login.mjs`).
 - **Deep links have no back button.** A detail page opened by URL (the links in emails) has no header back arrow and no tab bar; navigate with `page.goto`.
 - **`window.confirm` dialogs** (Confirm availability, Mark paid, Delete, Cancel) are auto-accepted by `lib.mjs`.

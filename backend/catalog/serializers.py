@@ -1,7 +1,7 @@
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import Airport, Offering
+from .models import Airport, Offer
 
 
 class AirportSerializer(serializers.ModelSerializer):
@@ -10,7 +10,7 @@ class AirportSerializer(serializers.ModelSerializer):
         fields = ["id", "code", "name", "city", "country"]
 
 
-class OfferingSerializer(serializers.ModelSerializer):
+class OfferSerializer(serializers.ModelSerializer):
     """Read-only representation used by browse and detail."""
 
     origin = AirportSerializer(read_only=True)
@@ -18,7 +18,7 @@ class OfferingSerializer(serializers.ModelSerializer):
     is_bookable = serializers.BooleanField(read_only=True)
 
     class Meta:
-        model = Offering
+        model = Offer
         fields = [
             "id",
             "origin",
@@ -34,13 +34,13 @@ class OfferingSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-class AdminOfferingSerializer(serializers.ModelSerializer):
+class AdminOfferSerializer(serializers.ModelSerializer):
     """Airports are written by id and read as nested objects."""
 
     is_bookable = serializers.BooleanField(read_only=True)
 
     class Meta:
-        model = Offering
+        model = Offer
         fields = [
             "id",
             "origin",

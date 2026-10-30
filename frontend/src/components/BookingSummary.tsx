@@ -7,14 +7,14 @@ import { formatDate, formatPrice, stopoversLabel, ticketClassLabel } from '../ut
 
 /** The flight, passengers and price of a booking. */
 export function BookingSummary({ booking }: { booking: Booking }) {
-  const { offering } = booking;
+  const { offer } = booking;
   return (
     <View style={styles.box}>
       <Text style={styles.route}>{bookingRoute(booking)}</Text>
-      <Row label="Departure" value={formatDate(offering.departure_date)} />
-      <Row label="Airline" value={offering.airline} />
-      <Row label="Class" value={ticketClassLabel(offering.ticket_class)} />
-      <Row label="Stopovers" value={stopoversLabel(offering.stopovers)} />
+      <Row label="Departure" value={formatDate(offer.departure_date)} />
+      <Row label="Airline" value={offer.airline} />
+      <Row label="Class" value={ticketClassLabel(offer.ticket_class)} />
+      <Row label="Stopovers" value={stopoversLabel(offer.stopovers)} />
       <Row
         label="Passengers"
         value={`${passengersLabel(booking.passenger_count)} × ${formatPrice(booking.unit_price)}`}

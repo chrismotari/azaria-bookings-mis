@@ -38,7 +38,7 @@ export const TICKET_CLASSES: { value: TicketClass; label: string }[] = [
   { value: 'first', label: 'First' },
 ];
 
-export type Offering = {
+export type Offer = {
   id: number;
   origin: Airport;
   destination: Airport;
@@ -51,7 +51,7 @@ export type Offering = {
   is_bookable: boolean;
 };
 
-export type AdminOffering = Offering & {
+export type AdminOffer = Offer & {
   is_public: boolean;
   is_active: boolean;
   created_at: string;
@@ -62,7 +62,7 @@ export type QueryStatus = 'open' | 'responded' | 'closed';
 export type QueryResponse = {
   id: number;
   message: string;
-  offerings: Offering[];
+  offers: Offer[];
   created_at: string;
 };
 
@@ -105,7 +105,7 @@ export type BookingEvent = {
 
 export type Booking = {
   id: number;
-  offering: Offering;
+  offer: Offer;
   query: number | null;
   passenger_count: number;
   notes: string;

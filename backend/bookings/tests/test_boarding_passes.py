@@ -24,15 +24,15 @@ def upload(name="pass.pdf", content=PDF, content_type="application/pdf"):
 
 
 @pytest.fixture
-def make_booking(customer, make_offering):
-    offering = make_offering()
+def make_booking(customer, make_offer):
+    offer = make_offer()
 
     def make(status=Status.PAID, user=None):
         fields = {}
         if status == Status.AVAILABILITY_CONFIRMED:
             fields["payment_deadline"] = timezone.now() + timedelta(hours=24)
         return Booking.objects.create(
-            user=user or customer, offering=offering, passenger_count=2, unit_price=offering.price, status=status, **fields
+            user=user or customer, offer=offer, passenger_count=2, unit_price=offer.price, status=status, **fields
         )
 
     return make

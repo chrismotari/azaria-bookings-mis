@@ -1,11 +1,11 @@
 from django.conf import settings
 from django.db import models
 
-from catalog.models import Airport, Offering
+from catalog.models import Airport, Offer
 
 
 class Query(models.Model):
-    """A customer's request for options when no listed offering fits."""
+    """A customer's request for options when no listed offer fits."""
 
     class Status(models.TextChoices):
         OPEN = "open", "Open"
@@ -20,7 +20,7 @@ class Query(models.Model):
     price_min = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     price_max = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     # Blank means any class.
-    ticket_class = models.CharField(max_length=20, choices=Offering.TicketClass.choices, blank=True)
+    ticket_class = models.CharField(max_length=20, choices=Offer.TicketClass.choices, blank=True)
     max_stopovers = models.PositiveSmallIntegerField(null=True, blank=True)
     message = models.TextField(blank=True)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.OPEN)
@@ -39,7 +39,7 @@ class Query(models.Model):
 class QueryResponse(models.Model):
     query = models.ForeignKey(Query, on_delete=models.CASCADE, related_name="responses")
     message = models.TextField(blank=True)
-    offerings = models.ManyToManyField(Offering, related_name="query_responses")
+    offers = models.ManyToManyField(Offer, related_name="query_responses")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

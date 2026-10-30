@@ -4,7 +4,7 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from catalog.models import Offering
+from catalog.models import Offer
 from core.permissions import IsAdminRole
 
 from .models import Query, QueryResponse
@@ -20,8 +20,8 @@ from .tasks import notify_admin_new_query
 
 
 def with_responses(queryset):
-    offerings = Offering.objects.select_related("origin", "destination")
-    responses = QueryResponse.objects.prefetch_related(Prefetch("offerings", queryset=offerings))
+    offers = Offer.objects.select_related("origin", "destination")
+    responses = QueryResponse.objects.prefetch_related(Prefetch("offers", queryset=offers))
     return queryset.prefetch_related(Prefetch("responses", queryset=responses))
 
 
@@ -72,6 +72,6 @@ class AdminQueryRespondView(APIView):
         serializer = RespondSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        respond_to_query(pk, data["message"], data["offering_ids"], data["new_offerings"])
+        respond_to_query(pk, data["message"], data["offer_ids"], data["new_offers"])
         query = with_responses(Query.objects.select_related("user", "origin", "destination")).get(pk=pk)
         return Response(AdminQueryDetailSerializer(query).data, status=status.HTTP_201_CREATED)

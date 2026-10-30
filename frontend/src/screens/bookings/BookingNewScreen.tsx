@@ -8,7 +8,7 @@ import { z } from 'zod';
 
 import { api } from '../../api/client';
 import { applyServerErrors } from '../../api/errors';
-import { BookingDetail, Offering } from '../../api/types';
+import { BookingDetail, Offer } from '../../api/types';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { FormError } from '../../components/Field';
@@ -33,12 +33,12 @@ type FormValues = z.infer<typeof schema>;
 const FIELDS = ['passenger_count', 'notes'] as const;
 
 export function BookingNewScreen({ navigation, route }: NativeStackScreenProps<RootStackParamList, 'BookingNew'>) {
-  const { offering: offeringId, query } = route.params;
+  const { offer: offerId, query } = route.params;
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
-  const offering = useQuery({
-    queryKey: ['offerings', offeringId],
-    queryFn: async () => (await api.get<Offering>(`/offerings/${offeringId}`)).data,
+  const offer = useQuery({
+    queryKey: ['offers', offerId],
+    queryFn: async () => (await api.get<Offer>(`/offers/${offerId}`)).data,
   });
   const { control, handleSubmit, setError, formState } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -46,20 +46,20 @@ export function BookingNewScreen({ navigation, route }: NativeStackScreenProps<R
   });
   const passengerCount = useWatch({ control, name: 'passenger_count' });
 
-  if (offering.isPending) {
+  if (offer.isPending) {
     return <LoadingState />;
   }
-  if (offering.isError) {
-    return <ErrorState error={offering.error} onRetry={() => offering.refetch()} />;
+  if (offer.isError) {
+    return <ErrorState error={offer.error} onRetry={() => offer.refetch()} />;
   }
 
-  const data = offering.data;
+  const data = offer.data;
   const count = Number(passengerCount);
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
     try {
       const { data: booking } = await api.post<BookingDetail>('/bookings', {
-        offering: offeringId,
+        offer: offerId,
         passenger_count: Number(values.passenger_count),
         notes: values.notes.trim(),
         query: query ?? null,

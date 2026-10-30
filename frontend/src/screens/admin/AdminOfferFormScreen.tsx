@@ -8,7 +8,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { applyServerErrors } from '../../api/errors';
-import { AdminOffering } from '../../api/types';
+import { AdminOffer } from '../../api/types';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { FormError } from '../../components/Field';
@@ -16,8 +16,8 @@ import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme';
-import { OfferingFields } from './OfferingFields';
-import { OfferingFormValues, offeringSchema, toOfferingBody } from './offeringSchema';
+import { OfferFields } from './OfferFields';
+import { OfferFormValues, offerSchema, toOfferBody } from './offerSchema';
 
 const FIELDS = [
   'origin',
@@ -31,7 +31,7 @@ const FIELDS = [
   'is_public',
 ] as const;
 
-const EMPTY: OfferingFormValues = {
+const EMPTY: OfferFormValues = {
   origin: null,
   destination: null,
   departure_date: '',
@@ -43,60 +43,60 @@ const EMPTY: OfferingFormValues = {
   is_public: true,
 };
 
-function toFormValues(offering: AdminOffering): OfferingFormValues {
+function toFormValues(offer: AdminOffer): OfferFormValues {
   return {
-    origin: offering.origin,
-    destination: offering.destination,
-    departure_date: offering.departure_date,
-    ticket_class: offering.ticket_class,
-    price: offering.price,
-    stopovers: String(offering.stopovers),
-    airline: offering.airline,
-    valid_until: offering.valid_until,
-    is_public: offering.is_public,
+    origin: offer.origin,
+    destination: offer.destination,
+    departure_date: offer.departure_date,
+    ticket_class: offer.ticket_class,
+    price: offer.price,
+    stopovers: String(offer.stopovers),
+    airline: offer.airline,
+    valid_until: offer.valid_until,
+    is_public: offer.is_public,
   };
 }
 
-export function AdminOfferingNewScreen() {
-  return <OfferingForm initial={EMPTY} />;
+export function AdminOfferNewScreen() {
+  return <OfferForm initial={EMPTY} />;
 }
 
-export function AdminOfferingEditScreen({ route }: NativeStackScreenProps<RootStackParamList, 'AdminOfferingEdit'>) {
+export function AdminOfferEditScreen({ route }: NativeStackScreenProps<RootStackParamList, 'AdminOfferEdit'>) {
   const { id } = route.params;
-  const offering = useQuery({
-    queryKey: ['admin', 'offerings', id],
-    queryFn: async () => (await api.get<AdminOffering>(`/admin/offerings/${id}`)).data,
+  const offer = useQuery({
+    queryKey: ['admin', 'offers', id],
+    queryFn: async () => (await api.get<AdminOffer>(`/admin/offers/${id}`)).data,
   });
-  if (offering.isPending) {
+  if (offer.isPending) {
     return <LoadingState />;
   }
-  if (offering.isError) {
-    return <ErrorState error={offering.error} onRetry={() => offering.refetch()} />;
+  if (offer.isError) {
+    return <ErrorState error={offer.error} onRetry={() => offer.refetch()} />;
   }
-  return <OfferingForm id={id} initial={toFormValues(offering.data)} />;
+  return <OfferForm id={id} initial={toFormValues(offer.data)} />;
 }
 
-function OfferingForm({ id, initial }: { id?: number; initial: OfferingFormValues }) {
+function OfferForm({ id, initial }: { id?: number; initial: OfferFormValues }) {
   const navigation = useNavigation();
   const queryClient = useQueryClient();
   const isCreate = id === undefined;
   const [formError, setFormError] = useState<string | null>(null);
-  const { control, handleSubmit, setError, formState } = useForm<OfferingFormValues>({
-    resolver: zodResolver(offeringSchema(isCreate)),
+  const { control, handleSubmit, setError, formState } = useForm<OfferFormValues>({
+    resolver: zodResolver(offerSchema(isCreate)),
     defaultValues: initial,
   });
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
-    const body = toOfferingBody(values);
+    const body = toOfferBody(values);
     try {
       if (isCreate) {
-        await api.post('/admin/offerings', body);
+        await api.post('/admin/offers', body);
       } else {
-        await api.patch(`/admin/offerings/${id}`, body);
+        await api.patch(`/admin/offers/${id}`, body);
       }
-      await queryClient.invalidateQueries({ queryKey: ['admin', 'offerings'] });
-      navigation.navigate('AdminTabs', { screen: 'AdminOfferings' });
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'offers'] });
+      navigation.navigate('AdminTabs', { screen: 'AdminOffers' });
     } catch (error) {
       setFormError(applyServerErrors(error, setError, FIELDS));
     }
@@ -104,20 +104,20 @@ function OfferingForm({ id, initial }: { id?: number; initial: OfferingFormValue
 
   return (
     <Screen maxWidth={760}>
-      <Text style={styles.title}>{isCreate ? 'New offering' : 'Edit offering'}</Text>
+      <Text style={styles.title}>{isCreate ? 'New offer' : 'Edit offer'}</Text>
       <Card>
-        <OfferingFields control={control} />
+        <OfferFields control={control} />
         <FormError message={formError} />
         <View style={styles.actions}>
           <Button
-            title={isCreate ? 'Create offering' : 'Save changes'}
+            title={isCreate ? 'Create offer' : 'Save changes'}
             onPress={onSubmit}
             loading={formState.isSubmitting}
           />
           <Button
             title="Cancel"
             variant="secondary"
-            onPress={() => navigation.navigate('AdminTabs', { screen: 'AdminOfferings' })}
+            onPress={() => navigation.navigate('AdminTabs', { screen: 'AdminOffers' })}
           />
         </View>
       </Card>

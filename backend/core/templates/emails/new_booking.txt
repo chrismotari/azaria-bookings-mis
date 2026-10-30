@@ -4,7 +4,7 @@ Customer: {{ booking.user.full_name }} <{{ booking.user.email }}>{% if booking.u
 Route: {{ route }}
 Departure: {{ departure }}
 Class: {{ ticket_class }}
-Airline: {{ booking.offering.airline }}
+Airline: {{ booking.offer.airline }}
 Passengers: {{ booking.passenger_count }}
 Total price: {{ total }}
 Notes: {{ booking.notes|default:"(none)" }}

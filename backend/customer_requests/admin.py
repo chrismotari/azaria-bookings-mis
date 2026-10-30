@@ -13,4 +13,4 @@ class QueryAdmin(admin.ModelAdmin):
 @admin.register(QueryResponse)
 class QueryResponseAdmin(admin.ModelAdmin):
     list_display = ["__str__", "created_at"]
-    raw_id_fields = ["query", "offerings"]
+    raw_id_fields = ["query", "offers"]

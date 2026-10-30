@@ -4,7 +4,7 @@ import { isAxiosError } from 'axios';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
-import { Airport, Offering } from '../../api/types';
+import { Airport, Offer } from '../../api/types';
 import { useAuthGate } from '../../auth/gate';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
@@ -14,34 +14,34 @@ import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme';
 import { formatDate, formatPrice, stopoversLabel, ticketClassLabel } from '../../utils/format';
 
-export function OfferingDetailScreen({
+export function OfferDetailScreen({
   navigation,
   route,
-}: NativeStackScreenProps<RootStackParamList, 'OfferingDetail'>) {
+}: NativeStackScreenProps<RootStackParamList, 'OfferDetail'>) {
   const { id, query } = route.params;
   const requireAuth = useAuthGate();
-  const offering = useQuery({
-    queryKey: ['offerings', id],
-    queryFn: async () => (await api.get<Offering>(`/offerings/${id}`)).data,
+  const offer = useQuery({
+    queryKey: ['offers', id],
+    queryFn: async () => (await api.get<Offer>(`/offers/${id}`)).data,
   });
   const backToExplore = () => navigation.navigate('Main', { screen: 'Explore' });
 
-  if (offering.isPending) {
+  if (offer.isPending) {
     return <LoadingState />;
   }
-  if (offering.isError) {
-    if (isAxiosError(offering.error) && offering.error.response?.status === 404) {
+  if (offer.isError) {
+    if (isAxiosError(offer.error) && offer.error.response?.status === 404) {
       return (
         <Screen maxWidth={720}>
-          <EmptyState message="This offering is not available." />
+          <EmptyState message="This deal is not available." />
           <Button title="Browse other deals" onPress={backToExplore} />
         </Screen>
       );
     }
-    return <ErrorState error={offering.error} onRetry={() => offering.refetch()} />;
+    return <ErrorState error={offer.error} onRetry={() => offer.refetch()} />;
   }
 
-  const data = offering.data;
+  const data = offer.data;
   return (
     <Screen maxWidth={720}>
       <Card>
@@ -63,7 +63,7 @@ export function OfferingDetailScreen({
           <Button
             title="Book"
             onPress={() =>
-              requireAuth({ screen: 'BookingNew', params: query ? { offering: id, query } : { offering: id } })
+              requireAuth({ screen: 'BookingNew', params: query ? { offer: id, query } : { offer: id } })
             }
           />
         ) : (
