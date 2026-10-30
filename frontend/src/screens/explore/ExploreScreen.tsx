@@ -1,6 +1,6 @@
-import { useNavigation } from '@react-navigation/native';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
@@ -8,6 +8,7 @@ import { Offer, Paginated } from '../../api/types';
 import { useAuthGate } from '../../auth/gate';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
+import { DetailLayout } from '../../components/DetailLayout';
 import { OptionChips } from '../../components/OptionChips';
 import {
   EMPTY_OFFER_FILTERS,
@@ -21,8 +22,9 @@ import { OfferCard } from '../../components/OfferCard';
 import { Pagination } from '../../components/Pagination';
 import { Screen } from '../../components/Screen';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
-import { QueryPrefill } from '../../navigation/types';
+import { MainTabParamList, QueryPrefill } from '../../navigation/types';
 import { colors, useIsWide } from '../../theme';
+import { OfferDetailView } from './OfferDetailView';
 
 type Ordering = 'departure_date' | 'price' | '-price';
 
@@ -47,8 +49,9 @@ const ORDERING_OPTIONS: { value: Ordering; label: string }[] = [
   { value: '-price', label: 'Highest price' },
 ];
 
-export function ExploreScreen() {
-  const navigation = useNavigation();
+export function ExploreScreen({ navigation, route }: BottomTabScreenProps<MainTabParamList, 'Explore'>) {
+  const selected = route.params?.id;
+  const close = useCallback(() => navigation.setParams({ id: undefined, query: undefined }), [navigation]);
   const isWide = useIsWide();
   const [draft, setDraft] = useState<OfferFilterValues>(EMPTY_OFFER_FILTERS);
   const [errors, setErrors] = useState<OfferFilterErrors>({});
@@ -86,71 +89,80 @@ export function ExploreScreen() {
   };
 
   return (
-    <Screen>
-      <Text style={styles.title}>Find a flight deal</Text>
-      <Card>
-        <OfferFilterFields
-          value={draft}
-          onChange={setDraft}
-          errors={errors}
-          onSubmit={search}
-          showDetails={isWide || moreFilters}
-        />
-        <View style={styles.actions}>
-          <Button title="Search" onPress={search} />
-          <Button title="Clear" variant="secondary" onPress={clear} />
-          {!isWide ? (
-            <Button
-              title={moreFilters ? 'Fewer filters' : 'More filters'}
-              variant="link"
-              onPress={() => setMoreFilters((open) => !open)}
+    <DetailLayout
+      title="Flight deal"
+      backLabel="All deals"
+      onClose={close}
+      detail={selected ? <OfferDetailView key={selected} id={selected} query={route.params?.query} /> : null}
+      list={
+        <Screen>
+          <Text style={styles.title}>Find a flight deal</Text>
+          <Card>
+            <OfferFilterFields
+              value={draft}
+              onChange={setDraft}
+              errors={errors}
+              onSubmit={search}
+              showDetails={isWide || moreFilters}
             />
-          ) : null}
-        </View>
-      </Card>
-
-      <OptionChips
-        label="Sort by"
-        options={ORDERING_OPTIONS}
-        value={ordering}
-        onChange={(value) => {
-          setOrdering(value);
-          setPage(1);
-        }}
-      />
-
-      {offers.isPending ? (
-        <LoadingState />
-      ) : offers.isError ? (
-        <ErrorState error={offers.error} onRetry={() => offers.refetch()} />
-      ) : offers.data.results.length === 0 ? (
-        <View style={styles.empty}>
-          <EmptyState message="No flight deals match your search right now. Tell us what you need and we will find options for you." />
-          <Button
-            title="Request options"
-            variant="accent"
-            onPress={() => requireAuth({ screen: 'QueryNew', params: queryPrefill(filters) })}
-          />
-        </View>
-      ) : (
-        <>
-          <Text style={styles.count}>
-            {offers.data.count} deal{offers.data.count === 1 ? '' : 's'}
-          </Text>
-          <View style={styles.grid}>
-            {offers.data.results.map((offer) => (
-              <View key={offer.id} style={styles.gridItem}>
-                <OfferCard
-                  offer={offer}
-                  onPress={() => navigation.navigate('OfferDetail', { id: offer.id })}
+            <View style={styles.actions}>
+              <Button title="Search" onPress={search} />
+              <Button title="Clear" variant="secondary" onPress={clear} />
+              {!isWide ? (
+                <Button
+                  title={moreFilters ? 'Fewer filters' : 'More filters'}
+                  variant="link"
+                  onPress={() => setMoreFilters((open) => !open)}
                 />
+              ) : null}
+            </View>
+          </Card>
+
+          <OptionChips
+            label="Sort by"
+            options={ORDERING_OPTIONS}
+            value={ordering}
+            onChange={(value) => {
+              setOrdering(value);
+              setPage(1);
+            }}
+          />
+
+          {offers.isPending ? (
+            <LoadingState />
+          ) : offers.isError ? (
+            <ErrorState error={offers.error} onRetry={() => offers.refetch()} />
+          ) : offers.data.results.length === 0 ? (
+            <View style={styles.empty}>
+              <EmptyState message="No flight deals match your search right now. Tell us what you need and we will find options for you." />
+              <Button
+                title="Request options"
+                variant="accent"
+                onPress={() => requireAuth({ screen: 'QueryNew', params: queryPrefill(filters) })}
+              />
+            </View>
+          ) : (
+            <>
+              <Text style={styles.count}>
+                {offers.data.count} deal{offers.data.count === 1 ? '' : 's'}
+              </Text>
+              <View style={styles.grid}>
+                {offers.data.results.map((offer) => (
+                  <View key={offer.id} style={styles.gridItem}>
+                    <OfferCard
+                      offer={offer}
+                      selected={offer.id === selected}
+                      onPress={() => navigation.setParams({ id: offer.id, query: undefined })}
+                    />
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
-          <Pagination page={page} count={offers.data.count} onChange={setPage} />
-        </>
-      )}
-    </Screen>
+              <Pagination page={page} count={offers.data.count} onChange={setPage} />
+            </>
+          )}
+        </Screen>
+      }
+    />
   );
 }
 

@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -14,7 +13,6 @@ import { Card } from '../../components/Card';
 import { FormError } from '../../components/Field';
 import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
-import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme';
 import { OfferFields } from './OfferFields';
 import { OfferFormValues, offerSchema, toOfferBody } from './offerSchema';
@@ -58,11 +56,18 @@ function toFormValues(offer: AdminOffer): OfferFormValues {
 }
 
 export function AdminOfferNewScreen() {
-  return <OfferForm initial={EMPTY} />;
+  const navigation = useNavigation();
+  const backToOffers = () => navigation.navigate('AdminTabs', { screen: 'AdminOffers' });
+  return (
+    <Screen maxWidth={760}>
+      <Text style={styles.title}>New offer</Text>
+      <OfferForm initial={EMPTY} onDone={backToOffers} />
+    </Screen>
+  );
 }
 
-export function AdminOfferEditScreen({ route }: NativeStackScreenProps<RootStackParamList, 'AdminOfferEdit'>) {
-  const { id } = route.params;
+/** onDone: called after saving or cancelling. */
+export function AdminOfferEditView({ id, onDone }: { id: number; onDone: () => void }) {
   const offer = useQuery({
     queryKey: ['admin', 'offers', id],
     queryFn: async () => (await api.get<AdminOffer>(`/admin/offers/${id}`)).data,
@@ -73,11 +78,12 @@ export function AdminOfferEditScreen({ route }: NativeStackScreenProps<RootStack
   if (offer.isError) {
     return <ErrorState error={offer.error} onRetry={() => offer.refetch()} />;
   }
-  return <OfferForm id={id} initial={toFormValues(offer.data)} />;
+  return <OfferForm id={id} initial={toFormValues(offer.data)} onDone={onDone} />;
 }
 
-function OfferForm({ id, initial }: { id?: number; initial: OfferFormValues }) {
-  const navigation = useNavigation();
+type FormProps = { id?: number; initial: OfferFormValues; onDone: () => void };
+
+function OfferForm({ id, initial, onDone }: FormProps) {
   const queryClient = useQueryClient();
   const isCreate = id === undefined;
   const [formError, setFormError] = useState<string | null>(null);
@@ -96,32 +102,25 @@ function OfferForm({ id, initial }: { id?: number; initial: OfferFormValues }) {
         await api.patch(`/admin/offers/${id}`, body);
       }
       await queryClient.invalidateQueries({ queryKey: ['admin', 'offers'] });
-      navigation.navigate('AdminTabs', { screen: 'AdminOffers' });
+      onDone();
     } catch (error) {
       setFormError(applyServerErrors(error, setError, FIELDS));
     }
   });
 
   return (
-    <Screen maxWidth={760}>
-      <Text style={styles.title}>{isCreate ? 'New offer' : 'Edit offer'}</Text>
-      <Card>
-        <OfferFields control={control} />
-        <FormError message={formError} />
-        <View style={styles.actions}>
-          <Button
-            title={isCreate ? 'Create offer' : 'Save changes'}
-            onPress={onSubmit}
-            loading={formState.isSubmitting}
-          />
-          <Button
-            title="Cancel"
-            variant="secondary"
-            onPress={() => navigation.navigate('AdminTabs', { screen: 'AdminOffers' })}
-          />
-        </View>
-      </Card>
-    </Screen>
+    <Card>
+      <OfferFields control={control} />
+      <FormError message={formError} />
+      <View style={styles.actions}>
+        <Button
+          title={isCreate ? 'Create offer' : 'Save changes'}
+          onPress={onSubmit}
+          loading={formState.isSubmitting}
+        />
+        <Button title="Cancel" variant="secondary" onPress={onDone} />
+      </View>
+    </Card>
   );
 }
 

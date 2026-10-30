@@ -14,39 +14,34 @@ export type QueryPrefill = {
   max_stopovers?: string;
 };
 
+/** id: the item whose detail is open beside (wide) or instead of (narrow) the list. */
 export type MainTabParamList = {
-  Explore: undefined;
-  Requests: undefined;
-  Bookings: undefined;
+  /** query: the request whose response led to this offer; passed on to the booking. */
+  Explore: { id?: number; query?: number } | undefined;
+  Requests: { id?: number } | undefined;
+  Bookings: { id?: number } | undefined;
   Account: undefined;
 };
 
 export type AdminTabParamList = {
   AdminDashboard: undefined;
-  AdminOffers: undefined;
-  AdminRequests: { status?: QueryStatus | 'all' } | undefined;
-  AdminBookings: { status?: BookingStatus | 'all' } | undefined;
+  AdminOffers: { id?: number } | undefined;
+  AdminRequests: { status?: QueryStatus | 'all'; id?: number } | undefined;
+  AdminBookings: { status?: BookingStatus | 'all'; id?: number } | undefined;
   AdminSettings: undefined;
 };
 
 export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
-  /** query: the request whose response led here; passed on to the booking. */
-  OfferDetail: { id: number; query?: number };
   BookingNew: { offer: number; query?: number };
-  BookingDetail: { id: number };
   QueryNew: QueryPrefill | undefined;
-  QueryDetail: { id: number };
   Login: { passwordReset?: boolean } | undefined;
   Register: undefined;
   ForgotPassword: undefined;
   ResetPassword: { uid?: string; token?: string } | undefined;
   AdminTabs: NavigatorScreenParams<AdminTabParamList> | undefined;
   AdminOfferNew: undefined;
-  AdminOfferEdit: { id: number };
-  AdminQueryDetail: { id: number };
   AdminQueryRespond: { id: number };
-  AdminBookingDetail: { id: number };
 };
 
 /** A screen and its params, e.g. what a guest was trying to open before signing in. */

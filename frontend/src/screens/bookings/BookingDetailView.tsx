@@ -1,4 +1,4 @@
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -11,10 +11,8 @@ import { BookingTimeline } from '../../components/BookingTimeline';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { FormError } from '../../components/Field';
-import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
-import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme';
 import { BOOKING_STATUS } from '../../utils/bookings';
 import { confirmAction } from '../../utils/confirm';
@@ -29,8 +27,8 @@ const STATUS_HELP: Partial<Record<BookingStatus, string>> = {
   expired: 'The hold lapsed because payment was not received in time. You can book again if the deal is still open.',
 };
 
-export function BookingDetailScreen({ navigation, route }: NativeStackScreenProps<RootStackParamList, 'BookingDetail'>) {
-  const { id } = route.params;
+export function BookingDetailView({ id }: { id: number }) {
+  const navigation = useNavigation();
   const queryClient = useQueryClient();
   const booking = useQuery({
     queryKey: ['bookings', 'detail', id],
@@ -61,7 +59,7 @@ export function BookingDetailScreen({ navigation, route }: NativeStackScreenProp
   };
 
   return (
-    <Screen maxWidth={760}>
+    <>
       <Card>
         <View style={styles.header}>
           <Text style={styles.muted}>Booked {formatDateTime(data.created_at)}</Text>
@@ -106,7 +104,7 @@ export function BookingDetailScreen({ navigation, route }: NativeStackScreenProp
           <Button title="Cancel booking" variant="danger" onPress={onCancel} loading={cancel.isPending} />
         </View>
       ) : null}
-    </Screen>
+    </>
   );
 }
 

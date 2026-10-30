@@ -245,9 +245,9 @@ Navigation layout
 
 Detail drawer (list stays visible)
 - Applies to these list -> detail pairs: Explore -> offer detail; customer Requests -> request detail; customer Bookings -> booking detail; admin Offers -> offer edit; admin Requests -> request detail; admin Bookings -> booking detail.
-- Wide (>= 900 px): selecting a row opens the detail in a panel sliding in from the right (about 480 px wide, full height under the top bar). The list stays visible and usable on the left; the selected row is highlighted; choosing another row swaps the panel content. The panel closes with a close button, the Escape key, or a click on the list's empty area. While it is open the list area narrows rather than being covered, so no content is hidden and nothing scrolls horizontally.
+- Wide (>= 900 px): selecting a row opens the detail in a panel sliding in from the right (about 480 px wide, full height under the top bar). The list stays visible and usable on the left; the selected row is highlighted; choosing another row swaps the panel content. The panel closes with a close button or the Escape key. While it is open the list area narrows rather than being covered, so no content is hidden and nothing scrolls horizontally.
 - Narrow (< 900 px): there is no room for both, so the detail opens full screen as it does today (with a back button to the list). This is the expected mobile behaviour, not a missing feature.
-- URLs: the open detail keeps its own URL (for example /offers/12, /bookings/7), so reloads, the back button and shared links work. Opening that URL directly on a wide screen shows the list with the panel open.
+- URLs: the open detail keeps its own URL (for example /offers/12, /bookings/7), so reloads and shared links work. Opening that URL directly on a wide screen shows the list with the panel open. Opening and switching items does not add browser history entries: the browser back button leaves the list rather than closing the panel.
 - Forms that start new work stay full-page screens, not drawers: Book, Request options, admin New offer, admin Respond to a request. Buttons inside a drawer that open them navigate as today.
 - Actions inside a drawer (cancel booking, confirm availability, mark paid, upload or delete boarding passes, send, deactivate) refresh both the panel and the list behind it.
 
@@ -260,7 +260,7 @@ General polish
 Delivery (each is its own step and commit; see DELIVERY ORDER 9 to 11)
 - [x] 9. Theme: new colour tokens in theme.ts, every component and screen moved onto them (no stray hex values), buttons, chips, cards and Explore header restyled.
 - [x] 10. Top bar navigation replacing the sidebar on wide screens; slim top bar plus bottom tabs on narrow screens; guest and signed-in controls in the bar.
-- [ ] 11. Detail drawer on wide screens for the six list -> detail pairs above, with URLs, Escape and close handling and list refresh after actions; full-screen detail on narrow screens. Browser check at 1280 px and 390 px widths.
+- [x] 11. Detail drawer on wide screens for the six list -> detail pairs above, with URLs, Escape and close handling and list refresh after actions; full-screen detail on narrow screens. Browser check at 1280 px and 390 px widths.
 
 ======================================================================
 HTML EMAILS

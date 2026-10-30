@@ -24,8 +24,14 @@ export function ResponsiveTabBar({ state, descriptors, navigation, hiddenRoutes 
     const focused = state.index === index;
     const onPress = () => {
       const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-      if (!focused && !event.defaultPrevented) {
+      if (event.defaultPrevented) {
+        return;
+      }
+      if (!focused) {
         navigation.navigate(route.name, route.params);
+      } else if (route.params && 'id' in route.params) {
+        // Pressing the current tab again closes its open detail.
+        navigation.navigate(route.name, { ...route.params, id: undefined });
       }
     };
     return [{ key: route.key, label, focused, onPress }];

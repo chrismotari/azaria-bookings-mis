@@ -1,4 +1,4 @@
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -7,10 +7,8 @@ import { AdminQueryDetail } from '../../api/types';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { QuerySummary } from '../../components/QuerySummary';
-import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
-import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme';
 import { formatDate, formatDateTime, formatPrice, stopoversLabel, ticketClassLabel } from '../../utils/format';
 import { QUERY_STATUS } from '../../utils/queries';
@@ -22,11 +20,8 @@ export function useAdminQuery(id: number) {
   });
 }
 
-export function AdminQueryDetailScreen({
-  navigation,
-  route,
-}: NativeStackScreenProps<RootStackParamList, 'AdminQueryDetail'>) {
-  const { id } = route.params;
+export function AdminQueryDetailView({ id }: { id: number }) {
+  const navigation = useNavigation();
   const query = useAdminQuery(id);
 
   if (query.isPending) {
@@ -39,7 +34,7 @@ export function AdminQueryDetailScreen({
   const data = query.data;
   const status = QUERY_STATUS[data.status];
   return (
-    <Screen maxWidth={900}>
+    <>
       <Card>
         <View style={styles.header}>
           <Text style={styles.muted}>Received {formatDateTime(data.created_at)}</Text>
@@ -76,15 +71,14 @@ export function AdminQueryDetailScreen({
             {response.message ? <Text style={styles.text}>{response.message}</Text> : null}
             {response.offers.map((offer) => (
               <Text key={offer.id} style={styles.text}>
-                • {offer.origin.code} → {offer.destination.code}, {formatDate(offer.departure_date)},{' '}
-                {offer.airline}, {ticketClassLabel(offer.ticket_class)}, {stopoversLabel(offer.stopovers)},{' '}
-                {formatPrice(offer.price)}
+                • {offer.origin.code} → {offer.destination.code}, {formatDate(offer.departure_date)}, {offer.airline},{' '}
+                {ticketClassLabel(offer.ticket_class)}, {stopoversLabel(offer.stopovers)}, {formatPrice(offer.price)}
               </Text>
             ))}
           </Card>
         ))
       )}
-    </Screen>
+    </>
   );
 }
 

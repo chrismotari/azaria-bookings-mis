@@ -3,8 +3,12 @@ import { StyleSheet, View } from 'react-native';
 
 import { colors, radius, shadow, space } from '../theme';
 
-export function Card({ children }: { children: ReactNode }) {
-  return <View style={styles.card}>{children}</View>;
+export function Card({ children, selected }: { children: ReactNode; selected?: boolean }) {
+  return (
+    <View style={[styles.card, selected && styles.selected]} aria-current={selected}>
+      {children}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -17,4 +21,5 @@ const styles = StyleSheet.create({
     gap: space.md,
     ...shadow,
   },
+  selected: { borderColor: colors.primary, backgroundColor: colors.primaryTint },
 });

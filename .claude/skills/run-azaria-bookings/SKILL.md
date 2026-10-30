@@ -115,7 +115,7 @@ About 400 backend tests in ~15 s. They need PostgreSQL only, not the worker, Red
 - **Inputs are found by `aria-label` = their visible label** (`TextField`, `DateField`, `AirportPicker` set it). Date inputs take `YYYY-MM-DD` via `fill`.
 - **Respond screen has two From/To pairs.** Filter search on top, custom offer below. The custom pair is prefilled with the request's airports; class chips appear twice, so use `getByRole('radio', { name }).nth(1)` for the custom one.
 - **Admin URLs as a guest show Explore.** If a saved admin session is missing or expired, `/admin/...` silently renders the guest navigator. Sign in first (`signIn` or `login.mjs`).
-- **Deep links have no back button.** A detail page opened by URL (the links in emails) has no header back arrow and no tab bar; navigate with `page.goto`.
+- **Details open beside the list.** At 1280 px a detail (offer, booking, request, admin offer edit) is a right-hand panel with a `Close` button; at 390 px it replaces the list with a `← All …` link. The URL is the list's with the id (`/offers/5`, `/admin/bookings/7`); Explore itself is `/offers`. The brand name in the top bar is also a `link`, so filter link locators by text.
 - **`window.confirm` dialogs** (Confirm availability, Mark paid, Delete, Cancel) are auto-accepted by `lib.mjs`.
 - **Expected 4xx responses show up as console errors** (e.g. "status of 409" when an action is refused). They are not failures by themselves.
 - **Explore needs a route with no public deals** for the "Request options" path. `flow.mjs` uses NBO→ZNZ; override with `ROUTE=NBO-KGL` if that route gets deals.

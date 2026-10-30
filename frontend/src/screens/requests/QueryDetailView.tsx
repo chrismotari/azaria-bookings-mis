@@ -1,4 +1,4 @@
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -10,17 +10,15 @@ import { Card } from '../../components/Card';
 import { FormError } from '../../components/Field';
 import { OfferCard } from '../../components/OfferCard';
 import { QuerySummary } from '../../components/QuerySummary';
-import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
-import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme';
 import { confirmAction } from '../../utils/confirm';
 import { formatDateTime } from '../../utils/format';
 import { QUERY_STATUS } from '../../utils/queries';
 
-export function QueryDetailScreen({ navigation, route }: NativeStackScreenProps<RootStackParamList, 'QueryDetail'>) {
-  const { id } = route.params;
+export function QueryDetailView({ id }: { id: number }) {
+  const navigation = useNavigation();
   const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: ['queries', 'detail', id],
@@ -50,7 +48,7 @@ export function QueryDetailScreen({ navigation, route }: NativeStackScreenProps<
   };
 
   return (
-    <Screen maxWidth={900}>
+    <>
       <Card>
         <View style={styles.header}>
           <Text style={styles.muted}>Sent {formatDateTime(data.created_at)}</Text>
@@ -78,7 +76,9 @@ export function QueryDetailScreen({ navigation, route }: NativeStackScreenProps<
                 <View key={offer.id} style={styles.gridItem}>
                   <OfferCard
                     offer={offer}
-                    onPress={() => navigation.navigate('OfferDetail', { id: offer.id, query: id })}
+                    onPress={() =>
+                      navigation.navigate('Main', { screen: 'Explore', params: { id: offer.id, query: id } })
+                    }
                   />
                 </View>
               ))}
@@ -86,7 +86,7 @@ export function QueryDetailScreen({ navigation, route }: NativeStackScreenProps<
           </View>
         ))
       )}
-    </Screen>
+    </>
   );
 }
 

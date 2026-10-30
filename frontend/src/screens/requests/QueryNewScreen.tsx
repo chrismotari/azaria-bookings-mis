@@ -143,7 +143,7 @@ function QueryForm({ prefill, origin, destination }: FormProps) {
         message: values.message.trim(),
       });
       await queryClient.invalidateQueries({ queryKey: ['queries'] });
-      navigation.replace('QueryDetail', { id: data.id });
+      navigation.popTo('Main', { screen: 'Requests', params: { id: data.id } });
     } catch (error) {
       setFormError(applyServerErrors(error, setError, FIELDS));
     }

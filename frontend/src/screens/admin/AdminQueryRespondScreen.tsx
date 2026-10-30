@@ -26,7 +26,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/StatusVie
 import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme';
 import { formatDate, formatPrice, stopoversLabel, ticketClassLabel, todayInNairobi } from '../../utils/format';
-import { useAdminQuery } from './AdminQueryDetailScreen';
+import { useAdminQuery } from './AdminQueryDetailView';
 import { OfferFields } from './OfferFields';
 import { OfferFormValues, offerSchema, toOfferBody } from './offerSchema';
 
@@ -41,7 +41,10 @@ export function AdminQueryRespondScreen({ navigation, route }: Props) {
     return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
   }
   return (
-    <RespondForm query={query.data} onSent={() => navigation.replace('AdminQueryDetail', { id: query.data.id })} />
+    <RespondForm
+      query={query.data}
+      onSent={() => navigation.popTo('AdminTabs', { screen: 'AdminRequests', params: { id: query.data.id } })}
+    />
   );
 }
 

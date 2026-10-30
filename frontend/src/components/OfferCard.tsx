@@ -5,13 +5,16 @@ import { colors, radius, shadow, space } from '../theme';
 import { formatDate, formatPrice, stopoversLabel, ticketClassLabel } from '../utils/format';
 
 /** Summary of an offer that opens its detail when pressed. */
-export function OfferCard({ offer, onPress }: { offer: Offer; onPress: () => void }) {
+type Props = { offer: Offer; selected?: boolean; onPress: () => void };
+
+export function OfferCard({ offer, selected, onPress }: Props) {
   return (
     <Pressable
       accessibilityRole="link"
       accessibilityLabel={`${offer.origin.city} to ${offer.destination.city}, ${formatDate(offer.departure_date)}`}
+      aria-current={selected}
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.card, (pressed || selected) && styles.pressed, selected && styles.selected]}
     >
       <View style={styles.top}>
         <View style={styles.shrink}>
@@ -49,6 +52,7 @@ const styles = StyleSheet.create({
     ...shadow,
   },
   pressed: { borderColor: colors.primary },
+  selected: { backgroundColor: colors.primaryTint },
   top: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
   shrink: { flexShrink: 1 },
   route: { fontSize: 18, fontWeight: '700', color: colors.primary },

@@ -1,6 +1,7 @@
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
@@ -8,6 +9,7 @@ import { errorMessage } from '../../api/errors';
 import { AdminOffer, Paginated } from '../../api/types';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
+import { DetailLayout } from '../../components/DetailLayout';
 import { FieldGrid, FormError } from '../../components/Field';
 import {
   EMPTY_OFFER_FILTERS,
@@ -22,8 +24,10 @@ import { Pagination } from '../../components/Pagination';
 import { Screen } from '../../components/Screen';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { Toggle } from '../../components/Toggle';
+import { AdminTabParamList } from '../../navigation/types';
 import { colors, radius, shadow, useIsWide } from '../../theme';
 import { formatDate, formatPrice, stopoversLabel, ticketClassLabel } from '../../utils/format';
+import { AdminOfferEditView } from './AdminOfferFormScreen';
 
 type AdminFilters = OfferFilterValues & { is_active: '' | 'true' | 'false'; is_public: '' | 'true' | 'false' };
 
@@ -35,10 +39,14 @@ const YES_NO_ANY = (yes: string, no: string): { value: '' | 'true' | 'false'; la
   { value: 'false', label: no },
 ];
 
-export function AdminOffersScreen() {
-  const navigation = useNavigation();
+export function AdminOffersScreen({ navigation, route }: BottomTabScreenProps<AdminTabParamList, 'AdminOffers'>) {
+  const rootNavigation = useNavigation();
   const queryClient = useQueryClient();
   const isWide = useIsWide();
+  const selected = route.params?.id;
+  const close = useCallback(() => navigation.setParams({ id: undefined }), [navigation]);
+  // With the edit panel open the list is too narrow for the table.
+  const asTable = isWide && selected === undefined;
   const [draft, setDraft] = useState<AdminFilters>(EMPTY_FILTERS);
   const [errors, setErrors] = useState<OfferFilterErrors>({});
   const [filters, setFilters] = useState<AdminFilters>(EMPTY_FILTERS);
@@ -82,79 +90,88 @@ export function AdminOffersScreen() {
   };
 
   return (
-    <Screen>
-      <View style={styles.header}>
-        <Text style={styles.title}>Offers</Text>
-        <Button title="New offer" onPress={() => navigation.navigate('AdminOfferNew')} />
-      </View>
-
-      {!isWide ? (
-        <Button
-          title={filtersOpen ? 'Hide filters' : 'Show filters'}
-          variant="secondary"
-          onPress={() => setFiltersOpen((open) => !open)}
-        />
-      ) : null}
-
-      {isWide || filtersOpen ? (
-        <Card>
-          <OfferFilterFields
-            value={draft}
-            onChange={(base) => setDraft({ ...draft, ...base })}
-            errors={errors}
-            onSubmit={apply}
-          />
-          <FieldGrid>
-            <OptionChips
-              label="Active"
-              options={YES_NO_ANY('Active', 'Deactivated')}
-              value={draft.is_active}
-              onChange={(is_active) => setDraft({ ...draft, is_active })}
-            />
-            <OptionChips
-              label="Visibility"
-              options={YES_NO_ANY('Public', 'Private')}
-              value={draft.is_public}
-              onChange={(is_public) => setDraft({ ...draft, is_public })}
-            />
-          </FieldGrid>
-          <View style={styles.actions}>
-            <Button title="Apply filters" onPress={apply} />
-            <Button title="Clear" variant="secondary" onPress={clear} />
+    <DetailLayout
+      title="Edit offer"
+      backLabel="All offers"
+      onClose={close}
+      detail={selected ? <AdminOfferEditView key={selected} id={selected} onDone={close} /> : null}
+      list={
+        <Screen>
+          <View style={styles.header}>
+            <Text style={styles.title}>Offers</Text>
+            <Button title="New offer" onPress={() => rootNavigation.navigate('AdminOfferNew')} />
           </View>
-        </Card>
-      ) : null}
 
-      <FormError message={setActive.isError ? errorMessage(setActive.error) : null} />
+          {!isWide ? (
+            <Button
+              title={filtersOpen ? 'Hide filters' : 'Show filters'}
+              variant="secondary"
+              onPress={() => setFiltersOpen((open) => !open)}
+            />
+          ) : null}
 
-      {offers.isPending ? (
-        <LoadingState />
-      ) : offers.isError ? (
-        <ErrorState error={offers.error} onRetry={() => offers.refetch()} />
-      ) : offers.data.results.length === 0 ? (
-        <EmptyState message="No offers match these filters." />
-      ) : (
-        <>
-          <Text style={styles.count}>
-            {offers.data.count} offer{offers.data.count === 1 ? '' : 's'}
-          </Text>
-          <View style={isWide ? styles.table : styles.cards}>
-            {isWide ? <TableHeader /> : null}
-            {offers.data.results.map((offer) => (
-              <OfferRow
-                key={offer.id}
-                offer={offer}
-                wide={isWide}
-                toggling={setActive.isPending && setActive.variables?.id === offer.id}
-                onToggleActive={(is_active) => setActive.mutate({ id: offer.id, is_active })}
-                onEdit={() => navigation.navigate('AdminOfferEdit', { id: offer.id })}
+          {isWide || filtersOpen ? (
+            <Card>
+              <OfferFilterFields
+                value={draft}
+                onChange={(base) => setDraft({ ...draft, ...base })}
+                errors={errors}
+                onSubmit={apply}
               />
-            ))}
-          </View>
-          <Pagination page={page} count={offers.data.count} onChange={setPage} />
-        </>
-      )}
-    </Screen>
+              <FieldGrid>
+                <OptionChips
+                  label="Active"
+                  options={YES_NO_ANY('Active', 'Deactivated')}
+                  value={draft.is_active}
+                  onChange={(is_active) => setDraft({ ...draft, is_active })}
+                />
+                <OptionChips
+                  label="Visibility"
+                  options={YES_NO_ANY('Public', 'Private')}
+                  value={draft.is_public}
+                  onChange={(is_public) => setDraft({ ...draft, is_public })}
+                />
+              </FieldGrid>
+              <View style={styles.actions}>
+                <Button title="Apply filters" onPress={apply} />
+                <Button title="Clear" variant="secondary" onPress={clear} />
+              </View>
+            </Card>
+          ) : null}
+
+          <FormError message={setActive.isError ? errorMessage(setActive.error) : null} />
+
+          {offers.isPending ? (
+            <LoadingState />
+          ) : offers.isError ? (
+            <ErrorState error={offers.error} onRetry={() => offers.refetch()} />
+          ) : offers.data.results.length === 0 ? (
+            <EmptyState message="No offers match these filters." />
+          ) : (
+            <>
+              <Text style={styles.count}>
+                {offers.data.count} offer{offers.data.count === 1 ? '' : 's'}
+              </Text>
+              <View style={asTable ? styles.table : styles.cards}>
+                {asTable ? <TableHeader /> : null}
+                {offers.data.results.map((offer) => (
+                  <OfferRow
+                    key={offer.id}
+                    offer={offer}
+                    wide={asTable}
+                    selected={offer.id === selected}
+                    toggling={setActive.isPending && setActive.variables?.id === offer.id}
+                    onToggleActive={(is_active) => setActive.mutate({ id: offer.id, is_active })}
+                    onEdit={() => navigation.setParams({ id: offer.id })}
+                  />
+                ))}
+              </View>
+              <Pagination page={page} count={offers.data.count} onChange={setPage} />
+            </>
+          )}
+        </Screen>
+      }
+    />
   );
 }
 
@@ -174,12 +191,13 @@ function TableHeader() {
 type RowProps = {
   offer: AdminOffer;
   wide: boolean;
+  selected: boolean;
   toggling: boolean;
   onToggleActive: (value: boolean) => void;
   onEdit: () => void;
 };
 
-function OfferRow({ offer, wide, toggling, onToggleActive, onEdit }: RowProps) {
+function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: RowProps) {
   const route = `${offer.origin.code} → ${offer.destination.code}`;
   const cities = `${offer.origin.city} → ${offer.destination.city}`;
   const flight = `${offer.airline} · ${ticketClassLabel(offer.ticket_class)} · ${stopoversLabel(offer.stopovers)}`;
@@ -198,7 +216,7 @@ function OfferRow({ offer, wide, toggling, onToggleActive, onEdit }: RowProps) {
 
   if (wide) {
     return (
-      <View style={styles.tableRow}>
+      <View style={[styles.tableRow, selected && styles.selected]} aria-current={selected}>
         <View style={styles.colRoute}>
           <Text style={styles.strong}>{route}</Text>
           <Text style={styles.muted}>{cities}</Text>
@@ -219,7 +237,7 @@ function OfferRow({ offer, wide, toggling, onToggleActive, onEdit }: RowProps) {
   }
 
   return (
-    <Card>
+    <Card selected={selected}>
       <View style={styles.cardTop}>
         <View style={styles.shrink}>
           <Text style={styles.strong}>{route}</Text>
@@ -255,6 +273,7 @@ const styles = StyleSheet.create({
     ...shadow,
   },
   tableHeader: { backgroundColor: colors.background },
+  selected: { backgroundColor: colors.primaryTint },
   tableRow: {
     flexDirection: 'row',
     alignItems: 'center',

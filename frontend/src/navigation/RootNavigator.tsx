@@ -1,18 +1,15 @@
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { BottomTabScreenProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator, NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { useAuth } from '../auth/AuthContext';
 import { RequireAuth } from '../auth/gate';
-import { AdminBookingDetailScreen } from '../screens/admin/AdminBookingDetailScreen';
 import { AdminBookingsScreen } from '../screens/admin/AdminBookingsScreen';
 import { AdminDashboardScreen } from '../screens/admin/AdminDashboardScreen';
-import { AdminOfferEditScreen, AdminOfferNewScreen } from '../screens/admin/AdminOfferFormScreen';
+import { AdminOfferNewScreen } from '../screens/admin/AdminOfferFormScreen';
 import { AdminOffersScreen } from '../screens/admin/AdminOffersScreen';
-import { AdminQueryDetailScreen } from '../screens/admin/AdminQueryDetailScreen';
 import { AdminQueryRespondScreen } from '../screens/admin/AdminQueryRespondScreen';
 import { AdminRequestsScreen } from '../screens/admin/AdminRequestsScreen';
 import { AdminSettingsScreen } from '../screens/admin/AdminSettingsScreen';
-import { BookingDetailScreen } from '../screens/bookings/BookingDetailScreen';
 import { BookingNewScreen } from '../screens/bookings/BookingNewScreen';
 import { BookingsScreen } from '../screens/bookings/BookingsScreen';
 import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
@@ -21,8 +18,6 @@ import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { ResetPasswordScreen } from '../screens/auth/ResetPasswordScreen';
 import { AccountScreen } from '../screens/customer/AccountScreen';
 import { ExploreScreen } from '../screens/explore/ExploreScreen';
-import { OfferDetailScreen } from '../screens/explore/OfferDetailScreen';
-import { QueryDetailScreen } from '../screens/requests/QueryDetailScreen';
 import { QueryNewScreen } from '../screens/requests/QueryNewScreen';
 import { RequestsScreen } from '../screens/requests/RequestsScreen';
 import { colors, useIsWide } from '../theme';
@@ -42,10 +37,10 @@ function GatedAccount() {
   );
 }
 
-function GatedRequests() {
+function GatedRequests(props: BottomTabScreenProps<MainTabParamList, 'Requests'>) {
   return (
-    <RequireAuth target={{ screen: 'Main', params: { screen: 'Requests' } }}>
-      <RequestsScreen />
+    <RequireAuth target={{ screen: 'Main', params: { screen: 'Requests', params: props.route.params } }}>
+      <RequestsScreen {...props} />
     </RequireAuth>
   );
 }
@@ -58,18 +53,10 @@ function GatedQueryNew(props: NativeStackScreenProps<RootStackParamList, 'QueryN
   );
 }
 
-function GatedQueryDetail(props: NativeStackScreenProps<RootStackParamList, 'QueryDetail'>) {
+function GatedBookings(props: BottomTabScreenProps<MainTabParamList, 'Bookings'>) {
   return (
-    <RequireAuth target={{ screen: 'QueryDetail', params: props.route.params }}>
-      <QueryDetailScreen {...props} />
-    </RequireAuth>
-  );
-}
-
-function GatedBookings() {
-  return (
-    <RequireAuth target={{ screen: 'Main', params: { screen: 'Bookings' } }}>
-      <BookingsScreen />
+    <RequireAuth target={{ screen: 'Main', params: { screen: 'Bookings', params: props.route.params } }}>
+      <BookingsScreen {...props} />
     </RequireAuth>
   );
 }
@@ -78,14 +65,6 @@ function GatedBookingNew(props: NativeStackScreenProps<RootStackParamList, 'Book
   return (
     <RequireAuth target={{ screen: 'BookingNew', params: props.route.params }}>
       <BookingNewScreen {...props} />
-    </RequireAuth>
-  );
-}
-
-function GatedBookingDetail(props: NativeStackScreenProps<RootStackParamList, 'BookingDetail'>) {
-  return (
-    <RequireAuth target={{ screen: 'BookingDetail', params: props.route.params }}>
-      <BookingDetailScreen {...props} />
     </RequireAuth>
   );
 }
@@ -102,7 +81,7 @@ function tabScreenOptions(isWide: boolean) {
   };
 }
 
-/** Stack pages (details and forms) keep a back button, in the brand colours. */
+/** Stack pages (the forms) keep a back button, in the brand colours. */
 const STACK_SCREEN_OPTIONS = {
   headerStyle: { backgroundColor: colors.primary },
   headerTintColor: colors.primaryText,
@@ -129,10 +108,7 @@ function MainTabsNavigator() {
 function AdminTabsNavigator() {
   const isWide = useIsWide();
   return (
-    <AdminTabs.Navigator
-      tabBar={(props) => <ResponsiveTabBar {...props} />}
-      screenOptions={tabScreenOptions(isWide)}
-    >
+    <AdminTabs.Navigator tabBar={(props) => <ResponsiveTabBar {...props} />} screenOptions={tabScreenOptions(isWide)}>
       <AdminTabs.Screen name="AdminDashboard" component={AdminDashboardScreen} options={{ title: 'Dashboard' }} />
       <AdminTabs.Screen name="AdminOffers" component={AdminOffersScreen} options={{ title: 'Offers' }} />
       <AdminTabs.Screen name="AdminRequests" component={AdminRequestsScreen} options={{ title: 'Requests' }} />
@@ -151,17 +127,10 @@ export function RootNavigator() {
         <Stack.Screen name="AdminTabs" component={AdminTabsNavigator} options={{ headerShown: false }} />
         <Stack.Screen name="AdminOfferNew" component={AdminOfferNewScreen} options={{ title: 'New offer' }} />
         <Stack.Screen
-          name="AdminOfferEdit"
-          component={AdminOfferEditScreen}
-          options={{ title: 'Edit offer' }}
-        />
-        <Stack.Screen name="AdminQueryDetail" component={AdminQueryDetailScreen} options={{ title: 'Request' }} />
-        <Stack.Screen
           name="AdminQueryRespond"
           component={AdminQueryRespondScreen}
           options={{ title: 'Respond to request' }}
         />
-        <Stack.Screen name="AdminBookingDetail" component={AdminBookingDetailScreen} options={{ title: 'Booking' }} />
       </Stack.Navigator>
     );
   }
@@ -169,11 +138,8 @@ export function RootNavigator() {
   return (
     <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
       <Stack.Screen name="Main" component={MainTabsNavigator} options={{ headerShown: false }} />
-      <Stack.Screen name="OfferDetail" component={OfferDetailScreen} options={{ title: 'Flight deal' }} />
       <Stack.Screen name="QueryNew" component={GatedQueryNew} options={{ title: 'Request options' }} />
-      <Stack.Screen name="QueryDetail" component={GatedQueryDetail} options={{ title: 'Request' }} />
       <Stack.Screen name="BookingNew" component={GatedBookingNew} options={{ title: 'Book' }} />
-      <Stack.Screen name="BookingDetail" component={GatedBookingDetail} options={{ title: 'Booking' }} />
       {/* Guests only: for a signed-in customer these URLs match no screen and open Explore. */}
       {user ? null : (
         <Stack.Group screenOptions={{ headerShown: false }}>

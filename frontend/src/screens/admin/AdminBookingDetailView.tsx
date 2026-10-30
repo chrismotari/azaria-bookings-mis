@@ -1,4 +1,3 @@
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -13,10 +12,8 @@ import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { FileField } from '../../components/FileField';
 import { FormError } from '../../components/Field';
-import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
-import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme';
 import { BOOKING_STATUS } from '../../utils/bookings';
 import { confirmAction } from '../../utils/confirm';
@@ -79,8 +76,7 @@ const ACTIONS: Partial<Record<BookingStatus, Action[]>> = {
   availability_confirmed: [MARK_PAID, MARK_UNAVAILABLE],
 };
 
-export function AdminBookingDetailScreen({ route }: NativeStackScreenProps<RootStackParamList, 'AdminBookingDetail'>) {
-  const { id } = route.params;
+export function AdminBookingDetailView({ id }: { id: number }) {
   const queryClient = useQueryClient();
   const booking = useQuery({
     queryKey: ['admin', 'bookings', 'detail', id],
@@ -115,7 +111,7 @@ export function AdminBookingDetailScreen({ route }: NativeStackScreenProps<RootS
   };
 
   return (
-    <Screen maxWidth={900}>
+    <>
       <Card>
         <View style={styles.header}>
           <Text style={styles.muted}>Booked {formatDateTime(data.created_at)}</Text>
@@ -168,7 +164,7 @@ export function AdminBookingDetailScreen({ route }: NativeStackScreenProps<RootS
         <Text style={styles.section}>Timeline</Text>
         <BookingTimeline events={data.events} />
       </Card>
-    </Screen>
+    </>
   );
 }
 

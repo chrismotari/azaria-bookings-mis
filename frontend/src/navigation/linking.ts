@@ -8,29 +8,18 @@ export const linking: LinkingOptions<RootStackParamList> = {
     screens: {
       Main: {
         screens: {
-          Explore: '',
-          Requests: 'requests',
-          Bookings: 'bookings',
+          // Explore is the offers list; '/' opens it too.
+          Explore: { path: 'offers/:id?', alias: [''], parse: { id: Number, query: Number } },
+          Requests: { path: 'requests/:id?', parse: { id: Number } },
+          Bookings: { path: 'bookings/:id?', parse: { id: Number } },
           Account: 'account',
         },
-      },
-      OfferDetail: {
-        path: 'offers/:id',
-        parse: { id: Number, query: Number },
       },
       BookingNew: {
         path: 'offers/:offer/book',
         parse: { offer: Number, query: Number },
       },
-      BookingDetail: {
-        path: 'bookings/:id',
-        parse: { id: Number },
-      },
       QueryNew: 'requests/new',
-      QueryDetail: {
-        path: 'requests/:id',
-        parse: { id: Number },
-      },
       Login: {
         path: 'login',
         parse: { passwordReset: (value: string) => value === 'true' },
@@ -42,27 +31,15 @@ export const linking: LinkingOptions<RootStackParamList> = {
         path: 'admin',
         screens: {
           AdminDashboard: '',
-          AdminOffers: 'offers',
-          AdminRequests: 'requests',
-          AdminBookings: 'bookings',
+          AdminOffers: { path: 'offers/:id?', parse: { id: Number } },
+          AdminRequests: { path: 'requests/:id?', parse: { id: Number } },
+          AdminBookings: { path: 'bookings/:id?', parse: { id: Number } },
           AdminSettings: 'settings',
         },
       },
       AdminOfferNew: 'admin/offers/new',
-      AdminOfferEdit: {
-        path: 'admin/offers/:id',
-        parse: { id: Number },
-      },
-      AdminQueryDetail: {
-        path: 'admin/requests/:id',
-        parse: { id: Number },
-      },
       AdminQueryRespond: {
         path: 'admin/requests/:id/respond',
-        parse: { id: Number },
-      },
-      AdminBookingDetail: {
-        path: 'admin/bookings/:id',
         parse: { id: Number },
       },
     },

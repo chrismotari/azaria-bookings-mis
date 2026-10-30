@@ -38,4 +38,8 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - Stale requested bookings (flight already departed) get the same "booking expired" email 7 as lapsed payment holds, since the spec defines one expiry email.
 - Decisions are kept in this file, linked from README.md, rather than as a section of README.md.
 - Sign in, Create account, Forgot password and Reset password are guest-only screens; a signed-in user opening their URLs lands on home (Explore, or the Dashboard for the admin). To use a reset link, sign out first.
-- Detail and form pages (offer detail, booking, request, the forms) keep their own header with a back button, styled in the brand indigo, rather than the full navigation bar.
+- Form pages (Book, Request options, New offer, Respond) keep their own header with a back button, styled in the brand indigo, rather than the full navigation bar.
+- The selected item is a parameter of its list's route (e.g. the Bookings tab with id 7 is /bookings/7), so the list stays mounted with its filters and scroll while the detail is open. Explore's own URL is therefore /offers ('/' still opens it).
+- Opening a detail replaces the browser history entry (React Navigation's tab router does this for parameter changes), so browser back leaves the list; the panel closes with its close button, Escape, the narrow-screen back link, or by pressing the list's tab again.
+- An offer opened from a request's response shows on Explore (with that offer's panel open), since offer detail lives on Explore.
+- Admin Offers shows cards instead of the table while the edit panel is open, as the narrowed list has no room for the table's columns.

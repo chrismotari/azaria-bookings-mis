@@ -65,7 +65,7 @@ export function BookingNewScreen({ navigation, route }: NativeStackScreenProps<R
         query: query ?? null,
       });
       await queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      navigation.replace('BookingDetail', { id: booking.id });
+      navigation.popTo('Main', { screen: 'Bookings', params: { id: booking.id } });
     } catch (error) {
       setFormError(applyServerErrors(error, setError, FIELDS));
     }
