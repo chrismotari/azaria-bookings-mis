@@ -253,7 +253,7 @@ Detail drawer (list stays visible)
 
 General polish
 - Cards and table rows: white surface, subtle border and shadow, 8 px radius, consistent spacing scale (4, 8, 12, 16, 24, 32).
-- Explore: the search filters stay in a plain white card (no coloured band behind them); offer results are cards showing the price in amber.
+- Explore: offer results show the price in amber. (Step 14 replaces the Explore layout, see UI REFINEMENT.)
 - Buttons: primary (indigo), call to action (amber), secondary (outline tertiary), danger (red). Visible focus outline on web for keyboard users.
 - Loading, empty and error states keep working and use the new colours.
 
@@ -273,6 +273,50 @@ Goal: every email (1 to 10) is sent as formatted HTML that matches the app's the
 - The brand colours are written once as template context or a base-template block, not repeated per template.
 - Content and recipients are unchanged; only the presentation changes. No new email types.
 - Tests: each email has both a text and an HTML part, the HTML part contains the key details (route, total, deadline, reset link as applicable), and email 9 still carries every boarding pass attachment.
+
+======================================================================
+UI REFINEMENT (steps 13 to 16)
+======================================================================
+Goal: move the app from plain cards of label/value text to a polished travel-booking look, using the layout patterns of large booking sites such as trip.com (compact search bar, filter sidebar, sort tabs, flight result rows, sticky price summary, booking progress) in Azaria's own colours. Patterns only: no copied branding, imagery or wording. Frontend only: no backend, API or data changes. Everything shown comes from fields that already exist (there are no departure times or durations, so none are shown or invented).
+
+Shared building blocks (step 13)
+- Icons: @expo/vector-icons (Ionicons set) is the one new dependency allowed by this section. One Icon wrapper component; icons are decorative (hidden from screen readers) unless they are the only content of a button, which then gets an accessibility label.
+- Typography scale in theme.ts (display 28, title 22, heading 18, body 15, small 13, caption 12) with weights, used by every screen instead of ad-hoc font sizes.
+- Top bar: icons beside the nav items on wide screens; bottom tabs get an icon above each label. The account control shows the user's initials in a circle with the name and a chevron; its menu is unchanged (Account, Sign out).
+- Hover (web) and pressed states on cards, rows, chips and buttons; the visible focus outline stays.
+- Auth screens (Sign in, Create account, Forgot and Reset password): on wide screens a split layout with an indigo brand panel on the left (name, one-line tagline, three short benefit lines with icons) and the form card on the right; on narrow screens the form card alone under the slim top bar.
+- Empty states: an icon in a tinted circle, a short title, one line of help text and, where one already exists, the action button.
+- Status chips get a small leading icon or dot in the status colour.
+
+Explore and offer detail (step 14)
+- Hero: an indigo band across the top of Explore with a headline ("Find your next flight deal") and a white search bar on it: From, a swap button (⇄) that exchanges From and To, To, the departure date range (from / until), Class, and an amber Search button. On narrow screens the bar's fields stack inside the band.
+- Filter sidebar on wide screens, left of the results: Price per person (min and max), Max stopovers as chips (Any, Direct, Up to 1, Up to 2), and Clear all. On narrow screens a "Filters" button with a count of active filters opens the same filters in a panel above the results.
+- Sort tabs above the results (Soonest departure, Lowest price, Highest price) as a segmented control that fits in one row at 390 px; the result count sits beside them.
+- Flight result rows (one per offer, full width of the results column): an airline badge (initials in a tinted circle; no logos), airline name and class; a route line: origin code and city, a line with one dot per stopover and the label "Direct" or "N stop(s)", destination code and city; the departure date; on the right the amber price with "per person" and a "View deal" button. "Offer valid until" in small muted text. The selected row (drawer open) is highlighted.
+- Zero results: the empty state with the existing "Request options" call to action, styled as an amber button.
+- Offer detail (drawer and full screen): a header with the route line from the result rows drawn larger (codes, cities, airport names), a details grid with icons (departure date, airline, class, stopovers, valid until), and a price summary card with the price per person and the Book button. On the full-screen detail on wide screens the summary card sits on the right and stays in view while scrolling.
+- Book form: the offer summary on top (route line, date, airline), a passenger stepper (− / +, within the existing bounds) in place of a bare number field, notes, and a live total (passengers × price) above the Book button.
+
+Customer requests and bookings (step 15)
+- Lists: trip cards showing the route line, date, airline and passengers (bookings) or dates and criteria (requests), the status chip, and for bookings the total in the price style. A thin left edge in the status colour.
+- Booking detail: a progress tracker across the top for the normal path, Requested → Confirmed → Paid → Completed, with done, current and upcoming steps; a terminal status (unavailable, cancelled, expired) shows as a single banner in its status colour instead. The existing event timeline stays below as "History".
+- While availability_confirmed: a highlighted payment box with the payment instructions, the deadline in Nairobi time and a countdown ("12 h 30 min left", updated each minute on the client; "Deadline passed" after it). The Cancel button stays where allowed.
+- Completed: boarding passes as file rows with a file icon, name, upload time and a Download button.
+- Request detail: the criteria as a compact summary with icons; each response as a card with the admin's message and the offers as the same flight result rows used on Explore.
+
+Admin screens (step 16)
+- Dashboard: a greeting line, the four count tiles with an icon each, a coloured accent and a "View" link, each opening its filtered list as today. Tiles with a non-zero count that need action (bookings to confirm, paid awaiting boarding pass) are emphasised.
+- Tables (Offers, Requests, Bookings): header row on a light tint, row hover, the route as codes with cities underneath, prices in the price style, status chips, and enough row height to read comfortably. Status filters are a segmented control or tabs with the active one in indigo.
+- Detail drawers: the actions available for the current status sit together in an action bar at the top of the panel (primary action in indigo, Mark unavailable in danger style); the boarding pass section uses the file rows from step 15 and a dashed drop-style upload area (clicking it opens the existing file picker; no drag and drop required).
+- Forms (New offer, Respond, Settings): grouped into titled sections inside cards, two columns on wide screens, with the save button in a footer bar.
+
+Across all four steps: no hex values outside theme.ts, no horizontal scrolling at 390 px or 1280 px, loading/empty/error states keep working, and every step ends with a browser check at both widths.
+
+Delivery (each is its own step and commit; see DELIVERY ORDER 13 to 16)
+- [ ] 13. Shared building blocks: icons, typography scale, top bar and tab icons, hover states, auth split layout, empty states, status chip icons.
+- [ ] 14. Explore and offer detail: hero search bar, filter sidebar, sort tabs, flight result rows, offer detail, book form.
+- [ ] 15. Customer requests and bookings: trip cards, progress tracker, payment box with countdown, boarding pass rows, request detail.
+- [ ] 16. Admin screens: dashboard tiles, tables, drawer action bars and upload area, sectioned forms.
 
 ======================================================================
 UUID IDENTIFIERS (after the frontend work is done)
@@ -305,6 +349,10 @@ DELIVERY ORDER (commit after each step; the app must run at each step)
 10. Look and layout: top bar navigation.
 11. Look and layout: detail drawer for list screens.
 12. HTML emails (see HTML EMAILS).
-13. UUID identifiers (see UUID IDENTIFIERS). Only after steps 9 to 12 are done.
+13. UI refinement: shared building blocks (see UI REFINEMENT).
+14. UI refinement: Explore and offer detail.
+15. UI refinement: customer requests and bookings.
+16. UI refinement: admin screens.
+17. UUID identifiers (see UUID IDENTIFIERS). Only after steps 9 to 16 are done.
 
 Finish each step before starting the next. At the end, run the full test suite and do a manual browser walkthrough of the entire flow as guest and as customer (browse as a guest -> no result -> sign up -> query -> admin responds -> book -> confirm -> pay -> upload pass -> send -> customer downloads, plus an expiry case and a password reset) and report any deviations from this spec.
