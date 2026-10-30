@@ -1,11 +1,8 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator, NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useNavigation } from '@react-navigation/native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '../auth/AuthContext';
 import { RequireAuth } from '../auth/gate';
-import { useSignOut } from '../auth/useSignOut';
 import { AdminBookingDetailScreen } from '../screens/admin/AdminBookingDetailScreen';
 import { AdminBookingsScreen } from '../screens/admin/AdminBookingsScreen';
 import { AdminDashboardScreen } from '../screens/admin/AdminDashboardScreen';
@@ -29,6 +26,7 @@ import { QueryDetailScreen } from '../screens/requests/QueryDetailScreen';
 import { QueryNewScreen } from '../screens/requests/QueryNewScreen';
 import { RequestsScreen } from '../screens/requests/RequestsScreen';
 import { colors, useIsWide } from '../theme';
+import { AppBar } from './AppBar';
 import { ResponsiveTabBar } from './ResponsiveTabBar';
 import { AdminTabParamList, MainTabParamList, RootStackParamList } from './types';
 
@@ -95,26 +93,30 @@ function GatedBookingDetail(props: NativeStackScreenProps<RootStackParamList, 'B
 // Login-required tabs, left out of the bar for guests.
 const GATED_TABS: (keyof MainTabParamList)[] = ['Requests', 'Bookings', 'Account'];
 
-function GuestHeaderActions() {
-  const navigation = useNavigation();
-  return (
-    <View style={styles.headerActions}>
-      <HeaderButton title="Sign in" onPress={() => navigation.navigate('Login')} />
-      <HeaderButton title="Create account" onPress={() => navigation.navigate('Register')} />
-    </View>
-  );
+/** Wide: the brand bar is the tab bar, on top. Narrow: a slim brand bar as the header, tabs at the bottom. */
+function tabScreenOptions(isWide: boolean) {
+  return {
+    tabBarPosition: isWide ? ('top' as const) : ('bottom' as const),
+    headerShown: !isWide,
+    header: () => <AppBar />,
+  };
 }
+
+/** Stack pages (details and forms) keep a back button, in the brand colours. */
+const STACK_SCREEN_OPTIONS = {
+  headerStyle: { backgroundColor: colors.primary },
+  headerTintColor: colors.primaryText,
+};
 
 function MainTabsNavigator() {
   const isWide = useIsWide();
   const { user } = useAuth();
+  // Signed in on a wide screen, Account sits in the bar's account menu instead.
+  const hiddenRoutes = !user ? GATED_TABS : isWide ? ['Account'] : [];
   return (
     <MainTabs.Navigator
-      tabBar={(props) => <ResponsiveTabBar {...props} hiddenRoutes={user ? [] : GATED_TABS} />}
-      screenOptions={{
-        tabBarPosition: isWide ? 'left' : 'bottom',
-        headerRight: user ? undefined : () => <GuestHeaderActions />,
-      }}
+      tabBar={(props) => <ResponsiveTabBar {...props} hiddenRoutes={hiddenRoutes} />}
+      screenOptions={tabScreenOptions(isWide)}
     >
       <MainTabs.Screen name="Explore" component={ExploreScreen} options={{ title: 'Explore' }} />
       <MainTabs.Screen name="Requests" component={GatedRequests} options={{ title: 'Requests' }} />
@@ -124,25 +126,12 @@ function MainTabsNavigator() {
   );
 }
 
-function HeaderButton({ title, onPress }: { title: string; onPress: () => void }) {
-  return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.headerButton}>
-      <Text style={styles.headerButtonText}>{title}</Text>
-    </Pressable>
-  );
-}
-
-function LogoutButton() {
-  const signOut = useSignOut();
-  return <HeaderButton title="Log out" onPress={signOut} />;
-}
-
 function AdminTabsNavigator() {
   const isWide = useIsWide();
   return (
     <AdminTabs.Navigator
       tabBar={(props) => <ResponsiveTabBar {...props} />}
-      screenOptions={{ tabBarPosition: isWide ? 'left' : 'bottom', headerRight: () => <LogoutButton /> }}
+      screenOptions={tabScreenOptions(isWide)}
     >
       <AdminTabs.Screen name="AdminDashboard" component={AdminDashboardScreen} options={{ title: 'Dashboard' }} />
       <AdminTabs.Screen name="AdminOffers" component={AdminOffersScreen} options={{ title: 'Offers' }} />
@@ -158,7 +147,7 @@ export function RootNavigator() {
 
   if (user?.role === 'admin') {
     return (
-      <Stack.Navigator>
+      <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
         <Stack.Screen name="AdminTabs" component={AdminTabsNavigator} options={{ headerShown: false }} />
         <Stack.Screen name="AdminOfferNew" component={AdminOfferNewScreen} options={{ title: 'New offer' }} />
         <Stack.Screen
@@ -178,7 +167,7 @@ export function RootNavigator() {
   }
 
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
       <Stack.Screen name="Main" component={MainTabsNavigator} options={{ headerShown: false }} />
       <Stack.Screen name="OfferDetail" component={OfferDetailScreen} options={{ title: 'Flight deal' }} />
       <Stack.Screen name="QueryNew" component={GatedQueryNew} options={{ title: 'Request options' }} />
@@ -197,9 +186,3 @@ export function RootNavigator() {
     </Stack.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  headerActions: { flexDirection: 'row' },
-  headerButton: { paddingHorizontal: 12, paddingVertical: 8 },
-  headerButtonText: { color: colors.primary, fontWeight: '600' },
-});

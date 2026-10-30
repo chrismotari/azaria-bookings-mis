@@ -253,13 +253,13 @@ Detail drawer (list stays visible)
 
 General polish
 - Cards and table rows: white surface, subtle border and shadow, 8 px radius, consistent spacing scale (4, 8, 12, 16, 24, 32).
-- Explore: a primary-coloured search header holding From, To and the filters, with offer results as cards showing the price in amber.
+- Explore: the search filters stay in a plain white card (no coloured band behind them); offer results are cards showing the price in amber.
 - Buttons: primary (indigo), call to action (amber), secondary (outline tertiary), danger (red). Visible focus outline on web for keyboard users.
 - Loading, empty and error states keep working and use the new colours.
 
 Delivery (each is its own step and commit; see DELIVERY ORDER 9 to 11)
 - [x] 9. Theme: new colour tokens in theme.ts, every component and screen moved onto them (no stray hex values), buttons, chips, cards and Explore header restyled.
-- [ ] 10. Top bar navigation replacing the sidebar on wide screens; slim top bar plus bottom tabs on narrow screens; guest and signed-in controls in the bar.
+- [x] 10. Top bar navigation replacing the sidebar on wide screens; slim top bar plus bottom tabs on narrow screens; guest and signed-in controls in the bar.
 - [ ] 11. Detail drawer on wide screens for the six list -> detail pairs above, with URLs, Escape and close handling and list refresh after actions; full-screen detail on narrow screens. Browser check at 1280 px and 390 px widths.
 
 ======================================================================

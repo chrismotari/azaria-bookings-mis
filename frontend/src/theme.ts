@@ -9,7 +9,6 @@ export const colors = {
   primary: '#1800d2',
   primaryText: '#ffffff',
   primaryTint: '#ebe8fd',
-  primaryMutedText: '#d4d0f7',
   accent: '#ffb400',
   accentText: '#252525',
   tertiary: '#4a6660',
