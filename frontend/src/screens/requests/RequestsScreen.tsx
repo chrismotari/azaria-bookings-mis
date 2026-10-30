@@ -10,7 +10,7 @@ import { Pagination } from '../../components/Pagination';
 import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
-import { colors } from '../../theme';
+import { colors, radius, shadow } from '../../theme';
 import { formatDateTime } from '../../utils/format';
 import { QUERY_STATUS, describeQuery } from '../../utils/queries';
 
@@ -82,10 +82,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
     backgroundColor: colors.surface,
-    borderRadius: 8,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     padding: 16,
+    ...shadow,
   },
   pressed: { borderColor: colors.primary },
   rowMain: { flexShrink: 1, gap: 2 },

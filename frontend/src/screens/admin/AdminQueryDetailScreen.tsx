@@ -90,7 +90,7 @@ export function AdminQueryDetailScreen({
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
-  section: { fontSize: 18, fontWeight: '700', color: colors.text },
+  section: { fontSize: 18, fontWeight: '700', color: colors.tertiary },
   actions: { flexDirection: 'row' },
   text: { color: colors.text },
   muted: { color: colors.muted },

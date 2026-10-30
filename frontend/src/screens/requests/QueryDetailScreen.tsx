@@ -93,7 +93,7 @@ export function QueryDetailScreen({ navigation, route }: NativeStackScreenProps<
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   actions: { flexDirection: 'row' },
-  section: { fontSize: 20, fontWeight: '700', color: colors.text },
+  section: { fontSize: 20, fontWeight: '700', color: colors.tertiary },
   response: { gap: 8 },
   message: { color: colors.text, fontSize: 15 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },

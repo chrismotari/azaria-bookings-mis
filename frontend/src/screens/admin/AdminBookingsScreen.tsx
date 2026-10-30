@@ -12,7 +12,7 @@ import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { AdminTabParamList } from '../../navigation/types';
-import { colors } from '../../theme';
+import { colors, radius, shadow } from '../../theme';
 import { BOOKING_STATUS, bookingRoute, passengersLabel } from '../../utils/bookings';
 import { formatDate, formatDateTime, formatPrice } from '../../utils/format';
 
@@ -107,11 +107,12 @@ const styles = StyleSheet.create({
   gridItem: { flexGrow: 1, flexBasis: 340, minWidth: 0 },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 8,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     padding: 16,
     gap: 4,
+    ...shadow,
   },
   pressed: { borderColor: colors.primary },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },

@@ -26,7 +26,7 @@ type Action = {
   path: 'confirm-availability' | 'mark-unavailable' | 'mark-paid' | 'complete';
   title: string;
   confirm: string;
-  variant: 'primary' | 'secondary';
+  variant: 'primary' | 'danger';
 };
 
 const CONFIRM_AVAILABILITY: Action = {
@@ -39,7 +39,7 @@ const MARK_UNAVAILABLE: Action = {
   path: 'mark-unavailable',
   title: 'Mark unavailable',
   confirm: 'The customer will be told the seats are not available. This cannot be undone.',
-  variant: 'secondary',
+  variant: 'danger',
 };
 const MARK_PAID: Action = {
   path: 'mark-paid',
@@ -262,7 +262,7 @@ function BoardingPassUploads({ booking, onSend, sending }: UploadsProps) {
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
-  section: { fontSize: 18, fontWeight: '700', color: colors.text },
+  section: { fontSize: 18, fontWeight: '700', color: colors.tertiary },
   deadline: { color: colors.text, fontWeight: '700' },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   text: { color: colors.text },

@@ -7,7 +7,7 @@ import { Dashboard } from '../../api/types';
 import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { AdminTabParamList } from '../../navigation/types';
-import { colors } from '../../theme';
+import { colors, radius, shadow } from '../../theme';
 
 export function AdminDashboardScreen({ navigation }: BottomTabScreenProps<AdminTabParamList, 'AdminDashboard'>) {
   const dashboard = useQuery({
@@ -75,11 +75,12 @@ const styles = StyleSheet.create({
     flexBasis: 200,
     minWidth: 0,
     backgroundColor: colors.surface,
-    borderRadius: 8,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     padding: 20,
     gap: 4,
+    ...shadow,
   },
   pressed: { borderColor: colors.primary },
   count: { fontSize: 36, fontWeight: '700', color: colors.primary },

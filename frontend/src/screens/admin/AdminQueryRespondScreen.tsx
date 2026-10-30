@@ -244,7 +244,7 @@ function RespondForm({ query, onSent }: { query: AdminQueryDetail; onSent: () =>
             numberOfLines={4}
             accessibilityLabel="Message to the customer"
             placeholder="e.g. These are the best fares I found for your dates."
-            placeholderTextColor="#98a2ad"
+            placeholderTextColor={colors.placeholder}
           />
         </Field>
         <FormError message={formError} />
@@ -295,7 +295,7 @@ function SelectableOffer({ offer, selected, onToggle }: SelectableProps) {
 
 const styles = StyleSheet.create({
   title: { fontSize: 24, fontWeight: '700', color: colors.text },
-  section: { fontSize: 18, fontWeight: '700', color: colors.text },
+  section: { fontSize: 18, fontWeight: '700', color: colors.tertiary },
   actions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   option: {
     flexDirection: 'row',
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 6,
   },
-  optionSelected: { borderColor: colors.primary, backgroundColor: '#e3eef5' },
+  optionSelected: { borderColor: colors.primary, backgroundColor: colors.primaryTint },
   optionDisabled: { opacity: 0.5 },
   optionText: { flexShrink: 1 },
   box: {

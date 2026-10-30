@@ -258,7 +258,7 @@ General polish
 - Loading, empty and error states keep working and use the new colours.
 
 Delivery (each is its own step and commit; see DELIVERY ORDER 9 to 11)
-- [ ] 9. Theme: new colour tokens in theme.ts, every component and screen moved onto them (no stray hex values), buttons, chips, cards and Explore header restyled.
+- [x] 9. Theme: new colour tokens in theme.ts, every component and screen moved onto them (no stray hex values), buttons, chips, cards and Explore header restyled.
 - [ ] 10. Top bar navigation replacing the sidebar on wide screens; slim top bar plus bottom tabs on narrow screens; guest and signed-in controls in the bar.
 - [ ] 11. Detail drawer on wide screens for the six list -> detail pairs above, with URLs, Escape and close handling and list refresh after actions; full-screen detail on narrow screens. Browser check at 1280 px and 390 px widths.
 

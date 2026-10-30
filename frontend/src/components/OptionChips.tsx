@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors } from '../theme';
+import { colors, radius } from '../theme';
 import { Field } from './Field';
 
 type Option<T extends string> = { value: T; label: string };
@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   chip: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 16,
+    borderRadius: radius.pill,
     paddingVertical: 6,
     paddingHorizontal: 12,
     backgroundColor: colors.surface,

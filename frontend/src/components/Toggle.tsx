@@ -17,7 +17,10 @@ export function Toggle({ label, value, onChange, disabled }: Props) {
         onValueChange={onChange}
         disabled={disabled}
         accessibilityLabel={label}
-        trackColor={{ true: colors.primary, false: colors.border }}
+        trackColor={{ true: colors.primary, false: colors.light }}
+        thumbColor={colors.surface}
+        // react-native-web colours the "on" thumb from this web-only prop (teal by default).
+        {...({ activeThumbColor: colors.surface } as object)}
       />
       <Text style={styles.label}>{label}</Text>
     </View>

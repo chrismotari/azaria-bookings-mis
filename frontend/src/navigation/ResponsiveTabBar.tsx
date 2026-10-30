@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   bottomItem: { flex: 1, paddingVertical: 14, alignItems: 'center', minWidth: 0 },
-  focused: { backgroundColor: '#e3eef5' },
+  focused: { backgroundColor: colors.primaryTint },
   label: { fontSize: 15, color: colors.text },
   focusedLabel: { color: colors.primary, fontWeight: '700' },
 });

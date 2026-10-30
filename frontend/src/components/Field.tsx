@@ -1,7 +1,7 @@
 import { Children, ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors } from '../theme';
+import { colors, radius } from '../theme';
 
 /** Label, control and validation message. */
 export function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
@@ -32,7 +32,7 @@ export function FormError({ message }: { message: string | null | undefined }) {
 export const inputStyle = {
   borderWidth: 1,
   borderColor: colors.border,
-  borderRadius: 6,
+  borderRadius: radius.sm,
   paddingHorizontal: 10,
   paddingVertical: 8,
   fontSize: 15,

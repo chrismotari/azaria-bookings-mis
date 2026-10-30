@@ -53,7 +53,7 @@ export function BoardingPassList({ passes, onDelete, deletingId }: Props) {
             {onDelete ? (
               <Button
                 title="Delete"
-                variant="secondary"
+                variant="danger"
                 onPress={() => onDelete(boardingPass)}
                 loading={deletingId === boardingPass.id}
               />

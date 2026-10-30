@@ -103,7 +103,7 @@ export function BookingDetailScreen({ navigation, route }: NativeStackScreenProp
       <FormError message={cancel.isError ? errorMessage(cancel.error) : null} />
       {CANCELLABLE.includes(data.status) ? (
         <View style={styles.actions}>
-          <Button title="Cancel booking" variant="secondary" onPress={onCancel} loading={cancel.isPending} />
+          <Button title="Cancel booking" variant="danger" onPress={onCancel} loading={cancel.isPending} />
         </View>
       ) : null}
     </Screen>
@@ -112,7 +112,7 @@ export function BookingDetailScreen({ navigation, route }: NativeStackScreenProp
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
-  section: { fontSize: 18, fontWeight: '700', color: colors.text },
+  section: { fontSize: 18, fontWeight: '700', color: colors.tertiary },
   deadline: { color: colors.danger, fontWeight: '700' },
   actions: { flexDirection: 'row' },
   text: { color: colors.text },

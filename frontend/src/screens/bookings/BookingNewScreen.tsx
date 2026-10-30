@@ -124,7 +124,7 @@ export function BookingNewScreen({ navigation, route }: NativeStackScreenProps<R
         </Text>
         <FormError message={formError} />
         <View style={styles.actions}>
-          <Button title="Request booking" onPress={onSubmit} loading={formState.isSubmitting} />
+          <Button title="Request booking" variant="accent" onPress={onSubmit} loading={formState.isSubmitting} />
         </View>
       </Card>
     </Screen>

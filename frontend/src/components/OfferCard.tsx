@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Offer } from '../api/types';
-import { colors } from '../theme';
+import { colors, radius, shadow, space } from '../theme';
 import { formatDate, formatPrice, stopoversLabel, ticketClassLabel } from '../utils/format';
 
 /** Summary of an offer that opens its detail when pressed. */
@@ -39,18 +39,29 @@ export function OfferCard({ offer, onPress }: { offer: Offer; onPress: () => voi
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 8,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 16,
+    borderTopWidth: 4,
+    borderTopColor: colors.primary,
+    padding: space.lg,
     gap: 6,
+    ...shadow,
   },
   pressed: { borderColor: colors.primary },
   top: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
   shrink: { flexShrink: 1 },
-  route: { fontSize: 18, fontWeight: '700', color: colors.text },
-  priceBox: { alignItems: 'flex-end' },
-  price: { fontSize: 18, fontWeight: '700', color: colors.primary },
+  route: { fontSize: 18, fontWeight: '700', color: colors.primary },
+  priceBox: { alignItems: 'flex-end', gap: 2 },
+  price: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.accentText,
+    backgroundColor: colors.accent,
+    borderRadius: radius.sm,
+    paddingHorizontal: space.sm,
+    paddingVertical: 2,
+  },
   text: { color: colors.text },
   muted: { color: colors.muted, fontSize: 13 },
 });

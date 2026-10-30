@@ -89,7 +89,7 @@ export function AirportPicker({ label, value, onChange, error }: PickerProps) {
         onChangeText={setText}
         placeholder="City, airport or code"
         accessibilityLabel={label}
-        placeholderTextColor="#98a2ad"
+        placeholderTextColor={colors.placeholder}
         autoCorrect={false}
       />
       <AirportSuggestions
@@ -136,7 +136,7 @@ export function AirportSearchField({ label, value, onChange, onSubmitEditing }: 
         onSubmitEditing={onSubmitEditing}
         placeholder="City, country or code"
         accessibilityLabel={label}
-        placeholderTextColor="#98a2ad"
+        placeholderTextColor={colors.placeholder}
         autoCorrect={false}
         selectTextOnFocus={value.airport !== null}
       />

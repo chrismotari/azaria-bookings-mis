@@ -22,7 +22,7 @@ import { Pagination } from '../../components/Pagination';
 import { Screen } from '../../components/Screen';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { Toggle } from '../../components/Toggle';
-import { colors, useIsWide } from '../../theme';
+import { colors, radius, shadow, useIsWide } from '../../theme';
 import { formatDate, formatPrice, stopoversLabel, ticketClassLabel } from '../../utils/format';
 
 type AdminFilters = OfferFilterValues & { is_active: '' | 'true' | 'false'; is_public: '' | 'true' | 'false' };
@@ -246,7 +246,14 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   count: { color: colors.muted },
   cards: { gap: 12 },
-  table: { borderWidth: 1, borderColor: colors.border, borderRadius: 8, overflow: 'hidden' },
+  table: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    overflow: 'hidden',
+    backgroundColor: colors.surface,
+    ...shadow,
+  },
   tableHeader: { backgroundColor: colors.background },
   tableRow: {
     flexDirection: 'row',

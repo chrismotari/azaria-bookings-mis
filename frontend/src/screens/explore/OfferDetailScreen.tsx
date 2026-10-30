@@ -11,7 +11,7 @@ import { Card } from '../../components/Card';
 import { Screen } from '../../components/Screen';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { RootStackParamList } from '../../navigation/types';
-import { colors } from '../../theme';
+import { colors, radius } from '../../theme';
 import { formatDate, formatPrice, stopoversLabel, ticketClassLabel } from '../../utils/format';
 
 export function OfferDetailScreen({
@@ -62,6 +62,7 @@ export function OfferDetailScreen({
         {data.is_bookable ? (
           <Button
             title="Book"
+            variant="accent"
             onPress={() =>
               requireAuth({ screen: 'BookingNew', params: query ? { offer: id, query } : { offer: id } })
             }
@@ -99,11 +100,19 @@ function Detail({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   route: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   airport: { flex: 1, minWidth: 0 },
-  arrow: { fontSize: 24, color: colors.muted },
+  arrow: { fontSize: 24, color: colors.primary },
   code: { fontSize: 28, fontWeight: '700', color: colors.text },
   city: { color: colors.text },
-  priceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
-  price: { fontSize: 26, fontWeight: '700', color: colors.primary },
+  priceRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  price: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.accentText,
+    backgroundColor: colors.accent,
+    borderRadius: radius.sm,
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+  },
   detail: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' },
   label: { color: colors.muted },
   value: { color: colors.text, fontWeight: '600' },

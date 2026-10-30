@@ -86,29 +86,36 @@ export function ExploreScreen() {
   };
 
   return (
-    <Screen>
-      <Text style={styles.title}>Find a flight deal</Text>
-      <Card>
-        <OfferFilterFields
-          value={draft}
-          onChange={setDraft}
-          errors={errors}
-          onSubmit={search}
-          showDetails={isWide || moreFilters}
-        />
-        <View style={styles.actions}>
-          <Button title="Search" onPress={search} />
-          <Button title="Clear" variant="secondary" onPress={clear} />
-          {!isWide ? (
-            <Button
-              title={moreFilters ? 'Fewer filters' : 'More filters'}
-              variant="link"
-              onPress={() => setMoreFilters((open) => !open)}
+    <Screen
+      header={
+        <>
+          <View style={styles.heading}>
+            <Text style={styles.title}>Find a flight deal</Text>
+            <Text style={styles.subtitle}>Browse current deals, or tell us where you want to go and we will find options.</Text>
+          </View>
+          <Card>
+            <OfferFilterFields
+              value={draft}
+              onChange={setDraft}
+              errors={errors}
+              onSubmit={search}
+              showDetails={isWide || moreFilters}
             />
-          ) : null}
-        </View>
-      </Card>
-
+            <View style={styles.actions}>
+              <Button title="Search" onPress={search} />
+              <Button title="Clear" variant="secondary" onPress={clear} />
+              {!isWide ? (
+                <Button
+                  title={moreFilters ? 'Fewer filters' : 'More filters'}
+                  variant="link"
+                  onPress={() => setMoreFilters((open) => !open)}
+                />
+              ) : null}
+            </View>
+          </Card>
+        </>
+      }
+    >
       <OptionChips
         label="Sort by"
         options={ORDERING_OPTIONS}
@@ -128,6 +135,7 @@ export function ExploreScreen() {
           <EmptyState message="No flight deals match your search right now. Tell us what you need and we will find options for you." />
           <Button
             title="Request options"
+            variant="accent"
             onPress={() => requireAuth({ screen: 'QueryNew', params: queryPrefill(filters) })}
           />
         </View>
@@ -154,7 +162,9 @@ export function ExploreScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '700', color: colors.text },
+  heading: { gap: 4 },
+  title: { fontSize: 28, fontWeight: '700', color: colors.primaryText },
+  subtitle: { fontSize: 15, color: colors.primaryMutedText },
   actions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', alignItems: 'center' },
   count: { color: colors.muted },
   empty: { alignItems: 'center', gap: 4 },
