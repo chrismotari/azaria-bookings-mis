@@ -37,7 +37,7 @@ export function RequestsScreen({ navigation, route }: BottomTabScreenProps<MainT
       onClose={close}
       detail={selected ? <QueryDetailView key={selected} id={selected} /> : null}
       list={
-        <Screen maxWidth={900}>
+        <Screen maxWidth={900} card>
           <View style={styles.header}>
             <Text style={styles.title}>My requests</Text>
             <Button title="New request" onPress={() => rootNavigation.navigate('QueryNew')} />

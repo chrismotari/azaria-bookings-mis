@@ -96,7 +96,7 @@ export function AdminOffersScreen({ navigation, route }: BottomTabScreenProps<Ad
       onClose={close}
       detail={selected ? <AdminOfferEditView key={selected} id={selected} onDone={close} /> : null}
       list={
-        <Screen>
+        <Screen card>
           <View style={styles.header}>
             <Text style={styles.title}>Offers</Text>
             <Button title="New offer" onPress={() => rootNavigation.navigate('AdminOfferNew')} />

@@ -1,11 +1,12 @@
 import { useIsFocused } from '@react-navigation/native';
 import { ReactNode, useEffect, useRef } from 'react';
-import { Animated, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { colors, font, space, useIsWide, weight } from '../theme';
 import { Button } from './Button';
 
-export const PANEL_WIDTH = 480;
+/** Share of the screen width the panel takes on wide screens; the list gets the rest. */
+const PANEL_SHARE = '62%';
 
 type Props = {
   /** The list screen; it stays mounted (filters, page, scroll) while a detail is open. */
@@ -21,7 +22,7 @@ type Props = {
 
 /**
  * List with its selected item's detail. Wide: the detail is a panel on the right
- * and the list narrows beside it. Narrow: the detail takes the whole screen.
+ * taking most of the width, and the list narrows beside it. Narrow: the detail takes the whole screen.
  */
 export function DetailLayout({ list, detail, title, backLabel, onClose }: Props) {
   const isWide = useIsWide();
@@ -55,7 +56,8 @@ export function DetailLayout({ list, detail, title, backLabel, onClose }: Props)
 
 function Panel({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   // Slides in when it opens; switching to another item keeps it in place.
-  const offset = useRef(new Animated.Value(PANEL_WIDTH)).current;
+  const { width } = useWindowDimensions();
+  const offset = useRef(new Animated.Value(width)).current;
   useEffect(() => {
     Animated.timing(offset, { toValue: 0, duration: 180, useNativeDriver: Platform.OS !== 'web' }).start();
   }, [offset]);
@@ -98,8 +100,7 @@ const styles = StyleSheet.create({
   hidden: { display: 'none' },
   narrowBody: { padding: space.lg, gap: space.lg, backgroundColor: colors.background },
   panel: {
-    width: PANEL_WIDTH,
-    maxWidth: '50%',
+    width: PANEL_SHARE,
     backgroundColor: colors.background,
     borderLeftWidth: 1,
     borderLeftColor: colors.border,

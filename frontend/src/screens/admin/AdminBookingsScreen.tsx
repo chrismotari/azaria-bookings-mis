@@ -50,7 +50,7 @@ export function AdminBookingsScreen({ navigation, route }: BottomTabScreenProps<
       onClose={close}
       detail={selected ? <AdminBookingDetailView key={selected} id={selected} /> : null}
       list={
-        <Screen>
+        <Screen card>
           <Text style={styles.title}>Bookings</Text>
           <OptionChips
             label="Status"

@@ -34,7 +34,7 @@ export function BookingsScreen({ navigation, route }: BottomTabScreenProps<MainT
       onClose={close}
       detail={selected ? <BookingDetailView key={selected} id={selected} /> : null}
       list={
-        <Screen maxWidth={900}>
+        <Screen maxWidth={900} card>
           <Text style={styles.title}>My bookings</Text>
           {bookings.isPending ? (
             <LoadingState />

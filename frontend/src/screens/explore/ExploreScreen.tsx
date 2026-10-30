@@ -95,7 +95,7 @@ export function ExploreScreen({ navigation, route }: BottomTabScreenProps<MainTa
       onClose={close}
       detail={selected ? <OfferDetailView key={selected} id={selected} query={route.params?.query} /> : null}
       list={
-        <Screen>
+        <Screen card>
           <Text style={styles.title}>Find a flight deal</Text>
           <Card>
             <OfferFilterFields

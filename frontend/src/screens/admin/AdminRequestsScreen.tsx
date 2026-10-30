@@ -46,7 +46,7 @@ export function AdminRequestsScreen({ navigation, route }: BottomTabScreenProps<
       onClose={close}
       detail={selected ? <AdminQueryDetailView key={selected} id={selected} /> : null}
       list={
-        <Screen>
+        <Screen card>
           <Text style={styles.title}>Requests</Text>
           <OptionChips
             label="Status"
