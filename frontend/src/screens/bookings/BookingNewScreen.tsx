@@ -16,7 +16,7 @@ import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
 import { RootStackParamList } from '../../navigation/types';
-import { colors } from '../../theme';
+import { colors, font, weight } from '../../theme';
 import { formatDate, formatPrice, stopoversLabel, ticketClassLabel } from '../../utils/format';
 
 // Mirrors the server's rules: 1 to 9 passengers.
@@ -132,10 +132,10 @@ export function BookingNewScreen({ navigation, route }: NativeStackScreenProps<R
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '700', color: colors.text },
-  route: { fontSize: 18, fontWeight: '700', color: colors.text },
+  title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
+  route: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text },
   text: { color: colors.text },
-  total: { fontSize: 18, fontWeight: '700', color: colors.primary },
+  total: { fontSize: font.heading, fontWeight: weight.bold, color: colors.primary },
   muted: { color: colors.muted },
   actions: { flexDirection: 'row' },
 });

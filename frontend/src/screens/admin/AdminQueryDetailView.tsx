@@ -9,7 +9,7 @@ import { Card } from '../../components/Card';
 import { QuerySummary } from '../../components/QuerySummary';
 import { StatusChip } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
-import { colors } from '../../theme';
+import { colors, font, weight } from '../../theme';
 import { formatDate, formatDateTime, formatPrice, stopoversLabel, ticketClassLabel } from '../../utils/format';
 import { QUERY_STATUS } from '../../utils/queries';
 
@@ -84,7 +84,7 @@ export function AdminQueryDetailView({ id }: { id: number }) {
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
-  section: { fontSize: 18, fontWeight: '700', color: colors.tertiary },
+  section: { fontSize: font.heading, fontWeight: weight.bold, color: colors.tertiary },
   actions: { flexDirection: 'row' },
   text: { color: colors.text },
   muted: { color: colors.muted },

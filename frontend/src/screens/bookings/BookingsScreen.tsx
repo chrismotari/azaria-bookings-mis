@@ -11,10 +11,11 @@ import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { MainTabParamList } from '../../navigation/types';
-import { colors, radius, shadow } from '../../theme';
+import { colors, font, radius, shadow, weight } from '../../theme';
 import { BOOKING_STATUS, bookingRoute, passengersLabel } from '../../utils/bookings';
 import { formatDate, formatPrice } from '../../utils/format';
 import { BookingDetailView } from './BookingDetailView';
+import { PressState } from '../../components/pressState';
 
 export function BookingsScreen({ navigation, route }: BottomTabScreenProps<MainTabParamList, 'Bookings'>) {
   const selected = route.params?.id;
@@ -40,7 +41,11 @@ export function BookingsScreen({ navigation, route }: BottomTabScreenProps<MainT
           ) : bookings.isError ? (
             <ErrorState error={bookings.error} onRetry={() => bookings.refetch()} />
           ) : bookings.data.results.length === 0 ? (
-            <EmptyState message="You have no bookings yet. Find a deal on Explore and book it." />
+            <EmptyState
+              icon="ticket-outline"
+              title="No bookings yet"
+              message="You have no bookings yet. Find a deal on Explore and book it."
+            />
           ) : (
             <>
               <View style={styles.list}>
@@ -69,7 +74,11 @@ function BookingRow({ booking, selected, onPress }: { booking: Booking; selected
       accessibilityRole="link"
       aria-current={selected}
       onPress={onPress}
-      style={({ pressed }) => [styles.row, (pressed || selected) && styles.pressed, selected && styles.selected]}
+      style={({ pressed, hovered }: PressState) => [
+        styles.row,
+        (pressed || hovered || selected) && styles.pressed,
+        selected && styles.selected,
+      ]}
     >
       <View style={styles.rowMain}>
         <Text style={styles.route}>{bookingRoute(booking)}</Text>
@@ -85,7 +94,7 @@ function BookingRow({ booking, selected, onPress }: { booking: Booking; selected
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '700', color: colors.text },
+  title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   list: { gap: 12 },
   row: {
     flexDirection: 'row',
@@ -102,7 +111,7 @@ const styles = StyleSheet.create({
   pressed: { borderColor: colors.primary },
   selected: { backgroundColor: colors.primaryTint },
   rowMain: { flexShrink: 1, gap: 2 },
-  route: { fontSize: 16, fontWeight: '700', color: colors.text },
+  route: { fontSize: font.body, fontWeight: weight.bold, color: colors.text },
   text: { color: colors.text },
-  price: { color: colors.primary, fontWeight: '700' },
+  price: { color: colors.primary, fontWeight: weight.bold },
 });

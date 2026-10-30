@@ -5,15 +5,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../auth/AuthContext';
 import { useSignOut } from '../auth/useSignOut';
-import { colors, radius, shadow, space, useIsWide } from '../theme';
+import { Icon, IconName } from '../components/Icon';
+import { colors, font, radius, shadow, space, useIsWide, weight } from '../theme';
+import { PressState } from '../components/pressState';
 
 export const APP_BAR_HEIGHT = 56;
 
 /**
  * The brand bar: brand, optional navigation items, and the guest or account
  * controls. Full navigation on wide screens; brand and account only on narrow ones.
+ * brandOnly drops the controls (the auth screens, where they would repeat the form's own).
  */
-export function AppBar({ children }: { children?: ReactNode }) {
+export function AppBar({ children, brandOnly }: { children?: ReactNode; brandOnly?: boolean }) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
@@ -34,21 +37,24 @@ export function AppBar({ children }: { children?: ReactNode }) {
         <View style={styles.items} accessibilityRole="tablist">
           {children}
         </View>
-        {user ? <AccountMenu /> : <GuestActions />}
+        {brandOnly ? null : user ? <AccountMenu /> : <GuestActions />}
       </View>
     </View>
   );
 }
 
+type ItemProps = { label: string; icon: ReactNode; focused: boolean; onPress: () => void };
+
 /** A navigation item in the bar; the focused one is underlined in amber. */
-export function AppBarItem({ label, focused, onPress }: { label: string; focused: boolean; onPress: () => void }) {
+export function AppBarItem({ label, icon, focused, onPress }: ItemProps) {
   return (
     <Pressable
       accessibilityRole="tab"
       accessibilityState={{ selected: focused }}
       onPress={onPress}
-      style={[styles.item, focused && styles.itemFocused]}
+      style={({ hovered }: PressState) => [styles.item, hovered && styles.itemHovered, focused && styles.itemFocused]}
     >
+      {icon}
       <Text style={[styles.itemText, focused && styles.itemTextFocused]} numberOfLines={1}>
         {label}
       </Text>
@@ -80,6 +86,7 @@ function AccountMenu() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const signOut = useSignOut();
+  const isWide = useIsWide();
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
 
@@ -90,11 +97,17 @@ function AccountMenu() {
         accessibilityLabel="Account menu"
         accessibilityState={{ expanded: open }}
         onPress={() => setOpen(true)}
-        style={styles.account}
+        style={({ hovered }: PressState) => [styles.account, hovered && styles.accountHovered]}
       >
-        <Text style={styles.linkText} numberOfLines={1}>
-          {user?.full_name} ▾
-        </Text>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>{initials(user?.full_name ?? '')}</Text>
+        </View>
+        {isWide ? (
+          <Text style={[styles.linkText, styles.shrink]} numberOfLines={1}>
+            {user?.full_name}
+          </Text>
+        ) : null}
+        <Icon name="chevron-down" size={16} color={colors.primaryText} />
       </Pressable>
       <Modal transparent visible={open} onRequestClose={close} animationType="none">
         <Pressable accessibilityLabel="Close menu" style={styles.backdrop} onPress={close}>
@@ -105,6 +118,7 @@ function AccountMenu() {
             {user?.role === 'customer' ? (
               <MenuItem
                 label="Account"
+                icon="person-circle-outline"
                 onPress={() => {
                   close();
                   navigation.navigate('Main', { screen: 'Account' });
@@ -113,6 +127,7 @@ function AccountMenu() {
             ) : null}
             <MenuItem
               label="Sign out"
+              icon="log-out-outline"
               onPress={() => {
                 close();
                 signOut();
@@ -125,13 +140,25 @@ function AccountMenu() {
   );
 }
 
-function MenuItem({ label, onPress }: { label: string; onPress: () => void }) {
+/** Up to two initials, from the first and last words of the name. */
+function initials(name: string) {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) {
+    return '?';
+  }
+  const first = words[0][0];
+  const last = words.length > 1 ? words[words.length - 1][0] : '';
+  return (first + last).toUpperCase();
+}
+
+function MenuItem({ label, icon, onPress }: { label: string; icon: IconName; onPress: () => void }) {
   return (
     <Pressable
       accessibilityRole="menuitem"
       onPress={onPress}
-      style={({ pressed }) => [styles.menuItem, pressed && styles.menuItemPressed]}
+      style={({ pressed, hovered }: PressState) => [styles.menuItem, (pressed || hovered) && styles.menuItemPressed]}
     >
+      <Icon name={icon} size={18} color={colors.muted} />
       <Text style={styles.menuItemText}>{label}</Text>
     </Pressable>
   );
@@ -147,22 +174,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.lg,
   },
   innerNarrow: { gap: space.sm, paddingHorizontal: space.md },
-  brand: { fontSize: 18, fontWeight: '700', color: colors.primaryText },
-  brandNarrow: { fontSize: 16 },
-  textNarrow: { fontSize: 14 },
+  brand: { fontSize: font.heading, fontWeight: weight.bold, color: colors.primaryText },
+  brandNarrow: { fontSize: font.body },
+  textNarrow: { fontSize: font.small },
   items: { flex: 1, flexDirection: 'row', alignSelf: 'stretch', gap: space.xs, minWidth: 0 },
   item: {
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: space.md,
     borderBottomWidth: 3,
     borderBottomColor: 'transparent',
   },
+  itemHovered: { backgroundColor: colors.primaryHover },
   itemFocused: { borderBottomColor: colors.accent },
-  itemText: { fontSize: 15, color: colors.primaryText, opacity: 0.85 },
-  itemTextFocused: { fontWeight: '700', opacity: 1 },
+  itemText: { fontSize: font.body, color: colors.primaryText, opacity: 0.85 },
+  itemTextFocused: { fontWeight: weight.bold, opacity: 1 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   link: { paddingHorizontal: space.xs, paddingVertical: space.sm },
-  linkText: { color: colors.primaryText, fontWeight: '600', fontSize: 15 },
+  linkText: { color: colors.primaryText, fontWeight: weight.semibold, fontSize: font.body },
   cta: {
     backgroundColor: colors.accent,
     borderRadius: radius.sm,
@@ -170,8 +200,27 @@ const styles = StyleSheet.create({
     paddingVertical: space.sm,
   },
   ctaNarrow: { paddingHorizontal: space.sm, paddingVertical: 6 },
-  ctaText: { color: colors.accentText, fontWeight: '700', fontSize: 15 },
-  account: { paddingVertical: space.sm, maxWidth: 220 },
+  ctaText: { color: colors.accentText, fontWeight: weight.bold, fontSize: font.body },
+  account: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    paddingVertical: space.xs,
+    paddingHorizontal: space.sm,
+    borderRadius: radius.pill,
+    maxWidth: 260,
+  },
+  accountHovered: { backgroundColor: colors.primaryHover },
+  shrink: { flexShrink: 1 },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: { color: colors.accentText, fontWeight: weight.bold, fontSize: font.small },
   backdrop: { flex: 1 },
   menu: {
     position: 'absolute',
@@ -187,13 +236,13 @@ const styles = StyleSheet.create({
   },
   menuEmail: {
     color: colors.muted,
-    fontSize: 13,
+    fontSize: font.small,
     paddingHorizontal: space.lg,
     paddingVertical: space.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  menuItem: { paddingHorizontal: space.lg, paddingVertical: 10 },
+  menuItem: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingVertical: 10 },
   menuItemPressed: { backgroundColor: colors.primaryTint },
-  menuItemText: { color: colors.text, fontSize: 15 },
+  menuItemText: { color: colors.text, fontSize: font.body },
 });

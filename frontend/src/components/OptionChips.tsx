@@ -1,7 +1,8 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius } from '../theme';
+import { colors, font, radius } from '../theme';
 import { Field } from './Field';
+import { PressState } from './pressState';
 
 type Option<T extends string> = { value: T; label: string };
 
@@ -26,7 +27,7 @@ export function OptionChips<T extends string>({ label, options, value, onChange,
               accessibilityRole="radio"
               accessibilityState={{ checked: selected }}
               onPress={() => onChange(option.value)}
-              style={[styles.chip, selected && styles.selected]}
+              style={({ hovered }: PressState) => [styles.chip, hovered && styles.hovered, selected && styles.selected]}
             >
               <Text style={[styles.text, selected && styles.selectedText]}>{option.label}</Text>
             </Pressable>
@@ -47,7 +48,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     backgroundColor: colors.surface,
   },
+  hovered: { borderColor: colors.primary },
   selected: { backgroundColor: colors.primary, borderColor: colors.primary },
-  text: { fontSize: 14, color: colors.text },
+  text: { fontSize: font.small, color: colors.text },
   selectedText: { color: colors.primaryText },
 });

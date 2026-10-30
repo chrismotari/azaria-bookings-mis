@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Query } from '../api/types';
-import { colors } from '../theme';
+import { colors, font, weight } from '../theme';
 import { describeQuery } from '../utils/queries';
 
 /** The criteria of a request for options. */
@@ -30,7 +30,7 @@ function Row({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   box: { gap: 6 },
-  route: { fontSize: 18, fontWeight: '700', color: colors.text },
+  route: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   label: { color: colors.muted, minWidth: 130 },
   value: { color: colors.text, flexShrink: 1 },

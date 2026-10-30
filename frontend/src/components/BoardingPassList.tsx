@@ -3,7 +3,7 @@ import { Platform, StyleSheet, Text, View } from 'react-native';
 
 import { errorMessage } from '../api/errors';
 import { BoardingPass } from '../api/types';
-import { colors } from '../theme';
+import { colors, font, weight } from '../theme';
 import { downloadBoardingPass } from '../utils/download';
 import { formatDateTime } from '../utils/format';
 import { Button } from './Button';
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   info: { flexShrink: 1, minWidth: 0 },
-  name: { color: colors.text, fontWeight: '600' },
-  muted: { color: colors.muted, fontSize: 13 },
+  name: { color: colors.text, fontWeight: weight.semibold },
+  muted: { color: colors.muted, fontSize: font.small },
   actions: { flexDirection: 'row', gap: 8 },
 });

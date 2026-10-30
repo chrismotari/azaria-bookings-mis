@@ -25,7 +25,7 @@ import { Screen } from '../../components/Screen';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { Toggle } from '../../components/Toggle';
 import { AdminTabParamList } from '../../navigation/types';
-import { colors, radius, shadow, useIsWide } from '../../theme';
+import { colors, font, radius, shadow, useIsWide, weight } from '../../theme';
 import { formatDate, formatPrice, stopoversLabel, ticketClassLabel } from '../../utils/format';
 import { AdminOfferEditView } from './AdminOfferFormScreen';
 
@@ -146,7 +146,7 @@ export function AdminOffersScreen({ navigation, route }: BottomTabScreenProps<Ad
           ) : offers.isError ? (
             <ErrorState error={offers.error} onRetry={() => offers.refetch()} />
           ) : offers.data.results.length === 0 ? (
-            <EmptyState message="No offers match these filters." />
+            <EmptyState icon="search-outline" title="No offers found" message="No offers match these filters." />
           ) : (
             <>
               <Text style={styles.count}>
@@ -260,7 +260,7 @@ function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: R
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
-  title: { fontSize: 24, fontWeight: '700', color: colors.text },
+  title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   actions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   count: { color: colors.muted },
   cards: { gap: 12 },
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: colors.border,
   },
-  th: { fontSize: 12, fontWeight: '700', color: colors.muted, textTransform: 'uppercase' },
+  th: { fontSize: font.caption, fontWeight: weight.bold, color: colors.muted, textTransform: 'uppercase' },
   colRoute: { flex: 2, minWidth: 0 },
   colDates: { flex: 2, minWidth: 0 },
   colFlight: { flex: 3, minWidth: 0 },
@@ -293,8 +293,8 @@ const styles = StyleSheet.create({
   colActions: { flex: 2.2, minWidth: 0 },
   rowActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' },
   cell: { color: colors.text },
-  strong: { color: colors.text, fontWeight: '700' },
-  muted: { color: colors.muted, fontSize: 13 },
+  strong: { color: colors.text, fontWeight: weight.bold },
+  muted: { color: colors.muted, fontSize: font.small },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   shrink: { flexShrink: 1 },
 });

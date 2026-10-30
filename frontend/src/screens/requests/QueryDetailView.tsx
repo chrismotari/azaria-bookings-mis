@@ -12,7 +12,7 @@ import { OfferCard } from '../../components/OfferCard';
 import { QuerySummary } from '../../components/QuerySummary';
 import { StatusChip } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
-import { colors } from '../../theme';
+import { colors, font, weight } from '../../theme';
 import { confirmAction } from '../../utils/confirm';
 import { formatDateTime } from '../../utils/format';
 import { QUERY_STATUS } from '../../utils/queries';
@@ -93,9 +93,9 @@ export function QueryDetailView({ id }: { id: number }) {
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   actions: { flexDirection: 'row' },
-  section: { fontSize: 20, fontWeight: '700', color: colors.tertiary },
+  section: { fontSize: font.title, fontWeight: weight.heavy, color: colors.tertiary },
   response: { gap: 8 },
-  message: { color: colors.text, fontSize: 15 },
+  message: { color: colors.text, fontSize: font.body },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   gridItem: { flexGrow: 1, flexBasis: 300, minWidth: 0 },
   muted: { color: colors.muted },

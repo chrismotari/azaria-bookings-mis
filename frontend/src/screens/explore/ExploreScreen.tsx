@@ -23,7 +23,7 @@ import { Pagination } from '../../components/Pagination';
 import { Screen } from '../../components/Screen';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { MainTabParamList, QueryPrefill } from '../../navigation/types';
-import { colors, useIsWide } from '../../theme';
+import { colors, font, useIsWide, weight } from '../../theme';
 import { OfferDetailView } from './OfferDetailView';
 
 type Ordering = 'departure_date' | 'price' | '-price';
@@ -133,14 +133,15 @@ export function ExploreScreen({ navigation, route }: BottomTabScreenProps<MainTa
           ) : offers.isError ? (
             <ErrorState error={offers.error} onRetry={() => offers.refetch()} />
           ) : offers.data.results.length === 0 ? (
-            <View style={styles.empty}>
-              <EmptyState message="No flight deals match your search right now. Tell us what you need and we will find options for you." />
-              <Button
-                title="Request options"
-                variant="accent"
-                onPress={() => requireAuth({ screen: 'QueryNew', params: queryPrefill(filters) })}
-              />
-            </View>
+            <EmptyState
+              icon="airplane-outline"
+              title="No deals found"
+              message="No flight deals match your search right now. Tell us what you need and we will find options for you."
+              action={{
+                title: 'Request options',
+                onPress: () => requireAuth({ screen: 'QueryNew', params: queryPrefill(filters) }),
+              }}
+            />
           ) : (
             <>
               <Text style={styles.count}>
@@ -167,10 +168,9 @@ export function ExploreScreen({ navigation, route }: BottomTabScreenProps<MainTa
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '700', color: colors.text },
+  title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   actions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', alignItems: 'center' },
   count: { color: colors.muted },
-  empty: { alignItems: 'center', gap: 4 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   gridItem: { flexGrow: 1, flexBasis: 300, minWidth: 0 },
 });

@@ -24,7 +24,7 @@ import { QuerySummary } from '../../components/QuerySummary';
 import { Screen } from '../../components/Screen';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { RootStackParamList } from '../../navigation/types';
-import { colors } from '../../theme';
+import { colors, font, weight } from '../../theme';
 import { formatDate, formatPrice, stopoversLabel, ticketClassLabel, todayInNairobi } from '../../utils/format';
 import { useAdminQuery } from './AdminQueryDetailView';
 import { OfferFields } from './OfferFields';
@@ -191,7 +191,11 @@ function RespondForm({ query, onSent }: { query: AdminQueryDetail; onSent: () =>
         ) : offers.isError ? (
           <ErrorState error={offers.error} onRetry={() => offers.refetch()} />
         ) : offers.data.results.length === 0 ? (
-          <EmptyState message="No active offers match. Add a custom one below." />
+          <EmptyState
+            icon="search-outline"
+            title="No matching offers"
+            message="No active offers match. Add a custom one below."
+          />
         ) : (
           <>
             {offers.data.results.map((offer) => (
@@ -297,8 +301,8 @@ function SelectableOffer({ offer, selected, onToggle }: SelectableProps) {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '700', color: colors.text },
-  section: { fontSize: 18, fontWeight: '700', color: colors.tertiary },
+  title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
+  section: { fontSize: font.heading, fontWeight: weight.bold, color: colors.tertiary },
   actions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   option: {
     flexDirection: 'row',
@@ -322,12 +326,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   boxSelected: { borderColor: colors.primary, backgroundColor: colors.primary },
-  tick: { color: colors.primaryText, fontSize: 12, fontWeight: '700' },
+  tick: { color: colors.primaryText, fontSize: font.caption, fontWeight: weight.bold },
   chosenBlock: { gap: 2 },
   chosen: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
   chosenText: { color: colors.text, flexShrink: 1 },
   message: { minHeight: 90, textAlignVertical: 'top' },
   text: { color: colors.text },
   muted: { color: colors.muted },
-  error: { color: colors.danger, fontSize: 13 },
+  error: { color: colors.danger, fontSize: font.small },
 });

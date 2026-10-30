@@ -14,7 +14,7 @@ import { FileField } from '../../components/FileField';
 import { FormError } from '../../components/Field';
 import { StatusChip } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
-import { colors } from '../../theme';
+import { colors, font, weight } from '../../theme';
 import { BOOKING_STATUS } from '../../utils/bookings';
 import { confirmAction } from '../../utils/confirm';
 import { formatDateTime } from '../../utils/format';
@@ -258,8 +258,8 @@ function BoardingPassUploads({ booking, onSend, sending }: UploadsProps) {
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
-  section: { fontSize: 18, fontWeight: '700', color: colors.tertiary },
-  deadline: { color: colors.text, fontWeight: '700' },
+  section: { fontSize: font.heading, fontWeight: weight.bold, color: colors.tertiary },
+  deadline: { color: colors.text, fontWeight: weight.bold },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   text: { color: colors.text },
   muted: { color: colors.muted },

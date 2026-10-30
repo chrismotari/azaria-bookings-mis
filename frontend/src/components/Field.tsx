@@ -1,7 +1,7 @@
 import { Children, ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius } from '../theme';
+import { colors, font, radius, weight } from '../theme';
 
 /** Label, control and validation message. */
 export function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
@@ -35,7 +35,7 @@ export const inputStyle = {
   borderRadius: radius.sm,
   paddingHorizontal: 10,
   paddingVertical: 8,
-  fontSize: 15,
+  fontSize: font.body,
   color: colors.text,
   backgroundColor: colors.surface,
   minWidth: 0,
@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
   field: { gap: 4, minWidth: 0 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   gridItem: { flexGrow: 1, flexBasis: 180, minWidth: 0 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.muted },
-  error: { fontSize: 13, color: colors.danger },
-  formError: { fontSize: 14 },
+  label: { fontSize: font.small, fontWeight: weight.semibold, color: colors.muted },
+  error: { fontSize: font.small, color: colors.danger },
+  formError: { fontSize: font.small },
 });

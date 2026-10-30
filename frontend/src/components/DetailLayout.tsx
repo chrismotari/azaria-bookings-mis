@@ -2,7 +2,7 @@ import { useIsFocused } from '@react-navigation/native';
 import { ReactNode, useEffect, useRef } from 'react';
 import { Animated, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, space, useIsWide } from '../theme';
+import { colors, font, space, useIsWide, weight } from '../theme';
 import { Button } from './Button';
 
 export const PANEL_WIDTH = 480;
@@ -116,8 +116,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  panelTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
+  panelTitle: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text },
   close: { paddingHorizontal: space.sm, paddingVertical: space.xs },
-  closeText: { fontSize: 18, color: colors.muted },
+  closeText: { fontSize: font.heading, color: colors.muted },
   panelBody: { padding: space.lg, gap: space.lg },
 });

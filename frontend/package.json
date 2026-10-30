@@ -4,6 +4,7 @@
   "main": "index.ts",
   "dependencies": {
     "@expo/metro-runtime": "~58.0.15",
+    "@expo/vector-icons": "^15.0.2",
     "@hookform/resolvers": "^6.0.2",
     "@react-navigation/bottom-tabs": "^7.21.0",
     "@react-navigation/native": "^7.5.1",

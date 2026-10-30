@@ -313,7 +313,7 @@ Admin screens (step 16)
 Across all four steps: no hex values outside theme.ts, no horizontal scrolling at 390 px or 1280 px, loading/empty/error states keep working, and every step ends with a browser check at both widths.
 
 Delivery (each is its own step and commit; see DELIVERY ORDER 13 to 16)
-- [ ] 13. Shared building blocks: icons, typography scale, top bar and tab icons, hover states, auth split layout, empty states, status chip icons.
+- [x] 13. Shared building blocks: icons, typography scale, top bar and tab icons, hover states, auth split layout, empty states, status chip icons.
 - [ ] 14. Explore and offer detail: hero search bar, filter sidebar, sort tabs, flight result rows, offer detail, book form.
 - [ ] 15. Customer requests and bookings: trip cards, progress tracker, payment box with countdown, boarding pass rows, request detail.
 - [ ] 16. Admin screens: dashboard tiles, tables, drawer action bars and upload area, sectioned forms.

@@ -8,7 +8,7 @@ import { useAuthGate } from '../../auth/gate';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
-import { colors, radius } from '../../theme';
+import { colors, font, radius, weight } from '../../theme';
 import { formatDate, formatPrice, stopoversLabel, ticketClassLabel } from '../../utils/format';
 
 /** query: the request whose response led here; passed on to the booking. */
@@ -24,7 +24,7 @@ export function OfferDetailView({ id, query }: { id: number; query?: number }) {
   }
   if (offer.isError) {
     if (isAxiosError(offer.error) && offer.error.response?.status === 404) {
-      return <EmptyState message="This deal is not available." />;
+      return <EmptyState icon="airplane-outline" title="Deal not available" message="This deal is not available." />;
     }
     return <ErrorState error={offer.error} onRetry={() => offer.refetch()} />;
   }
@@ -83,13 +83,13 @@ function Detail({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   route: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   airport: { flex: 1, minWidth: 0 },
-  arrow: { fontSize: 24, color: colors.primary },
-  code: { fontSize: 28, fontWeight: '700', color: colors.text },
+  arrow: { fontSize: font.title, color: colors.primary },
+  code: { fontSize: font.display, fontWeight: weight.bold, color: colors.text },
   city: { color: colors.text },
   priceRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   price: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontSize: font.title,
+    fontWeight: weight.bold,
     color: colors.accentText,
     backgroundColor: colors.accent,
     borderRadius: radius.sm,
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   },
   detail: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' },
   label: { color: colors.muted },
-  value: { color: colors.text, fontWeight: '600' },
-  muted: { color: colors.muted, fontSize: 13 },
+  value: { color: colors.text, fontWeight: weight.semibold },
+  muted: { color: colors.muted, fontSize: font.small },
   notice: { color: colors.danger },
 });

@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { Platform, StyleSheet, Text } from 'react-native';
 
-import { colors } from '../theme';
+import { colors, font } from '../theme';
 import { Field } from './Field';
 
 type Props = {
@@ -32,7 +32,7 @@ export function FileField({ label, accept, onSelect, disabled, error }: Props) {
               onSelect(files);
             }
           },
-          style: { fontFamily: 'inherit', fontSize: 15, color: colors.text, maxWidth: '100%' },
+          style: { fontFamily: 'inherit', fontSize: font.body, color: colors.text, maxWidth: '100%' },
         })
       ) : (
         <Text style={styles.notice}>Uploading files is available on the web app.</Text>

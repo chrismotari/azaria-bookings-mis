@@ -1,8 +1,9 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Offer } from '../api/types';
-import { colors, radius, shadow, space } from '../theme';
+import { colors, font, radius, shadow, space, weight } from '../theme';
 import { formatDate, formatPrice, stopoversLabel, ticketClassLabel } from '../utils/format';
+import { PressState } from './pressState';
 
 /** Summary of an offer that opens its detail when pressed. */
 type Props = { offer: Offer; selected?: boolean; onPress: () => void };
@@ -14,7 +15,11 @@ export function OfferCard({ offer, selected, onPress }: Props) {
       accessibilityLabel={`${offer.origin.city} to ${offer.destination.city}, ${formatDate(offer.departure_date)}`}
       aria-current={selected}
       onPress={onPress}
-      style={({ pressed }) => [styles.card, (pressed || selected) && styles.pressed, selected && styles.selected]}
+      style={({ pressed, hovered }: PressState) => [
+        styles.card,
+        (pressed || hovered || selected) && styles.pressed,
+        selected && styles.selected,
+      ]}
     >
       <View style={styles.top}>
         <View style={styles.shrink}>
@@ -55,11 +60,11 @@ const styles = StyleSheet.create({
   selected: { backgroundColor: colors.primaryTint },
   top: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
   shrink: { flexShrink: 1 },
-  route: { fontSize: 18, fontWeight: '700', color: colors.primary },
+  route: { fontSize: font.heading, fontWeight: weight.bold, color: colors.primary },
   priceBox: { alignItems: 'flex-end', gap: 2 },
   price: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: font.heading,
+    fontWeight: weight.bold,
     color: colors.accentText,
     backgroundColor: colors.accent,
     borderRadius: radius.sm,
@@ -67,5 +72,5 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   text: { color: colors.text },
-  muted: { color: colors.muted, fontSize: 13 },
+  muted: { color: colors.muted, fontSize: font.small },
 });

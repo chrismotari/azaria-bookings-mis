@@ -20,7 +20,7 @@ import { Screen } from '../../components/Screen';
 import { LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
 import { QueryPrefill, RootStackParamList } from '../../navigation/types';
-import { colors } from '../../theme';
+import { colors, font, weight } from '../../theme';
 import { todayInNairobi } from '../../utils/format';
 
 type FormValues = {
@@ -240,7 +240,7 @@ function QueryForm({ prefill, origin, destination }: FormProps) {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '700', color: colors.text },
+  title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   help: { color: colors.muted },
   actions: { flexDirection: 'row', gap: 8 },
 });

@@ -4,8 +4,9 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 
 
 import { api } from '../api/client';
 import { Airport } from '../api/types';
-import { colors } from '../theme';
+import { colors, font, weight } from '../theme';
 import { Field, inputStyle } from './Field';
+import { PressState } from './pressState';
 
 function airportLabel(airport: Airport): string {
   return `${airport.code} · ${airport.city}, ${airport.country}`;
@@ -43,7 +44,7 @@ function AirportSuggestions({ text, onSelect }: { text: string; onSelect: (airpo
           key={airport.id}
           accessibilityRole="button"
           onPress={() => onSelect(airport)}
-          style={({ pressed }) => [styles.option, pressed && styles.pressed]}
+          style={({ pressed, hovered }: PressState) => [styles.option, (pressed || hovered) && styles.pressed]}
         >
           <Text style={styles.code}>{airport.code}</Text>
           <Text style={styles.optionText} numberOfLines={1}>
@@ -155,8 +156,8 @@ export function AirportSearchField({ label, value, onChange, onSubmitEditing }: 
 
 const styles = StyleSheet.create({
   selected: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  selectedText: { flexShrink: 1, color: colors.text, fontSize: 15 },
-  change: { color: colors.primary, fontWeight: '600' },
+  selectedText: { flexShrink: 1, color: colors.text, fontSize: font.body },
+  change: { color: colors.primary, fontWeight: weight.semibold },
   results: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -167,7 +168,7 @@ const styles = StyleSheet.create({
   },
   option: { flexDirection: 'row', gap: 8, paddingVertical: 8, paddingHorizontal: 10 },
   pressed: { backgroundColor: colors.background },
-  code: { fontWeight: '700', color: colors.text, width: 40 },
+  code: { fontWeight: weight.bold, color: colors.text, width: 40 },
   optionText: { flexShrink: 1, color: colors.text },
   message: { padding: 10, color: colors.muted },
 });

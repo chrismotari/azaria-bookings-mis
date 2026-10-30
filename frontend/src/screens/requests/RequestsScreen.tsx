@@ -13,10 +13,11 @@ import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { MainTabParamList } from '../../navigation/types';
-import { colors, radius, shadow } from '../../theme';
+import { colors, font, radius, shadow, weight } from '../../theme';
 import { formatDateTime } from '../../utils/format';
 import { QUERY_STATUS, describeQuery } from '../../utils/queries';
 import { QueryDetailView } from './QueryDetailView';
+import { PressState } from '../../components/pressState';
 
 export function RequestsScreen({ navigation, route }: BottomTabScreenProps<MainTabParamList, 'Requests'>) {
   const rootNavigation = useNavigation();
@@ -46,7 +47,11 @@ export function RequestsScreen({ navigation, route }: BottomTabScreenProps<MainT
           ) : queries.isError ? (
             <ErrorState error={queries.error} onRetry={() => queries.refetch()} />
           ) : queries.data.results.length === 0 ? (
-            <EmptyState message="You have not asked for any flight options yet." />
+            <EmptyState
+              icon="chatbubbles-outline"
+              title="No requests yet"
+              message="You have not asked for any flight options yet."
+            />
           ) : (
             <>
               <View style={styles.list}>
@@ -76,7 +81,11 @@ function QueryRow({ query, selected, onPress }: { query: Query; selected: boolea
       accessibilityRole="link"
       aria-current={selected}
       onPress={onPress}
-      style={({ pressed }) => [styles.row, (pressed || selected) && styles.pressed, selected && styles.selected]}
+      style={({ pressed, hovered }: PressState) => [
+        styles.row,
+        (pressed || hovered || selected) && styles.pressed,
+        selected && styles.selected,
+      ]}
     >
       <View style={styles.rowMain}>
         <Text style={styles.route}>{details.route}</Text>
@@ -90,7 +99,7 @@ function QueryRow({ query, selected, onPress }: { query: Query; selected: boolea
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
-  title: { fontSize: 24, fontWeight: '700', color: colors.text },
+  title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   list: { gap: 12 },
   row: {
     flexDirection: 'row',
@@ -107,7 +116,7 @@ const styles = StyleSheet.create({
   pressed: { borderColor: colors.primary },
   selected: { backgroundColor: colors.primaryTint },
   rowMain: { flexShrink: 1, gap: 2 },
-  route: { fontSize: 16, fontWeight: '700', color: colors.text },
+  route: { fontSize: font.body, fontWeight: weight.bold, color: colors.text },
   text: { color: colors.text },
-  muted: { color: colors.muted, fontSize: 13 },
+  muted: { color: colors.muted, fontSize: font.small },
 });

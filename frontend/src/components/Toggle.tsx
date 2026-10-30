@@ -1,6 +1,6 @@
 import { StyleSheet, Switch, Text, View } from 'react-native';
 
-import { colors } from '../theme';
+import { colors, font } from '../theme';
 
 type Props = {
   label: string;
@@ -29,5 +29,5 @@ export function Toggle({ label, value, onChange, disabled }: Props) {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  label: { fontSize: 14, color: colors.text },
+  label: { fontSize: font.small, color: colors.text },
 });

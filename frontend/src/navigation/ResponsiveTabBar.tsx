@@ -1,8 +1,10 @@
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, useIsWide } from '../theme';
+import { PressState } from '../components/pressState';
+import { colors, font, space, useIsWide, weight } from '../theme';
 import { AppBar, AppBarItem } from './AppBar';
 
 type Props = BottomTabBarProps & {
@@ -22,6 +24,8 @@ export function ResponsiveTabBar({ state, descriptors, navigation, hiddenRoutes 
     const { options } = descriptors[route.key];
     const label = typeof options.tabBarLabel === 'string' ? options.tabBarLabel : (options.title ?? route.name);
     const focused = state.index === index;
+    // The bar draws icons in its own colours: light on the brand bar, indigo or text below.
+    const icon = (color: string): ReactNode => options.tabBarIcon?.({ focused, color, size: isWide ? 18 : 22 });
     const onPress = () => {
       const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
       if (event.defaultPrevented) {
@@ -34,14 +38,20 @@ export function ResponsiveTabBar({ state, descriptors, navigation, hiddenRoutes 
         navigation.navigate(route.name, { ...route.params, id: undefined });
       }
     };
-    return [{ key: route.key, label, focused, onPress }];
+    return [{ key: route.key, label, focused, onPress, icon }];
   });
 
   if (isWide) {
     return (
       <AppBar>
         {routes.map((route) => (
-          <AppBarItem key={route.key} label={route.label} focused={route.focused} onPress={route.onPress} />
+          <AppBarItem
+            key={route.key}
+            label={route.label}
+            icon={route.icon(colors.primaryText)}
+            focused={route.focused}
+            onPress={route.onPress}
+          />
         ))}
       </AppBar>
     );
@@ -54,8 +64,13 @@ export function ResponsiveTabBar({ state, descriptors, navigation, hiddenRoutes 
           accessibilityRole="tab"
           accessibilityState={{ selected: route.focused }}
           onPress={route.onPress}
-          style={[styles.bottomItem, route.focused && styles.focused]}
+          style={({ hovered }: PressState) => [
+            styles.bottomItem,
+            hovered && styles.hovered,
+            route.focused && styles.focused,
+          ]}
         >
+          {route.icon(route.focused ? colors.primary : colors.muted)}
           <Text style={[styles.label, route.focused && styles.focusedLabel]} numberOfLines={1}>
             {route.label}
           </Text>
@@ -74,14 +89,17 @@ const styles = StyleSheet.create({
   },
   bottomItem: {
     flex: 1,
-    paddingVertical: 14,
+    paddingTop: space.sm,
+    paddingBottom: 6,
+    gap: 2,
     paddingHorizontal: 2,
     alignItems: 'center',
     minWidth: 0,
     borderTopWidth: 3,
     borderTopColor: 'transparent',
   },
-  focused: { backgroundColor: colors.primaryTint, borderTopColor: colors.primary },
-  label: { fontSize: 14, color: colors.text },
-  focusedLabel: { color: colors.primary, fontWeight: '700' },
+  hovered: { backgroundColor: colors.background },
+  focused: { borderTopColor: colors.primary },
+  label: { fontSize: font.caption, color: colors.muted },
+  focusedLabel: { color: colors.primary, fontWeight: weight.bold },
 });

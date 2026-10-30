@@ -8,7 +8,7 @@ import { FieldGrid } from '../../components/Field';
 import { OptionChips } from '../../components/OptionChips';
 import { TextField } from '../../components/TextField';
 import { Toggle } from '../../components/Toggle';
-import { colors } from '../../theme';
+import { colors, font } from '../../theme';
 import { OfferFormValues } from './offerSchema';
 
 type Props = {
@@ -131,5 +131,5 @@ export function OfferFields({ control, showPublicToggle = true }: Props) {
 
 const styles = StyleSheet.create({
   toggle: { gap: 4 },
-  help: { color: colors.muted, fontSize: 13 },
+  help: { color: colors.muted, fontSize: font.small },
 });

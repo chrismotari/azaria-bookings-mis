@@ -5,7 +5,7 @@ import { useSignOut } from '../../auth/useSignOut';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Screen } from '../../components/Screen';
-import { colors } from '../../theme';
+import { colors, font, weight } from '../../theme';
 
 export function AccountScreen() {
   const { user } = useAuth();
@@ -36,6 +36,6 @@ function Row({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   row: { gap: 2 },
-  label: { fontSize: 13, fontWeight: '600', color: colors.muted },
-  value: { fontSize: 16, color: colors.text },
+  label: { fontSize: font.small, fontWeight: weight.semibold, color: colors.muted },
+  value: { fontSize: font.body, color: colors.text },
 });

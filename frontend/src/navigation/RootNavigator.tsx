@@ -3,6 +3,7 @@ import { createNativeStackNavigator, NativeStackScreenProps } from '@react-navig
 
 import { useAuth } from '../auth/AuthContext';
 import { RequireAuth } from '../auth/gate';
+import { Icon, IconName } from '../components/Icon';
 import { AdminBookingsScreen } from '../screens/admin/AdminBookingsScreen';
 import { AdminDashboardScreen } from '../screens/admin/AdminDashboardScreen';
 import { AdminOfferNewScreen } from '../screens/admin/AdminOfferFormScreen';
@@ -81,6 +82,16 @@ function tabScreenOptions(isWide: boolean) {
   };
 }
 
+/** Tab options with an icon: filled when focused, outline otherwise. */
+function tab(title: string, icon: IconName, focusedIcon: IconName) {
+  return {
+    title,
+    tabBarIcon: ({ focused, color, size }: { focused: boolean; color: string; size: number }) => (
+      <Icon name={focused ? focusedIcon : icon} color={color} size={size} />
+    ),
+  };
+}
+
 /** Stack pages (the forms) keep a back button, in the brand colours. */
 const STACK_SCREEN_OPTIONS = {
   headerStyle: { backgroundColor: colors.primary },
@@ -97,10 +108,26 @@ function MainTabsNavigator() {
       tabBar={(props) => <ResponsiveTabBar {...props} hiddenRoutes={hiddenRoutes} />}
       screenOptions={tabScreenOptions(isWide)}
     >
-      <MainTabs.Screen name="Explore" component={ExploreScreen} options={{ title: 'Explore' }} />
-      <MainTabs.Screen name="Requests" component={GatedRequests} options={{ title: 'Requests' }} />
-      <MainTabs.Screen name="Bookings" component={GatedBookings} options={{ title: 'Bookings' }} />
-      <MainTabs.Screen name="Account" component={GatedAccount} options={{ title: 'Account' }} />
+      <MainTabs.Screen
+        name="Explore"
+        component={ExploreScreen}
+        options={tab('Explore', 'compass-outline', 'compass')}
+      />
+      <MainTabs.Screen
+        name="Requests"
+        component={GatedRequests}
+        options={tab('Requests', 'chatbubbles-outline', 'chatbubbles')}
+      />
+      <MainTabs.Screen
+        name="Bookings"
+        component={GatedBookings}
+        options={tab('Bookings', 'ticket-outline', 'ticket')}
+      />
+      <MainTabs.Screen
+        name="Account"
+        component={GatedAccount}
+        options={tab('Account', 'person-circle-outline', 'person-circle')}
+      />
     </MainTabs.Navigator>
   );
 }
@@ -109,11 +136,31 @@ function AdminTabsNavigator() {
   const isWide = useIsWide();
   return (
     <AdminTabs.Navigator tabBar={(props) => <ResponsiveTabBar {...props} />} screenOptions={tabScreenOptions(isWide)}>
-      <AdminTabs.Screen name="AdminDashboard" component={AdminDashboardScreen} options={{ title: 'Dashboard' }} />
-      <AdminTabs.Screen name="AdminOffers" component={AdminOffersScreen} options={{ title: 'Offers' }} />
-      <AdminTabs.Screen name="AdminRequests" component={AdminRequestsScreen} options={{ title: 'Requests' }} />
-      <AdminTabs.Screen name="AdminBookings" component={AdminBookingsScreen} options={{ title: 'Bookings' }} />
-      <AdminTabs.Screen name="AdminSettings" component={AdminSettingsScreen} options={{ title: 'Settings' }} />
+      <AdminTabs.Screen
+        name="AdminDashboard"
+        component={AdminDashboardScreen}
+        options={tab('Dashboard', 'grid-outline', 'grid')}
+      />
+      <AdminTabs.Screen
+        name="AdminOffers"
+        component={AdminOffersScreen}
+        options={tab('Offers', 'pricetags-outline', 'pricetags')}
+      />
+      <AdminTabs.Screen
+        name="AdminRequests"
+        component={AdminRequestsScreen}
+        options={tab('Requests', 'chatbubbles-outline', 'chatbubbles')}
+      />
+      <AdminTabs.Screen
+        name="AdminBookings"
+        component={AdminBookingsScreen}
+        options={tab('Bookings', 'ticket-outline', 'ticket')}
+      />
+      <AdminTabs.Screen
+        name="AdminSettings"
+        component={AdminSettingsScreen}
+        options={tab('Settings', 'settings-outline', 'settings')}
+      />
     </AdminTabs.Navigator>
   );
 }
@@ -142,7 +189,7 @@ export function RootNavigator() {
       <Stack.Screen name="BookingNew" component={GatedBookingNew} options={{ title: 'Book' }} />
       {/* Guests only: for a signed-in customer these URLs match no screen and open Explore. */}
       {user ? null : (
-        <Stack.Group screenOptions={{ headerShown: false }}>
+        <Stack.Group screenOptions={{ header: () => <AppBar brandOnly /> }}>
           <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Sign in' }} />
           <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Create account' }} />
           <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ title: 'Forgot password' }} />

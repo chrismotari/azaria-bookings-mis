@@ -7,7 +7,8 @@ import { Dashboard } from '../../api/types';
 import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { AdminTabParamList } from '../../navigation/types';
-import { colors, radius, shadow } from '../../theme';
+import { colors, font, radius, shadow, weight } from '../../theme';
+import { PressState } from '../../components/pressState';
 
 export function AdminDashboardScreen({ navigation }: BottomTabScreenProps<AdminTabParamList, 'AdminDashboard'>) {
   const dashboard = useQuery({
@@ -56,7 +57,7 @@ export function AdminDashboardScreen({ navigation }: BottomTabScreenProps<AdminT
             accessibilityRole="link"
             accessibilityLabel={`${tile.label}: ${tile.count}`}
             onPress={tile.onPress}
-            style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
+            style={({ pressed, hovered }: PressState) => [styles.tile, (pressed || hovered) && styles.pressed]}
           >
             <Text style={styles.count}>{tile.count}</Text>
             <Text style={styles.label}>{tile.label}</Text>
@@ -68,7 +69,7 @@ export function AdminDashboardScreen({ navigation }: BottomTabScreenProps<AdminT
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '700', color: colors.text },
+  title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   tile: {
     flexGrow: 1,
@@ -83,6 +84,6 @@ const styles = StyleSheet.create({
     ...shadow,
   },
   pressed: { borderColor: colors.primary },
-  count: { fontSize: 36, fontWeight: '700', color: colors.primary },
-  label: { color: colors.text, fontWeight: '600' },
+  count: { fontSize: font.display, fontWeight: weight.bold, color: colors.primary },
+  label: { color: colors.text, fontWeight: weight.semibold },
 });

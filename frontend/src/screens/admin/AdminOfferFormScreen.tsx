@@ -13,7 +13,7 @@ import { Card } from '../../components/Card';
 import { FormError } from '../../components/Field';
 import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
-import { colors } from '../../theme';
+import { colors, font, weight } from '../../theme';
 import { OfferFields } from './OfferFields';
 import { OfferFormValues, offerSchema, toOfferBody } from './offerSchema';
 
@@ -125,6 +125,6 @@ function OfferForm({ id, initial, onDone }: FormProps) {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '700', color: colors.text },
+  title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   actions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
 });

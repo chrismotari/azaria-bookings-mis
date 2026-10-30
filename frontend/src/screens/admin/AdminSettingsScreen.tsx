@@ -14,7 +14,7 @@ import { FieldGrid, FormError } from '../../components/Field';
 import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
-import { colors } from '../../theme';
+import { colors, font, weight } from '../../theme';
 
 const HOURS = /^[1-9]\d{0,4}$/;
 
@@ -179,9 +179,9 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '700', color: colors.text },
-  muted: { color: colors.muted, fontSize: 13 },
+  title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
+  muted: { color: colors.muted, fontSize: font.small },
   warning: { color: colors.danger },
-  saved: { color: colors.success, fontWeight: '600' },
+  saved: { color: colors.success, fontWeight: weight.semibold },
   actions: { flexDirection: 'row' },
 });

@@ -12,10 +12,11 @@ import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { AdminTabParamList } from '../../navigation/types';
-import { colors, radius, shadow } from '../../theme';
+import { colors, font, radius, shadow, weight } from '../../theme';
 import { formatDateTime } from '../../utils/format';
 import { QUERY_STATUS, describeQuery } from '../../utils/queries';
 import { AdminQueryDetailView } from './AdminQueryDetailView';
+import { PressState } from '../../components/pressState';
 
 const STATUS_OPTIONS: { value: QueryStatus | 'all'; label: string }[] = [
   { value: 'open', label: 'Open' },
@@ -61,7 +62,7 @@ export function AdminRequestsScreen({ navigation, route }: BottomTabScreenProps<
           ) : queries.isError ? (
             <ErrorState error={queries.error} onRetry={() => queries.refetch()} />
           ) : queries.data.results.length === 0 ? (
-            <EmptyState message="No requests here." />
+            <EmptyState icon="chatbubbles-outline" title="Nothing here" message="No requests here." />
           ) : (
             <>
               <View style={styles.grid}>
@@ -92,7 +93,11 @@ function AdminQueryCard({ query, selected, onPress }: { query: AdminQuery; selec
       accessibilityRole="link"
       aria-current={selected}
       onPress={onPress}
-      style={({ pressed }) => [styles.card, (pressed || selected) && styles.pressed, selected && styles.selected]}
+      style={({ pressed, hovered }: PressState) => [
+        styles.card,
+        (pressed || hovered || selected) && styles.pressed,
+        selected && styles.selected,
+      ]}
     >
       <View style={styles.cardTop}>
         <Text style={styles.customer} numberOfLines={1}>
@@ -110,7 +115,7 @@ function AdminQueryCard({ query, selected, onPress }: { query: AdminQuery; selec
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '700', color: colors.text },
+  title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   gridItem: { flexGrow: 1, flexBasis: 340, minWidth: 0 },
   card: {
@@ -125,8 +130,8 @@ const styles = StyleSheet.create({
   pressed: { borderColor: colors.primary },
   selected: { backgroundColor: colors.primaryTint },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  customer: { flexShrink: 1, color: colors.muted, fontWeight: '600' },
-  route: { fontSize: 16, fontWeight: '700', color: colors.text },
+  customer: { flexShrink: 1, color: colors.muted, fontWeight: weight.semibold },
+  route: { fontSize: font.body, fontWeight: weight.bold, color: colors.text },
   text: { color: colors.text },
-  muted: { color: colors.muted, fontSize: 13 },
+  muted: { color: colors.muted, fontSize: font.small },
 });

@@ -12,10 +12,11 @@ import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { AdminTabParamList } from '../../navigation/types';
-import { colors, radius, shadow } from '../../theme';
+import { colors, font, radius, shadow, weight } from '../../theme';
 import { BOOKING_STATUS, bookingRoute, passengersLabel } from '../../utils/bookings';
 import { formatDate, formatDateTime, formatPrice } from '../../utils/format';
 import { AdminBookingDetailView } from './AdminBookingDetailView';
+import { PressState } from '../../components/pressState';
 
 const STATUS_OPTIONS: { value: BookingStatus | 'all'; label: string }[] = [
   { value: 'requested', label: 'Requested' },
@@ -65,7 +66,7 @@ export function AdminBookingsScreen({ navigation, route }: BottomTabScreenProps<
           ) : bookings.isError ? (
             <ErrorState error={bookings.error} onRetry={() => bookings.refetch()} />
           ) : bookings.data.results.length === 0 ? (
-            <EmptyState message="No bookings here." />
+            <EmptyState icon="ticket-outline" title="Nothing here" message="No bookings here." />
           ) : (
             <>
               <View style={styles.grid}>
@@ -103,7 +104,11 @@ function AdminBookingCard({
       accessibilityRole="link"
       aria-current={selected}
       onPress={onPress}
-      style={({ pressed }) => [styles.card, (pressed || selected) && styles.pressed, selected && styles.selected]}
+      style={({ pressed, hovered }: PressState) => [
+        styles.card,
+        (pressed || hovered || selected) && styles.pressed,
+        selected && styles.selected,
+      ]}
     >
       <View style={styles.cardTop}>
         <Text style={styles.customer} numberOfLines={1}>
@@ -122,7 +127,7 @@ function AdminBookingCard({
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '700', color: colors.text },
+  title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   gridItem: { flexGrow: 1, flexBasis: 340, minWidth: 0 },
   card: {
@@ -137,8 +142,8 @@ const styles = StyleSheet.create({
   pressed: { borderColor: colors.primary },
   selected: { backgroundColor: colors.primaryTint },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
-  customer: { flexShrink: 1, color: colors.muted, fontWeight: '600' },
-  route: { fontSize: 16, fontWeight: '700', color: colors.text },
+  customer: { flexShrink: 1, color: colors.muted, fontWeight: weight.semibold },
+  route: { fontSize: font.body, fontWeight: weight.bold, color: colors.text },
   text: { color: colors.text },
-  muted: { color: colors.muted, fontSize: 13 },
+  muted: { color: colors.muted, fontSize: font.small },
 });
