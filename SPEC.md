@@ -80,7 +80,7 @@ core.AppSettings (single row, pk=1, created by a data migration)
 - payment_instructions (text), payment_hold_hours (default 24), reminder_hours_before (default 4), admin_notification_email.
 - AppSettings.get() returns the row. The data migration seeds admin_notification_email from the ADMIN_EMAIL setting and leaves payment_instructions empty.
 
-No other models or tables. Password reset uses Django's default_token_generator and needs no table.
+No other models or tables, apart from those in ADMIN AND BOOKING ADDITIONS. Password reset uses Django's default_token_generator and needs no table.
 
 ======================================================================
 BOOKING STATE MACHINE
@@ -319,7 +319,7 @@ Delivery (each is its own step and commit; see DELIVERY ORDER 13 to 16)
 - [x] 16. Admin screens: dashboard tiles, tables, drawer action bars and upload area, sectioned forms.
 
 ======================================================================
-UUID IDENTIFIERS (after the frontend work is done)
+UUID IDENTIFIERS (step 18, before the models added in steps 19 to 23)
 ======================================================================
 Goal: replace sequential numeric ids with UUIDs so ids in URLs and the API cannot be guessed or counted.
 - Primary keys of User, Airport, Offer, Query, QueryResponse, Booking, BookingEvent and BoardingPass become UUIDField(primary_key=True, default=uuid.uuid4, editable=False). AppSettings stays an integer singleton with pk=1. Airport's public identifier in the API is still its IATA code where it is used today.
@@ -328,6 +328,47 @@ Goal: replace sequential numeric ids with UUIDs so ids in URLs and the API canno
 - Boarding pass upload path becomes boarding_passes/<booking uuid>/. The password reset uid is the urlsafe base64 of the UUID pk.
 - Migrations: there is no production data yet, so the migrations are regenerated from scratch rather than converting existing rows. After this step the local database is reset (drop, migrate, seed_airports, create_admin), and README.md says so.
 - Tests updated to use UUIDs; a request with a malformed id returns 404, not 500.
+
+======================================================================
+ADMIN AND BOOKING ADDITIONS (steps 17 and 19 to 23)
+======================================================================
+Models added here (OfferStop, BookingStop) use UUID primary keys like the rest (step 18 comes first). Every backend change comes with tests; every UI change ends with a browser check at 390 px and 1280 px.
+
+Admin booking progress (step 17, frontend only)
+- The admin booking drawer shows the same progress tracker as the customer booking detail (Requested -> Confirmed -> Paid -> Completed), or the terminal banner, above the booking summary.
+
+Stops: layovers and stopovers (step 19)
+- catalog.OfferStop: offer (FK, related_name "stops", cascade), position (PositiveSmallInteger, unique per offer, ordered), airport (FK Airport), duration_minutes (PositiveInteger, > 0).
+- A stop is a "layover" when it lasts under 24 hours and a "stopover" when it lasts 24 hours or more. The kind is derived from the duration, never stored; the API returns it as kind.
+- Offer.stopovers is removed. The number of stops is derived from the stop list (stop_count in the API). Validation: at most 4 stops; a stop's airport differs from the origin, the destination and the stop before it.
+- API: offers return stops as an ordered list of {airport, duration_minutes, kind} plus stop_count. Admin create and edit, and new_offers in the respond endpoint, take stops as an ordered list of {airport (IATA code), duration_minutes}; an edit replaces the whole list. The max_stopovers filters (offers and queries) count all stops, layovers and stopovers alike.
+- bookings.BookingStop: booking (FK, related_name "stops", cascade), position, airport, duration_minutes. Copied from the offer's stops when the booking is created, like unit_price, so later offer edits do not change existing bookings. Bookings show their own stops.
+- UI: route lines show one dot per stop; offer and booking details list each stop with airport code, city, duration ("2 h 15 min") and a Layover or Stopover tag. The admin offer form (and custom offers on the Respond screen) gets a stop editor: add, remove and reorder stops, each with an airport picker and a duration in hours and minutes. Emails that show a flight show its stops.
+
+Confirm availability with changes (step 20)
+- POST /admin/bookings/{id}/confirm-availability accepts an optional body {unit_price, stops}. Values that differ from the booking's are applied to the booking (unit price, booking stops) in the same transition.
+- New Booking fields: changes (JSON, null) records what changed as {"unit_price": {"old", "new"}, "stops": {"old", "new"}} with only the changed keys (stops as lists of airport code, city and duration); changes_accepted (Boolean, null): null when nothing changed, false while the customer has not accepted, true once accepted.
+- Customer: POST /bookings/{id}/accept-changes sets changes_accepted to true (only while availability_confirmed with changes_accepted false, otherwise 409). POST /bookings/{id}/decline-changes moves the booking to the new terminal status "declined".
+- State machine additions: availability_confirmed -> declined (the booking's customer, only while changes_accepted is false), queues no email, like cancelled. availability_confirmed -> paid is refused with 409 while changes_accepted is false. The payment deadline, reminders and expiry work as before.
+- Email 4 lists the changes (old -> new) when there are any and asks the customer to accept or decline them in the app before paying.
+- Customer UI: while changes await acceptance, the booking detail shows a changes box (each change as old -> new) with "Accept changes" and "Decline" (with a confirm dialog) in place of the payment box; the payment box shows after accepting. Declined shows as a terminal banner. Booking lists and filters gain the Declined status.
+- Admin UI: "Confirm availability" opens a confirm panel in the drawer with the price per person and the stop list prefilled and editable, and a summary of what will change. The drawer shows when changes are waiting for the customer; Mark paid is disabled until they are accepted.
+
+Mark unavailable with suggested options (step 21)
+- POST /admin/bookings/{id}/mark-unavailable accepts an optional body {message, offer_ids, new_offers} in the format of the respond endpoint. With at least one offer, the same transaction creates a Query for the booking's customer (origin, destination, date_from and ticket_class from the booking's offer; status responded) and a QueryResponse with the message and offers, and links it to the booking (new Booking field alternatives, FK Query, null). Without offers it works as before.
+- Email 5 then also carries the admin's message, the number of suggested options and a link to the request in the app; emails 1 and 2 are not sent for this request.
+- Customer UI: the unavailable banner has a "View suggested options" button that opens that request when there are suggestions, and keeps "Request other options" otherwise.
+- Admin UI: "Mark unavailable" opens a screen like Respond (existing offers searched from the booking's route and date, custom offers, message) with a danger "Mark unavailable" button; choosing options is optional.
+
+User management (step 22)
+- Admin endpoints for customers: GET /admin/users (search on name, email and phone; filter is_active), POST /admin/users {email, full_name, phone}, GET and PATCH /admin/users/{id} (full_name, email, phone, is_active). Only role customer is listed or managed; the role cannot be changed here.
+- Created users get an unusable password and email 11, send_account_created_email(user_id): a welcome with a set-password link in the email 10 format, using the same reset screen. Runs only if the user is active. Sent as HTML plus plain text like the others (see HTML EMAILS).
+- Delete means deactivate (is_active false): the user cannot sign in or refresh a token, their requests and bookings stay, and the admin can reactivate them.
+- Admin UI: a Users tab with a table (name, email, phone, status) and search, a drawer with the editable details and Deactivate or Reactivate in the action bar, and a New user form.
+
+Admin books for a customer (step 23)
+- POST /admin/bookings {user, offer, passenger_count, notes} creates the booking through create_booking with the admin as the event actor. The user must be an active customer; the offer must be bookable (public or private). The same duplicate-booking rule applies. Email 3 is not sent, since the admin made the booking. The booking then follows the normal flow from requested.
+- Admin UI: a "New booking" button on Bookings opens a form: customer (searchable dropdown of active customers), offer (search of bookable offers, as on the Respond screen), passenger stepper, notes and live total. Saving opens the new booking in its drawer.
 
 ======================================================================
 DELIVERY ORDER (commit after each step; the app must run at each step)
@@ -353,6 +394,12 @@ DELIVERY ORDER (commit after each step; the app must run at each step)
 14. UI refinement: Explore and offer detail.
 15. UI refinement: customer requests and bookings.
 16. UI refinement: admin screens.
-17. UUID identifiers (see UUID IDENTIFIERS). Only after steps 9 to 16 are done.
+17. Admin booking progress tracker (see ADMIN AND BOOKING ADDITIONS).
+18. UUID identifiers (see UUID IDENTIFIERS). Only after steps 9 to 17 are done.
+19. Stops: layovers and stopovers.
+20. Confirm availability with changes.
+21. Mark unavailable with suggested options.
+22. User management.
+23. Admin books for a customer.
 
 Finish each step before starting the next. At the end, run the full test suite and do a manual browser walkthrough of the entire flow as guest and as customer (browse as a guest -> no result -> sign up -> query -> admin responds -> book -> confirm -> pay -> upload pass -> send -> customer downloads, plus an expiry case and a password reset) and report any deviations from this spec.
