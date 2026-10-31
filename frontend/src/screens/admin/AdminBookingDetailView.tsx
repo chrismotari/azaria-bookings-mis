@@ -10,14 +10,15 @@ import { BoardingPassList } from '../../components/BoardingPassList';
 import { BookingSummary } from '../../components/BookingSummary';
 import { BookingTimeline } from '../../components/BookingTimeline';
 import { Button } from '../../components/Button';
+import { BookingProgress } from '../../components/BookingProgress';
 import { Card } from '../../components/Card';
+import { useConfirm } from '../../components/ConfirmDialog';
 import { FileField } from '../../components/FileField';
 import { FormError } from '../../components/Field';
 import { StatusChip } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { colors, font, weight } from '../../theme';
-import { BOOKING_STATUS } from '../../utils/bookings';
-import { confirmAction } from '../../utils/confirm';
+import { BOOKING_STATUS, TERMINAL_STATUSES } from '../../utils/bookings';
 import { formatDateTime } from '../../utils/format';
 
 type Action = {
@@ -83,6 +84,7 @@ const uploadKey = (id: number) => ['admin', 'boarding-passes', 'upload', id];
 export function AdminBookingDetailView({ id }: { id: number }) {
   const queryClient = useQueryClient();
   const uploading = useIsMutating({ mutationKey: uploadKey(id) }) > 0;
+  const confirm = useConfirm();
   const booking = useQuery({
     queryKey: ['admin', 'bookings', 'detail', id],
     queryFn: async () => (await api.get<AdminBookingDetail>(`/admin/bookings/${id}`)).data,
@@ -110,7 +112,14 @@ export function AdminBookingDetailView({ id }: { id: number }) {
   const status = BOOKING_STATUS[data.status];
   const actions = ACTIONS[data.status] ?? [];
   const run = async (action: Action) => {
-    if (await confirmAction(`${action.title}?`, action.confirm, action.title)) {
+    if (
+      await confirm({
+        title: `${action.title}?`,
+        message: action.confirm,
+        confirmLabel: action.title,
+        tone: action.variant,
+      })
+    ) {
       act.mutate(action);
     }
   };
@@ -140,8 +149,13 @@ export function AdminBookingDetailView({ id }: { id: number }) {
       <Card>
         <View style={styles.header}>
           <Text style={styles.muted}>Booked {formatDateTime(data.created_at)}</Text>
-          <StatusChip label={status.label} tone={status.tone} />
+          {/* A status that ends the booking shows as the progress banner instead. */}
+          {TERMINAL_STATUSES.includes(data.status) ? null : <StatusChip label={status.label} tone={status.tone} />}
         </View>
+        <BookingProgress status={data.status} />
+      </Card>
+
+      <Card>
         <BookingSummary booking={data} />
         {data.status === 'availability_confirmed' && data.payment_deadline ? (
           <Text style={styles.deadline}>Payment due by {formatDateTime(data.payment_deadline)}</Text>
@@ -174,6 +188,7 @@ export function AdminBookingDetailView({ id }: { id: number }) {
 /** Paid bookings: upload, list and delete boarding passes (sent from the action bar). */
 function BoardingPassUploads({ booking }: { booking: AdminBookingDetail }) {
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const [problems, setProblems] = useState<string[]>([]);
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['admin', 'bookings', 'detail', booking.id] });
 
@@ -214,7 +229,14 @@ function BoardingPassUploads({ booking }: { booking: AdminBookingDetail }) {
     }
   };
   const onDelete = async (boardingPass: BoardingPass) => {
-    if (await confirmAction('Delete this file?', boardingPass.original_name, 'Delete')) {
+    if (
+      await confirm({
+        title: 'Delete this file?',
+        message: boardingPass.original_name,
+        confirmLabel: 'Delete',
+        tone: 'danger',
+      })
+    ) {
       remove.mutate(boardingPass);
     }
   };

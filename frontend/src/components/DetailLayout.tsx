@@ -85,7 +85,8 @@ function useCloseOnEscape(open: boolean, onClose: () => void) {
       return;
     }
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      // Escape in an open dialog closes only the dialog.
+      if (event.key === 'Escape' && !document.querySelector('[aria-modal="true"]')) {
         onClose();
       }
     };

@@ -7,7 +7,7 @@
 // Needs the API, a Celery worker and the web app running (see SKILL.md).
 import fs from 'node:fs';
 import zlib from 'node:zlib';
-import { run, APP, OUT, signIn, field, button, seen } from './lib.mjs';
+import { run, APP, OUT, signIn, field, button, seen, confirmDialog } from './lib.mjs';
 
 const ADMIN_EMAIL = process.env.AZARIA_ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.AZARIA_ADMIN_PASSWORD;
@@ -171,13 +171,16 @@ await run('admin', async ({ page, shot }) => {
   await signIn(page, ADMIN_EMAIL, ADMIN_PASSWORD);
   await page.goto(`${APP}/admin/bookings/${bookingId}`);
   await button(page, 'Confirm availability').click();
+  await confirmDialog(page, 'Confirm availability');
   await seen(page, 'Payment due by').waitFor();
   await button(page, 'Mark paid').click();
+  await confirmDialog(page, 'Mark paid');
   await seen(page, 'Add files').waitFor();
   await page.locator('input[type=file]').setInputFiles([files.pdf, files.png]);
   await seen(page, 'Passenger two.png').waitFor();
   await shot('passes-uploaded');
   await button(page, 'Send boarding passes').click();
+  await confirmDialog(page, 'Send boarding passes');
   await seen(page, 'Boarding passes sent').waitFor();
   await shot('completed');
 });

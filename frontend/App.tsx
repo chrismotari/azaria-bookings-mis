@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
+import { ConfirmProvider } from './src/components/ConfirmDialog';
 import { LoadingState } from './src/components/StatusViews';
 import { linking } from './src/navigation/linking';
 import { navigationRef } from './src/navigation/navigationRef';
@@ -45,7 +46,9 @@ export default function App() {
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <Navigation />
+          <ConfirmProvider>
+            <Navigation />
+          </ConfirmProvider>
         </AuthProvider>
       </QueryClientProvider>
       <StatusBar style="auto" />

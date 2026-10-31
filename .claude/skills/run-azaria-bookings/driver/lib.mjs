@@ -15,6 +15,9 @@ export const field = (page, label) => page.locator(`[aria-label="${label}"]:visi
 export const seen = (page, text) => page.locator(`:text("${text}"):visible`).first();
 // getByRole already skips hidden elements.
 export const button = (page, name) => page.getByRole('button', { name, exact: true });
+/** Clicks the action button in the app's open confirmation dialog (it repeats the action's name). */
+export const confirmDialog = (page, name) =>
+  page.getByRole('dialog').getByRole('button', { name, exact: true }).click();
 
 /** Opens a page for a role; its localStorage (JWTs) is kept in OUT/profiles/<role>.json between runs. */
 export async function open(role, { width = 1280, height = 900 } = {}) {
@@ -29,8 +32,6 @@ export async function open(role, { width = 1280, height = 900 } = {}) {
   const errors = [];
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   page.on('pageerror', (e) => errors.push(String(e)));
-  // The app's confirm dialogs use window.confirm on web.
-  page.on('dialog', (d) => d.accept());
   let n = 0;
   return {
     page,

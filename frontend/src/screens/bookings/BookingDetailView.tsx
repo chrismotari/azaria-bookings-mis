@@ -12,18 +12,16 @@ import { BookingSummary } from '../../components/BookingSummary';
 import { BookingTimeline } from '../../components/BookingTimeline';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
+import { useConfirm } from '../../components/ConfirmDialog';
 import { FormError } from '../../components/Field';
 import { Icon } from '../../components/Icon';
 import { StatusChip } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { colors, font, radius, space, weight } from '../../theme';
-import { BOOKING_STATUS, timeLeft } from '../../utils/bookings';
-import { confirmAction } from '../../utils/confirm';
+import { BOOKING_STATUS, TERMINAL_STATUSES, timeLeft } from '../../utils/bookings';
 import { formatDateTime } from '../../utils/format';
 
 const CANCELLABLE: BookingStatus[] = ['requested', 'availability_confirmed'];
-
-const TERMINAL_STATUSES: BookingStatus[] = ['unavailable', 'cancelled', 'expired'];
 
 const STATUS_HELP: Partial<Record<BookingStatus, string>> = {
   requested: 'We are checking availability with the airline and will email you shortly.',
@@ -35,6 +33,7 @@ const STATUS_HELP: Partial<Record<BookingStatus, string>> = {
 export function BookingDetailView({ id }: { id: number }) {
   const navigation = useNavigation();
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const booking = useQuery({
     queryKey: ['bookings', 'detail', id],
     queryFn: async () => (await api.get<BookingDetail>(`/bookings/${id}`)).data,
@@ -58,7 +57,14 @@ export function BookingDetailView({ id }: { id: number }) {
   const status = BOOKING_STATUS[data.status];
   const help = STATUS_HELP[data.status];
   const onCancel = async () => {
-    if (await confirmAction('Cancel this booking?', 'This cannot be undone.', 'Cancel booking')) {
+    if (
+      await confirm({
+        title: 'Cancel this booking?',
+        message: 'This cannot be undone.',
+        confirmLabel: 'Cancel booking',
+        tone: 'danger',
+      })
+    ) {
       cancel.mutate();
     }
   };

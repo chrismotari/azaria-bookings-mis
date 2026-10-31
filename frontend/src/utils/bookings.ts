@@ -11,6 +11,9 @@ export const BOOKING_STATUS: Record<BookingStatus, { label: string; tone: Tone }
   expired: { label: 'Expired', tone: 'neutral' },
 };
 
+/** Statuses that end a booking; they show as a banner instead of the progress tracker. */
+export const TERMINAL_STATUSES: BookingStatus[] = ['unavailable', 'cancelled', 'expired'];
+
 /** What each status means for the timeline. */
 export const BOOKING_EVENT_LABELS: Record<BookingStatus, string> = {
   requested: 'Booking requested',

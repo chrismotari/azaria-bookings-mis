@@ -8,6 +8,7 @@ import { errorMessage } from '../../api/errors';
 import { QueryDetail } from '../../api/types';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
+import { useConfirm } from '../../components/ConfirmDialog';
 import { FormError } from '../../components/Field';
 import { FlightRow } from '../../components/FlightRow';
 import { Icon } from '../../components/Icon';
@@ -15,7 +16,6 @@ import { QuerySummary } from '../../components/QuerySummary';
 import { StatusChip } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { colors, font, radius, space, weight } from '../../theme';
-import { confirmAction } from '../../utils/confirm';
 import { formatDateTime } from '../../utils/format';
 import { QUERY_STATUS } from '../../utils/queries';
 
@@ -23,6 +23,7 @@ export function QueryDetailView({ id }: { id: number }) {
   const navigation = useNavigation();
   const [width, setWidth] = useState(0);
   const queryClient = useQueryClient();
+  const confirm = useConfirm();
   const query = useQuery({
     queryKey: ['queries', 'detail', id],
     queryFn: async () => (await api.get<QueryDetail>(`/queries/${id}`)).data,
@@ -45,7 +46,14 @@ export function QueryDetailView({ id }: { id: number }) {
   const data = query.data;
   const status = QUERY_STATUS[data.status];
   const onClose = async () => {
-    if (await confirmAction('Close this request?', 'We will stop looking for options for it.', 'Close request')) {
+    if (
+      await confirm({
+        title: 'Close this request?',
+        message: 'We will stop looking for options for it.',
+        confirmLabel: 'Close request',
+        tone: 'danger',
+      })
+    ) {
       close.mutate();
     }
   };
