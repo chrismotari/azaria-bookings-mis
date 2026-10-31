@@ -334,8 +334,11 @@ ADMIN AND BOOKING ADDITIONS (steps 17 and 19 to 23)
 ======================================================================
 Models added here (OfferStop, BookingStop) use UUID primary keys like the rest (step 18 comes first). Every backend change comes with tests; every UI change ends with a browser check at 390 px and 1280 px.
 
-Admin booking progress (step 17, frontend only)
+Admin booking progress and dialogs (step 17, frontend only)
 - The admin booking drawer shows the same progress tracker as the customer booking detail (Requested -> Confirmed -> Paid -> Completed), or the terminal banner, above the booking summary.
+- A shared Dialog component: a modal card over a dimmed page with a title, a scrollable body and a footer with the action buttons. Escape, the close button and a click on the dimmed area close it (except while saving); focus moves into it on open and back on close. On narrow screens it fills the screen. Sizes: small (confirmations) and large (forms).
+- The browser confirm prompts (Cancel booking, Close request, Confirm availability, Mark unavailable, Mark paid, Send boarding passes, Delete file) become small dialogs built on it, with the action button in its usual style (danger for destructive actions).
+- Steps 20 to 23 use dialogs for short tasks started from a list or drawer, so the admin keeps their place instead of navigating to a new screen. Long forms that already are screens (Book, Request options, New offer, Respond) stay screens.
 
 Stops: layovers and stopovers (step 19)
 - catalog.OfferStop: offer (FK, related_name "stops", cascade), position (PositiveSmallInteger, unique per offer, ordered), airport (FK Airport), duration_minutes (PositiveInteger, > 0).
@@ -347,28 +350,28 @@ Stops: layovers and stopovers (step 19)
 
 Confirm availability with changes (step 20)
 - POST /admin/bookings/{id}/confirm-availability accepts an optional body {unit_price, stops}. Values that differ from the booking's are applied to the booking (unit price, booking stops) in the same transition.
-- New Booking fields: changes (JSON, null) records what changed as {"unit_price": {"old", "new"}, "stops": {"old", "new"}} with only the changed keys (stops as lists of airport code, city and duration); changes_accepted (Boolean, null): null when nothing changed, false while the customer has not accepted, true once accepted.
-- Customer: POST /bookings/{id}/accept-changes sets changes_accepted to true (only while availability_confirmed with changes_accepted false, otherwise 409). POST /bookings/{id}/decline-changes moves the booking to the new terminal status "declined".
-- State machine additions: availability_confirmed -> declined (the booking's customer, only while changes_accepted is false), queues no email, like cancelled. availability_confirmed -> paid is refused with 409 while changes_accepted is false. The payment deadline, reminders and expiry work as before.
+- New Booking fields: changes (JSON, null) records what changed as {"unit_price": {"old", "new"}, "stops": {"old", "new"}} with only the changed keys (stops as lists of airport code, city and duration), null when nothing changed; changes_accepted (Boolean, default false) becomes true when the customer accepts. Changes "await acceptance" while changes is set and changes_accepted is false.
+- Customer: POST /bookings/{id}/accept-changes sets changes_accepted to true (only while availability_confirmed with changes awaiting acceptance, otherwise 409). POST /bookings/{id}/decline-changes moves the booking to the new terminal status "declined".
+- State machine additions: availability_confirmed -> declined (the booking's customer, only while changes await acceptance), queues no email, like cancelled. availability_confirmed -> paid is refused with 409 while changes await acceptance. The payment deadline, reminders and expiry work as before.
 - Email 4 lists the changes (old -> new) when there are any and asks the customer to accept or decline them in the app before paying.
-- Customer UI: while changes await acceptance, the booking detail shows a changes box (each change as old -> new) with "Accept changes" and "Decline" (with a confirm dialog) in place of the payment box; the payment box shows after accepting. Declined shows as a terminal banner. Booking lists and filters gain the Declined status.
-- Admin UI: "Confirm availability" opens a confirm panel in the drawer with the price per person and the stop list prefilled and editable, and a summary of what will change. The drawer shows when changes are waiting for the customer; Mark paid is disabled until they are accepted.
+- Customer UI: while changes await acceptance, the booking detail shows a changes box (each change as old -> new) with "Accept changes" and "Decline" (with a confirmation dialog) in place of the payment box; the payment box shows after accepting. Declined shows as a terminal banner. Booking lists and filters gain the Declined status.
+- Admin UI: "Confirm availability" opens a large dialog with the price per person and the stop list prefilled and editable, a summary of what will change, and the Confirm availability button. The drawer shows when changes are waiting for the customer; Mark paid is disabled until they are accepted.
 
 Mark unavailable with suggested options (step 21)
 - POST /admin/bookings/{id}/mark-unavailable accepts an optional body {message, offer_ids, new_offers} in the format of the respond endpoint. With at least one offer, the same transaction creates a Query for the booking's customer (origin, destination, date_from and ticket_class from the booking's offer; status responded) and a QueryResponse with the message and offers, and links it to the booking (new Booking field alternatives, FK Query, null). Without offers it works as before.
 - Email 5 then also carries the admin's message, the number of suggested options and a link to the request in the app; emails 1 and 2 are not sent for this request.
 - Customer UI: the unavailable banner has a "View suggested options" button that opens that request when there are suggestions, and keeps "Request other options" otherwise.
-- Admin UI: "Mark unavailable" opens a screen like Respond (existing offers searched from the booking's route and date, custom offers, message) with a danger "Mark unavailable" button; choosing options is optional.
+- Admin UI: "Mark unavailable" opens a large dialog: the message, existing offers searched from the booking's route and date (selectable, as on Respond), an "Add custom offer" form, and a danger "Mark unavailable" button; choosing options is optional.
 
 User management (step 22)
 - Admin endpoints for customers: GET /admin/users (search on name, email and phone; filter is_active), POST /admin/users {email, full_name, phone}, GET and PATCH /admin/users/{id} (full_name, email, phone, is_active). Only role customer is listed or managed; the role cannot be changed here.
 - Created users get an unusable password and email 11, send_account_created_email(user_id): a welcome with a set-password link in the email 10 format, using the same reset screen. Runs only if the user is active. Sent as HTML plus plain text like the others (see HTML EMAILS).
 - Delete means deactivate (is_active false): the user cannot sign in or refresh a token, their requests and bookings stay, and the admin can reactivate them.
-- Admin UI: a Users tab with a table (name, email, phone, status) and search, a drawer with the editable details and Deactivate or Reactivate in the action bar, and a New user form.
+- Admin UI: a Users tab with a table (name, email, phone, status) and search, a drawer with the editable details and Deactivate or Reactivate in the action bar (with a confirmation dialog), and a "New user" button that opens a dialog (email, name, phone).
 
 Admin books for a customer (step 23)
 - POST /admin/bookings {user, offer, passenger_count, notes} creates the booking through create_booking with the admin as the event actor. The user must be an active customer; the offer must be bookable (public or private). The same duplicate-booking rule applies. Email 3 is not sent, since the admin made the booking. The booking then follows the normal flow from requested.
-- Admin UI: a "New booking" button on Bookings opens a form: customer (searchable dropdown of active customers), offer (search of bookable offers, as on the Respond screen), passenger stepper, notes and live total. Saving opens the new booking in its drawer.
+- Admin UI: a "New booking" button on Bookings opens a large dialog: customer (searchable dropdown of active customers), offer (search of bookable offers, as on the Respond screen), passenger stepper, notes and live total. Saving closes the dialog and opens the new booking in its drawer.
 
 ======================================================================
 DELIVERY ORDER (commit after each step; the app must run at each step)
@@ -394,7 +397,7 @@ DELIVERY ORDER (commit after each step; the app must run at each step)
 14. UI refinement: Explore and offer detail.
 15. UI refinement: customer requests and bookings.
 16. UI refinement: admin screens.
-17. Admin booking progress tracker (see ADMIN AND BOOKING ADDITIONS).
+17. Admin booking progress tracker and dialogs (see ADMIN AND BOOKING ADDITIONS).
 18. UUID identifiers (see UUID IDENTIFIERS). Only after steps 9 to 17 are done.
 19. Stops: layovers and stopovers.
 20. Confirm availability with changes.
