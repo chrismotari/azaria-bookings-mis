@@ -3,7 +3,7 @@ import os
 from rest_framework import serializers
 
 from accounts.serializers import UserSerializer
-from catalog.serializers import OfferSerializer, stops_data
+from catalog.serializers import OfferSerializer, StopInputSerializer, stop_errors, stops_data
 from core.models import AppSettings
 from customer_requests.models import Query
 
@@ -83,6 +83,8 @@ class BookingSerializer(serializers.ModelSerializer):
             "total_price",
             "status",
             "payment_deadline",
+            "changes",
+            "changes_accepted",
             "created_at",
         ]
         read_only_fields = fields
@@ -128,3 +130,21 @@ class AdminBookingDetailSerializer(AdminBookingSerializer):
     class Meta(AdminBookingSerializer.Meta):
         fields = [*AdminBookingSerializer.Meta.fields, "events", "boarding_passes"]
         read_only_fields = fields
+
+
+class ConfirmAvailabilitySerializer(serializers.Serializer):
+    """Optional changes made on confirming; context["booking"] is the booking being confirmed."""
+
+    unit_price = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    stops = StopInputSerializer(many=True, required=False)
+
+    def validate_unit_price(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Price must be greater than 0.")
+        return value
+
+    def validate_stops(self, stops):
+        offer = self.context["booking"].offer
+        if messages := stop_errors(offer.origin, offer.destination, stops):
+            raise serializers.ValidationError(messages)
+        return stops

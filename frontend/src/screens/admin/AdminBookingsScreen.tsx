@@ -30,6 +30,7 @@ const STATUS_OPTIONS: { value: BookingStatus | 'all'; label: string }[] = [
   { value: 'unavailable', label: 'Unavailable' },
   { value: 'cancelled', label: 'Cancelled' },
   { value: 'expired', label: 'Expired' },
+  { value: 'declined', label: 'Declined' },
   { value: 'all', label: 'All' },
 ];
 

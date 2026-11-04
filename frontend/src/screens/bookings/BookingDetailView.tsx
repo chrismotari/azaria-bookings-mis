@@ -12,13 +12,14 @@ import { BookingSummary } from '../../components/BookingSummary';
 import { BookingTimeline } from '../../components/BookingTimeline';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
+import { ChangeList } from '../../components/ChangeList';
 import { useConfirm } from '../../components/ConfirmDialog';
 import { FormError } from '../../components/Field';
 import { Icon } from '../../components/Icon';
 import { StatusChip } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { colors, font, radius, space, weight } from '../../theme';
-import { BOOKING_STATUS, TERMINAL_STATUSES, timeLeft } from '../../utils/bookings';
+import { BOOKING_STATUS, TERMINAL_STATUSES, changesAwaitingAcceptance, timeLeft } from '../../utils/bookings';
 import { formatDateTime } from '../../utils/format';
 
 const CANCELLABLE: BookingStatus[] = ['requested', 'availability_confirmed'];
@@ -28,6 +29,7 @@ const STATUS_HELP: Partial<Record<BookingStatus, string>> = {
   paid: 'Payment received. We will email your boarding passes once they are ready.',
   unavailable: 'Sorry, these seats were no longer available. You can request other options.',
   expired: 'The hold lapsed because payment was not received in time. You can book again if the deal is still open.',
+  declined: 'You declined the changes we made, so this booking has ended. You can book again or request other options.',
 };
 
 export function BookingDetailView({ id }: { id: string }) {
@@ -38,8 +40,10 @@ export function BookingDetailView({ id }: { id: string }) {
     queryKey: ['bookings', 'detail', id],
     queryFn: async () => (await api.get<BookingDetail>(`/bookings/${id}`)).data,
   });
-  const cancel = useMutation({
-    mutationFn: async () => (await api.post<BookingDetail>(`/bookings/${id}/cancel`)).data,
+  // cancel, accept-changes or decline-changes.
+  const act = useMutation({
+    mutationFn: async (action: 'cancel' | 'accept-changes' | 'decline-changes') =>
+      (await api.post<BookingDetail>(`/bookings/${id}/${action}`)).data,
     onSuccess: (data) => {
       queryClient.setQueryData(['bookings', 'detail', id], data);
       return queryClient.invalidateQueries({ queryKey: ['bookings'] });
@@ -65,9 +69,22 @@ export function BookingDetailView({ id }: { id: string }) {
         tone: 'danger',
       })
     ) {
-      cancel.mutate();
+      act.mutate('cancel');
     }
   };
+  const onDecline = async () => {
+    if (
+      await confirm({
+        title: 'Decline the changes?',
+        message: 'This ends the booking. You can book again or request other options afterwards.',
+        confirmLabel: 'Decline',
+        tone: 'danger',
+      })
+    ) {
+      act.mutate('decline-changes');
+    }
+  };
+  const awaitingChanges = changesAwaitingAcceptance(data);
 
   return (
     <>
@@ -86,7 +103,39 @@ export function BookingDetailView({ id }: { id: string }) {
         ) : null}
       </Card>
 
-      {data.status === 'availability_confirmed' ? (
+      {awaitingChanges && data.changes ? (
+        <View style={styles.changes}>
+          <View style={styles.paymentTitle}>
+            <Icon name="create-outline" size={22} color={colors.warningText} />
+            <Text style={styles.section}>We had to make some changes</Text>
+          </View>
+          <Text style={styles.text}>
+            Seats are available, but not exactly as booked. Please accept the changes before you pay, or decline them to
+            end the booking.
+          </Text>
+          <ChangeList changes={data.changes} />
+          {data.payment_deadline ? (
+            <Text style={styles.muted}>
+              The hold lasts until {formatDateTime(data.payment_deadline)}, including the time to accept and pay.
+            </Text>
+          ) : null}
+          <View style={styles.changeActions}>
+            <Button
+              title="Accept changes"
+              onPress={() => act.mutate('accept-changes')}
+              loading={act.isPending && act.variables === 'accept-changes'}
+              disabled={act.isPending}
+            />
+            <Button
+              title="Decline"
+              variant="danger"
+              onPress={onDecline}
+              loading={act.isPending && act.variables === 'decline-changes'}
+              disabled={act.isPending}
+            />
+          </View>
+        </View>
+      ) : data.status === 'availability_confirmed' ? (
         <PaymentBox deadline={data.payment_deadline} instructions={data.payment_instructions} />
       ) : null}
 
@@ -107,10 +156,16 @@ export function BookingDetailView({ id }: { id: string }) {
         <BookingTimeline events={data.events} />
       </Card>
 
-      <FormError message={cancel.isError ? errorMessage(cancel.error) : null} />
+      <FormError message={act.isError ? errorMessage(act.error) : null} />
       {CANCELLABLE.includes(data.status) ? (
         <View style={styles.actions}>
-          <Button title="Cancel booking" variant="danger" onPress={onCancel} loading={cancel.isPending} />
+          <Button
+            title="Cancel booking"
+            variant="danger"
+            onPress={onCancel}
+            loading={act.isPending && act.variables === 'cancel'}
+            disabled={act.isPending}
+          />
         </View>
       ) : null}
     </>
@@ -159,6 +214,17 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primaryTint,
   },
   paymentTitle: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  changes: {
+    gap: space.md,
+    padding: space.lg,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.warningText,
+    backgroundColor: colors.warningTint,
+  },
+  changeActions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   deadlineRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
   countdown: {
     flexDirection: 'row',

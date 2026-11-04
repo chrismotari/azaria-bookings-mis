@@ -17,11 +17,12 @@ const TERMINAL: Partial<Record<BookingStatus, IconName>> = {
   unavailable: 'close-circle',
   cancelled: 'ban',
   expired: 'time',
+  declined: 'arrow-undo',
 };
 
 /**
  * Where the booking is on the normal path (Requested → Confirmed → Paid → Completed),
- * or a single banner for a status that ends it (unavailable, cancelled, expired).
+ * or a single banner for a status that ends it (unavailable, cancelled, expired, declined).
  */
 export function BookingProgress({ status, message }: { status: BookingStatus; message?: string }) {
   const terminalIcon = TERMINAL[status];

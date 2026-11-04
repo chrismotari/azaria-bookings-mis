@@ -9,14 +9,13 @@ urlpatterns = [
     path("bookings", views.BookingListCreateView.as_view()),
     path("bookings/<uuid:pk>", views.BookingDetailView.as_view()),
     path("bookings/<uuid:pk>/cancel", views.BookingCancelView.as_view()),
+    path("bookings/<uuid:pk>/accept-changes", views.BookingAcceptChangesView.as_view()),
+    path("bookings/<uuid:pk>/decline-changes", views.BookingDeclineChangesView.as_view()),
     path("boarding-passes/<uuid:pk>/download", views.BoardingPassDownloadView.as_view()),
     path("admin/dashboard", views.AdminDashboardView.as_view()),
     path("admin/bookings", views.AdminBookingListView.as_view()),
     path("admin/bookings/<uuid:pk>", views.AdminBookingDetailView.as_view()),
-    path(
-        "admin/bookings/<uuid:pk>/confirm-availability",
-        views.AdminBookingTransitionView.as_view(to_status=Status.AVAILABILITY_CONFIRMED),
-    ),
+    path("admin/bookings/<uuid:pk>/confirm-availability", views.AdminConfirmAvailabilityView.as_view()),
     path(
         "admin/bookings/<uuid:pk>/mark-unavailable",
         views.AdminBookingTransitionView.as_view(to_status=Status.UNAVAILABLE),

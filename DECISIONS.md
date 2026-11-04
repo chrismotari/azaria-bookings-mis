@@ -59,3 +59,6 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - Bookings return their own stops and stop_count next to the nested offer (which shows the offer's current stops); booking screens use the booking's.
 - Durations read "2 h 15 min", "45 min" or "26 h" (no days), in the app and in emails; emails show a Stops line ("Direct" when there are none).
 - The admin offer form's Stops section sits under Route; each stop shows a live Layover or Stopover tag, and the offer detail lists stops in their own card under Flight details.
+- Confirm availability always sends the dialog's price and stops; the server records in changes only the values that differ. Accepting changes is not a status change, so it adds no timeline event.
+- The payment deadline starts when availability is confirmed, also while changes await acceptance; the changes box says the hold covers accepting and paying.
+- In the admin drawer the changes card stays after the customer answers ("accepted" or "declined"), so the admin can see what was agreed.

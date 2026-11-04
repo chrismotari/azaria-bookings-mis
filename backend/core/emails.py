@@ -55,12 +55,27 @@ def format_duration(minutes):
     return " ".join(part for part in (f"{hours} h" if hours else "", f"{minutes} min" if minutes else "") if part)
 
 
-def format_stops(stops):
-    """e.g. "Direct" or "Dubai (DXB), 2 h 15 min layover; Istanbul (IST), 26 h stopover"."""
+def format_stop_list(stops):
+    """stops: dicts of code, city and duration_minutes (as in Booking.changes).
+
+    e.g. "Direct" or "Dubai (DXB), 2 h 15 min layover; Istanbul (IST), 26 h stopover".
+    """
+    from catalog.models import Stop
+
+    def kind(minutes):
+        return "stopover" if minutes >= Stop.STOPOVER_MINUTES else "layover"
+
     return "; ".join(
-        f"{stop.airport.city} ({stop.airport.code}), {format_duration(stop.duration_minutes)} {stop.kind}"
+        f"{stop['city']} ({stop['code']}), {format_duration(stop['duration_minutes'])} {kind(stop['duration_minutes'])}"
         for stop in stops
     ) or "Direct"
+
+
+def format_stops(stops):
+    """stops: OfferStop or BookingStop rows, formatted as format_stop_list does."""
+    return format_stop_list(
+        {"code": s.airport.code, "city": s.airport.city, "duration_minutes": s.duration_minutes} for s in stops
+    )
 
 
 def format_datetime(value):

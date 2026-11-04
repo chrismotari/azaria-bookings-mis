@@ -12,14 +12,16 @@ import { BookingTimeline } from '../../components/BookingTimeline';
 import { Button } from '../../components/Button';
 import { BookingProgress } from '../../components/BookingProgress';
 import { Card } from '../../components/Card';
+import { ChangeList } from '../../components/ChangeList';
 import { useConfirm } from '../../components/ConfirmDialog';
 import { FileField } from '../../components/FileField';
 import { FormError } from '../../components/Field';
 import { StatusChip } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { colors, font, weight } from '../../theme';
-import { BOOKING_STATUS, TERMINAL_STATUSES } from '../../utils/bookings';
+import { BOOKING_STATUS, TERMINAL_STATUSES, changesAwaitingAcceptance } from '../../utils/bookings';
 import { formatDateTime } from '../../utils/format';
+import { ConfirmAvailabilityDialog } from './ConfirmAvailabilityDialog';
 
 type Action = {
   path: 'confirm-availability' | 'mark-unavailable' | 'mark-paid' | 'complete';
@@ -85,20 +87,22 @@ export function AdminBookingDetailView({ id }: { id: string }) {
   const queryClient = useQueryClient();
   const uploading = useIsMutating({ mutationKey: uploadKey(id) }) > 0;
   const confirm = useConfirm();
+  const [confirming, setConfirming] = useState(false);
   const booking = useQuery({
     queryKey: ['admin', 'bookings', 'detail', id],
     queryFn: async () => (await api.get<AdminBookingDetail>(`/admin/bookings/${id}`)).data,
   });
+  const updated = (data: AdminBookingDetail) => {
+    queryClient.setQueryData(['admin', 'bookings', 'detail', id], data);
+    return Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] }),
+      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] }),
+    ]);
+  };
   const act = useMutation({
     mutationFn: async (action: Action) =>
       (await api.post<AdminBookingDetail>(`/admin/bookings/${id}/${action.path}`)).data,
-    onSuccess: (data) => {
-      queryClient.setQueryData(['admin', 'bookings', 'detail', id], data);
-      return Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] }),
-        queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] }),
-      ]);
-    },
+    onSuccess: updated,
   });
 
   if (booking.isPending) {
@@ -112,6 +116,11 @@ export function AdminBookingDetailView({ id }: { id: string }) {
   const status = BOOKING_STATUS[data.status];
   const actions = ACTIONS[data.status] ?? [];
   const run = async (action: Action) => {
+    // Confirming has its own dialog, for any changes to the price and stops.
+    if (action === CONFIRM_AVAILABILITY) {
+      setConfirming(true);
+      return;
+    }
     if (
       await confirm({
         title: `${action.title}?`,
@@ -124,9 +133,11 @@ export function AdminBookingDetailView({ id }: { id: string }) {
     }
   };
 
-  // Sending needs at least one uploaded file and no upload in progress.
+  const awaitingChanges = changesAwaitingAcceptance(data);
+  // Sending needs at least one uploaded file and no upload in progress; marking paid needs any changes accepted.
   const blocked = (action: Action) =>
-    action === SEND_PASSES && (data.boarding_passes.length === 0 || uploading);
+    (action === SEND_PASSES && (data.boarding_passes.length === 0 || uploading)) ||
+    (action === MARK_PAID && awaitingChanges);
 
   return (
     <>
@@ -145,6 +156,31 @@ export function AdminBookingDetailView({ id }: { id: string }) {
         </ActionBar>
       ) : null}
       <FormError message={act.isError ? errorMessage(act.error) : null} />
+      <ConfirmAvailabilityDialog
+        booking={data}
+        open={confirming}
+        onClose={() => setConfirming(false)}
+        onDone={(confirmed) => {
+          setConfirming(false);
+          updated(confirmed);
+        }}
+      />
+
+      {data.changes ? (
+        <Card>
+          <Text style={styles.section}>
+            {data.status === 'declined'
+              ? 'Changes declined by the customer'
+              : data.changes_accepted
+                ? 'Changes accepted by the customer'
+                : 'Changes waiting for the customer'}
+          </Text>
+          <ChangeList changes={data.changes} />
+          {awaitingChanges ? (
+            <Text style={styles.muted}>Mark paid becomes available once the customer accepts the changes.</Text>
+          ) : null}
+        </Card>
+      ) : null}
 
       <Card>
         <View style={styles.header}>

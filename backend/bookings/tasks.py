@@ -1,12 +1,21 @@
 import logging
 import mimetypes
 from datetime import timedelta
+from decimal import Decimal
 
 from celery import shared_task
 from django.db import transaction
 from django.utils import timezone
 
-from core.emails import EMAIL_TASK_OPTIONS, format_date, format_datetime, format_price, format_stops, send_email
+from core.emails import (
+    EMAIL_TASK_OPTIONS,
+    format_date,
+    format_datetime,
+    format_price,
+    format_stop_list,
+    format_stops,
+    send_email,
+)
 from core.models import AppSettings
 
 from .models import Booking
@@ -38,6 +47,19 @@ def describe_booking(booking):
     }
 
 
+def describe_changes(booking):
+    """Each change made on confirming as {label, old, new}, for email 4; empty when there are none."""
+    changes = booking.changes or {}
+    described = []
+    if "unit_price" in changes:
+        old, new = (format_price(Decimal(changes["unit_price"][key])) for key in ("old", "new"))
+        described.append({"label": "Price per person", "old": old, "new": new})
+    if "stops" in changes:
+        old, new = (format_stop_list(changes["stops"][key]) for key in ("old", "new"))
+        described.append({"label": "Stops", "old": old, "new": new})
+    return described
+
+
 @shared_task(**EMAIL_TASK_OPTIONS)
 def notify_admin_new_booking(booking_id):
     booking = _booking_in(booking_id, Booking.Status.REQUESTED)
@@ -65,6 +87,7 @@ def notify_customer_availability_confirmed(booking_id):
             **describe_booking(booking),
             "payment_instructions": AppSettings.get().payment_instructions,
             "deadline": format_datetime(booking.payment_deadline),
+            "changes": describe_changes(booking),
         },
     )
 

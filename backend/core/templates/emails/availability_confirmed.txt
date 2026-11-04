@@ -1,7 +1,13 @@
 Hello {{ booking.user.full_name }},
 
 Good news: seats are available for your booking.
-
+{% if changes %}
+We had to make some changes to it:
+{% for change in changes %}- {{ change.label }}: {{ change.old }} → {{ change.new }}
+{% endfor %}
+Please accept or decline these changes in the app before you pay:
+{{ frontend_url }}/bookings/{{ booking.id }}
+{% endif %}
 Route: {{ route }}
 Departure: {{ departure }}
 Stops: {{ stops }}

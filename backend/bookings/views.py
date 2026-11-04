@@ -16,8 +16,16 @@ from .serializers import (
     BookingCreateSerializer,
     BookingDetailSerializer,
     BookingSerializer,
+    ConfirmAvailabilitySerializer,
 )
-from .services import add_boarding_pass, create_booking, delete_boarding_pass, transition
+from .services import (
+    accept_changes,
+    add_boarding_pass,
+    confirm_availability,
+    create_booking,
+    delete_boarding_pass,
+    transition,
+)
 
 BOOKING_RELATED = ["offer__origin", "offer__destination"]
 BOOKING_STOPS = ["stops__airport", "offer__stops__airport"]
@@ -58,6 +66,20 @@ class BookingCancelView(APIView):
         return Response(BookingDetailSerializer(booking).data)
 
 
+class BookingAcceptChangesView(APIView):
+    def post(self, request, pk):
+        generics.get_object_or_404(Booking, pk=pk, user=request.user)
+        booking = accept_changes(pk, request.user)
+        return Response(BookingDetailSerializer(booking).data)
+
+
+class BookingDeclineChangesView(APIView):
+    def post(self, request, pk):
+        generics.get_object_or_404(Booking, pk=pk, user=request.user)
+        booking = transition(pk, Booking.Status.DECLINED, request.user)
+        return Response(BookingDetailSerializer(booking).data)
+
+
 class AdminBookingListView(generics.ListAPIView):
     permission_classes = [IsAdminRole]
     serializer_class = AdminBookingSerializer
@@ -82,6 +104,19 @@ class AdminBookingTransitionView(APIView):
     def post(self, request, pk):
         generics.get_object_or_404(Booking, pk=pk)
         booking = transition(pk, self.to_status, request.user)
+        return Response(AdminBookingDetailSerializer(booking).data)
+
+
+class AdminConfirmAvailabilityView(APIView):
+    """Body (optional): unit_price and stops; values that differ from the booking's are applied."""
+
+    permission_classes = [IsAdminRole]
+
+    def post(self, request, pk):
+        booking = generics.get_object_or_404(Booking.objects.select_related(*BOOKING_RELATED), pk=pk)
+        serializer = ConfirmAvailabilitySerializer(data=request.data, context={"booking": booking})
+        serializer.is_valid(raise_exception=True)
+        booking = confirm_availability(pk, request.user, **serializer.validated_data)
         return Response(AdminBookingDetailSerializer(booking).data)
 
 

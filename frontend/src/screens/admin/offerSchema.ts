@@ -49,7 +49,7 @@ export type OfferFormValues = {
 
 const airport = z.custom<Airport | null>().refine((value) => value !== null, 'Choose an airport.');
 
-const stop = z
+export const stopSchema = z
   .object({
     airport,
     hours: z.string().trim().regex(/^\d{0,3}$/, 'Whole hours.'),
@@ -60,6 +60,39 @@ const stop = z
       .refine((value) => Number(value || 0) < 60, 'Under 60.'),
   })
   .refine((value) => stopMinutes(value) > 0, { path: ['hours'], message: 'Enter how long the stop lasts.' });
+
+export const stopsSchema = z.array(stopSchema).max(MAX_STOPS, `A flight can have at most ${MAX_STOPS} stops.`);
+
+/** Adds an issue to each stop whose airport is the origin, the destination or the stop before it. */
+export function checkStopAirports(
+  ctx: z.RefinementCtx,
+  origin: Airport | null,
+  destination: Airport | null,
+  stops: StopFormValues[],
+) {
+  stops.forEach((item, index) => {
+    const code = item.airport?.code;
+    const previous = index > 0 ? stops[index - 1].airport?.code : undefined;
+    const message =
+      code === undefined
+        ? null
+        : code === origin?.code
+          ? 'Must differ from the origin.'
+          : code === destination?.code
+            ? 'Must differ from the destination.'
+            : code === previous
+              ? 'Must differ from the stop before it.'
+              : null;
+    if (message) {
+      ctx.addIssue({ code: 'custom', path: ['stops', index, 'airport'], message });
+    }
+  });
+}
+
+/** The API body for a validated stop list. */
+export function toStopsBody(stops: StopFormValues[]) {
+  return stops.map((item) => ({ airport: item.airport?.code, duration_minutes: stopMinutes(item) }));
+}
 
 /** Mirrors the server's offer rules; "valid until" may not be in the past on create only. */
 export function offerSchema(isCreate: boolean) {
@@ -74,7 +107,7 @@ export function offerSchema(isCreate: boolean) {
         .trim()
         .regex(/^\d{1,8}(\.\d{1,2})?$/, 'Enter a price in USD, e.g. 650 or 650.50.')
         .refine((value) => Number(value) > 0, 'Price must be greater than 0.'),
-      stops: z.array(stop).max(MAX_STOPS, `A flight can have at most ${MAX_STOPS} stops.`),
+      stops: stopsSchema,
       airline: z.string().trim().min(1, 'Enter the airline.').max(100),
       valid_until: dateString('Enter the last day this offer is valid.'),
       is_public: z.boolean(),
@@ -93,23 +126,7 @@ export function offerSchema(isCreate: boolean) {
       if (isCreate && values.valid_until < todayInNairobi()) {
         ctx.addIssue({ code: 'custom', path: ['valid_until'], message: 'Valid until cannot be in the past.' });
       }
-      values.stops.forEach((item, index) => {
-        const code = item.airport?.code;
-        const previous = index > 0 ? values.stops[index - 1].airport?.code : undefined;
-        const message =
-          code === undefined
-            ? null
-            : code === values.origin?.code
-              ? 'Must differ from the origin.'
-              : code === values.destination?.code
-                ? 'Must differ from the destination.'
-                : code === previous
-                  ? 'Must differ from the stop before it.'
-                  : null;
-        if (message) {
-          ctx.addIssue({ code: 'custom', path: ['stops', index, 'airport'], message });
-        }
-      });
+      checkStopAirports(ctx, values.origin, values.destination, values.stops);
     });
 }
 
@@ -120,7 +137,7 @@ export function toOfferBody(values: OfferFormValues) {
     origin: values.origin?.id,
     destination: values.destination?.id,
     price: values.price.trim(),
-    stops: values.stops.map((item) => ({ airport: item.airport?.code, duration_minutes: stopMinutes(item) })),
+    stops: toStopsBody(values.stops),
     airline: values.airline.trim(),
   };
 }

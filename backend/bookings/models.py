@@ -21,6 +21,8 @@ class Booking(models.Model):
         UNAVAILABLE = "unavailable", "Unavailable"
         CANCELLED = "cancelled", "Cancelled"
         EXPIRED = "expired", "Expired"
+        # The customer declined the changes made when availability was confirmed.
+        DECLINED = "declined", "Declined"
 
     # A customer may hold only one booking in these statuses per offer.
     ACTIVE_STATUSES = [Status.REQUESTED, Status.AVAILABILITY_CONFIRMED, Status.PAID]
@@ -35,6 +37,10 @@ class Booking(models.Model):
     status = models.CharField(max_length=30, choices=Status.choices, default=Status.REQUESTED)
     payment_deadline = models.DateTimeField(null=True, blank=True)
     reminder_sent_at = models.DateTimeField(null=True, blank=True)
+    # What the admin changed when confirming availability: {"unit_price": {"old", "new"}, "stops": {"old", "new"}}
+    # with only the changed keys; null when nothing changed.
+    changes = models.JSONField(null=True, blank=True)
+    changes_accepted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -42,6 +48,10 @@ class Booking(models.Model):
 
     def __str__(self):
         return f"Booking {self.pk} ({self.status})"
+
+    @property
+    def changes_awaiting_acceptance(self):
+        return bool(self.changes) and not self.changes_accepted
 
     @property
     def total_price(self):

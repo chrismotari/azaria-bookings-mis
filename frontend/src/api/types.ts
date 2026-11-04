@@ -103,13 +103,23 @@ export type BookingStatus =
   | 'completed'
   | 'unavailable'
   | 'cancelled'
-  | 'expired';
+  | 'expired'
+  | 'declined';
 
 export type BookingEvent = {
   id: string;
   from_status: BookingStatus | '';
   to_status: BookingStatus;
   created_at: string;
+};
+
+/** A stop as recorded in booking changes. */
+export type StopChange = { code: string; city: string; duration_minutes: number };
+
+/** Only the keys that changed are present. */
+export type BookingChanges = {
+  unit_price?: { old: string; new: string };
+  stops?: { old: StopChange[]; new: StopChange[] };
 };
 
 export type Booking = {
@@ -122,6 +132,9 @@ export type Booking = {
   total_price: string;
   status: BookingStatus;
   payment_deadline: string | null;
+  /** What the admin changed when confirming availability; null when nothing changed. */
+  changes: BookingChanges | null;
+  changes_accepted: boolean;
   created_at: string;
   /** The booking's own stops, copied from the offer when it was booked. */
   stops: Stop[];

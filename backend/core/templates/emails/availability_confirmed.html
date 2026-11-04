@@ -2,6 +2,19 @@
 {% block content %}
 <p style="margin:0 0 16px 0;">Hello {{ booking.user.full_name }},</p>
 <p style="margin:0 0 16px 0;">Good news: seats are available for your booking.</p>
+{% if changes %}
+<p style="margin:0 0 8px 0;"><strong>We had to make some changes to it:</strong></p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
+  {% for change in changes %}
+  <tr>
+    <td valign="top" style="padding:8px 12px 8px 0; border-bottom:1px solid {{ brand.border }}; color:{{ brand.muted }}; font-size:14px; width:40%;">{{ change.label }}</td>
+    <td valign="top" style="padding:8px 0; border-bottom:1px solid {{ brand.border }}; color:{{ brand.text }}; font-size:14px;"><span style="text-decoration:line-through; color:{{ brand.muted }};">{{ change.old }}</span><br>{{ change.new }}</td>
+  </tr>
+  {% endfor %}
+</table>
+<p style="margin:0 0 16px 0;">Please accept or decline these changes in the app before you pay.</p>
+{% with booking_id=booking.id|stringformat:"s" %}{% include "emails/_button.html" with url=frontend_url|add:"/bookings/"|add:booking_id label="Review the changes" %}{% endwith %}
+{% endif %}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
   {% include "emails/_row.html" with label="Route" value=route %}
   {% include "emails/_row.html" with label="Departure" value=departure %}

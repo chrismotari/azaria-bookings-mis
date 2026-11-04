@@ -236,11 +236,20 @@ def actors(admin_user, customer, other_customer):
     return {"admin": admin_user, "customer": customer, "other_customer": other_customer, "system": None}
 
 
+# Declining needs changes waiting for the customer.
+PENDING_CHANGES = {"unit_price": {"old": "650.00", "new": "700.00"}}
+
+
+def booking_for(make_booking, from_status, to_status):
+    extra = {"changes": PENDING_CHANGES} if to_status == Status.DECLINED else {}
+    return make_booking(status=from_status, **extra)
+
+
 @pytest.mark.parametrize(("from_status", "to_status"), list(TRANSITIONS))
 def test_every_allowed_transition_succeeds_for_its_actor(
     make_booking, actors, payment_instructions, from_status, to_status
 ):
-    booking = make_booking(status=from_status)
+    booking = booking_for(make_booking, from_status, to_status)
     allowed = TRANSITIONS[(from_status, to_status)]
     result = transition(booking.id, to_status, actors[allowed])
     assert result.status == to_status
@@ -280,10 +289,10 @@ EXPECTED_EMAILS = {
 def test_each_transition_queues_exactly_its_email(
     make_booking, actors, payment_instructions, django_capture_on_commit_callbacks, from_status, to_status
 ):
-    booking = make_booking(status=from_status)
+    booking = booking_for(make_booking, from_status, to_status)
     with django_capture_on_commit_callbacks(execute=True) as callbacks:
         transition(booking.id, to_status, actors[TRANSITIONS[(from_status, to_status)]])
-    if to_status == Status.CANCELLED:
+    if to_status in (Status.CANCELLED, Status.DECLINED):
         assert callbacks == []
         assert mail.outbox == []
     else:

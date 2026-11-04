@@ -27,10 +27,12 @@ TRANSITIONS = {
     (Status.AVAILABILITY_CONFIRMED, Status.UNAVAILABLE): ADMIN,
     (Status.AVAILABILITY_CONFIRMED, Status.CANCELLED): CUSTOMER,
     (Status.AVAILABILITY_CONFIRMED, Status.EXPIRED): SYSTEM,
+    # Only while changes made on confirming await acceptance.
+    (Status.AVAILABILITY_CONFIRMED, Status.DECLINED): CUSTOMER,
     (Status.PAID, Status.COMPLETED): ADMIN,
 }
 
-# The email each new status queues; cancelled queues none.
+# The email each new status queues; cancelled and declined queue none.
 EMAILS = {
     Status.AVAILABILITY_CONFIRMED: tasks.notify_customer_availability_confirmed,
     Status.UNAVAILABLE: tasks.notify_customer_unavailable,
@@ -91,8 +93,11 @@ def create_booking(user, data):
     return booking
 
 
-def transition(booking_id, to_status, actor):
-    """Moves the booking to to_status on behalf of actor (None for the system). Raises InvalidTransition."""
+def transition(booking_id, to_status, actor, apply=None):
+    """Moves the booking to to_status on behalf of actor (None for the system). Raises InvalidTransition.
+
+    apply(booking), when given, makes further changes to the locked booking in the same transaction, after the checks.
+    """
     with transaction.atomic():
         booking = Booking.objects.select_for_update().get(pk=booking_id)
         from_status = booking.status
@@ -112,16 +117,72 @@ def transition(booking_id, to_status, actor):
                 raise InvalidTransition("Add payment instructions in Settings before confirming availability.")
             booking.payment_deadline = now + timedelta(hours=app_settings.payment_hold_hours)
             booking.reminder_sent_at = None
-        elif to_status == Status.PAID and now > booking.payment_deadline:
-            raise InvalidTransition("The payment deadline has passed; the booking will expire.")
+        elif to_status == Status.PAID:
+            if booking.changes_awaiting_acceptance:
+                raise InvalidTransition("The customer has not accepted the changes yet.")
+            if now > booking.payment_deadline:
+                raise InvalidTransition("The payment deadline has passed; the booking will expire.")
+        elif to_status == Status.DECLINED and not booking.changes_awaiting_acceptance:
+            raise InvalidTransition("There are no changes to decline.")
         elif to_status == Status.COMPLETED and not booking.boarding_passes.exists():
             raise InvalidTransition("Upload at least one boarding pass before sending them.")
 
+        if apply is not None:
+            apply(booking)
         booking.status = to_status
         booking.save()
         BookingEvent.objects.create(booking=booking, from_status=from_status, to_status=to_status, actor=actor)
         if to_status in EMAILS:
             _queue_email(EMAILS[to_status], booking.pk)
+    return booking
+
+
+def _stop_change(airport, duration_minutes):
+    return {"code": airport.code, "city": airport.city, "duration_minutes": duration_minutes}
+
+
+def confirm_availability(booking_id, actor, unit_price=None, stops=None):
+    """Confirms availability, applying a new unit price and stop list where they differ from the booking's.
+
+    stops: ordered dicts of airport and duration_minutes, already validated. What changed is recorded in
+    booking.changes for the customer to accept or decline.
+    """
+
+    def apply(booking):
+        changes = {}
+        if unit_price is not None and unit_price != booking.unit_price:
+            changes["unit_price"] = {"old": str(booking.unit_price), "new": str(unit_price)}
+            booking.unit_price = unit_price
+        if stops is not None:
+            current = list(booking.stops.select_related("airport"))
+            if [(s.airport_id, s.duration_minutes) for s in current] != [
+                (s["airport"].pk, s["duration_minutes"]) for s in stops
+            ]:
+                changes["stops"] = {
+                    "old": [_stop_change(s.airport, s.duration_minutes) for s in current],
+                    "new": [_stop_change(s["airport"], s["duration_minutes"]) for s in stops],
+                }
+                booking.stops.all().delete()
+                BookingStop.objects.bulk_create(
+                    BookingStop(
+                        booking=booking, position=position, airport=s["airport"], duration_minutes=s["duration_minutes"]
+                    )
+                    for position, s in enumerate(stops, start=1)
+                )
+        booking.changes = changes or None
+        booking.changes_accepted = False
+
+    return transition(booking_id, Status.AVAILABILITY_CONFIRMED, actor, apply=apply)
+
+
+def accept_changes(booking_id, user):
+    """The booking's customer accepts the changes made when availability was confirmed."""
+    with transaction.atomic():
+        booking = Booking.objects.select_for_update().get(pk=booking_id, user=user)
+        if booking.status != Status.AVAILABILITY_CONFIRMED or not booking.changes_awaiting_acceptance:
+            raise Conflict("There are no changes waiting for you to accept.")
+        booking.changes_accepted = True
+        booking.save(update_fields=["changes_accepted"])
     return booking
 
 

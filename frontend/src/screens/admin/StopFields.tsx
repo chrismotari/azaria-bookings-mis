@@ -8,12 +8,17 @@ import { PressState } from '../../components/pressState';
 import { TONES } from '../../components/StatusChip';
 import { TextField } from '../../components/TextField';
 import { colors, font, radius, space, weight } from '../../theme';
-import { EMPTY_STOP, MAX_STOPS, OfferFormValues, stopMinutes } from './offerSchema';
+import { EMPTY_STOP, MAX_STOPS, StopFormValues, stopMinutes } from './offerSchema';
+
+/** Any form with a stops list, such as the offer form or the confirm availability dialog. */
+type StopsForm = { stops: StopFormValues[] };
 
 const STOPOVER_MINUTES = 24 * 60;
 
 /** The stop editor: add, remove and reorder stops, each with an airport and a duration in hours and minutes. */
-export function StopFields({ control }: { control: Control<OfferFormValues> }) {
+export function StopFields<T extends StopsForm>({ control: formControl }: { control: Control<T> }) {
+  // Only the stops part of the form is used here.
+  const control = formControl as unknown as Control<StopsForm>;
   const { fields, append, remove, move } = useFieldArray({ control, name: 'stops' });
   const { errors } = useFormState({ control, name: 'stops' });
   const listError = errors.stops?.message ?? errors.stops?.root?.message;
@@ -97,7 +102,7 @@ export function StopFields({ control }: { control: Control<OfferFormValues> }) {
 }
 
 /** Layover or Stopover, from the duration typed so far. */
-function KindTag({ control, index }: { control: Control<OfferFormValues>; index: number }) {
+function KindTag({ control, index }: { control: Control<StopsForm>; index: number }) {
   const stop = useWatch({ control, name: `stops.${index}` });
   const minutes = stop ? stopMinutes(stop) : 0;
   if (!(minutes > 0)) {
