@@ -35,6 +35,10 @@ class AirportSearchView(APIView):
         return Response(AirportSerializer(airports, many=True).data)
 
 
+OFFER_RELATED = ["origin", "destination"]
+OFFER_STOPS = "stops__airport"
+
+
 class OfferListView(generics.ListAPIView):
     """Browse: bookable public offers only."""
 
@@ -43,7 +47,7 @@ class OfferListView(generics.ListAPIView):
     filterset_class = OfferFilter
 
     def get_queryset(self):
-        return Offer.objects.publicly_visible().bookable().select_related("origin", "destination")
+        return Offer.objects.publicly_visible().bookable().select_related(*OFFER_RELATED).prefetch_related(OFFER_STOPS)
 
 
 class OfferDetailView(generics.RetrieveAPIView):
@@ -51,18 +55,18 @@ class OfferDetailView(generics.RetrieveAPIView):
     serializer_class = OfferSerializer
 
     def get_queryset(self):
-        return Offer.objects.visible_to(self.request.user).select_related("origin", "destination")
+        return Offer.objects.visible_to(self.request.user).select_related(*OFFER_RELATED).prefetch_related(OFFER_STOPS)
 
 
 class AdminOfferListView(generics.ListCreateAPIView):
     permission_classes = [IsAdminRole]
     serializer_class = AdminOfferSerializer
     filterset_class = AdminOfferFilter
-    queryset = Offer.objects.select_related("origin", "destination")
+    queryset = Offer.objects.select_related(*OFFER_RELATED).prefetch_related(OFFER_STOPS)
 
 
 class AdminOfferDetailView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAdminRole]
     serializer_class = AdminOfferSerializer
-    queryset = Offer.objects.select_related("origin", "destination")
+    queryset = Offer.objects.select_related(*OFFER_RELATED).prefetch_related(OFFER_STOPS)
     http_method_names = ["get", "patch", "head", "options"]

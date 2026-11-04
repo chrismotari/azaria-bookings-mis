@@ -15,7 +15,7 @@ import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { colors, font, weight } from '../../theme';
 import { OfferFields } from './OfferFields';
-import { OfferFormValues, offerSchema, toOfferBody } from './offerSchema';
+import { OfferFormValues, offerSchema, toOfferBody, toStopFormValues } from './offerSchema';
 
 const FIELDS = [
   'origin',
@@ -23,7 +23,7 @@ const FIELDS = [
   'departure_date',
   'ticket_class',
   'price',
-  'stopovers',
+  'stops',
   'airline',
   'valid_until',
   'is_public',
@@ -35,7 +35,7 @@ const EMPTY: OfferFormValues = {
   departure_date: '',
   ticket_class: 'economy',
   price: '',
-  stopovers: '0',
+  stops: [],
   airline: '',
   valid_until: '',
   is_public: true,
@@ -48,7 +48,7 @@ function toFormValues(offer: AdminOffer): OfferFormValues {
     departure_date: offer.departure_date,
     ticket_class: offer.ticket_class,
     price: offer.price,
-    stopovers: String(offer.stopovers),
+    stops: toStopFormValues(offer.stops),
     airline: offer.airline,
     valid_until: offer.valid_until,
     is_public: offer.is_public,

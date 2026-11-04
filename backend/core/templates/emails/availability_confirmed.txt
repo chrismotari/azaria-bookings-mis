@@ -4,6 +4,7 @@ Good news: seats are available for your booking.
 
 Route: {{ route }}
 Departure: {{ departure }}
+Stops: {{ stops }}
 Passengers: {{ booking.passenger_count }}
 Total price: {{ total }}
 

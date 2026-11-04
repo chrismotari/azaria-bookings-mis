@@ -7,6 +7,7 @@ import { formatDate, formatPrice, ticketClassLabel } from '../utils/format';
 import { AirlineBadge } from './AirlineBadge';
 import { PriceTag } from './PriceTag';
 import { RouteLine } from './RouteLine';
+import { StopList } from './StopList';
 
 /** The flight, passengers and price of a booking. */
 export function BookingSummary({ booking }: { booking: Booking }) {
@@ -20,7 +21,8 @@ export function BookingSummary({ booking }: { booking: Booking }) {
           <Text style={styles.muted}>{ticketClassLabel(offer.ticket_class)}</Text>
         </View>
       </View>
-      <RouteLine origin={offer.origin} destination={offer.destination} stopovers={offer.stopovers} />
+      <RouteLine origin={offer.origin} destination={offer.destination} stopCount={booking.stop_count} />
+      {booking.stop_count > 0 ? <StopList stops={booking.stops} /> : null}
       <Row label="Departure" value={formatDate(offer.departure_date)} />
       <Row
         label="Passengers"

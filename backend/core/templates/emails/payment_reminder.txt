@@ -4,6 +4,7 @@ This is a reminder that payment for your booking is due by {{ deadline }}.
 
 Route: {{ route }}
 Departure: {{ departure }}
+Stops: {{ stops }}
 Total price: {{ total }}
 
 How to pay:

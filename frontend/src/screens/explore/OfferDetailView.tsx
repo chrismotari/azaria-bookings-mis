@@ -12,9 +12,10 @@ import { Card } from '../../components/Card';
 import { Icon, IconName } from '../../components/Icon';
 import { PriceTag } from '../../components/PriceTag';
 import { RouteLine } from '../../components/RouteLine';
+import { StopList } from '../../components/StopList';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { colors, font, space, weight } from '../../theme';
-import { formatDate, stopoversLabel, ticketClassLabel } from '../../utils/format';
+import { formatDate, stopsLabel, ticketClassLabel } from '../../utils/format';
 
 /** Width from which the price summary sits beside the details instead of below them. */
 const TWO_COLUMNS = 640;
@@ -54,7 +55,7 @@ export function OfferDetailView({ id, query }: { id: string; query?: string }) {
               <Text style={styles.muted}>{ticketClassLabel(data.ticket_class)}</Text>
             </View>
           </View>
-          <RouteLine origin={data.origin} destination={data.destination} stopovers={data.stopovers} size="large" />
+          <RouteLine origin={data.origin} destination={data.destination} stopCount={data.stop_count} size="large" />
         </Card>
         <Card>
           <Text style={styles.heading}>Flight details</Text>
@@ -62,10 +63,16 @@ export function OfferDetailView({ id, query }: { id: string; query?: string }) {
             <Detail icon="calendar-outline" label="Departure date" value={formatDate(data.departure_date)} />
             <Detail icon="airplane-outline" label="Airline" value={data.airline} />
             <Detail icon="ribbon-outline" label="Class" value={ticketClassLabel(data.ticket_class)} />
-            <Detail icon="git-commit-outline" label="Stopovers" value={stopoversLabel(data.stopovers)} />
+            <Detail icon="git-commit-outline" label="Stops" value={stopsLabel(data.stop_count)} />
             <Detail icon="time-outline" label="Offer valid until" value={formatDate(data.valid_until)} />
           </View>
         </Card>
+        {data.stop_count > 0 ? (
+          <Card>
+            <Text style={styles.heading}>Stops</Text>
+            <StopList stops={data.stops} />
+          </Card>
+        ) : null}
       </View>
       <View style={twoColumns && styles.summaryColumn}>
         <Card>

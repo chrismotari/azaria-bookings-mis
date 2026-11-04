@@ -11,6 +11,7 @@ import { TextField } from '../../components/TextField';
 import { Toggle } from '../../components/Toggle';
 import { colors, font } from '../../theme';
 import { OfferFormValues } from './offerSchema';
+import { StopFields } from './StopFields';
 
 type Props = {
   control: Control<OfferFormValues>;
@@ -42,6 +43,13 @@ export function OfferFields({ control, showPublicToggle = true, plain }: Props) 
             />
           ))}
         </FieldGrid>
+      </FormSection>
+      <FormSection
+        title="Stops"
+        description="In flight order. Under 24 hours is a layover; 24 hours or more is a stopover."
+        plain={plain}
+      >
+        <StopFields control={control} />
       </FormSection>
       <FormSection title="Dates" plain={plain}>
         <FieldGrid columns={2}>
@@ -101,20 +109,6 @@ export function OfferFields({ control, showPublicToggle = true, plain }: Props) 
                 onBlur={field.onBlur}
                 error={fieldState.error?.message}
                 keyboardType="decimal-pad"
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="stopovers"
-            render={({ field, fieldState }) => (
-              <TextField
-                label="Stopovers"
-                value={field.value}
-                onChangeText={field.onChange}
-                onBlur={field.onBlur}
-                error={fieldState.error?.message}
-                keyboardType="number-pad"
               />
             )}
           />

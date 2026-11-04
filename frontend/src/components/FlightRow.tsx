@@ -30,7 +30,7 @@ export function FlightRow({ offer, selected, compact, onPress }: Props) {
     </View>
   );
   const route = (
-    <RouteLine origin={offer.origin} destination={offer.destination} stopovers={offer.stopovers} />
+    <RouteLine origin={offer.origin} destination={offer.destination} stopCount={offer.stop_count} />
   );
   const validUntil = <Text style={styles.caption}>Offer valid until {formatDate(offer.valid_until)}</Text>;
   const price = (

@@ -2,30 +2,30 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Airport } from '../api/types';
 import { colors, font, radius, space, weight } from '../theme';
-import { stopoversLabel } from '../utils/format';
+import { stopsLabel } from '../utils/format';
 import { Icon } from './Icon';
 
 type Props = {
   /** Null for "anywhere" (a request for options without that airport). */
   origin: Airport | null;
   destination: Airport | null;
-  /** Leave out for a route without a known flight (a request); the line then shows a plane. */
-  stopovers?: number;
+  /** Number of stops. Leave out for a route without a known flight (a request); the line then shows a plane. */
+  stopCount?: number;
   /** Large also shows the airport names (offer detail header). */
   size?: 'regular' | 'large';
 };
 
-/** Origin and destination codes and cities joined by a line with one dot per stopover. */
-export function RouteLine({ origin, destination, stopovers, size = 'regular' }: Props) {
+/** Origin and destination codes and cities joined by a line with one dot per stop. */
+export function RouteLine({ origin, destination, stopCount, size = 'regular' }: Props) {
   const large = size === 'large';
   return (
     <View style={styles.row}>
       <End airport={origin} large={large} />
       <View style={styles.middle}>
-        {stopovers === undefined ? null : (
-          <Text style={[styles.stops, stopovers === 0 && styles.direct]}>{stopoversLabel(stopovers)}</Text>
+        {stopCount === undefined ? null : (
+          <Text style={[styles.stops, stopCount === 0 && styles.direct]}>{stopsLabel(stopCount)}</Text>
         )}
-        {stopovers === undefined ? (
+        {stopCount === undefined ? (
           <View style={styles.track}>
             <View style={styles.half} />
             <Icon name="airplane" size={14} color={colors.primary} />
@@ -34,7 +34,7 @@ export function RouteLine({ origin, destination, stopovers, size = 'regular' }: 
         ) : (
           <View style={styles.track}>
             <View style={styles.line} />
-            {Array.from({ length: stopovers }, (_, index) => (
+            {Array.from({ length: stopCount }, (_, index) => (
               <View key={index} style={styles.dot} />
             ))}
           </View>

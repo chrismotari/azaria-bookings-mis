@@ -29,7 +29,7 @@ import { Column, RouteCell, Table, TableRow, TwoLineCell } from '../../component
 import { Toggle } from '../../components/Toggle';
 import { AdminTabParamList } from '../../navigation/types';
 import { colors, font, space, useIsWide, weight } from '../../theme';
-import { formatDate, stopoversLabel, ticketClassLabel } from '../../utils/format';
+import { formatDate, stopsLabel, ticketClassLabel } from '../../utils/format';
 import { AdminOfferEditView } from './AdminOfferFormScreen';
 
 type AdminFilters = OfferFilterValues & { is_active: '' | 'true' | 'false'; is_public: '' | 'true' | 'false' };
@@ -200,7 +200,7 @@ type RowProps = {
 };
 
 function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: RowProps) {
-  const flight = `${ticketClassLabel(offer.ticket_class)} · ${stopoversLabel(offer.stopovers)}`;
+  const flight = `${ticketClassLabel(offer.ticket_class)} · ${stopsLabel(offer.stop_count)}`;
   const chips = (
     <View style={styles.chips}>
       <StatusChip label={offer.is_public ? 'Public' : 'Private'} tone={offer.is_public ? 'info' : 'neutral'} />

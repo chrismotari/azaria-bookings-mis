@@ -54,3 +54,8 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - Booking status filters (eight options) use the segmented control wrapping onto a second row when they do not fit.
 - On a paid booking, "Send boarding passes" sits in the drawer's action bar with the other status actions; it stays disabled until a file is uploaded and while uploads are running.
 - The request drawer's Respond / Send more options button is its action bar.
+- Stops in API responses carry the airport as the same nested object as origin and destination ({id, code, name, city, country}); they are written by IATA code.
+- Stop positions start at 1 and follow the order of the list sent; an offer edit without a stops key keeps the current stops, and its stops are rechecked against a changed origin or destination.
+- Bookings return their own stops and stop_count next to the nested offer (which shows the offer's current stops); booking screens use the booking's.
+- Durations read "2 h 15 min", "45 min" or "26 h" (no days), in the app and in emails; emails show a Stops line ("Direct" when there are none).
+- The admin offer form's Stops section sits under Route; each stop shows a live Layover or Stopover tag, and the offer detail lists stops in their own card under Flight details.

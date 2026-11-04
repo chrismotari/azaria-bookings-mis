@@ -140,8 +140,10 @@ def test_date_price_class_and_stopover_filters(api, airports):
     mid_business = make_offer(
         airports, departure_date=TODAY + timedelta(days=40), price=Decimal("2500"), ticket_class="business"
     )
-    late_stops = make_offer(
-        airports, departure_date=TODAY + timedelta(days=60), price=Decimal("800"), stopovers=2
+    late_stops = make_offer(airports, departure_date=TODAY + timedelta(days=60), price=Decimal("800"))
+    # One layover and one stopover: the filter counts both.
+    late_stops.set_stops(
+        [{"airport": airports["DXB"], "duration_minutes": 90}, {"airport": airports["MBA"], "duration_minutes": 1500}]
     )
 
     def get(**params):
@@ -157,6 +159,7 @@ def test_date_price_class_and_stopover_filters(api, airports):
     assert get(price_min="301", price_max="2499.99") == [late_stops.id]
     assert get(ticket_class="business") == [mid_business.id]
     assert get(max_stopovers="0") == sorted([early_cheap.id, mid_business.id])
+    assert get(max_stopovers="1") == sorted([early_cheap.id, mid_business.id])
     assert get(max_stopovers="2") == sorted([early_cheap.id, mid_business.id, late_stops.id])
 
 
@@ -193,7 +196,7 @@ def payload(airports, **overrides):
         "departure_date": (TODAY + timedelta(days=30)).isoformat(),
         "ticket_class": "business",
         "price": "1999.50",
-        "stopovers": 1,
+        "stops": [],
         "airline": "Qatar Airways",
         "valid_until": (TODAY + timedelta(days=7)).isoformat(),
         **overrides,
@@ -238,7 +241,7 @@ def test_admin_can_create_non_public_offer(admin_api, api, airports):
         ({"valid_until": (TODAY + timedelta(days=31)).isoformat()}, "valid_until"),
         ({"valid_until": (TODAY - timedelta(days=1)).isoformat()}, "valid_until"),
         ({"ticket_class": "cargo"}, "ticket_class"),
-        ({"stopovers": -1}, "stopovers"),
+        ({"stops": [{"airport": "DXB", "duration_minutes": 0}]}, "stops"),
         ({"airline": ""}, "airline"),
     ],
 )

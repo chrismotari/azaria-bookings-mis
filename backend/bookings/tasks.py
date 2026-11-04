@@ -6,7 +6,7 @@ from celery import shared_task
 from django.db import transaction
 from django.utils import timezone
 
-from core.emails import EMAIL_TASK_OPTIONS, format_date, format_datetime, format_price, send_email
+from core.emails import EMAIL_TASK_OPTIONS, format_date, format_datetime, format_price, format_stops, send_email
 from core.models import AppSettings
 
 from .models import Booking
@@ -18,6 +18,7 @@ def _booking_in(booking_id, status):
     """The booking, or None when it is gone or no longer in the status the email describes."""
     return (
         Booking.objects.select_related("user", "offer__origin", "offer__destination")
+        .prefetch_related("stops__airport")
         .filter(pk=booking_id, status=status)
         .first()
     )
@@ -31,6 +32,7 @@ def describe_booking(booking):
             f"{offer.origin.city} ({offer.origin.code}) → {offer.destination.city} ({offer.destination.code})"
         ),
         "departure": format_date(offer.departure_date),
+        "stops": format_stops(booking.stops.all()),
         "ticket_class": offer.get_ticket_class_display(),
         "total": format_price(booking.total_price),
     }

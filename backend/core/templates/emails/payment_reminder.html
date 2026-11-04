@@ -5,6 +5,7 @@
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
   {% include "emails/_row.html" with label="Route" value=route %}
   {% include "emails/_row.html" with label="Departure" value=departure %}
+  {% include "emails/_row.html" with label="Stops" value=stops %}
   {% include "emails/_row.html" with label="Total price" value=total price=True %}
 </table>
 {% include "emails/_box.html" with title="How to pay" text=payment_instructions %}

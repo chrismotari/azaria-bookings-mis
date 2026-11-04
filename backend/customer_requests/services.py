@@ -13,7 +13,13 @@ def respond_to_query(query_id, message, offers, new_offers):
         query = Query.objects.select_for_update().get(pk=query_id)
         if query.status == Query.Status.CLOSED:
             raise Conflict("This request has been closed by the customer.")
-        created = [Offer.objects.create(**{**data, "is_public": False}) for data in new_offers]
+        created = []
+        for data in new_offers:
+            data = {**data, "is_public": False}
+            stops = data.pop("stops", [])
+            offer = Offer.objects.create(**data)
+            offer.set_stops(stops)
+            created.append(offer)
         response = QueryResponse.objects.create(query=query, message=message)
         response.offers.set([*offers, *created])
         query.status = Query.Status.RESPONDED

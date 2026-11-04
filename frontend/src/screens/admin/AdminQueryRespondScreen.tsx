@@ -25,7 +25,7 @@ import { Screen } from '../../components/Screen';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { RootStackParamList } from '../../navigation/types';
 import { colors, font, weight } from '../../theme';
-import { formatDate, formatPrice, stopoversLabel, ticketClassLabel, todayInNairobi } from '../../utils/format';
+import { formatDate, formatPrice, stopsLabel, ticketClassLabel, todayInNairobi } from '../../utils/format';
 import { useAdminQuery } from './AdminQueryDetailView';
 import { OfferFields } from './OfferFields';
 import { OfferFormValues, offerSchema, toOfferBody } from './offerSchema';
@@ -70,7 +70,7 @@ function customOfferDefaults(query: AdminQueryDetail): OfferFormValues {
     departure_date: query.date_from,
     ticket_class: query.ticket_class || 'economy',
     price: '',
-    stopovers: '0',
+    stops: [],
     airline: '',
     valid_until: todayInNairobi(),
     is_public: false,
@@ -230,7 +230,7 @@ function RespondForm({ query, onSent }: { query: AdminQueryDetail; onSent: () =>
             <View style={styles.chosen}>
               <Text style={styles.chosenText}>
                 Custom: {values.origin?.code} → {values.destination?.code}, {formatDate(values.departure_date)},{' '}
-                {values.airline}, {ticketClassLabel(values.ticket_class)}, {stopoversLabel(Number(values.stopovers))},{' '}
+                {values.airline}, {ticketClassLabel(values.ticket_class)}, {stopsLabel(values.stops.length)},{' '}
                 {formatPrice(values.price)}
               </Text>
               <Button title="Remove" variant="link" onPress={() => removeCustom(index)} />
@@ -265,7 +265,7 @@ function offerLine(offer: AdminOffer): string {
     formatDate(offer.departure_date),
     offer.airline,
     ticketClassLabel(offer.ticket_class),
-    stopoversLabel(offer.stopovers),
+    stopsLabel(offer.stop_count),
     formatPrice(offer.price),
     offer.is_public ? 'public' : 'private',
   ].join(', ');

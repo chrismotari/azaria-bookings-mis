@@ -1,5 +1,5 @@
 import django_filters
-from django.db.models import Q
+from django.db.models import Count, Q
 
 from .models import Offer
 
@@ -22,7 +22,8 @@ class OfferFilter(django_filters.FilterSet):
     price_min = django_filters.NumberFilter(field_name="price", lookup_expr="gte")
     price_max = django_filters.NumberFilter(field_name="price", lookup_expr="lte")
     ticket_class = django_filters.ChoiceFilter(choices=Offer.TicketClass.choices)
-    max_stopovers = django_filters.NumberFilter(field_name="stopovers", lookup_expr="lte")
+    # Counts every stop, layovers and stopovers alike.
+    max_stopovers = django_filters.NumberFilter(method="filter_max_stops")
     ordering = django_filters.OrderingFilter(fields=["price", "departure_date"])
 
     class Meta:
@@ -34,6 +35,9 @@ class OfferFilter(django_filters.FilterSet):
         if not value:
             return queryset
         return queryset.filter(_airport_matches(name, value))
+
+    def filter_max_stops(self, queryset, name, value):
+        return queryset.annotate(number_of_stops=Count("stops")).filter(number_of_stops__lte=value)
 
 
 class AdminOfferFilter(OfferFilter):

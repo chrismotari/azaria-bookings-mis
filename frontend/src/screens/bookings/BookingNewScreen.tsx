@@ -79,7 +79,7 @@ export function BookingNewScreen({ navigation, route }: NativeStackScreenProps<R
     <Screen maxWidth={640}>
       <Text style={styles.title}>Book this flight</Text>
       <Card>
-        <RouteLine origin={data.origin} destination={data.destination} stopovers={data.stopovers} />
+        <RouteLine origin={data.origin} destination={data.destination} stopCount={data.stop_count} />
         <View style={styles.summary}>
           <View style={styles.summaryItem}>
             <Icon name="calendar-outline" size={18} color={colors.primary} />

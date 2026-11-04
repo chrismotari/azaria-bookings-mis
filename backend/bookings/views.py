@@ -20,13 +20,18 @@ from .serializers import (
 from .services import add_boarding_pass, create_booking, delete_boarding_pass, transition
 
 BOOKING_RELATED = ["offer__origin", "offer__destination"]
+BOOKING_STOPS = ["stops__airport", "offer__stops__airport"]
 
 
 class BookingListCreateView(generics.ListAPIView):
     serializer_class = BookingSerializer
 
     def get_queryset(self):
-        return Booking.objects.filter(user=self.request.user).select_related(*BOOKING_RELATED)
+        return (
+            Booking.objects.filter(user=self.request.user)
+            .select_related(*BOOKING_RELATED)
+            .prefetch_related(*BOOKING_STOPS)
+        )
 
     def post(self, request):
         serializer = BookingCreateSerializer(data=request.data, context={"request": request})
@@ -42,7 +47,7 @@ class BookingDetailView(generics.RetrieveAPIView):
         return (
             Booking.objects.filter(user=self.request.user)
             .select_related(*BOOKING_RELATED)
-            .prefetch_related("events")
+            .prefetch_related("events", *BOOKING_STOPS)
         )
 
 
@@ -56,14 +61,16 @@ class BookingCancelView(APIView):
 class AdminBookingListView(generics.ListAPIView):
     permission_classes = [IsAdminRole]
     serializer_class = AdminBookingSerializer
-    queryset = Booking.objects.select_related("user", *BOOKING_RELATED)
+    queryset = Booking.objects.select_related("user", *BOOKING_RELATED).prefetch_related(*BOOKING_STOPS)
     filterset_fields = ["status"]
 
 
 class AdminBookingDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAdminRole]
     serializer_class = AdminBookingDetailSerializer
-    queryset = Booking.objects.select_related("user", *BOOKING_RELATED).prefetch_related("events", "boarding_passes")
+    queryset = Booking.objects.select_related("user", *BOOKING_RELATED).prefetch_related(
+        "events", "boarding_passes", *BOOKING_STOPS
+    )
 
 
 class AdminBookingTransitionView(APIView):

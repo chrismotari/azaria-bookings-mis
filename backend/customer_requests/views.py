@@ -20,7 +20,7 @@ from .tasks import notify_admin_new_query
 
 
 def with_responses(queryset):
-    offers = Offer.objects.select_related("origin", "destination")
+    offers = Offer.objects.select_related("origin", "destination").prefetch_related("stops__airport")
     responses = QueryResponse.objects.prefetch_related(Prefetch("offers", queryset=offers))
     return queryset.prefetch_related(Prefetch("responses", queryset=responses))
 

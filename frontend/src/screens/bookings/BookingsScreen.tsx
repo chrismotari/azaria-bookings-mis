@@ -90,7 +90,7 @@ function BookingRow({ booking, selected, onPress }: { booking: Booking; selected
         </View>
         <StatusChip label={status.label} tone={status.tone} />
       </View>
-      <RouteLine origin={offer.origin} destination={offer.destination} stopovers={offer.stopovers} />
+      <RouteLine origin={offer.origin} destination={offer.destination} stopCount={booking.stop_count} />
       <View style={styles.between}>
         <View style={styles.facts}>
           <Fact icon="calendar-outline" text={formatDate(offer.departure_date)} />

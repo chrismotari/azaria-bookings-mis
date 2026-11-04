@@ -3,6 +3,7 @@ A customer has booked a flight deal.
 Customer: {{ booking.user.full_name }} <{{ booking.user.email }}>{% if booking.user.phone %}, {{ booking.user.phone }}{% endif %}
 Route: {{ route }}
 Departure: {{ departure }}
+Stops: {{ stops }}
 Class: {{ ticket_class }}
 Airline: {{ booking.offer.airline }}
 Passengers: {{ booking.passenger_count }}

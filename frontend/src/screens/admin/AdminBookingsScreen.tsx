@@ -160,7 +160,7 @@ function AdminBookingCard({
         </Text>
         <StatusChip label={status.label} tone={status.tone} />
       </View>
-      <RouteLine origin={offer.origin} destination={offer.destination} stopovers={offer.stopovers} />
+      <RouteLine origin={offer.origin} destination={offer.destination} stopCount={booking.stop_count} />
       <View style={styles.between}>
         <View style={styles.facts}>
           <View style={styles.fact}>

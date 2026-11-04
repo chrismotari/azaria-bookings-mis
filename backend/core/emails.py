@@ -49,6 +49,20 @@ def format_date(value):
     return f"{value:%a}, {value.day} {value:%b %Y}"
 
 
+def format_duration(minutes):
+    """e.g. "2 h 15 min", "45 min", "26 h"."""
+    hours, minutes = divmod(minutes, 60)
+    return " ".join(part for part in (f"{hours} h" if hours else "", f"{minutes} min" if minutes else "") if part)
+
+
+def format_stops(stops):
+    """e.g. "Direct" or "Dubai (DXB), 2 h 15 min layover; Istanbul (IST), 26 h stopover"."""
+    return "; ".join(
+        f"{stop.airport.city} ({stop.airport.code}), {format_duration(stop.duration_minutes)} {stop.kind}"
+        for stop in stops
+    ) or "Direct"
+
+
 def format_datetime(value):
     """A timestamp in Nairobi time (the project's TIME_ZONE)."""
     local = timezone.localtime(value)

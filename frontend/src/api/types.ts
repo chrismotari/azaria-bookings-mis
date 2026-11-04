@@ -38,6 +38,13 @@ export const TICKET_CLASSES: { value: TicketClass; label: string }[] = [
   { value: 'first', label: 'First' },
 ];
 
+/** A stop between origin and destination: a layover under 24 hours, a stopover from 24 hours. */
+export type Stop = {
+  airport: Airport;
+  duration_minutes: number;
+  kind: 'layover' | 'stopover';
+};
+
 export type Offer = {
   id: string;
   origin: Airport;
@@ -45,10 +52,12 @@ export type Offer = {
   departure_date: string;
   ticket_class: TicketClass;
   price: string;
-  stopovers: number;
   airline: string;
   valid_until: string;
   is_bookable: boolean;
+  /** In flight order. */
+  stops: Stop[];
+  stop_count: number;
 };
 
 export type AdminOffer = Offer & {
@@ -114,6 +123,9 @@ export type Booking = {
   status: BookingStatus;
   payment_deadline: string | null;
   created_at: string;
+  /** The booking's own stops, copied from the offer when it was booked. */
+  stops: Stop[];
+  stop_count: number;
 };
 
 export type BoardingPass = {

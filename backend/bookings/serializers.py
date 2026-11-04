@@ -3,7 +3,7 @@ import os
 from rest_framework import serializers
 
 from accounts.serializers import UserSerializer
-from catalog.serializers import OfferSerializer
+from catalog.serializers import OfferSerializer, stops_data
 from core.models import AppSettings
 from customer_requests.models import Query
 
@@ -66,6 +66,8 @@ class BookingCreateSerializer(serializers.ModelSerializer):
 
 
 class BookingSerializer(serializers.ModelSerializer):
+    """stops are the booking's own, copied from the offer when it was booked."""
+
     offer = OfferSerializer(read_only=True)
     total_price = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
 
@@ -84,6 +86,9 @@ class BookingSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = fields
+
+    def to_representation(self, booking):
+        return {**super().to_representation(booking), **stops_data(booking.stops.all())}
 
 
 class BookingDetailSerializer(BookingSerializer):

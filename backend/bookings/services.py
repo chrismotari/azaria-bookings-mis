@@ -11,7 +11,7 @@ from core.exceptions import Conflict
 from core.models import AppSettings
 
 from . import tasks
-from .models import BoardingPass, Booking, BookingEvent
+from .models import BoardingPass, Booking, BookingEvent, BookingStop
 
 Status = Booking.Status
 
@@ -76,6 +76,15 @@ def create_booking(user, data):
             passenger_count=data["passenger_count"],
             notes=data.get("notes", ""),
             unit_price=offer.price,
+        )
+        BookingStop.objects.bulk_create(
+            BookingStop(
+                booking=booking,
+                position=stop.position,
+                airport_id=stop.airport_id,
+                duration_minutes=stop.duration_minutes,
+            )
+            for stop in offer.stops.all()
         )
         BookingEvent.objects.create(booking=booking, to_status=Status.REQUESTED, actor=user)
         _queue_email(tasks.notify_admin_new_booking, booking.pk)

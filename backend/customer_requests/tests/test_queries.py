@@ -46,7 +46,7 @@ def new_offer_payload(airports, **overrides):
         "departure_date": in_days(25),
         "ticket_class": "business",
         "price": "880.00",
-        "stopovers": 0,
+        "stops": [],
         "airline": "Emirates",
         "valid_until": in_days(5),
         **overrides,

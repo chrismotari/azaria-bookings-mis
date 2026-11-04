@@ -146,7 +146,12 @@ await run('admin', async ({ page, shot }) => {
   await page.getByRole('radio', { name: 'Economy' }).nth(1).click();
   await field(page, 'Airline').fill('Flow Air');
   await field(page, 'Price per person (USD)').fill('500');
-  await field(page, 'Stopovers').fill('0');
+  // One 2 h 15 min layover in Dar es Salaam, through the stop editor.
+  await button(page, 'Add a stop').click();
+  await pickAirport(page, 'Stop 1 airport', 'DAR');
+  await field(page, 'Stop 1 hours').fill('2');
+  await field(page, 'Stop 1 minutes').fill('15');
+  await seen(page, 'Layover').waitFor();
   await button(page, 'Add custom offer').click();
   await seen(page, 'Custom:').waitFor();
   await field(page, 'Message to the customer').fill('Option from the run skill flow.');
@@ -166,6 +171,8 @@ await run(`customer-${stamp}`, async ({ page, shot }) => {
   await button(page, 'Add a passenger').click();
   await button(page, 'Request booking').click();
   await seen(page, 'History').waitFor();
+  // The booking lists its own copy of the offer's stop.
+  await seen(page, '2 h 15 min').waitFor();
   bookingId = uuidFromUrl(page.url());
   await shot('booking-requested');
   console.log('booking', bookingId);

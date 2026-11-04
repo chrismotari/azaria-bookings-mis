@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from catalog.models import Offer
+from catalog.models import Offer, Stop
 from core.storage import private_storage
 from customer_requests.models import Query
 
@@ -46,6 +46,21 @@ class Booking(models.Model):
     @property
     def total_price(self):
         return self.unit_price * self.passenger_count
+
+
+class BookingStop(Stop):
+    """Copied from the offer's stops when the booking is created, so later offer edits leave it unchanged."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name="stops")
+
+    class Meta(Stop.Meta):
+        constraints = [
+            models.UniqueConstraint(fields=["booking", "position"], name="unique_booking_stop_position"),
+            models.CheckConstraint(
+                condition=models.Q(duration_minutes__gt=0), name="booking_stop_duration_positive"
+            ),
+        ]
 
 
 class BookingEvent(models.Model):

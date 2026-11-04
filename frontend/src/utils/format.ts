@@ -24,11 +24,19 @@ export function todayInNairobi(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Nairobi' }).format(new Date());
 }
 
-export function stopoversLabel(stopovers: number): string {
-  if (stopovers === 0) {
+/** "Direct" or "N stop(s)"; counts layovers and stopovers alike. */
+export function stopsLabel(count: number): string {
+  if (count === 0) {
     return 'Direct';
   }
-  return `${stopovers} stop${stopovers === 1 ? '' : 's'}`;
+  return `${count} stop${count === 1 ? '' : 's'}`;
+}
+
+/** e.g. "2 h 15 min", "45 min", "26 h". */
+export function formatDuration(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return [hours ? `${hours} h` : '', rest ? `${rest} min` : ''].filter(Boolean).join(' ');
 }
 
 export function ticketClassLabel(value: TicketClass): string {

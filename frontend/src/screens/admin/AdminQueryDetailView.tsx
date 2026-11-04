@@ -11,7 +11,7 @@ import { QuerySummary } from '../../components/QuerySummary';
 import { StatusChip } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { colors, font, weight } from '../../theme';
-import { formatDate, formatDateTime, formatPrice, stopoversLabel, ticketClassLabel } from '../../utils/format';
+import { formatDate, formatDateTime, formatPrice, stopsLabel, ticketClassLabel } from '../../utils/format';
 import { QUERY_STATUS } from '../../utils/queries';
 
 export function useAdminQuery(id: string) {
@@ -73,7 +73,7 @@ export function AdminQueryDetailView({ id }: { id: string }) {
             {response.offers.map((offer) => (
               <Text key={offer.id} style={styles.text}>
                 • {offer.origin.code} → {offer.destination.code}, {formatDate(offer.departure_date)}, {offer.airline},{' '}
-                {ticketClassLabel(offer.ticket_class)}, {stopoversLabel(offer.stopovers)}, {formatPrice(offer.price)}
+                {ticketClassLabel(offer.ticket_class)}, {stopsLabel(offer.stop_count)}, {formatPrice(offer.price)}
               </Text>
             ))}
           </Card>
