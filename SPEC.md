@@ -319,7 +319,7 @@ Delivery (each is its own step and commit; see DELIVERY ORDER 13 to 16)
 - [x] 16. Admin screens: dashboard tiles, tables, drawer action bars and upload area, sectioned forms.
 
 ======================================================================
-UUID IDENTIFIERS (step 18, before the models added in steps 19 to 23)
+UUID IDENTIFIERS (step 18, before the models added in steps 19 to 24)
 ======================================================================
 Goal: replace sequential numeric ids with UUIDs so ids in URLs and the API cannot be guessed or counted.
 - Primary keys of User, Airport, Offer, Query, QueryResponse, Booking, BookingEvent and BoardingPass become UUIDField(primary_key=True, default=uuid.uuid4, editable=False). AppSettings stays an integer singleton with pk=1. Airport's public identifier in the API is still its IATA code where it is used today.
@@ -330,7 +330,7 @@ Goal: replace sequential numeric ids with UUIDs so ids in URLs and the API canno
 - Tests updated to use UUIDs; a request with a malformed id returns 404, not 500.
 
 ======================================================================
-ADMIN AND BOOKING ADDITIONS (steps 17 and 19 to 23)
+ADMIN AND BOOKING ADDITIONS (steps 17, 19 to 21, 23 and 24)
 ======================================================================
 Models added here (OfferStop, BookingStop) use UUID primary keys like the rest (step 18 comes first). Every backend change comes with tests; every UI change ends with a browser check at 390 px and 1280 px.
 
@@ -338,7 +338,7 @@ Admin booking progress and dialogs (step 17, frontend only)
 - The admin booking drawer shows the same progress tracker as the customer booking detail (Requested -> Confirmed -> Paid -> Completed), or the terminal banner, above the booking summary.
 - A shared Dialog component: a modal card over a dimmed page with a title, a scrollable body and a footer with the action buttons. Escape, the close button and a click on the dimmed area close it (except while saving); focus moves into it on open and back on close. On narrow screens it fills the screen. Sizes: small (confirmations) and large (forms).
 - The browser confirm prompts (Cancel booking, Close request, Confirm availability, Mark unavailable, Mark paid, Send boarding passes, Delete file) become small dialogs built on it, with the action button in its usual style (danger for destructive actions).
-- Steps 20 to 23 use dialogs for short tasks started from a list or drawer, so the admin keeps their place instead of navigating to a new screen. Long forms that already are screens (Book, Request options, New offer, Respond) stay screens.
+- Steps 20, 21, 23 and 24 use dialogs for short tasks started from a list or drawer, so the admin keeps their place instead of navigating to a new screen. Long forms that already are screens (Book, Request options, New offer, Respond) stay screens.
 
 Stops: layovers and stopovers (step 19)
 - catalog.OfferStop: offer (FK, related_name "stops", cascade), position (PositiveSmallInteger, unique per offer, ordered), airport (FK Airport), duration_minutes (PositiveInteger, > 0).
@@ -363,15 +363,67 @@ Mark unavailable with suggested options (step 21)
 - Customer UI: the unavailable banner has a "View suggested options" button that opens that request when there are suggestions, and keeps "Request other options" otherwise.
 - Admin UI: "Mark unavailable" opens a large dialog: the message, existing offers searched from the booking's route and date (selectable, as on Respond), an "Add custom offer" form, and a danger "Mark unavailable" button; choosing options is optional.
 
-User management (step 22)
+User management (step 23)
 - Admin endpoints for customers: GET /admin/users (search on name, email and phone; filter is_active), POST /admin/users {email, full_name, phone}, GET and PATCH /admin/users/{id} (full_name, email, phone, is_active). Only role customer is listed or managed; the role cannot be changed here.
 - Created users get an unusable password and email 11, send_account_created_email(user_id): a welcome with a set-password link in the email 10 format, using the same reset screen. Runs only if the user is active. Sent as HTML plus plain text like the others (see HTML EMAILS).
 - Delete means deactivate (is_active false): the user cannot sign in or refresh a token, their requests and bookings stay, and the admin can reactivate them.
 - Admin UI: a Users tab with a table (name, email, phone, status) and search, a drawer with the editable details and Deactivate or Reactivate in the action bar (with a confirmation dialog), and a "New user" button that opens a dialog (email, name, phone).
 
-Admin books for a customer (step 23)
+Admin books for a customer (step 24)
 - POST /admin/bookings {user, offer, passenger_count, notes} creates the booking through create_booking with the admin as the event actor. The user must be an active customer; the offer must be bookable (public or private). The same duplicate-booking rule applies. Email 3 is not sent, since the admin made the booking. The booking then follows the normal flow from requested.
 - Admin UI: a "New booking" button on Bookings opens a large dialog: customer (searchable dropdown of active customers), offer (search of bookable offers, as on the Respond screen), passenger stepper, notes and live total. Saving closes the dialog and opens the new booking in its drawer.
+
+======================================================================
+MULTITENANCY (step 22)
+======================================================================
+Goal: one installation serves many travel agencies. Each agency (a tenant) has its own PostgreSQL schema, so its users, offers, requests, bookings, files and settings are separate from every other agency's. The public schema is the platform itself ("app_admin"), used only by the system owner to create and manage tenants. Everything else in this spec describes one tenant unless it says otherwise.
+
+Library and apps
+- django-tenants (schema per tenant, tenant chosen from the request's hostname), the only new dependency. The PostgreSQL backend becomes django_tenants.postgresql_backend and the router django_tenants.routers.TenantSyncRouter.
+- New shared app tenants: Tenant (TenantMixin: schema_name, name, is_active default true, created_at; auto_create_schema true, auto_drop_schema false) and Domain (DomainMixin: domain, tenant, is_primary).
+- Airport moves out of catalog into a new shared app airports (model and seed_airports unchanged), so the 4,000+ airports are seeded once in public and every tenant's offers, stops and queries point at them.
+- SHARED_APPS (public schema): django_tenants, tenants, airports, accounts, and the django.contrib apps. TENANT_APPS (each tenant schema): accounts, catalog (Offer, OfferStop), requests, bookings, core, and the django.contrib apps they need. accounts is in both: the public user table holds only the system owner's accounts, each tenant's user table holds that agency's admins and customers. The same email may hold separate accounts at different agencies.
+- No production data exists yet, so migrations are regenerated from scratch (as in step 18) and the local database is reset; README.md says so. migrate_schemas replaces migrate. The core data migration that creates AppSettings (pk=1) runs in every tenant schema.
+
+Hosts and routing
+- New settings from .env: TENANT_BASE_DOMAIN (the platform's root host: localhost in development, azariabookings.com in production). FRONTEND_URL becomes a template with a {domain} placeholder (development: http://{domain}:8081; production: https://{domain}). ALLOWED_HOSTS includes the base domain and its subdomains (e.g. .localhost). CORS uses CORS_ALLOWED_ORIGIN_REGEXES from .env (development: ^http://([a-z0-9-]+\.)?localhost:8081$).
+- Each tenant is reached at <schema_name>.<TENANT_BASE_DOMAIN> (its primary domain, created with it). Extra domains can be added in /django-admin/ on the root host (for example a nip.io name to reach the dev machine from a phone).
+- The root host (TENANT_BASE_DOMAIN) is the public schema and uses its own URL conf (PUBLIC_SCHEMA_URLCONF): only /django-admin/. Any /api/ request there returns 404 {"detail": "There is no agency at this address.", "code": "no_tenant"}. An unknown host returns the same 404.
+- A tenant with is_active false is suspended: every /api/ request on its hosts returns 403 {"detail": "This agency is not available at the moment.", "code": "tenant_suspended"}, its scheduled tasks are skipped, and its queued emails are not sent. Tenants are never deleted.
+- schema_name: 3 to 30 lowercase letters, digits and hyphens, starting with a letter; reserved: public, www, api, admin, app-admin. Hyphens become underscores in the schema itself (django-tenants requires a valid schema name), but the domain keeps the hyphen.
+
+Tenant isolation rules
+- JWT access and refresh tokens carry a tenant claim (the schema_name). The authentication class rejects a token whose claim differs from the request's tenant with 401, so a token from one agency never works at another.
+- Password reset and set-password links point at the tenant's primary domain (FRONTEND_URL with {domain}); a uid/token pair from one tenant is invalid at another.
+- Boarding passes are stored under boarding_passes/<schema_name>/<booking uuid>/.
+- Throttling stays per IP across all hosts (no change).
+- Email links use the tenant's primary domain; email content is otherwise unchanged. Branding (the name "Azaria Bookings", colours, sender address) stays the same for every tenant; per-tenant branding is out of scope.
+
+Celery
+- Every task that touches tenant data takes schema_name as its first argument and runs inside schema_context(schema_name), after checking the tenant still exists and is active. The places that queue emails pass connection.schema_name. Email tasks otherwise keep their rules (IDs only, reload and re-check state).
+- Beat keeps the same three schedules, each now a public-level task that runs the job in every active tenant's schema in turn; an error in one tenant is logged and does not stop the others.
+
+The system owner (app_admin, public schema)
+- System owner accounts are Django superusers in the public schema, created with python manage.py createsuperuser. They sign in to /django-admin/ on the root host. There is no app_admin screen in the Expo app.
+- /django-admin/ on the root host lists tenants (name, schema, primary domain, active, created) with search and an active filter, lets the owner rename, suspend and reactivate a tenant and manage its domains, and has an "Add tenant" form: name, schema_name, and the first admin's full name, email and password.
+- Adding a tenant, from that form or from python manage.py create_agency --schema --name --admin-email --admin-password --admin-name, goes through one function, tenants.services.create_agency: it validates the schema name, creates the Tenant (which creates and migrates its schema), the primary Domain, sets AppSettings.admin_notification_email to the first admin's email, and creates that admin (role admin) inside the new schema. If any part fails, nothing is left behind (no tenant row, no schema).
+- /django-admin/ on a tenant host stays what it was: technical support for that tenant's data, superusers of that tenant's schema only (created with tenant_command createsuperuser --schema=<schema>).
+- create_admin keeps working per tenant through tenant_command create_admin --schema=<schema>.
+
+First tenant
+- After the reset, Azaria itself is the first tenant: create_agency --schema azaria --name "Azaria Bookings" ..., reached at azaria.localhost in development and azaria.azariabookings.com in production. The root host stays platform-only.
+
+Frontend
+- The API base URL comes from EXPO_PUBLIC_API_URL, which may contain {host}, replaced by the page's hostname (development: http://{host}:8000/api), so the app at azaria.localhost:8081 talks to azaria.localhost:8000.
+- When any API call returns code no_tenant or tenant_suspended, the app shows a full-page message with the server's detail instead of the screen (no navigation, no sign-in).
+- Stored tokens are per origin already (each tenant host has its own browser storage), so no change is needed there.
+
+Tests
+- conftest.py creates one test tenant per test session and runs every existing test inside its schema, with requests made to its domain.
+- New tests: data created in one tenant is invisible in another (offers, bookings, users with the same email); a token from tenant A gets 401 at tenant B; a reset link from A fails at B; the root host serves /django-admin/ and returns no_tenant for /api/; an unknown host returns no_tenant; a suspended tenant returns tenant_suspended and its beat jobs and emails are skipped; each beat task runs its job in every active tenant and survives an error in one; create_agency creates schema, domain, settings and admin, rejects bad or reserved names, and leaves nothing behind on failure; boarding pass paths include the schema.
+
+README
+- Local hosts (azaria.localhost works in Chrome and Firefox without setup; nip.io for other devices), migrate_schemas, seed_airports on public, createsuperuser for the system owner, create_agency for each tenant, and the database reset.
 
 ======================================================================
 DELIVERY ORDER (commit after each step; the app must run at each step)
@@ -402,7 +454,8 @@ DELIVERY ORDER (commit after each step; the app must run at each step)
 19. Stops: layovers and stopovers.
 20. Confirm availability with changes.
 21. Mark unavailable with suggested options.
-22. User management.
-23. Admin books for a customer.
+22. Multitenancy (see MULTITENANCY).
+23. User management.
+24. Admin books for a customer.
 
 Finish each step before starting the next. At the end, run the full test suite and do a manual browser walkthrough of the entire flow as guest and as customer (browse as a guest -> no result -> sign up -> query -> admin responds -> book -> confirm -> pay -> upload pass -> send -> customer downloads, plus an expiry case and a password reset) and report any deviations from this spec.
