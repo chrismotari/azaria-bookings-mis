@@ -15,6 +15,8 @@ type Props = {
   busy?: boolean;
   /** The action buttons, shown in the footer. */
   footer: ReactNode;
+  /** Why the last action failed, shown in the footer above the buttons so it is in view. */
+  error?: string | null;
   children: ReactNode;
 };
 
@@ -22,7 +24,7 @@ type Props = {
  * A modal card over a dimmed page; full screen on narrow screens. On web the modal
  * keeps keyboard focus inside and returns it to where it was when it closes.
  */
-export function Dialog({ open, title, onClose, size = 'small', busy, footer, children }: Props) {
+export function Dialog({ open, title, onClose, size = 'small', busy, footer, error, children }: Props) {
   const isWide = useIsWide();
   const close = () => {
     if (!busy) {
@@ -54,7 +56,14 @@ export function Dialog({ open, title, onClose, size = 'small', busy, footer, chi
           <ScrollView style={[styles.scroll, !isWide && styles.scrollNarrow]} contentContainerStyle={styles.body}>
             {children}
           </ScrollView>
-          <View style={styles.footer}>{footer}</View>
+          <View style={styles.footer}>
+            {error ? (
+              <Text style={styles.error} role="alert">
+                {error}
+              </Text>
+            ) : null}
+            {footer}
+          </View>
         </View>
       </View>
     </Modal>
@@ -97,6 +106,7 @@ const styles = StyleSheet.create({
   // Full screen: the body takes the free height so the buttons sit at the bottom.
   scrollNarrow: { flexGrow: 1 },
   body: { padding: space.lg, gap: space.md },
+  error: { width: '100%', color: colors.dangerText, fontSize: font.small },
   footer: {
     flexDirection: 'row',
     flexWrap: 'wrap',

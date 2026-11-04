@@ -6,7 +6,6 @@ import { errorMessage } from '../../api/errors';
 import { AdminBookingDetail } from '../../api/types';
 import { Button } from '../../components/Button';
 import { Dialog } from '../../components/Dialog';
-import { FormError } from '../../components/Field';
 import { FormSection } from '../../components/FormSection';
 import { OfferFilterValues } from '../../components/OfferFilterFields';
 import { colors, font } from '../../theme';
@@ -85,6 +84,7 @@ function MarkUnavailableForm({ booking, onClose, onDone }: Omit<Props, 'open'>) 
       size="large"
       onClose={onClose}
       busy={saving}
+      error={formError}
       footer={
         <>
           <Button title="Cancel" variant="secondary" onPress={onClose} disabled={saving} />
@@ -110,7 +110,6 @@ function MarkUnavailableForm({ booking, onClose, onDone }: Omit<Props, 'open'>) 
             : 'Choosing options is optional. Without any, the message is not sent.'}
         </Text>
       </FormSection>
-      <FormError message={formError} />
     </Dialog>
   );
 }

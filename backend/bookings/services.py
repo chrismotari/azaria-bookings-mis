@@ -63,17 +63,24 @@ def _queue_email(task, booking_id):
     queue(task, booking_id)
 
 
-def create_booking(user, data):
-    """data: offer (id), passenger_count, notes and optionally query, already validated by the serializer."""
+def create_booking(user, data, admin=None):
+    """data: offer (id), passenger_count, notes and optionally query, already validated by the serializer.
+
+    admin: set when the admin books on the customer's behalf. Then any bookable offer may be booked (public or
+    private), the admin is the creation event's actor, and email 3 is not sent.
+    """
     with transaction.atomic():
+        offers = Offer.objects.bookable() if admin is not None else Offer.objects.visible_to(user).bookable()
         # Locking the offer serialises concurrent bookings of it, so the duplicate check holds.
-        offer = (
-            Offer.objects.visible_to(user).bookable().select_for_update().filter(pk=data["offer"]).first()
-        )
+        offer = offers.select_for_update().filter(pk=data["offer"]).first()
         if offer is None:
             raise ValidationError({"offer": "This offer is not available to book."})
         if Booking.objects.filter(user=user, offer=offer, status__in=Booking.ACTIVE_STATUSES).exists():
-            raise Conflict("You already have an active booking for this offer.")
+            raise Conflict(
+                "This customer already has an active booking for this offer."
+                if admin is not None
+                else "You already have an active booking for this offer."
+            )
         booking = Booking.objects.create(
             user=user,
             offer=offer,
@@ -91,8 +98,9 @@ def create_booking(user, data):
             )
             for stop in offer.stops.all()
         )
-        BookingEvent.objects.create(booking=booking, to_status=Status.REQUESTED, actor=user)
-        _queue_email(tasks.notify_admin_new_booking, booking.pk)
+        BookingEvent.objects.create(booking=booking, to_status=Status.REQUESTED, actor=admin or user)
+        if admin is None:
+            _queue_email(tasks.notify_admin_new_booking, booking.pk)
     return booking
 
 

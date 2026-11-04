@@ -247,19 +247,26 @@ function offerLine(offer: AdminOffer): string {
   ].join(', ');
 }
 
-type SelectableProps = { offer: AdminOffer; selected: boolean; onToggle: () => void };
+type SelectableProps = {
+  offer: AdminOffer;
+  selected: boolean;
+  onToggle: () => void;
+  /** Radio when exactly one offer is chosen (New booking); checkbox when several may be (Respond). */
+  kind?: 'checkbox' | 'radio';
+};
 
-function SelectableOffer({ offer, selected, onToggle }: SelectableProps) {
+/** An offer in search results that can be chosen; offers that can no longer be booked are disabled. */
+export function SelectableOffer({ offer, selected, onToggle, kind = 'checkbox' }: SelectableProps) {
   const disabled = !offer.is_bookable;
   return (
     <Pressable
-      accessibilityRole="checkbox"
+      accessibilityRole={kind}
       accessibilityState={{ checked: selected, disabled }}
       disabled={disabled}
       onPress={onToggle}
       style={[styles.option, selected && styles.optionSelected, disabled && styles.optionDisabled]}
     >
-      <View style={[styles.box, selected && styles.boxSelected]}>
+      <View style={[styles.box, kind === 'radio' && styles.round, selected && styles.boxSelected]}>
         {selected ? <Text style={styles.tick}>✓</Text> : null}
       </View>
       <View style={styles.optionText}>
@@ -295,6 +302,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  round: { borderRadius: 10 },
   boxSelected: { borderColor: colors.primary, backgroundColor: colors.primary },
   tick: { color: colors.primaryText, fontSize: font.caption, fontWeight: weight.bold },
   chosenBlock: { gap: 2 },

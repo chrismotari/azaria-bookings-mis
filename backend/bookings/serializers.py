@@ -2,6 +2,7 @@ import os
 
 from rest_framework import serializers
 
+from accounts.models import User
 from accounts.serializers import UserSerializer
 from catalog.serializers import OfferSerializer, StopInputSerializer, stop_errors, stops_data
 from core.models import AppSettings
@@ -150,3 +151,17 @@ class ConfirmAvailabilitySerializer(serializers.Serializer):
         if messages := stop_errors(offer.origin, offer.destination, stops):
             raise serializers.ValidationError(messages)
         return stops
+
+
+class AdminBookingCreateSerializer(serializers.ModelSerializer):
+    """The admin booking for a customer: an active customer and any bookable offer (checked under lock)."""
+
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.filter(role=User.Role.CUSTOMER, is_active=True),
+        error_messages={"does_not_exist": "Choose an active customer."},
+    )
+    offer = serializers.UUIDField()
+
+    class Meta:
+        model = Booking
+        fields = ["user", "offer", "passenger_count", "notes"]

@@ -220,6 +220,7 @@ function NewUserForm({ onClose, onCreated }: Omit<NewUserProps, 'open'>) {
       size="large"
       onClose={onClose}
       busy={formState.isSubmitting}
+      error={formError}
       footer={
         <>
           <Button title="Cancel" variant="secondary" onPress={onClose} disabled={formState.isSubmitting} />
@@ -231,7 +232,6 @@ function NewUserForm({ onClose, onCreated }: Omit<NewUserProps, 'open'>) {
         The customer is emailed a link to choose their password. Until then they cannot sign in.
       </Text>
       <UserFields control={control} />
-      <FormError message={formError} />
     </Dialog>
   );
 }

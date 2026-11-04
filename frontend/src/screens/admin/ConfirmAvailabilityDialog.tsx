@@ -10,7 +10,6 @@ import { AdminBookingDetail, BookingChanges, StopChange } from '../../api/types'
 import { Button } from '../../components/Button';
 import { ChangeList } from '../../components/ChangeList';
 import { Dialog } from '../../components/Dialog';
-import { FormError } from '../../components/Field';
 import { FormSection } from '../../components/FormSection';
 import { TextField } from '../../components/TextField';
 import { colors, font, space } from '../../theme';
@@ -109,6 +108,7 @@ function ConfirmForm({ booking, onClose, onDone }: Omit<Props, 'open'>) {
       size="large"
       onClose={onClose}
       busy={formState.isSubmitting}
+      error={formError}
       footer={
         <>
           <Button title="Cancel" variant="secondary" onPress={onClose} disabled={formState.isSubmitting} />
@@ -153,7 +153,6 @@ function ConfirmForm({ booking, onClose, onDone }: Omit<Props, 'open'>) {
           </Text>
         )}
       </FormSection>
-      <FormError message={formError} />
     </Dialog>
   );
 }

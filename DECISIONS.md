@@ -75,3 +75,7 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - The Users list is ordered by name then email and has a search box only; the is_active filter exists in the API but has no control in the UI.
 - The New user dialog uses the large size (a form); after saving, the new customer opens in the drawer.
 - The hook that waits for typing to stop (useDebounced) moved from the airport picker to src/utils so the Users search shares it.
+- When the admin books for a customer, the duplicate-booking message names the customer ("This customer already has…"); the customer-facing wording is unchanged.
+- The New booking dialog's customer search shows up to six active customers and asks to keep typing when more match; its offer search starts empty (any route and date) and lists active offers, with ones that can no longer be booked disabled.
+- After the admin creates a booking, the Bookings list switches to Requested so the new booking shows next to its drawer.
+- Dialogs show the reason a save failed in their footer, above the buttons, so it is in view however far the form is scrolled.

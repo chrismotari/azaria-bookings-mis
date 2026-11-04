@@ -10,6 +10,7 @@ from customer_requests.serializers import SuggestedOptionsSerializer
 
 from .models import BoardingPass, Booking
 from .serializers import (
+    AdminBookingCreateSerializer,
     AdminBookingDetailSerializer,
     AdminBookingSerializer,
     BoardingPassSerializer,
@@ -83,10 +84,19 @@ class BookingDeclineChangesView(APIView):
 
 
 class AdminBookingListView(generics.ListAPIView):
+    """Also POST: the admin books for a customer; the booking then follows the normal flow from requested."""
+
     permission_classes = [IsAdminRole]
     serializer_class = AdminBookingSerializer
     queryset = Booking.objects.select_related("user", *BOOKING_RELATED).prefetch_related(*BOOKING_STOPS)
     filterset_fields = ["status"]
+
+    def post(self, request):
+        serializer = AdminBookingCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        booking = create_booking(data["user"], data, admin=request.user)
+        return Response(AdminBookingDetailSerializer(booking).data, status=status.HTTP_201_CREATED)
 
 
 class AdminBookingDetailView(generics.RetrieveAPIView):

@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { AdminBooking, BookingStatus, Paginated } from '../../api/types';
+import { Button } from '../../components/Button';
 import { DetailLayout } from '../../components/DetailLayout';
 import { Icon } from '../../components/Icon';
 import { Pagination } from '../../components/Pagination';
@@ -21,6 +22,7 @@ import { colors, font, space, useIsWide, weight } from '../../theme';
 import { BOOKING_STATUS, bookingRoute, passengersLabel } from '../../utils/bookings';
 import { formatDate, formatDateTime } from '../../utils/format';
 import { AdminBookingDetailView } from './AdminBookingDetailView';
+import { NewBookingDialog } from './NewBookingDialog';
 
 const STATUS_OPTIONS: { value: BookingStatus | 'all'; label: string }[] = [
   { value: 'requested', label: 'Requested' },
@@ -51,6 +53,7 @@ export function AdminBookingsScreen({ navigation, route }: BottomTabScreenProps<
   const asTable = useIsWide() && selected === undefined;
   const status = route.params?.status ?? 'requested';
   const [page, setPage] = useState(1);
+  const [creating, setCreating] = useState(false);
   const bookings = useQuery({
     queryKey: ['admin', 'bookings', status, page],
     queryFn: async () => {
@@ -69,7 +72,20 @@ export function AdminBookingsScreen({ navigation, route }: BottomTabScreenProps<
       detail={selected ? <AdminBookingDetailView key={selected} id={selected} /> : null}
       list={
         <Screen card>
-          <Text style={styles.title}>Bookings</Text>
+          <View style={styles.header}>
+            <Text style={styles.title}>Bookings</Text>
+            <Button title="New booking" icon="add" onPress={() => setCreating(true)} />
+          </View>
+          <NewBookingDialog
+            open={creating}
+            onClose={() => setCreating(false)}
+            onCreated={(booking) => {
+              setCreating(false);
+              // New bookings start as requested: show that list with the booking open.
+              setPage(1);
+              navigation.setParams({ status: 'requested', id: booking.id });
+            }}
+          />
           <SegmentedControl
             label="Status"
             options={STATUS_OPTIONS}
@@ -181,6 +197,7 @@ function AdminBookingCard({
 }
 
 const styles = StyleSheet.create({
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   cards: { gap: space.md },
   between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
