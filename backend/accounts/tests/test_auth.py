@@ -60,7 +60,7 @@ def test_login_refresh_and_me(api, customer):
     me = api.get("/api/auth/me")
     assert me.status_code == 200
     assert me.data == {
-        "id": customer.id,
+        "id": str(customer.id),
         "email": customer.email,
         "full_name": customer.full_name,
         "phone": customer.phone,

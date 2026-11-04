@@ -20,8 +20,8 @@ def test_app_settings_row_seeded(settings):
 def test_private_storage_uses_uuid_names_and_has_no_url(settings, tmp_path):
     settings.PRIVATE_MEDIA_ROOT = tmp_path
     storage = type(private_storage)()
-    name = storage.save("boarding_passes/1/My Pass.PDF", ContentFile(b"%PDF-1.4"))
-    assert name.startswith("boarding_passes/1/")
+    name = storage.save("boarding_passes/00000000-0000-4000-8000-000000000000/My Pass.PDF", ContentFile(b"%PDF-1.4"))
+    assert name.startswith("boarding_passes/00000000-0000-4000-8000-000000000000/")
     assert name.endswith(".pdf")
     assert "My Pass" not in name
     assert (tmp_path / name).exists()

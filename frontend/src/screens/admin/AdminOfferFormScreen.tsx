@@ -67,7 +67,7 @@ export function AdminOfferNewScreen() {
 }
 
 /** onDone: called after saving or cancelling. */
-export function AdminOfferEditView({ id, onDone }: { id: number; onDone: () => void }) {
+export function AdminOfferEditView({ id, onDone }: { id: string; onDone: () => void }) {
   const offer = useQuery({
     queryKey: ['admin', 'offers', id],
     queryFn: async () => (await api.get<AdminOffer>(`/admin/offers/${id}`)).data,
@@ -81,7 +81,7 @@ export function AdminOfferEditView({ id, onDone }: { id: number; onDone: () => v
   return <OfferForm id={id} initial={toFormValues(offer.data)} onDone={onDone} />;
 }
 
-type FormProps = { id?: number; initial: OfferFormValues; onDone: () => void };
+type FormProps = { id?: string; initial: OfferFormValues; onDone: () => void };
 
 function OfferForm({ id, initial, onDone }: FormProps) {
   const queryClient = useQueryClient();

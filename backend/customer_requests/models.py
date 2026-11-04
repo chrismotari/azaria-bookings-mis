@@ -1,3 +1,5 @@
+import uuid
+
 from django.conf import settings
 from django.db import models
 
@@ -7,6 +9,7 @@ from catalog.models import Airport, Offer
 class Query(models.Model):
     """A customer's request for options when no listed offer fits."""
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     class Status(models.TextChoices):
         OPEN = "open", "Open"
         RESPONDED = "responded", "Responded"
@@ -37,6 +40,7 @@ class Query(models.Model):
 
 
 class QueryResponse(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     query = models.ForeignKey(Query, on_delete=models.CASCADE, related_name="responses")
     message = models.TextField(blank=True)
     offers = models.ManyToManyField(Offer, related_name="query_responses")

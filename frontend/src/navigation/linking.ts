@@ -9,16 +9,13 @@ export const linking: LinkingOptions<RootStackParamList> = {
       Main: {
         screens: {
           // Explore is the offers list; '/' opens it too.
-          Explore: { path: 'offers/:id?', alias: [''], parse: { id: Number, query: Number } },
-          Requests: { path: 'requests/:id?', parse: { id: Number } },
-          Bookings: { path: 'bookings/:id?', parse: { id: Number } },
+          Explore: { path: 'offers/:id?', alias: [''] },
+          Requests: 'requests/:id?',
+          Bookings: 'bookings/:id?',
           Account: 'account',
         },
       },
-      BookingNew: {
-        path: 'offers/:offer/book',
-        parse: { offer: Number, query: Number },
-      },
+      BookingNew: 'offers/:offer/book',
       QueryNew: 'requests/new',
       Login: {
         path: 'login',
@@ -31,17 +28,14 @@ export const linking: LinkingOptions<RootStackParamList> = {
         path: 'admin',
         screens: {
           AdminDashboard: '',
-          AdminOffers: { path: 'offers/:id?', parse: { id: Number } },
-          AdminRequests: { path: 'requests/:id?', parse: { id: Number } },
-          AdminBookings: { path: 'bookings/:id?', parse: { id: Number } },
+          AdminOffers: 'offers/:id?',
+          AdminRequests: 'requests/:id?',
+          AdminBookings: 'bookings/:id?',
           AdminSettings: 'settings',
         },
       },
       AdminOfferNew: 'admin/offers/new',
-      AdminQueryRespond: {
-        path: 'admin/requests/:id/respond',
-        parse: { id: Number },
-      },
+      AdminQueryRespond: 'admin/requests/:id/respond',
     },
   },
 };

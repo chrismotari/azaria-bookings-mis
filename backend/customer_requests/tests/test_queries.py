@@ -154,7 +154,7 @@ def test_customer_cannot_set_status_on_create(customer_api, query_payload):
 def test_customer_lists_own_queries(customer_api, query, other_customer, airports):
     Query.objects.create(user=other_customer, destination=airports["LHR"], date_from=timezone.localdate())
     response = customer_api.get("/api/queries")
-    assert [q["id"] for q in response.data["results"]] == [query.id]
+    assert [q["id"] for q in response.data["results"]] == [str(query.id)]
 
 
 # Close
@@ -178,12 +178,12 @@ def test_admin_lists_queries_with_customer_and_status_filter(admin_api, query, o
         user=other_customer, destination=airports["LHR"], date_from=timezone.localdate(), status="closed"
     )
     response = admin_api.get("/api/admin/queries")
-    assert {q["id"] for q in response.data["results"]} == {query.id, closed.id}
+    assert {q["id"] for q in response.data["results"]} == {str(query.id), str(closed.id)}
     assert response.data["results"][-1]["user"]["email"] == "customer@example.com"
 
-    assert [q["id"] for q in admin_api.get("/api/admin/queries", {"status": "open"}).data["results"]] == [query.id]
+    assert [q["id"] for q in admin_api.get("/api/admin/queries", {"status": "open"}).data["results"]] == [str(query.id)]
     assert [q["id"] for q in admin_api.get("/api/admin/queries", {"status": "closed"}).data["results"]] == [
-        closed.id
+        str(closed.id)
     ]
 
 
@@ -241,7 +241,7 @@ def test_respond_requires_at_least_one_offer(admin_api, query):
 
 def test_respond_rejects_unknown_or_unbookable_offers(admin_api, query, make_offer):
     inactive = make_offer(is_active=False)
-    for ids in ([inactive.id], [999999]):
+    for ids in ([inactive.id], ["00000000-0000-4000-8000-000000000000"], ["123"]):
         response = admin_api.post(f"/api/admin/queries/{query.id}/respond", {"offer_ids": ids}, format="json")
         assert response.status_code == 400
         assert "offer_ids" in response.data
@@ -332,3 +332,11 @@ def test_email_tasks_ignore_missing_objects():
     notify_admin_new_query(999999)
     notify_customer_query_responded(999999)
     assert mail.outbox == []
+
+
+@pytest.mark.parametrize("query_id", ["00000000-0000-4000-8000-000000000000", "123", "not-a-uuid"])
+def test_unknown_or_malformed_query_id_returns_404(customer_api, admin_api, query_id):
+    assert customer_api.get(f"/api/queries/{query_id}").status_code == 404
+    assert customer_api.post(f"/api/queries/{query_id}/close").status_code == 404
+    assert admin_api.get(f"/api/admin/queries/{query_id}").status_code == 404
+    assert admin_api.post(f"/api/admin/queries/{query_id}/respond", {"message": "x"}, format="json").status_code == 404

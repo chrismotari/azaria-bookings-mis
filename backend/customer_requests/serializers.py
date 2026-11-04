@@ -86,7 +86,7 @@ class AdminQueryDetailSerializer(AdminQuerySerializer):
 
 class RespondSerializer(serializers.Serializer):
     message = serializers.CharField(allow_blank=True, default="")
-    offer_ids = serializers.ListField(child=serializers.IntegerField(), default=list)
+    offer_ids = serializers.ListField(child=serializers.UUIDField(), default=list)
     new_offers = serializers.ListField(child=serializers.DictField(), default=list)
 
     def validate_offer_ids(self, ids):

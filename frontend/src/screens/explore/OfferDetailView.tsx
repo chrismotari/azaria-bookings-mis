@@ -20,7 +20,7 @@ import { formatDate, stopoversLabel, ticketClassLabel } from '../../utils/format
 const TWO_COLUMNS = 640;
 
 /** query: the request whose response led here; passed on to the booking. */
-export function OfferDetailView({ id, query }: { id: number; query?: number }) {
+export function OfferDetailView({ id, query }: { id: string; query?: string }) {
   const requireAuth = useAuthGate();
   const [width, setWidth] = useState(0);
   const offer = useQuery({

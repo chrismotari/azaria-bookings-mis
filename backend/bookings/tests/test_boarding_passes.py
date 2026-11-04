@@ -243,12 +243,14 @@ def test_admin_downloads_and_sees_passes_at_any_status(admin_api, make_booking, 
     booking = make_booking(status=status)
     boarding_pass = add_pass(booking, "pass.png", PNG)
     assert [p["id"] for p in admin_api.get(f"/api/admin/bookings/{booking.id}").data["boarding_passes"]] == [
-        boarding_pass.id
+        str(boarding_pass.id)
     ]
     response = admin_api.get(f"/api/boarding-passes/{boarding_pass.id}/download")
     assert response.status_code == 200
     assert b"".join(response.streaming_content) == PNG
 
 
-def test_download_unknown_pass_returns_404(admin_api):
-    assert admin_api.get("/api/boarding-passes/999999/download").status_code == 404
+@pytest.mark.parametrize("pass_id", ["00000000-0000-4000-8000-000000000000", "123", "not-a-uuid"])
+def test_download_or_delete_unknown_or_malformed_pass_returns_404(admin_api, pass_id):
+    assert admin_api.get(f"/api/boarding-passes/{pass_id}/download").status_code == 404
+    assert admin_api.delete(f"/api/admin/boarding-passes/{pass_id}").status_code == 404

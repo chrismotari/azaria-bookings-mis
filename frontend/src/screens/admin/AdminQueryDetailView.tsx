@@ -14,14 +14,14 @@ import { colors, font, weight } from '../../theme';
 import { formatDate, formatDateTime, formatPrice, stopoversLabel, ticketClassLabel } from '../../utils/format';
 import { QUERY_STATUS } from '../../utils/queries';
 
-export function useAdminQuery(id: number) {
+export function useAdminQuery(id: string) {
   return useQuery({
     queryKey: ['admin', 'queries', 'detail', id],
     queryFn: async () => (await api.get<AdminQueryDetail>(`/admin/queries/${id}`)).data,
   });
 }
 
-export function AdminQueryDetailView({ id }: { id: number }) {
+export function AdminQueryDetailView({ id }: { id: string }) {
   const navigation = useNavigation();
   const query = useAdminQuery(id);
 

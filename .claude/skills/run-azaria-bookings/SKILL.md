@@ -47,7 +47,7 @@ All driver commands run from `.claude/skills/run-azaria-bookings/driver/`. Scree
 
 | command | what it does |
 |---|---|
-| `AZARIA_ADMIN_EMAIL=... AZARIA_ADMIN_PASSWORD=... node flow.mjs` | Full flow with a fresh customer: guest search with no results → Request options → gate → register → request → admin responds with a custom offer → book 2 passengers → confirm → mark paid → upload PDF + PNG → send → customer downloads both and checks the bytes. Prints `FLOW OK (request N, booking M)`. About 1 minute. |
+| `AZARIA_ADMIN_EMAIL=... AZARIA_ADMIN_PASSWORD=... node flow.mjs` | Full flow with a fresh customer: guest search with no results → Request options → gate → register → request → admin responds with a custom offer → book 2 passengers → confirm → mark paid → upload PDF + PNG → send → customer downloads both and checks the bytes. Prints `FLOW OK (request <uuid>, booking <uuid>)`. About 1 minute. |
 | `node login.mjs <role> <email> <password>` | Signs in and saves the session as `/tmp/azaria-run/profiles/<role>.json` |
 | `node shot.mjs <role> <path> [width]` | Screenshots `http://localhost:8081<path>` as `<role>` (`guest` = signed out) and prints horizontal overflow. Use width `390` for the phone layout (bottom tabs). |
 
@@ -82,7 +82,7 @@ Expiry case: a confirmed booking's deadline is 24h away. Move it into the past, 
 cd backend && source .venv/bin/activate && DJANGO_SETTINGS_MODULE=config.settings python -c "
 import django; django.setup()
 from datetime import timedelta; from django.utils import timezone; from bookings.models import Booking
-print(Booking.objects.filter(pk=BOOKING_ID, status='availability_confirmed').update(payment_deadline=timezone.now() - timedelta(minutes=1)))"
+print(Booking.objects.filter(pk='BOOKING_UUID', status='availability_confirmed').update(payment_deadline=timezone.now() - timedelta(minutes=1)))"
 ```
 
 ## Stop
@@ -115,7 +115,7 @@ About 400 backend tests in ~15 s. They need PostgreSQL only, not the worker, Red
 - **Inputs are found by `aria-label` = their visible label** (`TextField`, `DateField`, `AirportPicker` set it). Date inputs take `YYYY-MM-DD` via `fill`.
 - **Respond screen has two From/To pairs.** Filter search on top, custom offer below. The custom pair is prefilled with the request's airports; class chips appear twice, so use `getByRole('radio', { name }).nth(1)` for the custom one.
 - **Admin URLs as a guest show Explore.** If a saved admin session is missing or expired, `/admin/...` silently renders the guest navigator. Sign in first (`signIn` or `login.mjs`).
-- **Details open beside the list.** At 1280 px a detail (offer, booking, request, admin offer edit) is a right-hand panel with a `Close` button; at 390 px it replaces the list with a `← All …` link. The URL is the list's with the id (`/offers/5`, `/admin/bookings/7`); Explore itself is `/offers`. The brand name in the top bar is also a `link`, so filter link locators by text.
+- **Details open beside the list.** At 1280 px a detail (offer, booking, request, admin offer edit) is a right-hand panel with a `Close` button; at 390 px it replaces the list with a `← All …` link. The URL is the list's with the id (`/offers/<uuid>`, `/admin/bookings/<uuid>`); Explore itself is `/offers`. The brand name in the top bar is also a `link`, so filter link locators by text.
 - **Confirmations are in-app dialogs** (Confirm availability, Mark paid, Send boarding passes, Delete, Cancel, Close request), not `window.confirm`. The dialog's action button repeats the action's name, so `button(page, 'Mark paid')` matches twice while it is open: click the one inside with `confirmDialog(page, 'Mark paid')` from `lib.mjs`.
 - **Expected 4xx responses show up as console errors** (e.g. "status of 409" when an action is refused). They are not failures by themselves.
 - **Explore needs a route with no public deals** for the "Request options" path. `flow.mjs` uses NBO→ZNZ; override with `ROUTE=NBO-KGL` if that route gets deals.

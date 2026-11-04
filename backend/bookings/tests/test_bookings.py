@@ -171,7 +171,7 @@ def test_cannot_book_once_valid_until_has_passed(customer_api, offer):
 
 
 def test_cannot_book_unknown_offer(customer_api):
-    response = customer_api.post("/api/bookings", {"offer": 999999, "passenger_count": 1}, format="json")
+    response = customer_api.post("/api/bookings", {"offer": "00000000-0000-4000-8000-000000000000", "passenger_count": 1}, format="json")
     assert response.status_code == 400
     assert "offer" in response.data
 
@@ -222,7 +222,7 @@ def test_customer_lists_only_own_bookings(customer_api, make_booking, other_cust
     mine = make_booking()
     make_booking(user=other_customer)
     response = customer_api.get("/api/bookings")
-    assert [b["id"] for b in response.data["results"]] == [mine.id]
+    assert [b["id"] for b in response.data["results"]] == [str(mine.id)]
     assert response.data["results"][0]["total_price"] == "1300.00"
 
 
@@ -356,9 +356,18 @@ def test_customer_cancels_own_booking(customer_api, make_booking):
     assert customer_api.post(f"/api/bookings/{booking.id}/cancel").status_code == 409
 
 
-def test_unknown_booking_returns_404(admin_api, customer_api):
-    assert admin_api.post("/api/admin/bookings/999999/mark-paid").status_code == 404
-    assert customer_api.post("/api/bookings/999999/cancel").status_code == 404
+@pytest.mark.parametrize("booking_id", ["00000000-0000-4000-8000-000000000000", "123", "not-a-uuid"])
+def test_unknown_or_malformed_booking_id_returns_404(admin_api, customer_api, booking_id):
+    assert admin_api.get(f"/api/admin/bookings/{booking_id}").status_code == 404
+    assert admin_api.post(f"/api/admin/bookings/{booking_id}/mark-paid").status_code == 404
+    assert customer_api.get(f"/api/bookings/{booking_id}").status_code == 404
+    assert customer_api.post(f"/api/bookings/{booking_id}/cancel").status_code == 404
+
+
+def test_malformed_offer_id_in_booking_body_returns_400(customer_api):
+    response = customer_api.post("/api/bookings", {"offer": "123", "passenger_count": 1}, format="json")
+    assert response.status_code == 400
+    assert "offer" in response.data
 
 
 # Reading
@@ -380,9 +389,9 @@ def test_admin_lists_bookings_with_status_filter(admin_api, make_booking, other_
     requested = make_booking()
     paid = make_booking(status=Status.PAID, user=other_customer)
     response = admin_api.get("/api/admin/bookings")
-    assert {b["id"] for b in response.data["results"]} == {requested.id, paid.id}
+    assert {b["id"] for b in response.data["results"]} == {str(requested.id), str(paid.id)}
     response = admin_api.get("/api/admin/bookings", {"status": "paid"})
-    assert [b["id"] for b in response.data["results"]] == [paid.id]
+    assert [b["id"] for b in response.data["results"]] == [str(paid.id)]
     assert response.data["results"][0]["user"]["full_name"] == "Otto Other"
 
 

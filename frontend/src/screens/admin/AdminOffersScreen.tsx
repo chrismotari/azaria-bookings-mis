@@ -71,7 +71,7 @@ export function AdminOffersScreen({ navigation, route }: BottomTabScreenProps<Ad
   });
 
   const setActive = useMutation({
-    mutationFn: ({ id, is_active }: { id: number; is_active: boolean }) =>
+    mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) =>
       api.patch(`/admin/offers/${id}`, { is_active }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'offers'] }),
   });

@@ -1,8 +1,11 @@
+import uuid
+
 from django.db import models
 from django.utils import timezone
 
 
 class Airport(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     code = models.CharField(max_length=3, unique=True)
     name = models.CharField(max_length=200)
     city = models.CharField(max_length=200)
@@ -32,6 +35,7 @@ class OfferQuerySet(models.QuerySet):
 
 
 class Offer(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     class TicketClass(models.TextChoices):
         ECONOMY = "economy", "Economy"
         PREMIUM_ECONOMY = "premium_economy", "Premium economy"

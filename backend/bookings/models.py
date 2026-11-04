@@ -1,3 +1,5 @@
+import uuid
+
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -10,6 +12,7 @@ from customer_requests.models import Query
 class Booking(models.Model):
     """Status changes go through bookings.services only."""
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     class Status(models.TextChoices):
         REQUESTED = "requested", "Requested"
         AVAILABILITY_CONFIRMED = "availability_confirmed", "Availability confirmed"
@@ -48,6 +51,7 @@ class Booking(models.Model):
 class BookingEvent(models.Model):
     """One row per status change, including creation; the booking's timeline."""
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name="events")
     # Blank on creation.
     from_status = models.CharField(max_length=30, choices=Booking.Status.choices, blank=True)
@@ -71,6 +75,7 @@ def boarding_pass_path(instance, filename):
 class BoardingPass(models.Model):
     """Uploaded and deleted only while the booking is paid; served only by the authenticated download view."""
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     MAX_PER_BOOKING = 10
     MAX_SIZE = 5 * 1024 * 1024
     # Allowed extension -> the content type it must be uploaded with.

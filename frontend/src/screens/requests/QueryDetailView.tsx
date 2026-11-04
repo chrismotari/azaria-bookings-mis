@@ -19,7 +19,7 @@ import { colors, font, radius, space, weight } from '../../theme';
 import { formatDateTime } from '../../utils/format';
 import { QUERY_STATUS } from '../../utils/queries';
 
-export function QueryDetailView({ id }: { id: number }) {
+export function QueryDetailView({ id }: { id: string }) {
   const navigation = useNavigation();
   const [width, setWidth] = useState(0);
   const queryClient = useQueryClient();

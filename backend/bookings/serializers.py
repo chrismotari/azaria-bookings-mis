@@ -52,7 +52,7 @@ class BoardingPassUploadSerializer(serializers.Serializer):
 class BookingCreateSerializer(serializers.ModelSerializer):
     """Input for create_booking; the offer's visibility and bookability are checked there, under lock."""
 
-    offer = serializers.IntegerField()
+    offer = serializers.UUIDField()
     query = serializers.PrimaryKeyRelatedField(queryset=Query.objects.none(), required=False, allow_null=True)
 
     class Meta:

@@ -72,6 +72,20 @@ python manage.py seed_airports
 python manage.py create_admin --email owner@example.com --password '<strong password>' --name "Agency Owner"
 ```
 
+#### Resetting the database after the UUID change
+
+All records use UUID primary keys, and the migrations were regenerated from scratch when that change was made. A database created before it cannot be migrated forward, so drop it and start again (this deletes all local data):
+
+```bash
+sudo -u postgres psql -c "DROP DATABASE azaria;"
+sudo -u postgres psql -c "CREATE DATABASE azaria OWNER azaria;"
+python manage.py migrate
+python manage.py seed_airports
+python manage.py create_admin --email owner@example.com --password '<strong password>' --name "Agency Owner"
+```
+
+Uploaded boarding passes in `backend/private_media/` belong to the old records and can be deleted too.
+
 The settings in `backend/.env`:
 
 | Variable | Purpose |

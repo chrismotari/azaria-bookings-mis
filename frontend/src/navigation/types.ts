@@ -17,23 +17,23 @@ export type QueryPrefill = {
 /** id: the item whose detail is open beside (wide) or instead of (narrow) the list. */
 export type MainTabParamList = {
   /** query: the request whose response led to this offer; passed on to the booking. */
-  Explore: { id?: number; query?: number } | undefined;
-  Requests: { id?: number } | undefined;
-  Bookings: { id?: number } | undefined;
+  Explore: { id?: string; query?: string } | undefined;
+  Requests: { id?: string } | undefined;
+  Bookings: { id?: string } | undefined;
   Account: undefined;
 };
 
 export type AdminTabParamList = {
   AdminDashboard: undefined;
-  AdminOffers: { id?: number } | undefined;
-  AdminRequests: { status?: QueryStatus | 'all'; id?: number } | undefined;
-  AdminBookings: { status?: BookingStatus | 'all'; id?: number } | undefined;
+  AdminOffers: { id?: string } | undefined;
+  AdminRequests: { status?: QueryStatus | 'all'; id?: string } | undefined;
+  AdminBookings: { status?: BookingStatus | 'all'; id?: string } | undefined;
   AdminSettings: undefined;
 };
 
 export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
-  BookingNew: { offer: number; query?: number };
+  BookingNew: { offer: string; query?: string };
   QueryNew: QueryPrefill | undefined;
   Login: { passwordReset?: boolean } | undefined;
   Register: undefined;
@@ -41,7 +41,7 @@ export type RootStackParamList = {
   ResetPassword: { uid?: string; token?: string } | undefined;
   AdminTabs: NavigatorScreenParams<AdminTabParamList> | undefined;
   AdminOfferNew: undefined;
-  AdminQueryRespond: { id: number };
+  AdminQueryRespond: { id: string };
 };
 
 /** A screen and its params, e.g. what a guest was trying to open before signing in. */

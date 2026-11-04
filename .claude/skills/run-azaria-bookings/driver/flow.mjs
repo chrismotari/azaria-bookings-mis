@@ -90,6 +90,13 @@ async function pickAirport(page, label, code, index = 0) {
 let queryId;
 let bookingId;
 
+/** The UUID at the end of a detail URL (/requests/<uuid>, /bookings/<uuid>); throws if it is not one. */
+function uuidFromUrl(url) {
+  const id = new URL(url).pathname.split('/').pop();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)) throw new Error(`no UUID in ${url}`);
+  return id;
+}
+
 console.log('== guest -> register -> request');
 await run(`customer-${stamp}`, async ({ page, shot }) => {
   await page.goto(APP);
@@ -113,7 +120,7 @@ await run(`customer-${stamp}`, async ({ page, shot }) => {
   await shot('request-prefilled');
   await button(page, 'Send request').click();
   await seen(page, 'Options from Azaria Bookings').waitFor();
-  queryId = Number(new URL(page.url()).pathname.split('/').pop());
+  queryId = uuidFromUrl(page.url());
   console.log('request', queryId, 'from', CUSTOMER.email);
 });
 if (!queryId) process.exit(1);
@@ -159,7 +166,7 @@ await run(`customer-${stamp}`, async ({ page, shot }) => {
   await button(page, 'Add a passenger').click();
   await button(page, 'Request booking').click();
   await seen(page, 'History').waitFor();
-  bookingId = Number(new URL(page.url()).pathname.split('/').pop());
+  bookingId = uuidFromUrl(page.url());
   await shot('booking-requested');
   console.log('booking', bookingId);
 });

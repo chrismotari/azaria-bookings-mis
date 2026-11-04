@@ -14,12 +14,12 @@ type Props = {
   passes: BoardingPass[];
   /** Shows a Delete button on each pass. */
   onDelete?: (boardingPass: BoardingPass) => void;
-  deletingId?: number | null;
+  deletingId?: string | null;
 };
 
 /** Boarding passes with a Download button each (web only), and optionally Delete. */
 export function BoardingPassList({ passes, onDelete, deletingId }: Props) {
-  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const download = async (boardingPass: BoardingPass) => {

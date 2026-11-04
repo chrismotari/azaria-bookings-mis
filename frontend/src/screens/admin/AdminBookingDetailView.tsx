@@ -79,9 +79,9 @@ const ACTIONS: Partial<Record<BookingStatus, Action[]>> = {
   paid: [SEND_PASSES],
 };
 
-const uploadKey = (id: number) => ['admin', 'boarding-passes', 'upload', id];
+const uploadKey = (id: string) => ['admin', 'boarding-passes', 'upload', id];
 
-export function AdminBookingDetailView({ id }: { id: number }) {
+export function AdminBookingDetailView({ id }: { id: string }) {
   const queryClient = useQueryClient();
   const uploading = useIsMutating({ mutationKey: uploadKey(id) }) > 0;
   const confirm = useConfirm();

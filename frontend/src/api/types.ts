@@ -1,7 +1,7 @@
 export type Role = 'customer' | 'admin';
 
 export type User = {
-  id: number;
+  id: string;
   email: string;
   full_name: string;
   phone: string;
@@ -22,7 +22,7 @@ export type Paginated<T> = {
 };
 
 export type Airport = {
-  id: number;
+  id: string;
   code: string;
   name: string;
   city: string;
@@ -39,7 +39,7 @@ export const TICKET_CLASSES: { value: TicketClass; label: string }[] = [
 ];
 
 export type Offer = {
-  id: number;
+  id: string;
   origin: Airport;
   destination: Airport;
   departure_date: string;
@@ -60,14 +60,14 @@ export type AdminOffer = Offer & {
 export type QueryStatus = 'open' | 'responded' | 'closed';
 
 export type QueryResponse = {
-  id: number;
+  id: string;
   message: string;
   offers: Offer[];
   created_at: string;
 };
 
 export type Query = {
-  id: number;
+  id: string;
   origin: Airport | null;
   destination: Airport | null;
   date_from: string;
@@ -97,16 +97,16 @@ export type BookingStatus =
   | 'expired';
 
 export type BookingEvent = {
-  id: number;
+  id: string;
   from_status: BookingStatus | '';
   to_status: BookingStatus;
   created_at: string;
 };
 
 export type Booking = {
-  id: number;
+  id: string;
   offer: Offer;
-  query: number | null;
+  query: string | null;
   passenger_count: number;
   notes: string;
   unit_price: string;
@@ -117,7 +117,7 @@ export type Booking = {
 };
 
 export type BoardingPass = {
-  id: number;
+  id: string;
   original_name: string;
   uploaded_at: string;
 };

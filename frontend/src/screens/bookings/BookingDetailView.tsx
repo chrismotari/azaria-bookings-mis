@@ -30,7 +30,7 @@ const STATUS_HELP: Partial<Record<BookingStatus, string>> = {
   expired: 'The hold lapsed because payment was not received in time. You can book again if the deal is still open.',
 };
 
-export function BookingDetailView({ id }: { id: number }) {
+export function BookingDetailView({ id }: { id: string }) {
   const navigation = useNavigation();
   const queryClient = useQueryClient();
   const confirm = useConfirm();

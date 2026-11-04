@@ -1,3 +1,4 @@
+import uuid
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -31,7 +32,7 @@ def make_offer(airports, origin="NBO", destination="LHR", **kwargs):
 
 
 def ids(response):
-    return [o["id"] for o in response.data["results"]]
+    return [uuid.UUID(o["id"]) for o in response.data["results"]]
 
 
 # Browse
@@ -215,7 +216,7 @@ def test_admin_creates_offer(admin_api, airports):
     assert offer.price == Decimal("1999.50")
     assert offer.is_public and offer.is_active
     assert response.data["origin"] == {
-        "id": airports["NBO"].id,
+        "id": str(airports["NBO"].id),
         "code": "NBO",
         "name": "Jomo Kenyatta International Airport",
         "city": "Nairobi",
@@ -328,3 +329,9 @@ def test_admin_cannot_delete_or_put(admin_api, airports):
     assert admin_api.delete(f"/api/admin/offers/{offer.id}").status_code == 405
     assert admin_api.put(f"/api/admin/offers/{offer.id}", payload(airports), format="json").status_code == 405
     assert Offer.objects.filter(pk=offer.id).exists()
+
+
+@pytest.mark.parametrize("offer_id", ["00000000-0000-4000-8000-000000000000", "123", "not-a-uuid"])
+def test_unknown_or_malformed_offer_id_returns_404(api, admin_api, offer_id):
+    assert api.get(f"/api/offers/{offer_id}").status_code == 404
+    assert admin_api.get(f"/api/admin/offers/{offer_id}").status_code == 404
