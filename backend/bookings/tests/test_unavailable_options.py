@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from bookings.models import Booking
 from catalog.models import Offer
-from core.tests.helpers import html_part
+from core.tests.helpers import airline_named, html_part
 from customer_requests.models import Query
 
 pytestmark = pytest.mark.django_db
@@ -33,7 +33,7 @@ def new_offer(airports, **overrides):
         "departure_date": in_days(31),
         "ticket_class": "business",
         "price": "900.00",
-        "airline": "Qatar Airways",
+        "airline": str(airline_named("Qatar Airways").id),
         "valid_until": in_days(5),
         "stops": [{"airport": "DXB", "duration_minutes": 120}],
         **overrides,
@@ -106,12 +106,12 @@ def test_with_custom_offers(admin_api, booking, airports, django_capture_on_comm
     response, _ = mark_unavailable(
         admin_api,
         booking,
-        {"new_offers": [new_offer(airports), new_offer(airports, airline="Kenya Airways", stops=[])]},
+        {"new_offers": [new_offer(airports), new_offer(airports, airline=str(airline_named("Kenya Airways").id), stops=[])]},
         django_capture_on_commit_callbacks,
     )
     assert response.status_code == 200, response.data
-    offers = list(Query.objects.get().responses.get().offers.order_by("airline"))
-    assert [(o.airline, o.is_public, o.stops.count()) for o in offers] == [
+    offers = list(Query.objects.get().responses.get().offers.order_by("airline__name"))
+    assert [(o.airline.name, o.is_public, o.stops.count()) for o in offers] == [
         ("Kenya Airways", False, 0),
         ("Qatar Airways", False, 1),
     ]

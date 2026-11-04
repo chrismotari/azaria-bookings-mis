@@ -37,7 +37,7 @@ function customOfferDefaults(booking: AdminBookingDetail): OfferFormValues {
     ticket_class: offer.ticket_class,
     price: '',
     stops: [],
-    airline: '',
+    airline: null,
     valid_until: todayInNairobi(),
     is_public: false,
   };

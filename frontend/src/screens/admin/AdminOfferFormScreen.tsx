@@ -36,7 +36,7 @@ const EMPTY: OfferFormValues = {
   ticket_class: 'economy',
   price: '',
   stops: [],
-  airline: '',
+  airline: null,
   valid_until: '',
   is_public: true,
 };

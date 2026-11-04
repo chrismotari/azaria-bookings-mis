@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from catalog.models import OfferStop
 from customer_requests.models import Query
+from core.tests.helpers import airline_named
 
 pytestmark = pytest.mark.django_db
 
@@ -20,7 +21,7 @@ def payload(airports, stops, **overrides):
         "departure_date": in_days(30),
         "ticket_class": "economy",
         "price": "700.00",
-        "airline": "Emirates",
+        "airline": str(airline_named("Emirates").id),
         "valid_until": in_days(7),
         "stops": stops,
         **overrides,
@@ -45,6 +46,7 @@ def test_admin_creates_offer_with_ordered_stops(admin_api, airports):
                 "name": "Dubai International Airport",
                 "city": "Dubai",
                 "country": "United Arab Emirates",
+                "country_code": "AE",
             },
             "duration_minutes": 135,
             "kind": "layover",
@@ -56,6 +58,7 @@ def test_admin_creates_offer_with_ordered_stops(admin_api, airports):
                 "name": "Moi International Airport",
                 "city": "Mombasa",
                 "country": "Kenya",
+                "country_code": "KE",
             },
             "duration_minutes": 1500,
             "kind": "stopover",
@@ -124,7 +127,7 @@ def test_edit_replaces_the_whole_stop_list(admin_api, airports):
     assert [(s.position, s.airport.code) for s in OfferStop.objects.filter(offer_id=offer_id)] == [(1, "MBA")]
 
     # An edit without stops leaves them alone.
-    response = admin_api.patch(f"/api/admin/offers/{offer_id}", {"airline": "Qatar Airways"}, format="json")
+    response = admin_api.patch(f"/api/admin/offers/{offer_id}", {"airline": str(airline_named("Qatar Airways").id)}, format="json")
     assert response.data["stop_count"] == 1
 
     response = admin_api.patch(f"/api/admin/offers/{offer_id}", {"stops": []}, format="json")

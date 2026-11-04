@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from catalog.models import Offer
 from core.models import AppSettings
-from core.tests.helpers import html_part
+from core.tests.helpers import airline_named, html_part
 from customer_requests.models import Query, QueryResponse
 from customer_requests.tasks import notify_admin_new_query, notify_customer_query_responded
 
@@ -47,7 +47,7 @@ def new_offer_payload(airports, **overrides):
         "ticket_class": "business",
         "price": "880.00",
         "stops": [],
-        "airline": "Emirates",
+        "airline": str(airline_named("Emirates").id),
         "valid_until": in_days(5),
         **overrides,
     }
@@ -206,7 +206,7 @@ def test_admin_responds_with_existing_and_new_offers(
 
     created = Offer.objects.exclude(pk=existing.pk).get()
     assert created.is_public is False
-    assert created.airline == "Emirates"
+    assert created.airline.name == "Emirates"
     query.refresh_from_db()
     assert query.status == Query.Status.RESPONDED
 
@@ -286,7 +286,7 @@ def test_customer_detail_includes_responses_with_full_offers(customer_api, admin
     [offer] = response.data["responses"][0]["offers"]
     assert offer["origin"]["code"] == "NBO"
     assert offer["destination"]["city"] == "Dubai"
-    assert offer["airline"] == "Emirates"
+    assert offer["airline"]["name"] == "Emirates"
     assert offer["is_bookable"] is True
 
 

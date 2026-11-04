@@ -7,6 +7,7 @@ import { Airport } from '../api/types';
 import { colors, font, weight } from '../theme';
 import { useDebounced } from '../utils/useDebounced';
 import { Field, inputStyle } from './Field';
+import { Flag } from './Flag';
 import { PressState } from './pressState';
 
 function airportLabel(airport: Airport): string {
@@ -39,6 +40,9 @@ function AirportSuggestions({ text, onSelect }: { text: string; onSelect: (airpo
           onPress={() => onSelect(airport)}
           style={({ pressed, hovered }: PressState) => [styles.option, (pressed || hovered) && styles.pressed]}
         >
+          <View style={styles.flagSlot}>
+            <Flag code={airport.country_code} />
+          </View>
           <Text style={styles.code}>{airport.code}</Text>
           <Text style={styles.optionText} numberOfLines={1}>
             {airport.name} — {airport.city}, {airport.country}
@@ -64,9 +68,12 @@ export function AirportPicker({ label, value, onChange, error }: PickerProps) {
     return (
       <Field label={label} error={error}>
         <View style={[inputStyle, styles.selected]}>
-          <Text style={styles.selectedText} numberOfLines={1}>
-            {airportLabel(value)}
-          </Text>
+          <View style={styles.selectedLabel}>
+            <Flag code={value.country_code} />
+            <Text style={styles.selectedText} numberOfLines={1}>
+              {airportLabel(value)}
+            </Text>
+          </View>
           <Pressable accessibilityRole="button" onPress={() => onChange(null)}>
             <Text style={styles.change}>Change</Text>
           </Pressable>
@@ -159,7 +166,10 @@ const styles = StyleSheet.create({
     maxHeight: 260,
     overflow: 'scroll',
   },
-  option: { flexDirection: 'row', gap: 8, paddingVertical: 8, paddingHorizontal: 10 },
+  option: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, paddingHorizontal: 10 },
+  // Keeps codes aligned whether or not an airport has a flag.
+  flagSlot: { width: 16 },
+  selectedLabel: { flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 1 },
   pressed: { backgroundColor: colors.background },
   code: { fontWeight: weight.bold, color: colors.text, width: 40 },
   optionText: { flexShrink: 1, color: colors.text },

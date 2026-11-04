@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 def _booking_in(booking_id, status):
     """The booking, or None when it is gone or no longer in the status the email describes."""
     return (
-        Booking.objects.select_related("user", "offer__origin", "offer__destination")
+        Booking.objects.select_related("user", "offer__origin", "offer__destination", "offer__airline")
         .prefetch_related("stops__airport")
         .filter(pk=booking_id, status=status)
         .first()

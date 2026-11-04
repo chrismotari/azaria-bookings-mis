@@ -89,7 +89,7 @@ def test_customer_books_and_admin_is_emailed(customer_api, customer, offer, djan
     assert response.data["status"] == "requested"
     assert response.data["unit_price"] == "650.00"
     assert response.data["total_price"] == "1950.00"
-    assert response.data["offer"]["airline"] == "Kenya Airways"
+    assert response.data["offer"]["airline"]["name"] == "Kenya Airways"
     [event] = response.data["events"]
     assert event["from_status"] == ""
     assert event["to_status"] == "requested"

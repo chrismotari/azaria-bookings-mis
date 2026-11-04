@@ -29,6 +29,7 @@ class Command(BaseCommand):
                         "name": name,
                         "city": row["municipality"].strip() or name,
                         "country": countries.get(row["iso_country"], row["iso_country"]),
+                        "country_code": row["iso_country"] if len(row["iso_country"]) == 2 else "",
                     },
                 )
                 if was_created:

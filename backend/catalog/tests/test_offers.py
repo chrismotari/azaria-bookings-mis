@@ -6,6 +6,7 @@ import pytest
 from freezegun import freeze_time
 
 from catalog.models import Offer
+from core.tests.helpers import airline_named
 
 pytestmark = pytest.mark.django_db
 
@@ -24,10 +25,12 @@ def make_offer(airports, origin="NBO", destination="LHR", **kwargs):
         "departure_date": TODAY + timedelta(days=30),
         "ticket_class": "economy",
         "price": Decimal("650.00"),
-        "airline": "Kenya Airways",
+        "airline": str(airline_named("Kenya Airways").id),
         "valid_until": TODAY + timedelta(days=10),
         **kwargs,
     }
+    if isinstance(fields["airline"], str):
+        fields["airline"] = airline_named(fields["airline"])
     return Offer.objects.create(origin=airports[origin], destination=airports[destination], **fields)
 
 
@@ -197,7 +200,7 @@ def payload(airports, **overrides):
         "ticket_class": "business",
         "price": "1999.50",
         "stops": [],
-        "airline": "Qatar Airways",
+        "airline": str(airline_named("Qatar Airways").id),
         "valid_until": (TODAY + timedelta(days=7)).isoformat(),
         **overrides,
     }
@@ -224,6 +227,7 @@ def test_admin_creates_offer(admin_api, airports):
         "name": "Jomo Kenyatta International Airport",
         "city": "Nairobi",
         "country": "Kenya",
+        "country_code": "KE",
     }
 
 
@@ -323,7 +327,7 @@ def test_admin_patch_validates_against_existing_values(admin_api, airports):
 def test_admin_patch_of_lapsed_offer_allowed(admin_api, airports):
     with freeze_time("2026-02-01"):
         offer = make_offer(airports, valid_until=TODAY - timedelta(days=1))
-    response = admin_api.patch(f"/api/admin/offers/{offer.id}", {"airline": "Emirates"}, format="json")
+    response = admin_api.patch(f"/api/admin/offers/{offer.id}", {"airline": str(airline_named("Emirates").id)}, format="json")
     assert response.status_code == 200
 
 

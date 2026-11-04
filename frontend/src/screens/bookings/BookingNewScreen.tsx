@@ -88,7 +88,7 @@ export function BookingNewScreen({ navigation, route }: NativeStackScreenProps<R
           <View style={styles.summaryItem}>
             <AirlineBadge airline={data.airline} />
             <View>
-              <Text style={styles.airline}>{data.airline}</Text>
+              <Text style={styles.airline}>{data.airline.name}</Text>
               <Text style={styles.muted}>{ticketClassLabel(data.ticket_class)}</Text>
             </View>
           </View>

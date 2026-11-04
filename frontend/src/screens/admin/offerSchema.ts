@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { Airport, Stop, TicketClass } from '../../api/types';
+import { Airline, Airport, Stop, TicketClass } from '../../api/types';
 import { todayInNairobi } from '../../utils/format';
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -42,7 +42,7 @@ export type OfferFormValues = {
   ticket_class: TicketClass;
   price: string;
   stops: StopFormValues[];
-  airline: string;
+  airline: Airline | null;
   valid_until: string;
   is_public: boolean;
 };
@@ -108,7 +108,7 @@ export function offerSchema(isCreate: boolean) {
         .regex(/^\d{1,8}(\.\d{1,2})?$/, 'Enter a price in USD, e.g. 650 or 650.50.')
         .refine((value) => Number(value) > 0, 'Price must be greater than 0.'),
       stops: stopsSchema,
-      airline: z.string().trim().min(1, 'Enter the airline.').max(100),
+      airline: z.custom<Airline | null>().refine((value) => value !== null, 'Choose the airline.'),
       valid_until: dateString('Enter the last day this offer is valid.'),
       is_public: z.boolean(),
     })
@@ -138,6 +138,6 @@ export function toOfferBody(values: OfferFormValues) {
     destination: values.destination?.id,
     price: values.price.trim(),
     stops: toStopsBody(values.stops),
-    airline: values.airline.trim(),
+    airline: values.airline?.id,
   };
 }

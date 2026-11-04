@@ -91,3 +91,8 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - Admin links opened while signed out (e.g. from emails) go through the sign-in gate and open after the admin signs in.
 - On start-up the app only clears stored tokens when the server rejects the session (401), not when it is unreachable or the agency is suspended.
 - Paged admin lists go back to page 1 when the filter changes (also from a Dashboard link) or when the page no longer exists.
+- The web Flag component is Flag.tsx (not Flag.web.tsx) so TypeScript has a platform-neutral file to check; Metro still picks Flag.native.tsx on iOS and Android. The code lists (flagCodes.ts, flags.native.ts) are generated from public/flags/.
+- @expo/metro-config is a dev dependency so react-native-svg-transformer's Expo entry can find Expo's Babel transformer (Expo 58 keeps it nested inside the expo package).
+- The airline badge is a rounded square (no longer a circle) for both logos and initials, so the two look alike in lists; picker results use a smaller one.
+- seed_airlines drops OpenFlights rows whose name is empty and whose ICAO code is not three letters (the code is then left blank).
+- The airline search (GET /airlines) lives on agency hosts for the admin's picker; the airline list itself is only edited in the platform admin.

@@ -27,6 +27,16 @@ export type Airport = {
   name: string;
   city: string;
   country: string;
+  /** ISO 3166-1 alpha-2, e.g. "KE"; may be empty. */
+  country_code: string;
+};
+
+/** From the shared airline list; logo_url is absolute, or null without a logo. */
+export type Airline = {
+  id: string;
+  iata_code: string;
+  name: string;
+  logo_url: string | null;
 };
 
 export type TicketClass = 'economy' | 'premium_economy' | 'business' | 'first';
@@ -52,7 +62,7 @@ export type Offer = {
   departure_date: string;
   ticket_class: TicketClass;
   price: string;
-  airline: string;
+  airline: Airline;
   valid_until: string;
   is_bookable: boolean;
   /** In flight order. */

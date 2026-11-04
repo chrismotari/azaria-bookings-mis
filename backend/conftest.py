@@ -5,7 +5,7 @@ from rest_framework.test import APIClient
 
 from accounts.models import User
 from config.celery import app as celery_app
-from core.tests.helpers import OTHER_DOMAIN, OTHER_SCHEMA, TEST_DOMAIN, TEST_SCHEMA
+from core.tests.helpers import OTHER_DOMAIN, OTHER_SCHEMA, TEST_DOMAIN, TEST_SCHEMA, airline_named
 
 
 @pytest.fixture(scope="session")
@@ -54,6 +54,17 @@ def private_media(tmp_path, monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def public_media(tmp_path_factory, monkeypatch):
+    """Keeps logos that tests store out of the real media directory."""
+    from core.storage import public_storage
+
+    root = tmp_path_factory.mktemp("public_media")
+    monkeypatch.setattr(public_storage, "base_location", str(root))
+    monkeypatch.setattr(public_storage, "location", str(root))
+    return root
+
+
+@pytest.fixture(autouse=True)
 def _clear_throttle_cache():
     cache.clear()
 
@@ -99,10 +110,34 @@ def airports(db):
         a.code: a
         for a in Airport.objects.bulk_create(
             [
-                Airport(code="NBO", name="Jomo Kenyatta International Airport", city="Nairobi", country="Kenya"),
-                Airport(code="MBA", name="Moi International Airport", city="Mombasa", country="Kenya"),
-                Airport(code="LHR", name="London Heathrow Airport", city="London", country="United Kingdom"),
-                Airport(code="DXB", name="Dubai International Airport", city="Dubai", country="United Arab Emirates"),
+                Airport(
+                    code="NBO",
+                    name="Jomo Kenyatta International Airport",
+                    city="Nairobi",
+                    country="Kenya",
+                    country_code="KE",
+                ),
+                Airport(
+                    code="MBA",
+                    name="Moi International Airport",
+                    city="Mombasa",
+                    country="Kenya",
+                    country_code="KE",
+                ),
+                Airport(
+                    code="LHR",
+                    name="London Heathrow Airport",
+                    city="London",
+                    country="United Kingdom",
+                    country_code="GB",
+                ),
+                Airport(
+                    code="DXB",
+                    name="Dubai International Airport",
+                    city="Dubai",
+                    country="United Arab Emirates",
+                    country_code="AE",
+                ),
             ]
         )
     }
@@ -128,6 +163,8 @@ def make_offer(airports):
             "valid_until": today + timedelta(days=10),
             **kwargs,
         }
+        if isinstance(fields["airline"], str):
+            fields["airline"] = airline_named(fields["airline"])
         return Offer.objects.create(origin=airports[origin], destination=airports[destination], **fields)
 
     return make

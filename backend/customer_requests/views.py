@@ -20,7 +20,7 @@ from .tasks import notify_admin_new_query
 
 
 def with_responses(queryset):
-    offers = Offer.objects.select_related("origin", "destination").prefetch_related("stops__airport")
+    offers = Offer.objects.select_related("origin", "destination", "airline").prefetch_related("stops__airport")
     responses = QueryResponse.objects.prefetch_related(Prefetch("offers", queryset=offers))
     return queryset.prefetch_related(Prefetch("responses", queryset=responses))
 
@@ -48,7 +48,7 @@ class QueryCloseView(APIView):
         generics.get_object_or_404(Query, pk=pk, user=request.user)
         close_query(pk, request.user)
         query = with_responses(Query.objects.select_related("origin", "destination")).get(pk=pk)
-        return Response(QueryDetailSerializer(query).data)
+        return Response(QueryDetailSerializer(query, context={"request": request}).data)
 
 
 class AdminQueryListView(generics.ListAPIView):
@@ -74,4 +74,4 @@ class AdminQueryRespondView(APIView):
         data = serializer.validated_data
         respond_to_query(pk, data["message"], data["offer_ids"], data["new_offers"])
         query = with_responses(Query.objects.select_related("user", "origin", "destination")).get(pk=pk)
-        return Response(AdminQueryDetailSerializer(query).data, status=status.HTTP_201_CREATED)
+        return Response(AdminQueryDetailSerializer(query, context={"request": request}).data, status=status.HTTP_201_CREATED)

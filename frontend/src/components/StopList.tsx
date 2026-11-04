@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Stop } from '../api/types';
 import { colors, font, radius, space, weight } from '../theme';
 import { formatDuration } from '../utils/format';
+import { Flag } from './Flag';
 import { TONES } from './StatusChip';
 
 const KIND = {
@@ -20,9 +21,12 @@ export function StopList({ stops }: { stops: Stop[] }) {
           <View key={`${index}-${stop.airport.code}`} style={[styles.row, index > 0 && styles.divider]}>
             <View style={styles.dot} />
             <View style={styles.place}>
-              <Text style={styles.code}>
-                {stop.airport.code} <Text style={styles.city}>{stop.airport.city}</Text>
-              </Text>
+              <View style={styles.placeRow}>
+                <Flag code={stop.airport.country_code} />
+                <Text style={styles.code}>
+                  {stop.airport.code} <Text style={styles.city}>{stop.airport.city}</Text>
+                </Text>
+              </View>
               <Text style={styles.duration}>{formatDuration(stop.duration_minutes)}</Text>
             </View>
             <View style={[styles.tag, { backgroundColor: kind.tone.background }]}>
@@ -50,6 +54,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   place: { flex: 1, minWidth: 0 },
+  placeRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   code: { fontSize: font.body, fontWeight: weight.bold, color: colors.text },
   city: { fontWeight: weight.regular, color: colors.text },
   duration: { fontSize: font.small, color: colors.muted },

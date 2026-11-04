@@ -4,6 +4,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 
+from airlines.models import Airline
 from airports.models import Airport
 
 
@@ -40,7 +41,7 @@ class Offer(models.Model):
     ticket_class = models.CharField(max_length=20, choices=TicketClass.choices)
     # Per person, in settings.CURRENCY.
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    airline = models.CharField(max_length=100)
+    airline = models.ForeignKey(Airline, on_delete=models.PROTECT, related_name="offers")
     # Inclusive through that day in Nairobi time.
     valid_until = models.DateField()
     # False for offers created for one specific query response.

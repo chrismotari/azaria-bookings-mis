@@ -72,7 +72,7 @@ export function AdminQueryDetailView({ id }: { id: string }) {
             {response.message ? <Text style={styles.text}>{response.message}</Text> : null}
             {response.offers.map((offer) => (
               <Text key={offer.id} style={styles.text}>
-                • {offer.origin.code} → {offer.destination.code}, {formatDate(offer.departure_date)}, {offer.airline},{' '}
+                • {offer.origin.code} → {offer.destination.code}, {formatDate(offer.departure_date)}, {offer.airline.name},{' '}
                 {ticketClassLabel(offer.ticket_class)}, {stopsLabel(offer.stop_count)}, {formatPrice(offer.price)}
               </Text>
             ))}

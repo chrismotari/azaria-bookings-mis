@@ -36,7 +36,7 @@ class AirportSearchView(APIView):
         return Response(AirportSerializer(airports, many=True).data)
 
 
-OFFER_RELATED = ["origin", "destination"]
+OFFER_RELATED = ["origin", "destination", "airline"]
 OFFER_STOPS = "stops__airport"
 
 

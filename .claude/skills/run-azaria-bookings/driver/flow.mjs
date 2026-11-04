@@ -144,7 +144,9 @@ await run('admin', async ({ page, shot }) => {
   await field(page, 'Departure date').fill(nairobiDate(21));
   await field(page, 'Valid until (inclusive)').fill(nairobiDate(10));
   await page.getByRole('radio', { name: 'Economy' }).nth(1).click();
-  await field(page, 'Airline').fill('Flow Air');
+  // The airline comes from the shared list (seed_airlines).
+  await field(page, 'Airline').fill('Kenya Airways');
+  await page.getByRole('button', { name: /^Kenya Airways, KQ/ }).first().click();
   await field(page, 'Price per person (USD)').fill('500');
   // One 2 h 15 min layover in Dar es Salaam, through the stop editor.
   await button(page, 'Add a stop').click();

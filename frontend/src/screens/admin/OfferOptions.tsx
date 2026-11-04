@@ -8,6 +8,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { api } from '../../api/client';
 import { firstMessage } from '../../api/errors';
 import { AdminOffer, Paginated } from '../../api/types';
+import { AirlineBadge } from '../../components/AirlineBadge';
 import { Button } from '../../components/Button';
 import { Field, inputStyle } from '../../components/Field';
 import { FormSection } from '../../components/FormSection';
@@ -207,7 +208,7 @@ export function ChosenOffers({ options }: { options: OfferOptions }) {
           <View style={styles.chosen}>
             <Text style={styles.chosenText}>
               Custom: {values.origin?.code} → {values.destination?.code}, {formatDate(values.departure_date)},{' '}
-              {values.airline}, {ticketClassLabel(values.ticket_class)}, {stopsLabel(values.stops.length)},{' '}
+              {values.airline?.name}, {ticketClassLabel(values.ticket_class)}, {stopsLabel(values.stops.length)},{' '}
               {formatPrice(values.price)}
             </Text>
             <Button title="Remove" variant="link" onPress={() => options.removeCustom(index)} />
@@ -241,7 +242,7 @@ function offerLine(offer: AdminOffer): string {
   return [
     `${offer.origin.code} → ${offer.destination.code}`,
     formatDate(offer.departure_date),
-    offer.airline,
+    offer.airline.name,
     ticketClassLabel(offer.ticket_class),
     stopsLabel(offer.stop_count),
     formatPrice(offer.price),
@@ -271,6 +272,7 @@ export function SelectableOffer({ offer, selected, onToggle, kind = 'checkbox' }
       <View style={[styles.box, kind === 'radio' && styles.round, selected && styles.boxSelected]}>
         {selected ? <Text style={styles.tick}>✓</Text> : null}
       </View>
+      <AirlineBadge airline={offer.airline} size={32} />
       <View style={styles.optionText}>
         <Text style={styles.text}>{offerLine(offer)}</Text>
         <Text style={styles.muted}>

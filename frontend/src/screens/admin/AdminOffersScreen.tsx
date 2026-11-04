@@ -7,6 +7,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
 import { AdminOffer, Paginated } from '../../api/types';
+import { AirlineBadge } from '../../components/AirlineBadge';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { DetailLayout } from '../../components/DetailLayout';
@@ -231,7 +232,12 @@ function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: R
             primary={formatDate(offer.departure_date)}
             secondary={`until ${formatDate(offer.valid_until)}`}
           />,
-          <TwoLineCell key="flight" primary={offer.airline} secondary={flight} />,
+          <View key="flight" style={styles.airlineCell}>
+            <AirlineBadge airline={offer.airline} size={32} />
+            <View style={styles.shrink}>
+              <TwoLineCell primary={offer.airline.name} secondary={flight} />
+            </View>
+          </View>,
           <PriceTag key="price" amount={offer.price} />,
           chips,
           <View key="actions" style={styles.rowActions}>
@@ -252,9 +258,12 @@ function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: R
       <Text style={styles.cell}>
         {formatDate(offer.departure_date)} · valid until {formatDate(offer.valid_until)}
       </Text>
-      <Text style={styles.cell}>
-        {offer.airline} · {flight}
-      </Text>
+      <View style={styles.airlineCell}>
+        <AirlineBadge airline={offer.airline} size={32} />
+        <Text style={[styles.cell, styles.shrink]}>
+          {offer.airline.name} · {flight}
+        </Text>
+      </View>
       {chips}
       <View style={styles.cardTop}>
         {toggle}
@@ -273,5 +282,7 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   rowActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm, flexWrap: 'wrap' },
   cell: { color: colors.text },
+  airlineCell: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  shrink: { flexShrink: 1, minWidth: 0 },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
 });

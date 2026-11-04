@@ -23,7 +23,7 @@ export function FlightRow({ offer, selected, compact, onPress }: Props) {
       <AirlineBadge airline={offer.airline} />
       <View style={styles.shrink}>
         <Text style={styles.airlineName} numberOfLines={1}>
-          {offer.airline}
+          {offer.airline.name}
         </Text>
         <Text style={styles.muted}>{ticketClassLabel(offer.ticket_class)}</Text>
       </View>

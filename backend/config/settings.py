@@ -37,6 +37,7 @@ SHARED_APPS = [
     "django_tenants",
     "tenants",
     "airports",
+    "airlines",
     *DJANGO_APPS,
     "rest_framework",
     "django_filters",
@@ -117,6 +118,10 @@ STATIC_URL = "static/"
 
 # Boarding passes live here. Never served by URL; see core.storage.
 PRIVATE_MEDIA_ROOT = BASE_DIR / "private_media"
+
+# Public files (airline logos): served under MEDIA_URL by Django when DEBUG, by the reverse proxy in production.
+PUBLIC_MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = "/media/"
 
 CURRENCY = "USD"
 

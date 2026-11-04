@@ -2,6 +2,7 @@ import { Control, Controller } from 'react-hook-form';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { TICKET_CLASSES } from '../../api/types';
+import { AirlinePicker } from '../../components/AirlinePicker';
 import { AirportPicker } from '../../components/AirportPicker';
 import { DateField } from '../../components/DateField';
 import { FieldGrid } from '../../components/Field';
@@ -89,11 +90,10 @@ export function OfferFields({ control, showPublicToggle = true, plain }: Props) 
             control={control}
             name="airline"
             render={({ field, fieldState }) => (
-              <TextField
+              <AirlinePicker
                 label="Airline"
                 value={field.value}
-                onChangeText={field.onChange}
-                onBlur={field.onBlur}
+                onChange={field.onChange}
                 error={fieldState.error?.message}
               />
             )}

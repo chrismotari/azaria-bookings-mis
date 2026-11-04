@@ -61,7 +61,7 @@ function customOfferDefaults(query: AdminQueryDetail): OfferFormValues {
     ticket_class: query.ticket_class || 'economy',
     price: '',
     stops: [],
-    airline: '',
+    airline: null,
     valid_until: todayInNairobi(),
     is_public: false,
   };

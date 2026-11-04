@@ -32,7 +32,7 @@ from .services import (
     transition,
 )
 
-BOOKING_RELATED = ["offer__origin", "offer__destination"]
+BOOKING_RELATED = ["offer__origin", "offer__destination", "offer__airline"]
 BOOKING_STOPS = ["stops__airport", "offer__stops__airport"]
 
 
@@ -53,7 +53,7 @@ class BookingListCreateView(generics.ListAPIView):
         serializer = BookingCreateSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         booking = create_booking(request.user, serializer.validated_data)
-        return Response(BookingDetailSerializer(booking).data, status=status.HTTP_201_CREATED)
+        return Response(BookingDetailSerializer(booking, context={"request": request}).data, status=status.HTTP_201_CREATED)
 
 
 class BookingDetailView(generics.RetrieveAPIView):
@@ -71,21 +71,21 @@ class BookingCancelView(APIView):
     def post(self, request, pk):
         generics.get_object_or_404(Booking, pk=pk, user=request.user)
         booking = transition(pk, Booking.Status.CANCELLED, request.user)
-        return Response(BookingDetailSerializer(booking).data)
+        return Response(BookingDetailSerializer(booking, context={"request": request}).data)
 
 
 class BookingAcceptChangesView(APIView):
     def post(self, request, pk):
         generics.get_object_or_404(Booking, pk=pk, user=request.user)
         booking = accept_changes(pk, request.user)
-        return Response(BookingDetailSerializer(booking).data)
+        return Response(BookingDetailSerializer(booking, context={"request": request}).data)
 
 
 class BookingDeclineChangesView(APIView):
     def post(self, request, pk):
         generics.get_object_or_404(Booking, pk=pk, user=request.user)
         booking = transition(pk, Booking.Status.DECLINED, request.user)
-        return Response(BookingDetailSerializer(booking).data)
+        return Response(BookingDetailSerializer(booking, context={"request": request}).data)
 
 
 class AdminBookingListView(generics.ListAPIView):
@@ -101,7 +101,7 @@ class AdminBookingListView(generics.ListAPIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         booking = create_booking(data["user"], data, admin=request.user)
-        return Response(AdminBookingDetailSerializer(booking).data, status=status.HTTP_201_CREATED)
+        return Response(AdminBookingDetailSerializer(booking, context={"request": request}).data, status=status.HTTP_201_CREATED)
 
 
 class AdminBookingDetailView(generics.RetrieveAPIView):
@@ -121,7 +121,7 @@ class AdminBookingTransitionView(APIView):
     def post(self, request, pk):
         generics.get_object_or_404(Booking, pk=pk)
         booking = transition(pk, self.to_status, request.user)
-        return Response(AdminBookingDetailSerializer(booking).data)
+        return Response(AdminBookingDetailSerializer(booking, context={"request": request}).data)
 
 
 class AdminConfirmAvailabilityView(APIView):
@@ -135,7 +135,7 @@ class AdminConfirmAvailabilityView(APIView):
         serializer = ConfirmAvailabilitySerializer(data=request.data, context={"booking": booking})
         serializer.is_valid(raise_exception=True)
         booking = confirm_availability(pk, request.user, **serializer.validated_data)
-        return Response(AdminBookingDetailSerializer(booking).data)
+        return Response(AdminBookingDetailSerializer(booking, context={"request": request}).data)
 
 
 class AdminMarkUnavailableView(APIView):
@@ -149,7 +149,7 @@ class AdminMarkUnavailableView(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         booking = mark_unavailable(pk, request.user, data["message"], data["offer_ids"], data["new_offers"])
-        return Response(AdminBookingDetailSerializer(booking).data)
+        return Response(AdminBookingDetailSerializer(booking, context={"request": request}).data)
 
 
 class AdminBoardingPassUploadView(APIView):

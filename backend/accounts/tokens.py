@@ -1,5 +1,6 @@
 """JWTs carry the tenant (schema name) they were issued by; they are refused at any other tenant."""
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken
@@ -34,4 +35,8 @@ class TenantJWTAuthentication(JWTAuthentication):
 class TenantTokenRefreshSerializer(TokenRefreshSerializer):
     def validate(self, attrs):
         check_tenant(RefreshToken(attrs["refresh"]))
-        return super().validate(attrs)
+        try:
+            return super().validate(attrs)
+        except ObjectDoesNotExist:
+            # The token's user is gone (e.g. after a local database reset): a rejected session, not a server error.
+            raise InvalidToken("The user for this token no longer exists.")

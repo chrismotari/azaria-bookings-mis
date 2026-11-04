@@ -2,6 +2,8 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
+from airlines.models import Airline
+from airlines.serializers import AirlineSerializer
 from airports.models import Airport
 
 from .models import Offer, Stop
@@ -10,7 +12,7 @@ from .models import Offer, Stop
 class AirportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Airport
-        fields = ["id", "code", "name", "city", "country"]
+        fields = ["id", "code", "name", "city", "country", "country_code"]
 
 
 class StopSerializer(serializers.Serializer):
@@ -60,6 +62,7 @@ class OfferSerializer(serializers.ModelSerializer):
 
     origin = AirportSerializer(read_only=True)
     destination = AirportSerializer(read_only=True)
+    airline = AirlineSerializer(read_only=True)
     is_bookable = serializers.BooleanField(read_only=True)
 
     class Meta:
@@ -82,7 +85,7 @@ class OfferSerializer(serializers.ModelSerializer):
 
 
 class AdminOfferSerializer(serializers.ModelSerializer):
-    """Airports are written by id and read as nested objects.
+    """Airports and the airline are written by id and read as nested objects.
 
     Stops are written by IATA code, in flight order; an edit that includes stops replaces them all.
     """
@@ -113,12 +116,20 @@ class AdminOfferSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         data["origin"] = AirportSerializer(instance.origin).data
         data["destination"] = AirportSerializer(instance.destination).data
+        data["airline"] = AirlineSerializer(instance.airline, context=self.context).data
         return {**data, **stops_data(instance.stops.all())}
 
     def validate_price(self, value):
         if value <= 0:
             raise serializers.ValidationError("Price must be greater than 0.")
         return value
+
+    def validate_airline(self, airline):
+        # Existing offers keep an airline deactivated later; choosing one needs it active.
+        unchanged = self.instance is not None and self.instance.airline_id == airline.pk
+        if not airline.is_active and not unchanged:
+            raise serializers.ValidationError("This airline is no longer active.")
+        return airline
 
     def validate(self, attrs):
         def current(field):

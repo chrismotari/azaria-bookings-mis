@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Airport } from '../api/types';
 import { colors, font, radius, space, weight } from '../theme';
 import { stopsLabel } from '../utils/format';
+import { Flag } from './Flag';
 import { Icon } from './Icon';
 
 type Props = {
@@ -58,9 +59,19 @@ function End({ airport, large, alignEnd }: { airport: Airport | null; large: boo
   return (
     <View style={[styles.end, large && styles.endLarge, alignEnd && styles.endRight]}>
       <Text style={[styles.code, large && styles.codeLarge, align]}>{airport.code}</Text>
-      <Text style={[styles.city, align]} numberOfLines={large ? 2 : 1}>
-        {large ? `${airport.city}, ${airport.country}` : airport.city}
-      </Text>
+      {large ? (
+        // Only the detail header shows the flag; compact route lines (rows, cards) stay uncluttered.
+        <View style={[styles.place, alignEnd && styles.placeEnd]}>
+          <Flag code={airport.country_code} />
+          <Text style={[styles.city, align, styles.shrink]} numberOfLines={2}>
+            {`${airport.city}, ${airport.country}`}
+          </Text>
+        </View>
+      ) : (
+        <Text style={[styles.city, align]} numberOfLines={1}>
+          {airport.city}
+        </Text>
+      )}
       {large ? (
         <Text style={[styles.name, align]} numberOfLines={2}>
           {airport.name}
@@ -82,6 +93,9 @@ const styles = StyleSheet.create({
   anywhere: { color: colors.muted },
   codeLarge: { fontSize: font.display },
   city: { fontSize: font.small, color: colors.text },
+  place: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  placeEnd: { justifyContent: 'flex-end' },
+  shrink: { flexShrink: 1 },
   name: { fontSize: font.caption, color: colors.muted },
   middle: { flex: 1, minWidth: 48, alignItems: 'center', gap: space.xs },
   stops: { fontSize: font.caption, fontWeight: weight.semibold, color: colors.muted },

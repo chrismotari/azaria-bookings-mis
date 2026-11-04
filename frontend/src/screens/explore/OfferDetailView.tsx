@@ -51,7 +51,7 @@ export function OfferDetailView({ id, query }: { id: string; query?: string }) {
           <View style={styles.airline}>
             <AirlineBadge airline={data.airline} />
             <View>
-              <Text style={styles.airlineName}>{data.airline}</Text>
+              <Text style={styles.airlineName}>{data.airline.name}</Text>
               <Text style={styles.muted}>{ticketClassLabel(data.ticket_class)}</Text>
             </View>
           </View>
@@ -61,7 +61,7 @@ export function OfferDetailView({ id, query }: { id: string; query?: string }) {
           <Text style={styles.heading}>Flight details</Text>
           <View style={styles.grid}>
             <Detail icon="calendar-outline" label="Departure date" value={formatDate(data.departure_date)} />
-            <Detail icon="airplane-outline" label="Airline" value={data.airline} />
+            <Detail icon="airplane-outline" label="Airline" value={data.airline.name} />
             <Detail icon="ribbon-outline" label="Class" value={ticketClassLabel(data.ticket_class)} />
             <Detail icon="git-commit-outline" label="Stops" value={stopsLabel(data.stop_count)} />
             <Detail icon="time-outline" label="Offer valid until" value={formatDate(data.valid_until)} />

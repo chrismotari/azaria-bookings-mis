@@ -11,6 +11,7 @@ from rest_framework.test import APIClient
 from bookings.admin import BookingAdmin
 from bookings.models import Booking
 from tenants import services
+from core.tests.helpers import airline_named
 
 pytestmark = pytest.mark.django_db
 
@@ -67,7 +68,7 @@ def test_stop_airport_codes_are_accepted_in_any_case(admin_api, airports):
         "departure_date": (timezone.localdate() + timedelta(days=30)).isoformat(),
         "ticket_class": "economy",
         "price": "500",
-        "airline": "Emirates",
+        "airline": str(airline_named("Emirates").id),
         "valid_until": (timezone.localdate() + timedelta(days=5)).isoformat(),
         "stops": [{"airport": " dxb ", "duration_minutes": 60}],
     }
@@ -90,3 +91,14 @@ def test_the_support_admin_cannot_change_booking_state():
     readonly = BookingAdmin(Booking, admin.site).get_readonly_fields(None)
     for field in ["status", "payment_deadline", "reminder_sent_at", "changes", "changes_accepted"]:
         assert field in readonly
+
+
+def test_refreshing_a_token_whose_user_is_gone_is_401(customer):
+    import uuid
+
+    from accounts.models import User
+    from accounts.tokens import TenantRefreshToken
+
+    ghost = TenantRefreshToken.for_user(User(id=uuid.uuid4(), email="ghost@example.com"))
+    response = APIClient().post("/api/auth/refresh", {"refresh": str(ghost)}, format="json")
+    assert response.status_code == 401

@@ -9,6 +9,8 @@ class Airport(models.Model):
     name = models.CharField(max_length=200)
     city = models.CharField(max_length=200)
     country = models.CharField(max_length=100)
+    # ISO 3166-1 alpha-2, e.g. "KE"; the app shows its flag.
+    country_code = models.CharField(max_length=2, blank=True)
 
     class Meta:
         ordering = ["code"]

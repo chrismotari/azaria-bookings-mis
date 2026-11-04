@@ -27,12 +27,13 @@ The app is **web first**: it is developed and checked in the browser. It still c
 backend/                 Django project "config"
   tenants/               Agencies (tenants) and their domains, create_agency, the platform's Django admin
   airports/              Airports (seed_airports), shared by every agency
+  airlines/              Airlines (seed_airlines) and their logos, shared by every agency
   accounts/              Custom user (login by email, role customer/admin), auth endpoints, create_admin
   catalog/               Flight offers and their stops
   customer_requests/     Customer requests for options and the admin's responses (app label "requests")
   bookings/              Bookings, the status state machine (services.py), boarding passes, scheduled tasks
   core/                  App settings, permissions, private storage, email templates
-  data/raw/              OurAirports CSV files used by seed_airports
+  data/raw/              OurAirports CSV files (seed_airports) and OpenFlights airlines.dat (seed_airlines)
 frontend/                Expo app
   src/api/               axios client (token refresh), token storage, API types
   src/auth/              Auth context and the login gate
@@ -71,6 +72,7 @@ pip install -r requirements.txt
 cp .env.example .env               # then edit .env
 python manage.py migrate_schemas --shared      # the platform (public schema)
 python manage.py seed_airports                 # shared airports, once
+python manage.py seed_airlines                 # shared airlines, once
 python manage.py createsuperuser               # the system owner, for /django-admin/ on the root host
 python manage.py create_agency --schema azaria --name "Azaria Bookings" \
     --admin-email owner@example.com --admin-password '<strong password>' --admin-name "Agency Owner"
@@ -78,21 +80,22 @@ python manage.py create_agency --schema azaria --name "Azaria Bookings" \
 
 `create_agency` creates the agency's schema (and migrates it), its domain `azaria.localhost`, its settings and its first admin. Create as many agencies as you like the same way; each one gets `<schema>.localhost`.
 
-#### Resetting the database after the multitenancy change
+#### Resetting the database after the airline change
 
-The migrations were regenerated from scratch when agencies got their own schemas (and again earlier, for UUID primary keys). A database created before that cannot be migrated forward, so drop it and start again (this deletes all local data):
+The migrations were regenerated from scratch when offers started pointing at the shared airline list (and earlier, when agencies got their own schemas and for UUID primary keys). A database created before that cannot be migrated forward, so drop it and start again (this deletes all local data):
 
 ```bash
 sudo -u postgres psql -c "DROP DATABASE azaria;"
 sudo -u postgres psql -c "CREATE DATABASE azaria OWNER azaria;"
 python manage.py migrate_schemas --shared
 python manage.py seed_airports
+python manage.py seed_airlines
 python manage.py createsuperuser
 python manage.py create_agency --schema azaria --name "Azaria Bookings" \
     --admin-email owner@example.com --admin-password '<strong password>' --admin-name "Agency Owner"
 ```
 
-Uploaded boarding passes in `backend/private_media/` belong to the old records and can be deleted too.
+Uploaded boarding passes in `backend/private_media/` and airline logos in `backend/media/` belong to the old records and can be deleted too.
 
 The settings in `backend/.env`:
 
@@ -113,9 +116,10 @@ The settings in `backend/.env`:
 About the management commands:
 
 - **`seed_airports`** loads airports from `data/raw/airports.csv` and `countries.csv` into the shared (public) schema. It keeps airports that have an IATA code and scheduled service, and skips closed ones. Running it again updates rows in place, so it is safe to repeat.
+- **`seed_airlines`** adds airlines from `data/raw/airlines.dat` to the shared (public) schema: active airlines with a two-character IATA code, one per code. It only adds airlines that are missing and never changes existing ones, so corrections made in the platform admin survive a re-run. The data is old (largely 2014 to 2017), so treat it as a starting point and curate the list in the platform admin.
 - **`create_agency`** adds an agency: see above. The address (`--schema`) is 3 to 30 lowercase letters, digits and hyphens; `public`, `www`, `api`, `admin` and `app-admin` are reserved. If any part fails, nothing is left behind.
 - **`create_admin`** adds another admin to an agency: `python manage.py tenant_command create_admin --schema=azaria --email ... --password ... --name ...`.
-- **`/django-admin/`** on the root host (http://localhost:8000/django-admin/) is the platform admin for the system owner: list, add, rename, suspend and reactivate agencies and manage their domains. It is open to superusers of the public schema (`createsuperuser`).
+- **`/django-admin/`** on the root host (http://localhost:8000/django-admin/) is the platform admin for the system owner: list, add, rename, suspend and reactivate agencies and manage their domains, and curate the shared airline list (add, edit, deactivate, and upload each airline's logo: PNG, JPEG or WebP, up to 200 KB). It is open to superusers of the public schema (`createsuperuser`).
 - **`/django-admin/`** on an agency's host is technical support for that agency's data, open to that agency's superusers (`python manage.py tenant_command createsuperuser --schema=azaria`). Both are separate from the in-app admin.
 
 ### 3. Web app
@@ -125,6 +129,12 @@ cd frontend
 npm install
 cp .env.example .env               # EXPO_PUBLIC_API_URL=http://{host}:8000/api
 ```
+
+### Files and media
+
+- `backend/private_media/` holds boarding passes. It is never served by URL; files are only reachable through the authenticated download endpoint.
+- `backend/media/` holds airline logos, served at `/media/`. Django serves it while `DEBUG` is true; in production, have the reverse proxy serve that folder at `/media/` on every agency's host.
+- `frontend/public/flags/` holds the country flags, served by the web app at `/flags/<code>.svg`. On iOS and Android the same files are bundled into the app (react-native-svg, with react-native-svg-transformer in `metro.config.js`).
 
 ## Running
 
@@ -205,6 +215,13 @@ cd frontend && npx expo export --platform web        # production web build
 ```
 
 The backend tests create two agencies for the session (`test`, reached at the test client's default host, and `other.localhost`) and run every test in the first. They use an in-memory email outbox, run Celery tasks eagerly and write uploaded files to a temporary directory, so the worker and Redis don't need to be running. PostgreSQL does.
+
+## Data and credits
+
+- Airports: [OurAirports](https://ourairports.com/data/) (public domain).
+- Airlines: [OpenFlights](https://openflights.org/data) airline data, under the [Open Database License](https://opendatacommons.org/licenses/odbl/1-0/).
+- Country flags: [flag-icons](https://github.com/lipis/flag-icons) by Panayiotis Lipiridis, MIT licence (kept in `frontend/public/flags/LICENSE`).
+- Airline logos are not bundled; the system owner uploads them.
 
 ## Decisions
 

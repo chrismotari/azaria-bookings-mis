@@ -27,7 +27,7 @@ def test_guest_can_search_airports(api, airports):
     response = api.get("/api/airports", {"search": "nairobi"})
     assert response.status_code == 200
     assert codes(response) == ["NBO", "WIL"]
-    assert set(response.data[0]) == {"id", "code", "name", "city", "country"}
+    assert set(response.data[0]) == {"id", "code", "name", "city", "country", "country_code"}
 
 
 def test_search_matches_country_and_name(api, airports):
@@ -65,9 +65,13 @@ def test_seed_airports_from_raw_csv():
     nbo = Airport.objects.get(code="NBO")
     assert nbo.city == "Nairobi"
     assert nbo.country == "Kenya"
+    assert nbo.country_code == "KE"
+    assert Airport.objects.get(code="LHR").country_code == "GB"
     assert all(len(code) == 3 for code in Airport.objects.values_list("code", flat=True))
 
-    Airport.objects.filter(code="NBO").update(city="Changed")
+    Airport.objects.filter(code="NBO").update(city="Changed", country_code="")
     call_command("seed_airports")
+    # A re-run fills the code in for airports seeded before it existed.
+    assert Airport.objects.get(code="NBO").country_code == "KE"
     assert Airport.objects.count() == count
     assert Airport.objects.get(code="NBO").city == "Nairobi"
