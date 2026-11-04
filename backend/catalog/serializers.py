@@ -21,8 +21,15 @@ class StopSerializer(serializers.Serializer):
     kind = serializers.CharField(read_only=True)
 
 
+class AirportCodeField(serializers.SlugRelatedField):
+    """An airport by IATA code, in any case."""
+
+    def to_internal_value(self, data):
+        return super().to_internal_value(data.strip().upper() if isinstance(data, str) else data)
+
+
 class StopInputSerializer(serializers.Serializer):
-    airport = serializers.SlugRelatedField(slug_field="code", queryset=Airport.objects.all())
+    airport = AirportCodeField(slug_field="code", queryset=Airport.objects.all())
     duration_minutes = serializers.IntegerField(min_value=1)
 
 

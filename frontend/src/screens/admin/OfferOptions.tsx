@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { api } from '../../api/client';
+import { firstMessage } from '../../api/errors';
 import { AdminOffer, Paginated } from '../../api/types';
 import { Button } from '../../components/Button';
 import { Field, inputStyle } from '../../components/Field';
@@ -29,9 +30,10 @@ function itemErrors(errors: unknown): string | null {
   if (!errors || typeof errors !== 'object') {
     return null;
   }
-  const messages = Object.entries(errors as Record<string, unknown>).map(
-    ([field, value]) => `${field.replace('_', ' ')}: ${Array.isArray(value) ? value[0] : String(value)}`,
-  );
+  const messages = Object.entries(errors as Record<string, unknown>).flatMap(([field, value]) => {
+    const message = firstMessage(value);
+    return message ? [`${field.replaceAll('_', ' ')}: ${message}`] : [];
+  });
   return messages.length ? messages.join(' · ') : null;
 }
 

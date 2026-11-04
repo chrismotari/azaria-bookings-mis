@@ -105,6 +105,8 @@ export function AdminBookingDetailView({ id }: { id: string }) {
     mutationFn: async (action: Action) =>
       (await api.post<AdminBookingDetail>(`/admin/bookings/${id}/${action.path}`)).data,
     onSuccess: updated,
+    // Refused (e.g. the customer cancelled meanwhile): show what it is now.
+    onError: () => queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] }),
   });
 
   if (booking.isPending) {
@@ -173,6 +175,9 @@ export function AdminBookingDetailView({ id }: { id: string }) {
         onDone={(marked) => {
           setDialog(null);
           updated(marked);
+          // Suggestions create a responded request and possibly private custom offers.
+          queryClient.invalidateQueries({ queryKey: ['admin', 'queries'] });
+          queryClient.invalidateQueries({ queryKey: ['admin', 'offers'] });
         }}
       />
 

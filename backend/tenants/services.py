@@ -5,7 +5,7 @@ from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import transaction
-from django_tenants.utils import get_public_schema_name, schema_context
+from django_tenants.utils import get_public_schema_name, schema_context, schema_exists
 
 from accounts.models import User
 from core.models import AppSettings
@@ -14,7 +14,7 @@ from .models import Domain, Tenant
 
 # What the system owner types: also the first label of the tenant's hostname.
 SLUG = re.compile(r"^[a-z][a-z0-9-]{2,29}$")
-RESERVED = {"public", "www", "api", "admin", "app-admin"}
+RESERVED = {"public", "www", "api", "admin", "app-admin", "information-schema"}
 
 
 def schema_name_for(slug):
@@ -37,6 +37,8 @@ def validate_slug(slug):
         taken = (
             Tenant.objects.filter(schema_name__iexact=schema_name_for(slug)).exists()
             or Domain.objects.filter(domain=domain_for(slug)).exists()
+            # Any other schema already in the database (e.g. PostgreSQL's own).
+            or schema_exists(schema_name_for(slug))
         )
     if taken:
         raise ValidationError(f"{slug} is already in use.", code="taken")

@@ -1,5 +1,6 @@
 from django.http import FileResponse, Http404
 from rest_framework import generics, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -23,6 +24,7 @@ from .serializers import (
 from .services import (
     accept_changes,
     add_boarding_pass,
+    check_transition,
     confirm_availability,
     create_booking,
     delete_boarding_pass,
@@ -45,6 +47,9 @@ class BookingListCreateView(generics.ListAPIView):
         )
 
     def post(self, request):
+        # Customers book here; the admin books for a customer through POST /admin/bookings.
+        if request.user.role != request.user.Role.CUSTOMER:
+            raise PermissionDenied("Only customers can book here.")
         serializer = BookingCreateSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         booking = create_booking(request.user, serializer.validated_data)
@@ -126,6 +131,7 @@ class AdminConfirmAvailabilityView(APIView):
 
     def post(self, request, pk):
         booking = generics.get_object_or_404(Booking.objects.select_related(*BOOKING_RELATED), pk=pk)
+        check_transition(booking, Booking.Status.AVAILABILITY_CONFIRMED)
         serializer = ConfirmAvailabilitySerializer(data=request.data, context={"booking": booking})
         serializer.is_valid(raise_exception=True)
         booking = confirm_availability(pk, request.user, **serializer.validated_data)
@@ -138,7 +144,7 @@ class AdminMarkUnavailableView(APIView):
     permission_classes = [IsAdminRole]
 
     def post(self, request, pk):
-        generics.get_object_or_404(Booking, pk=pk)
+        check_transition(generics.get_object_or_404(Booking, pk=pk), Booking.Status.UNAVAILABLE)
         serializer = SuggestedOptionsSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data

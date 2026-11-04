@@ -103,6 +103,7 @@ The settings in `backend/.env`:
 | `TENANT_BASE_DOMAIN` | The root host, which is the platform itself (`localhost` in development). Agencies are reached at `<schema>.<this>` |
 | `DATABASE_URL` | e.g. `postgres://azaria:password@localhost:5432/azaria` |
 | `REDIS_URL` | e.g. `redis://localhost:6379/0` (Celery broker and results) |
+| `NUM_PROXIES` | Trusted proxies in front of the API, so the per-IP throttles see the real client (default `0`: no proxy; set `1` behind one reverse proxy) |
 | `CORS_ALLOWED_ORIGIN_REGEXES` | The web app's origins on every agency's host, e.g. `^http://([a-z0-9-]+\.)?localhost:8081$` |
 | `FRONTEND_URL` | The web app's base URL for links in emails, with `{domain}` for the agency's primary domain: `http://{domain}:8081` |
 | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS` | SMTP. Leave `EMAIL_HOST` empty to print emails in the worker's console |

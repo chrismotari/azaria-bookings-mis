@@ -14,5 +14,7 @@ class BookingEventInline(admin.TabularInline):
 class BookingAdmin(admin.ModelAdmin):
     list_display = ["__str__", "user", "offer", "status", "created_at"]
     list_filter = ["status"]
-    raw_id_fields = ["user", "offer", "query"]
+    raw_id_fields = ["user", "offer", "query", "alternatives"]
+    # Status changes go through bookings.services only (timeline and emails), never through this form.
+    readonly_fields = ["status", "payment_deadline", "reminder_sent_at", "changes", "changes_accepted"]
     inlines = [BookingEventInline]

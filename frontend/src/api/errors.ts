@@ -3,12 +3,17 @@ import { FieldValues, Path, UseFormSetError } from 'react-hook-form';
 
 type ErrorBody = Record<string, unknown>;
 
-function firstMessage(value: unknown): string | null {
+/** The first message in a DRF error value: a string, a list, or nested field errors (e.g. one per stop). */
+export function firstMessage(value: unknown): string | null {
   if (typeof value === 'string') {
     return value;
   }
-  if (Array.isArray(value) && value.length > 0) {
-    return firstMessage(value[0]);
+  const items = Array.isArray(value) ? value : value && typeof value === 'object' ? Object.values(value) : [];
+  for (const item of items) {
+    const message = firstMessage(item);
+    if (message) {
+      return message;
+    }
   }
   return null;
 }

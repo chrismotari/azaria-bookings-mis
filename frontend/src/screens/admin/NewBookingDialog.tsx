@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
-import { errorMessage } from '../../api/errors';
+import { errorMessage, firstMessage } from '../../api/errors';
 import { AdminBookingDetail, AdminCustomer, AdminOffer, Paginated } from '../../api/types';
 import { Button } from '../../components/Button';
 import { Dialog } from '../../components/Dialog';
@@ -41,9 +41,9 @@ function fieldErrors(error: unknown): Errors | null {
   }
   const found: Errors = {};
   for (const field of ['user', 'offer', 'passenger_count', 'notes'] as const) {
-    const value = (body as Record<string, unknown>)[field];
-    if (Array.isArray(value) && typeof value[0] === 'string') {
-      found[field] = value[0];
+    const message = firstMessage((body as Record<string, unknown>)[field]);
+    if (message) {
+      found[field] = message;
     }
   }
   return Object.keys(found).length ? found : null;

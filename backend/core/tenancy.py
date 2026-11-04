@@ -27,7 +27,10 @@ def tenant_task(**options):
     def decorator(func):
         def run(schema_name, *args, **kwargs):
             with schema_context(get_public_schema_name()):
-                active = Tenant.objects.filter(schema_name=schema_name, is_active=True).exists()
+                active = (
+                    schema_name != get_public_schema_name()
+                    and Tenant.objects.filter(schema_name=schema_name, is_active=True).exists()
+                )
             if not active:
                 logger.info("Skipped %s: tenant %s is missing or suspended.", func.__name__, schema_name)
                 return None

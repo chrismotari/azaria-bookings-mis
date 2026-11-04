@@ -48,6 +48,8 @@ export function BookingDetailView({ id }: { id: string }) {
       queryClient.setQueryData(['bookings', 'detail', id], data);
       return queryClient.invalidateQueries({ queryKey: ['bookings'] });
     },
+    // Refused (e.g. the admin changed the booking meanwhile): show what it is now.
+    onError: () => queryClient.invalidateQueries({ queryKey: ['bookings'] }),
   });
 
   if (booking.isPending) {

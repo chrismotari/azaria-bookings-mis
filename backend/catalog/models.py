@@ -16,11 +16,14 @@ class OfferQuerySet(models.QuerySet):
         return self.filter(is_active=True, is_public=True)
 
     def visible_to(self, user):
-        """Public active offers, plus those sent to this customer in a query response."""
+        """Public active offers, plus those sent to this customer in a query response or booked by them."""
         if not user.is_authenticated:
             return self.publicly_visible()
         sent_to_user = self.filter(query_responses__query__user=user).values("pk")
-        return self.filter(models.Q(is_active=True, is_public=True) | models.Q(pk__in=sent_to_user))
+        booked_by_user = self.filter(bookings__user=user).values("pk")
+        return self.filter(
+            models.Q(is_active=True, is_public=True) | models.Q(pk__in=sent_to_user) | models.Q(pk__in=booked_by_user)
+        )
 
 
 class Offer(models.Model):

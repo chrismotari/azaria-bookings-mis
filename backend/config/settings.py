@@ -156,6 +156,9 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
+    # How many trusted proxies sit in front of the API; with 0 the client IP is REMOTE_ADDR and a forged
+    # X-Forwarded-For cannot dodge the per-IP throttles.
+    "NUM_PROXIES": env.int("NUM_PROXIES", default=0),
     "DEFAULT_THROTTLE_RATES": {
         "register": "10/min",
         "login": "10/min",

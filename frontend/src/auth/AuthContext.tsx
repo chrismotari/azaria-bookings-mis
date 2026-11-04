@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import { api, setSessionExpiredHandler } from '../api/client';
@@ -37,8 +38,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!cancelled) {
             setUser(data);
           }
-        } catch {
-          await tokenStorage.clear();
+        } catch (error) {
+          // Only a rejected session signs the user out (the client has already tried a refresh). If the
+          // server is unreachable or the agency suspended, keep the tokens for the next visit.
+          if (isAxiosError(error) && error.response?.status === 401) {
+            await tokenStorage.clear();
+          }
         }
       }
       if (!cancelled) {

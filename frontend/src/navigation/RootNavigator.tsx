@@ -1,8 +1,12 @@
 import { BottomTabScreenProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useFocusEffect, useLinkTo, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator, NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useCallback, useEffect, useRef } from 'react';
+import { Platform } from 'react-native';
 
 import { useAuth } from '../auth/AuthContext';
-import { RequireAuth } from '../auth/gate';
+import { RequireAuth, toLogin } from '../auth/gate';
+import { setPendingPath, takePendingAction, takePendingPath } from '../auth/pendingAction';
 import { Icon, IconName } from '../components/Icon';
 import { AdminBookingsScreen } from '../screens/admin/AdminBookingsScreen';
 import { AdminDashboardScreen } from '../screens/admin/AdminDashboardScreen';
@@ -30,6 +34,49 @@ import { AdminTabParamList, MainTabParamList, RootStackParamList } from './types
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const MainTabs = createBottomTabNavigator<MainTabParamList>();
 const AdminTabs = createBottomTabNavigator<AdminTabParamList>();
+
+/**
+ * An admin URL (e.g. the link in a new-booking email) opened while signed out: remember the path and sign in
+ * first; AdminStack reopens it once the admin is signed in.
+ */
+function AdminSignInFirst() {
+  const navigation = useNavigation();
+  // Read on the first render, before the redirect changes the address.
+  const path = useRef(Platform.OS === 'web' ? `${window.location.pathname}${window.location.search}` : null);
+  useFocusEffect(
+    useCallback(() => {
+      if (path.current) {
+        setPendingPath(path.current);
+      }
+      navigation.dispatch(toLogin);
+    }, [navigation]),
+  );
+  return null;
+}
+
+/** The admin's screens; on sign-in it opens the admin page the admin was sent to before, if any. */
+function AdminStack() {
+  const linkTo = useLinkTo();
+  useEffect(() => {
+    // A customer action remembered before an admin signed in does not apply.
+    takePendingAction();
+    const path = takePendingPath();
+    if (path) {
+      linkTo(path);
+    }
+  }, [linkTo]);
+  return (
+    <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
+      <Stack.Screen name="AdminTabs" component={AdminTabsNavigator} options={{ headerShown: false }} />
+      <Stack.Screen name="AdminOfferNew" component={AdminOfferNewScreen} options={{ title: 'New offer' }} />
+      <Stack.Screen
+        name="AdminQueryRespond"
+        component={AdminQueryRespondScreen}
+        options={{ title: 'Respond to request' }}
+      />
+    </Stack.Navigator>
+  );
+}
 
 function GatedAccount() {
   return (
@@ -175,17 +222,7 @@ export function RootNavigator() {
   const { user } = useAuth();
 
   if (user?.role === 'admin') {
-    return (
-      <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
-        <Stack.Screen name="AdminTabs" component={AdminTabsNavigator} options={{ headerShown: false }} />
-        <Stack.Screen name="AdminOfferNew" component={AdminOfferNewScreen} options={{ title: 'New offer' }} />
-        <Stack.Screen
-          name="AdminQueryRespond"
-          component={AdminQueryRespondScreen}
-          options={{ title: 'Respond to request' }}
-        />
-      </Stack.Navigator>
-    );
+    return <AdminStack />;
   }
 
   return (
@@ -200,6 +237,9 @@ export function RootNavigator() {
           <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Create account' }} />
           <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ title: 'Forgot password' }} />
           <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ title: 'Reset password' }} />
+          {/* Admin links opened while signed out go to Login first. */}
+          <Stack.Screen name="AdminTabs" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
+          <Stack.Screen name="AdminQueryRespond" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
         </Stack.Group>
       )}
     </Stack.Navigator>

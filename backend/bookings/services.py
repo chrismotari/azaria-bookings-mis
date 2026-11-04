@@ -104,13 +104,17 @@ def create_booking(user, data, admin=None):
     return booking
 
 
-def transition(booking_id, to_status, actor, apply=None):
+def transition(booking_id, to_status, actor, apply=None, from_status=None):
     """Moves the booking to to_status on behalf of actor (None for the system). Raises InvalidTransition.
 
     apply(booking), when given, makes further changes to the locked booking in the same transaction, after the checks.
+    from_status, when given, is the status the caller selected the booking in; if it has moved on since, the
+    change is refused (scheduled jobs use it so a booking confirmed or paid meanwhile is left alone).
     """
     with transaction.atomic():
         booking = Booking.objects.select_for_update().get(pk=booking_id)
+        if from_status is not None and booking.status != from_status:
+            raise InvalidTransition("The booking changed in the meantime.")
         from_status = booking.status
         allowed = TRANSITIONS.get((from_status, to_status))
         if allowed is None:
@@ -146,6 +150,15 @@ def transition(booking_id, to_status, actor, apply=None):
         if to_status in EMAILS:
             _queue_email(EMAILS[to_status], booking.pk)
     return booking
+
+
+def check_transition(booking, to_status):
+    """Refuses (409) a move the state machine never allows from the booking's status, before a body is validated."""
+    if (booking.status, to_status) not in TRANSITIONS:
+        raise InvalidTransition(
+            f"A booking that is {Status(booking.status).label.lower()} "
+            f"cannot be changed to {Status(to_status).label.lower()}."
+        )
 
 
 def _stop_change(airport, duration_minutes):

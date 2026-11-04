@@ -79,3 +79,15 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - The New booking dialog's customer search shows up to six active customers and asks to keep typing when more match; its offer search starts empty (any route and date) and lists active offers, with ones that can no longer be booked disabled.
 - After the admin creates a booking, the Bookings list switches to Requested so the new booking shows next to its drawer.
 - Dialogs show the reason a save failed in their footer, above the buttons, so it is in view however far the form is scrolled.
+- Throttles take the client IP from REMOTE_ADDR unless NUM_PROXIES (default 0) says how many trusted proxies to trust in X-Forwarded-For, so a forged header cannot dodge them.
+- Agency addresses that match a schema already in the database (e.g. information-schema) are refused like taken ones.
+- A host outside ALLOWED_HOSTS gets Django's plain 404 (django-tenants rejects it before any view); only allowed hosts without an agency get the no_tenant JSON.
+- POST /bookings is for customers only (403 for the admin, who books through POST /admin/bookings).
+- confirm-availability and mark-unavailable answer 409 for a move the state machine never allows before validating their optional body.
+- Scheduled expiry re-checks, under the lock, that the booking is still in the status it was selected in.
+- Stop airport codes are accepted in any case.
+- A customer can open the detail of any offer they have booked (besides public ones and those sent to them), so links to an offer the admin booked for them work.
+- In the support Django admin the booking's status, deadline, reminder and changes fields are read-only; status changes go through bookings.services only.
+- Admin links opened while signed out (e.g. from emails) go through the sign-in gate and open after the admin signs in.
+- On start-up the app only clears stored tokens when the server rejects the session (401), not when it is unreachable or the agency is suspended.
+- Paged admin lists go back to page 1 when the filter changes (also from a Dashboard link) or when the page no longer exists.

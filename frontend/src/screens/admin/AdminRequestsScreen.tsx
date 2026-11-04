@@ -1,6 +1,6 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
@@ -20,6 +20,7 @@ import { colors, font, space, useIsWide, weight } from '../../theme';
 import { formatDateTime } from '../../utils/format';
 import { QUERY_STATUS, describeQuery } from '../../utils/queries';
 import { AdminQueryDetailView } from './AdminQueryDetailView';
+import { useListPage, useMissingPageReset } from '../../utils/listPage';
 
 const STATUS_OPTIONS: { value: QueryStatus | 'all'; label: string }[] = [
   { value: 'open', label: 'Open' },
@@ -52,7 +53,7 @@ export function AdminRequestsScreen({ navigation, route }: BottomTabScreenProps<
   // With a request open the list is too narrow for the table.
   const asTable = useIsWide() && selected === undefined;
   const status = route.params?.status ?? 'open';
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useListPage(status);
   const queries = useQuery({
     queryKey: ['admin', 'queries', status, page],
     queryFn: async () => {
@@ -61,6 +62,7 @@ export function AdminRequestsScreen({ navigation, route }: BottomTabScreenProps<
     },
     placeholderData: keepPreviousData,
   });
+  useMissingPageReset(queries.error, page, setPage);
   const open = (query: AdminQuery) => navigation.setParams({ id: query.id });
 
   return (

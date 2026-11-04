@@ -23,6 +23,7 @@ import { BOOKING_STATUS, bookingRoute, passengersLabel } from '../../utils/booki
 import { formatDate, formatDateTime } from '../../utils/format';
 import { AdminBookingDetailView } from './AdminBookingDetailView';
 import { NewBookingDialog } from './NewBookingDialog';
+import { useListPage, useMissingPageReset } from '../../utils/listPage';
 
 const STATUS_OPTIONS: { value: BookingStatus | 'all'; label: string }[] = [
   { value: 'requested', label: 'Requested' },
@@ -52,7 +53,7 @@ export function AdminBookingsScreen({ navigation, route }: BottomTabScreenProps<
   // With a booking open the list is too narrow for the table.
   const asTable = useIsWide() && selected === undefined;
   const status = route.params?.status ?? 'requested';
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useListPage(status);
   const [creating, setCreating] = useState(false);
   const bookings = useQuery({
     queryKey: ['admin', 'bookings', status, page],
@@ -62,6 +63,7 @@ export function AdminBookingsScreen({ navigation, route }: BottomTabScreenProps<
     },
     placeholderData: keepPreviousData,
   });
+  useMissingPageReset(bookings.error, page, setPage);
   const open = (booking: AdminBooking) => navigation.setParams({ id: booking.id });
 
   return (

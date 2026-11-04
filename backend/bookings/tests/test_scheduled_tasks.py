@@ -90,9 +90,9 @@ def test_expire_skips_bookings_that_changed_meanwhile(make_booking, admin_user, 
     # Pay the first booking between the task's query and its transition.
     real_expire = tasks._expire
 
-    def pay_first_then_expire(booking_ids):
+    def pay_first_then_expire(booking_ids, from_status):
         Booking.objects.filter(pk=booking.pk).update(status=Status.PAID)
-        return real_expire(booking_ids)
+        return real_expire(booking_ids, from_status)
 
     monkeypatch.setattr(tasks, "_expire", pay_first_then_expire)
     with freeze_time(DEADLINE + timedelta(minutes=1)):
@@ -295,3 +295,22 @@ def test_settings_validation(admin_api, field, value):
 @pytest.mark.django_db
 def test_settings_put_not_allowed(admin_api):
     assert admin_api.put("/api/admin/settings", {}, format="json").status_code == 405
+
+
+@pytest.mark.django_db
+def test_stale_request_expiry_leaves_a_booking_confirmed_meanwhile(make_booking, instructions, monkeypatch):
+    booking = make_booking(status=Status.REQUESTED)
+    real_expire = tasks._expire
+
+    def confirm_first_then_expire(booking_ids, from_status):
+        # The admin confirms availability between the job's query and its transition.
+        Booking.objects.filter(pk=booking.pk).update(
+            status=Status.AVAILABILITY_CONFIRMED, payment_deadline=timezone.now() + timedelta(hours=24)
+        )
+        return real_expire(booking_ids, from_status)
+
+    monkeypatch.setattr(tasks, "_expire", confirm_first_then_expire)
+    with freeze_time(booking.offer.departure_date + timedelta(days=1)):
+        assert tasks.expire_stale_requests() == 0
+    booking.refresh_from_db()
+    assert booking.status == Status.AVAILABILITY_CONFIRMED

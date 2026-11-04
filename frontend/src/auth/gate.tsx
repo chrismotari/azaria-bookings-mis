@@ -8,7 +8,7 @@ import { useAuth } from './AuthContext';
 import { setPendingAction, takePendingAction } from './pendingAction';
 
 // Login on top of a fresh Main, so going back lands on Explore rather than the gated screen.
-const toLogin = CommonActions.reset({ index: 1, routes: [{ name: 'Main' }, { name: 'Login' }] });
+export const toLogin = CommonActions.reset({ index: 1, routes: [{ name: 'Main' }, { name: 'Login' }] });
 
 /**
  * The auth gate for login-required actions (e.g. "Request options"): opens the target

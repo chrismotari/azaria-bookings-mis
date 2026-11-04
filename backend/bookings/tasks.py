@@ -165,13 +165,13 @@ def notify_customer_payment_reminder(booking_id):
 # tasks, so these import it when they run.
 
 
-def _expire(booking_ids):
+def _expire(booking_ids, from_status):
     from .services import InvalidTransition, transition
 
     expired = 0
     for booking_id in booking_ids:
         try:
-            transition(booking_id, Booking.Status.EXPIRED, actor=None)
+            transition(booking_id, Booking.Status.EXPIRED, actor=None, from_status=from_status)
         except InvalidTransition:
             # Changed in the meantime, e.g. paid or cancelled.
             continue
@@ -189,7 +189,7 @@ def _expire_unpaid_bookings():
     booking_ids = Booking.objects.filter(
         status=Booking.Status.AVAILABILITY_CONFIRMED, payment_deadline__lt=timezone.now()
     ).values_list("pk", flat=True)
-    expired = _expire(list(booking_ids))
+    expired = _expire(list(booking_ids), Booking.Status.AVAILABILITY_CONFIRMED)
     logger.info("Expired %d unpaid booking(s).", expired)
     return expired
 
@@ -204,7 +204,7 @@ def _expire_stale_requests():
     booking_ids = Booking.objects.filter(
         status=Booking.Status.REQUESTED, offer__departure_date__lt=timezone.localdate()
     ).values_list("pk", flat=True)
-    expired = _expire(list(booking_ids))
+    expired = _expire(list(booking_ids), Booking.Status.REQUESTED)
     logger.info("Expired %d stale booking request(s).", expired)
     return expired
 
