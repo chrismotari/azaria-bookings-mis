@@ -85,3 +85,32 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         user.set_password(self.validated_data["new_password"])
         user.save(update_fields=["password"])
         return user
+
+
+class AdminCustomerSerializer(serializers.ModelSerializer):
+    """A customer as the admin manages them; the role is never changed here."""
+
+    class Meta:
+        model = User
+        fields = ["id", "email", "full_name", "phone", "is_active"]
+        read_only_fields = ["id"]
+        extra_kwargs = {"email": {"validators": []}}
+
+    def validate_email(self, value):
+        email = User.objects.normalize_email(value)
+        others = User.objects.filter(email=email)
+        if self.instance is not None:
+            others = others.exclude(pk=self.instance.pk)
+        if others.exists():
+            raise serializers.ValidationError("An account with this email already exists.")
+        return email
+
+    def validate_full_name(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Enter the customer's name.")
+        return value.strip()
+
+    def create(self, validated_data):
+        # No password: the customer chooses one from the welcome email (email 11).
+        validated_data.pop("is_active", None)
+        return User.objects.create_user(role=User.Role.CUSTOMER, password=None, **validated_data)

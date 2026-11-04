@@ -31,6 +31,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
           AdminOffers: 'offers/:id?',
           AdminRequests: 'requests/:id?',
           AdminBookings: 'bookings/:id?',
+          AdminUsers: 'users/:id?',
           AdminSettings: 'settings',
         },
       },

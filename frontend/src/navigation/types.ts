@@ -28,6 +28,7 @@ export type AdminTabParamList = {
   AdminOffers: { id?: string } | undefined;
   AdminRequests: { status?: QueryStatus | 'all'; id?: string } | undefined;
   AdminBookings: { status?: BookingStatus | 'all'; id?: string } | undefined;
+  AdminUsers: { id?: string } | undefined;
   AdminSettings: undefined;
 };
 

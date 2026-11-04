@@ -1,14 +1,17 @@
-from rest_framework import status
+from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from core.permissions import IsAdminRole
 from core.tenancy import queue
 from core.throttling import IPScopedRateThrottle
 
+from .filters import AdminCustomerFilter
 from .models import User
 from .serializers import (
+    AdminCustomerSerializer,
     LoginSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
@@ -16,7 +19,7 @@ from .serializers import (
     UserSerializer,
     tokens_for,
 )
-from .tasks import send_password_reset_email
+from .tasks import send_account_created_email, send_password_reset_email
 
 
 class RegisterView(APIView):
@@ -67,3 +70,25 @@ class PasswordResetConfirmView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"detail": "Your password has been reset."})
+
+
+class AdminCustomerListView(generics.ListCreateAPIView):
+    """The agency's customers (only role customer); creating one emails them a link to choose a password."""
+
+    permission_classes = [IsAdminRole]
+    serializer_class = AdminCustomerSerializer
+    filterset_class = AdminCustomerFilter
+    queryset = User.objects.filter(role=User.Role.CUSTOMER).order_by("full_name", "email")
+
+    def perform_create(self, serializer):
+        user = serializer.save()
+        queue(send_account_created_email, user.pk)
+
+
+class AdminCustomerDetailView(generics.RetrieveUpdateAPIView):
+    """Deactivating (is_active false) stands in for deleting: requests and bookings stay."""
+
+    permission_classes = [IsAdminRole]
+    serializer_class = AdminCustomerSerializer
+    queryset = User.objects.filter(role=User.Role.CUSTOMER)
+    http_method_names = ["get", "patch", "head", "options"]

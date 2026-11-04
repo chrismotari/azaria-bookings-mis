@@ -71,3 +71,7 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - Tenant tasks keep their names; the schema name is their first argument. The three beat tasks return the total across agencies.
 - Tests: the session's test agency uses the test client's default host (testserver), so existing tests needed no host changes; a second agency (other.localhost) backs the isolation tests.
 - The full-page "no agency" message appears when an API call returns no_tenant or tenant_suspended; the root host's app shows it as soon as Explore loads offers.
+- A customer created by the admin needs only email and name; phone is optional (registration still asks for it). is_active and role are ignored on create.
+- The Users list is ordered by name then email and has a search box only; the is_active filter exists in the API but has no control in the UI.
+- The New user dialog uses the large size (a form); after saving, the new customer opens in the drawer.
+- The hook that waits for typing to stop (useDebounced) moved from the airport picker to src/utils so the Users search shares it.

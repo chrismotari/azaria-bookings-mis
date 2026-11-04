@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 
 import { api } from '../api/client';
 import { Airport } from '../api/types';
 import { colors, font, weight } from '../theme';
+import { useDebounced } from '../utils/useDebounced';
 import { Field, inputStyle } from './Field';
 import { PressState } from './pressState';
 
@@ -12,14 +13,6 @@ function airportLabel(airport: Airport): string {
   return `${airport.code} · ${airport.city}, ${airport.country}`;
 }
 
-function useDebounced(value: string, delayMs: number): string {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delayMs);
-    return () => clearTimeout(timer);
-  }, [value, delayMs]);
-  return debounced;
-}
 
 /** Matches from /airports for what the user has typed (at least two characters). */
 function AirportSuggestions({ text, onSelect }: { text: string; onSelect: (airport: Airport) => void }) {

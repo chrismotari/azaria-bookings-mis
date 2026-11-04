@@ -160,7 +160,7 @@ Celery beat runs these scheduled tasks, each in every active agency in turn:
 **Who can do what**
 - **Guests** can browse deals, view a deal and search airports.
 - **Customers** can also request options, book, cancel their own bookings and download their boarding passes once they are sent.
-- **The admin** manages deals, answers requests, moves bookings through their statuses, uploads and sends boarding passes, and edits settings.
+- **The admin** manages deals, answers requests, moves bookings through their statuses, uploads and sends boarding passes, manages customers (add, edit, deactivate and reactivate) and edits settings. A customer the admin adds is emailed a link to choose their password; a deactivated customer cannot sign in, but their requests and bookings stay.
 
 **Booking lifecycle.** Every status change goes through `bookings/services.py`. The service locks the booking, checks that the move is allowed and that the right person is making it, records the change on the booking's timeline, and queues the matching email. Moves that aren't allowed return HTTP 409.
 
@@ -191,7 +191,7 @@ Everything is under `/api/` on an agency's host. Authenticate with `Authorizatio
 | Auth (public) | `POST auth/register`, `auth/login`, `auth/refresh`, `auth/password-reset`, `auth/password-reset-confirm`; `GET auth/me` |
 | Browse (public) | `GET airports?search=`, `GET offers` (filters: origin, destination, date range, price range, class, max stopovers; ordering), `GET offers/{id}` |
 | Customer | `queries` (list, create, detail, `close`), `bookings` (list, create, detail, `cancel`), `GET boarding-passes/{id}/download` |
-| Admin | `admin/dashboard`, `admin/offers`, `admin/queries` (+ `respond`), `admin/bookings` (+ `confirm-availability`, `mark-unavailable`, `mark-paid`, `complete`, `boarding-passes` upload), `DELETE admin/boarding-passes/{id}`, `admin/settings` |
+| Admin | `admin/dashboard`, `admin/offers`, `admin/queries` (+ `respond`), `admin/bookings` (+ `confirm-availability`, `mark-unavailable`, `mark-paid`, `complete`, `boarding-passes` upload), `DELETE admin/boarding-passes/{id}`, `admin/settings`, `admin/users` (list with `search` and `is_active`, create, detail, edit; customers only) |
 
 Errors use DRF's standard format.
 

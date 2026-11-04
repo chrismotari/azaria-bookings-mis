@@ -11,6 +11,7 @@ import { AdminOffersScreen } from '../screens/admin/AdminOffersScreen';
 import { AdminQueryRespondScreen } from '../screens/admin/AdminQueryRespondScreen';
 import { AdminRequestsScreen } from '../screens/admin/AdminRequestsScreen';
 import { AdminSettingsScreen } from '../screens/admin/AdminSettingsScreen';
+import { AdminUsersScreen } from '../screens/admin/AdminUsersScreen';
 import { BookingNewScreen } from '../screens/bookings/BookingNewScreen';
 import { BookingsScreen } from '../screens/bookings/BookingsScreen';
 import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
@@ -155,6 +156,11 @@ function AdminTabsNavigator() {
         name="AdminBookings"
         component={AdminBookingsScreen}
         options={tab('Bookings', 'ticket-outline', 'ticket')}
+      />
+      <AdminTabs.Screen
+        name="AdminUsers"
+        component={AdminUsersScreen}
+        options={tab('Users', 'people-outline', 'people')}
       />
       <AdminTabs.Screen
         name="AdminSettings"

@@ -174,3 +174,12 @@ export type AppSettings = {
   reminder_hours_before: number;
   admin_notification_email: string;
 };
+
+/** A customer as the admin manages them. */
+export type AdminCustomer = {
+  id: string;
+  email: string;
+  full_name: string;
+  phone: string;
+  is_active: boolean;
+};
