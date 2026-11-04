@@ -292,7 +292,7 @@ Explore and offer detail (step 14)
 - Hero: an indigo band across the top of Explore with a headline ("Find your next flight deal") and a white search bar on it: From, a swap button (⇄) that exchanges From and To, To, the departure date range (from / until), Class, and an amber Search button. On narrow screens the bar's fields stack inside the band.
 - Filter sidebar on wide screens, left of the results: Price per person (min and max), Max stopovers as chips (Any, Direct, Up to 1, Up to 2), and Clear all. On narrow screens a "Filters" button with a count of active filters opens the same filters in a panel above the results.
 - Sort tabs above the results (Soonest departure, Lowest price, Highest price) as a segmented control that fits in one row at 390 px; the result count sits beside them.
-- Flight result rows (one per offer, full width of the results column): an airline badge (initials in a tinted circle; no logos), airline name and class; a route line: origin code and city, a line with one dot per stopover and the label "Direct" or "N stop(s)", destination code and city; the departure date; on the right the amber price with "per person" and a "View deal" button. "Offer valid until" in small muted text. The selected row (drawer open) is highlighted.
+- Flight result rows (one per offer, full width of the results column): an airline badge (initials in a tinted circle; no logos until step 25, see AIRLINES, LOGOS AND FLAGS), airline name and class; a route line: origin code and city, a line with one dot per stopover and the label "Direct" or "N stop(s)", destination code and city; the departure date; on the right the amber price with "per person" and a "View deal" button. "Offer valid until" in small muted text. The selected row (drawer open) is highlighted.
 - Zero results: the empty state with the existing "Request options" call to action, styled as an amber button.
 - Offer detail (drawer and full screen): a header with the route line from the result rows drawn larger (codes, cities, airport names), a details grid with icons (departure date, airline, class, stopovers, valid until), and a price summary card with the price per person and the Book button. On the full-screen detail on wide screens the summary card sits on the right and stays in view while scrolling.
 - Book form: the offer summary on top (route line, date, airline), a passenger stepper (− / +, within the existing bounds) in place of a bare number field, notes, and a live total (passengers × price) above the Book button.
@@ -426,6 +426,43 @@ README
 - Local hosts (azaria.localhost works in Chrome and Firefox without setup; nip.io for other devices), migrate_schemas, seed_airports on public, createsuperuser for the system owner, create_agency for each tenant, and the database reset.
 
 ======================================================================
+AIRLINES, LOGOS AND FLAGS (step 25)
+======================================================================
+Goal: offers name a real airline chosen from a shared list instead of typed text, the airline badge shows the airline's logo where the system owner has uploaded one, and airports show their country's flag. The airline list and the logos belong to the platform: only the system owner maintains them, in the platform's /django-admin/; every agency picks from the same list.
+
+Model and data
+- New shared app airlines (public schema, like airports): Airline with id (UUID), iata_code (2 characters, letters and digits, unique), icao_code (3 letters, blank allowed), name, country, is_active (default true), logo (file, blank allowed), updated_at.
+- Offer.airline (CharField) is replaced by airline (FK Airline, PROTECT). There is no production data, so the migrations are regenerated and the local database is reset again (as in steps 18 and 22); README.md says so. Only an active airline can be chosen when an offer is created or its airline changed; existing offers keep an airline that is later deactivated.
+- seed_airlines builds the list from backend/data/raw/airlines.dat (OpenFlights airline data, Open Database License; README.md credits it): keep rows marked active ("Y") whose IATA code is two letters or digits, take the country as given, and where several rows share an IATA code keep the one with an ICAO code (then the first). It creates airlines that are missing and never changes existing ones, so the system owner's corrections, deactivations and logos survive a re-run. The data is old (largely 2014 to 2017) and its active flag is unreliable, so the seed is a starting point and the system owner curates the list.
+
+Logos
+- Uploaded by the system owner per airline in the platform admin: PNG, JPEG or WebP (no SVG), at most 200 KB, the content checked against the type as for boarding passes. Replacing or removing a logo deletes the old file once the change is saved.
+- Logos are public files, unlike boarding passes: a separate public storage rooted at PUBLIC_MEDIA_ROOT (backend/media/, added to .gitignore) and served under MEDIA_URL (/media/). In development Django serves /media/ on every host when DEBUG is true; in production the reverse proxy serves the folder (README.md says so). Stored names are random UUIDs plus the extension, under airline_logos/.
+- No logos are bundled, downloaded or fetched from third parties.
+
+Platform admin (root host)
+- Airlines: list with a logo thumbnail, IATA and ICAO codes, name, country and active; search on codes and name; filter on active and on "has logo"; add, edit, deactivate and reactivate (never delete); logo upload, replace and remove on the edit form.
+
+API
+- GET /airlines?search= (admin only, like the other admin pickers): active airlines whose IATA or ICAO code matches exactly or whose name contains the text, exact code matches first, at most 20.
+- Offers (public browse and detail, admin, query responses, and the offer nested in bookings) return airline as {id, iata_code, name, logo_url}, logo_url being an absolute URL on the request's host, or null without a logo. Admin create and edit, and new_offers in the respond and mark-unavailable bodies, take airline as the airline's id.
+
+Frontend
+- The airline badge (step 14: flight rows, offer detail, book form, trip cards, booking summary, admin tables and the Respond and Mark unavailable offer lists) shows the logo when there is one, fitted inside the badge on a white background, and the initials in a tinted circle otherwise or if the image fails to load. The airline's name stays next to it as text.
+- The offer form (and custom offers on Respond and Mark unavailable) replaces the airline text field with an airline picker: search as you type (from two characters), each result with its badge, IATA code and name; the chosen airline shows with a Change link, like the airport picker. The airline is required.
+- Emails keep showing the airline's name as text (no images).
+
+Country flags
+- Airport gets country_code (ISO 3166-1 alpha-2, e.g. "KE"), filled by seed_airports from the iso_country column it already reads; re-running seed_airports fills it for existing airports (it updates rows in place). The airport API (search results and every nested airport object) returns country_code.
+- frontend/public/flags/ holds the 4x3 SVG flags of the flag-icons project (MIT licence, credited in README.md and with its licence file kept next to the flags), copied in once as files (flag-icons itself is not a dependency). A Flag component shows the flag for a country code (small, rounded corners, a hairline border so white flags stay visible), and nothing when the code is empty or unknown; no emoji flags anywhere. It is split by platform: on web (Flag.web.tsx) an image of /flags/<code>.svg, which the web app serves from public/, so only the flags on screen are downloaded; on native (Flag.native.tsx) the same files bundled into the app and drawn with react-native-svg, through a map from code to file. New dependencies for this: react-native-svg, and react-native-svg-transformer as a dev dependency configured in metro.config.js so the SVG files can be imported on native.
+- Flags appear next to airports: the airport picker and search-field suggestions (before each result) and the chosen airport, the route line's ends (beside the city), the offer detail header (beside "City, Country"), the stop list, the request criteria and the admin tables' route cells. They are decoration: the country name or city stays as text, and the flag is hidden from screen readers.
+- Emails show no flags.
+
+Tests
+- seed_airports storing country_code; the airport API returning it;
+- seed_airlines filtering, duplicate codes, idempotence and leaving curated rows alone; offer create and edit by airline id, refusing an inactive or unknown airline; the API shape with and without a logo (absolute URL on the request's host); the airline search; logo upload rules (type, content, size) and file deletion on replace and remove; the platform admin listing airlines and tenant hosts not exposing them.
+
+======================================================================
 DELIVERY ORDER (commit after each step; the app must run at each step)
 ======================================================================
 1. Backend foundation: settings from .env, DRF/JWT/CORS/Celery wiring, accounts app with register, login, refresh, me, password reset and email task 10, create_admin, core AppSettings and migration, catalog.Airport and seed_airports, /django-admin/ mount, private storage setup, migrate and tests passing.
@@ -457,5 +494,6 @@ DELIVERY ORDER (commit after each step; the app must run at each step)
 22. Multitenancy (see MULTITENANCY).
 23. User management.
 24. Admin books for a customer.
+25. Airlines, logos and flags (see AIRLINES, LOGOS AND FLAGS).
 
 Finish each step before starting the next. At the end, run the full test suite and do a manual browser walkthrough of the entire flow as guest and as customer (browse as a guest -> no result -> sign up -> query -> admin responds -> book -> confirm -> pay -> upload pass -> send -> customer downloads, plus an expiry case and a password reset) and report any deviations from this spec.
