@@ -62,3 +62,6 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - Confirm availability always sends the dialog's price and stops; the server records in changes only the values that differ. Accepting changes is not a status change, so it adds no timeline event.
 - The payment deadline starts when availability is confirmed, also while changes await acceptance; the changes box says the hold covers accepting and paying.
 - In the admin drawer the changes card stays after the customer answers ("accepted" or "declined"), so the admin can see what was agreed.
+- Mark unavailable sends the message only together with suggested options; the dialog says so, and without options the body is empty.
+- The existing-offer search in the Mark unavailable dialog starts from the booking's route with its departure date as both ends of the date range, any class.
+- The Respond screen and the Mark unavailable dialog share one offer chooser (search, selectable results, custom offers, chosen list).

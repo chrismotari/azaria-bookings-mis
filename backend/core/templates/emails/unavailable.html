@@ -7,6 +7,12 @@
   {% include "emails/_row.html" with label="Departure" value=departure %}
   {% include "emails/_row.html" with label="Stops" value=stops %}
 </table>
+{% if alternatives %}
+<p style="margin:0 0 16px 0;">We have found <strong>{{ option_count }} other option{{ option_count|pluralize }}</strong> for you.</p>
+{% if message %}{% include "emails/_box.html" with title="Message from Azaria Bookings" text=message %}{% endif %}
+{% with request_id=alternatives.id|stringformat:"s" %}{% include "emails/_button.html" with url=frontend_url|add:"/requests/"|add:request_id label="View suggested options" %}{% endwith %}
+{% else %}
 <p style="margin:0 0 16px 0;">You can ask us for other options in the app and we will find you alternatives.</p>
 {% include "emails/_button.html" with url=frontend_url|add:"/requests/new" label="Request other options" %}
+{% endif %}
 {% endblock %}

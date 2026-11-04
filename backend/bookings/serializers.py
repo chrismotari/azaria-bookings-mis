@@ -85,6 +85,8 @@ class BookingSerializer(serializers.ModelSerializer):
             "payment_deadline",
             "changes",
             "changes_accepted",
+            # The request holding options suggested when the booking was marked unavailable.
+            "alternatives",
             "created_at",
         ]
         read_only_fields = fields

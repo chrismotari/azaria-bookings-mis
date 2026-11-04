@@ -41,6 +41,8 @@ class Booking(models.Model):
     # with only the changed keys; null when nothing changed.
     changes = models.JSONField(null=True, blank=True)
     changes_accepted = models.BooleanField(default=False)
+    # The request created with suggested options when the booking was marked unavailable.
+    alternatives = models.ForeignKey(Query, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

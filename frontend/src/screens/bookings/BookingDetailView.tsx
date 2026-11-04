@@ -59,7 +59,10 @@ export function BookingDetailView({ id }: { id: string }) {
 
   const data = booking.data;
   const status = BOOKING_STATUS[data.status];
-  const help = STATUS_HELP[data.status];
+  const help =
+    data.status === 'unavailable' && data.alternatives
+      ? 'Sorry, these seats were no longer available. We have suggested other options for you to choose from.'
+      : STATUS_HELP[data.status];
   const onCancel = async () => {
     if (
       await confirm({
@@ -98,7 +101,20 @@ export function BookingDetailView({ id }: { id: string }) {
         {help && !TERMINAL_STATUSES.includes(data.status) ? <Text style={styles.text}>{help}</Text> : null}
         {data.status === 'unavailable' ? (
           <View style={styles.actions}>
-            <Button title="Request other options" variant="secondary" onPress={() => navigation.navigate('QueryNew')} />
+            {data.alternatives ? (
+              <Button
+                title="View suggested options"
+                onPress={() =>
+                  navigation.navigate('Main', { screen: 'Requests', params: { id: data.alternatives ?? undefined } })
+                }
+              />
+            ) : (
+              <Button
+                title="Request other options"
+                variant="secondary"
+                onPress={() => navigation.navigate('QueryNew')}
+              />
+            )}
           </View>
         ) : null}
       </Card>

@@ -3,8 +3,15 @@ Hello {{ booking.user.full_name }},
 We are sorry: the seats you booked for {{ route }} on {{ departure }} are no longer available, so we could not confirm your booking.
 
 Stops: {{ stops }}
+{% if alternatives %}
+We have found {{ option_count }} other option{{ option_count|pluralize }} for you.{% if message %}
 
+{{ message }}{% endif %}
+
+See {{ option_count|pluralize:"it,them" }} and book in the app:
+{{ frontend_url }}/requests/{{ alternatives.id }}
+{% else %}
 You can ask us for other options in the app and we will find you alternatives:
 {{ frontend_url }}/requests/new
-
+{% endif %}
 Azaria Bookings

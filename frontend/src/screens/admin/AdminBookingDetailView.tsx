@@ -22,6 +22,7 @@ import { colors, font, weight } from '../../theme';
 import { BOOKING_STATUS, TERMINAL_STATUSES, changesAwaitingAcceptance } from '../../utils/bookings';
 import { formatDateTime } from '../../utils/format';
 import { ConfirmAvailabilityDialog } from './ConfirmAvailabilityDialog';
+import { MarkUnavailableDialog } from './MarkUnavailableDialog';
 
 type Action = {
   path: 'confirm-availability' | 'mark-unavailable' | 'mark-paid' | 'complete';
@@ -87,7 +88,8 @@ export function AdminBookingDetailView({ id }: { id: string }) {
   const queryClient = useQueryClient();
   const uploading = useIsMutating({ mutationKey: uploadKey(id) }) > 0;
   const confirm = useConfirm();
-  const [confirming, setConfirming] = useState(false);
+  // Confirming and marking unavailable each have a dialog of their own.
+  const [dialog, setDialog] = useState<'confirm' | 'unavailable' | null>(null);
   const booking = useQuery({
     queryKey: ['admin', 'bookings', 'detail', id],
     queryFn: async () => (await api.get<AdminBookingDetail>(`/admin/bookings/${id}`)).data,
@@ -116,9 +118,8 @@ export function AdminBookingDetailView({ id }: { id: string }) {
   const status = BOOKING_STATUS[data.status];
   const actions = ACTIONS[data.status] ?? [];
   const run = async (action: Action) => {
-    // Confirming has its own dialog, for any changes to the price and stops.
-    if (action === CONFIRM_AVAILABILITY) {
-      setConfirming(true);
+    if (action === CONFIRM_AVAILABILITY || action === MARK_UNAVAILABLE) {
+      setDialog(action === CONFIRM_AVAILABILITY ? 'confirm' : 'unavailable');
       return;
     }
     if (
@@ -158,11 +159,20 @@ export function AdminBookingDetailView({ id }: { id: string }) {
       <FormError message={act.isError ? errorMessage(act.error) : null} />
       <ConfirmAvailabilityDialog
         booking={data}
-        open={confirming}
-        onClose={() => setConfirming(false)}
+        open={dialog === 'confirm'}
+        onClose={() => setDialog(null)}
         onDone={(confirmed) => {
-          setConfirming(false);
+          setDialog(null);
           updated(confirmed);
+        }}
+      />
+      <MarkUnavailableDialog
+        booking={data}
+        open={dialog === 'unavailable'}
+        onClose={() => setDialog(null)}
+        onDone={(marked) => {
+          setDialog(null);
+          updated(marked);
         }}
       />
 

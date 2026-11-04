@@ -110,3 +110,10 @@ class RespondSerializer(serializers.Serializer):
         if not attrs["offer_ids"] and not attrs["new_offers"]:
             raise serializers.ValidationError("Include at least one offer.")
         return attrs
+
+
+class SuggestedOptionsSerializer(RespondSerializer):
+    """The optional body of mark-unavailable: the respond format, where choosing offers is optional."""
+
+    def validate(self, attrs):
+        return attrs

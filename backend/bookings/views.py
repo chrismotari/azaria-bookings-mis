@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 
 from core.permissions import IsAdminRole
 from customer_requests.models import Query
+from customer_requests.serializers import SuggestedOptionsSerializer
 
 from .models import BoardingPass, Booking
 from .serializers import (
@@ -24,6 +25,7 @@ from .services import (
     confirm_availability,
     create_booking,
     delete_boarding_pass,
+    mark_unavailable,
     transition,
 )
 
@@ -117,6 +119,20 @@ class AdminConfirmAvailabilityView(APIView):
         serializer = ConfirmAvailabilitySerializer(data=request.data, context={"booking": booking})
         serializer.is_valid(raise_exception=True)
         booking = confirm_availability(pk, request.user, **serializer.validated_data)
+        return Response(AdminBookingDetailSerializer(booking).data)
+
+
+class AdminMarkUnavailableView(APIView):
+    """Body (optional): message, offer_ids and new_offers, as for responding to a request."""
+
+    permission_classes = [IsAdminRole]
+
+    def post(self, request, pk):
+        generics.get_object_or_404(Booking, pk=pk)
+        serializer = SuggestedOptionsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        booking = mark_unavailable(pk, request.user, data["message"], data["offer_ids"], data["new_offers"])
         return Response(AdminBookingDetailSerializer(booking).data)
 
 

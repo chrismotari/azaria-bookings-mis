@@ -135,6 +135,8 @@ export type Booking = {
   /** What the admin changed when confirming availability; null when nothing changed. */
   changes: BookingChanges | null;
   changes_accepted: boolean;
+  /** The request holding options suggested when the booking was marked unavailable. */
+  alternatives: string | null;
   created_at: string;
   /** The booking's own stops, copied from the offer when it was booked. */
   stops: Stop[];

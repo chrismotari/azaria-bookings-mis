@@ -97,7 +97,14 @@ def notify_customer_unavailable(booking_id):
     booking = _booking_in(booking_id, Booking.Status.UNAVAILABLE)
     if booking is None:
         return
-    send_email("unavailable", "Your booking could not be confirmed", booking.user.email, describe_booking(booking))
+    context = describe_booking(booking)
+    # Options suggested by the admin, in the one response of the alternatives request.
+    response = booking.alternatives.responses.first() if booking.alternatives_id else None
+    if response is not None:
+        context.update(
+            alternatives=booking.alternatives, message=response.message, option_count=response.offers.count()
+        )
+    send_email("unavailable", "Your booking could not be confirmed", booking.user.email, context)
 
 
 @shared_task(**EMAIL_TASK_OPTIONS)

@@ -9,6 +9,8 @@ from rest_framework.exceptions import ValidationError
 from catalog.models import Offer
 from core.exceptions import Conflict
 from core.models import AppSettings
+from customer_requests.models import Query
+from customer_requests.services import add_response
 
 from . import tasks
 from .models import BoardingPass, Booking, BookingEvent, BookingStop
@@ -173,6 +175,32 @@ def confirm_availability(booking_id, actor, unit_price=None, stops=None):
         booking.changes_accepted = False
 
     return transition(booking_id, Status.AVAILABILITY_CONFIRMED, actor, apply=apply)
+
+
+def mark_unavailable(booking_id, actor, message="", offers=(), new_offers=()):
+    """Marks the booking unavailable. With at least one offer, also suggests them to the customer.
+
+    The suggestions go into a new request for the booking's customer (route, date and class from the booked
+    offer), answered with one response holding the message and offers, and linked as booking.alternatives.
+    The request's own emails (1 and 2) are not sent; email 5 tells the customer instead.
+    """
+
+    def apply(booking):
+        if not offers and not new_offers:
+            return
+        booked = booking.offer
+        query = Query.objects.create(
+            user=booking.user,
+            origin=booked.origin,
+            destination=booked.destination,
+            date_from=booked.departure_date,
+            ticket_class=booked.ticket_class,
+            status=Query.Status.RESPONDED,
+        )
+        add_response(query, message, offers, new_offers)
+        booking.alternatives = query
+
+    return transition(booking_id, Status.UNAVAILABLE, actor, apply=apply)
 
 
 def accept_changes(booking_id, user):
