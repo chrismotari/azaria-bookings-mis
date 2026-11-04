@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from catalog.models import Airport
+from airports.models import Airport
 
 RAW_DIR = settings.BASE_DIR / "data" / "raw"
 

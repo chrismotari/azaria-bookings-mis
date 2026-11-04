@@ -5,9 +5,9 @@ from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
+from .tokens import TenantRefreshToken
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -18,7 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 def tokens_for(user):
-    refresh = RefreshToken.for_user(user)
+    refresh = TenantRefreshToken.for_user(user)
     return {"access": str(refresh.access_token), "refresh": str(refresh), "user": UserSerializer(user).data}
 
 
@@ -47,6 +47,8 @@ class RegisterSerializer(serializers.Serializer):
 
 
 class LoginSerializer(TokenObtainPairSerializer):
+    token_class = TenantRefreshToken
+
     def validate(self, attrs):
         attrs[self.username_field] = User.objects.normalize_email(attrs[self.username_field])
         data = super().validate(attrs)

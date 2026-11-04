@@ -3,7 +3,8 @@ import uuid
 from django.conf import settings
 from django.db import models
 
-from catalog.models import Airport, Offer
+from airports.models import Airport
+from catalog.models import Offer
 
 
 class Query(models.Model):

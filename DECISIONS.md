@@ -65,3 +65,9 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - Mark unavailable sends the message only together with suggested options; the dialog says so, and without options the body is empty.
 - The existing-offer search in the Mark unavailable dialog starts from the booking's route with its departure date as both ends of the date range, any class.
 - The Respond screen and the Mark unavailable dialog share one offer chooser (search, selectable results, custom offers, chosen list).
+- The platform's Django admin (root host) and each agency's support admin (tenant hosts) are two admin sites; tenants and the shared airports are only on the platform's, so an agency's superuser cannot reach them.
+- create_agency runs in one transaction; PostgreSQL rolls back the new schema with everything else if any part fails.
+- The platform's own tenant row (schema public, name "app_admin") and its domain (TENANT_BASE_DOMAIN) are created by a data migration; the platform admin's tenant list hides it.
+- Tenant tasks keep their names; the schema name is their first argument. The three beat tasks return the total across agencies.
+- Tests: the session's test agency uses the test client's default host (testserver), so existing tests needed no host changes; a second agency (other.localhost) backs the isolation tests.
+- The full-page "no agency" message appears when an API call returns no_tenant or tenant_suspended; the root host's app shows it as soon as Explore loads offers.

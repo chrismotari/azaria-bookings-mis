@@ -1,7 +1,6 @@
-from celery import shared_task
-
 from core.emails import EMAIL_TASK_OPTIONS, format_date, format_price, send_email
 from core.models import AppSettings
+from core.tenancy import tenant_task
 
 from .models import Query, QueryResponse
 
@@ -33,7 +32,7 @@ def describe_query(query):
     }
 
 
-@shared_task(**EMAIL_TASK_OPTIONS)
+@tenant_task(**EMAIL_TASK_OPTIONS)
 def notify_admin_new_query(query_id):
     query = Query.objects.select_related("user", "origin", "destination").filter(pk=query_id).first()
     if query is None or query.status != Query.Status.OPEN:
@@ -47,7 +46,7 @@ def notify_admin_new_query(query_id):
     )
 
 
-@shared_task(**EMAIL_TASK_OPTIONS)
+@tenant_task(**EMAIL_TASK_OPTIONS)
 def notify_customer_query_responded(query_response_id):
     response = (
         QueryResponse.objects.select_related("query__user", "query__origin", "query__destination")

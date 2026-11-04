@@ -11,19 +11,42 @@ environ.Env.read_env(BASE_DIR / ".env")
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env.bool("DEBUG", default=False)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+# The web app's base URL with a {domain} placeholder for the tenant's primary domain.
 FRONTEND_URL = env("FRONTEND_URL").rstrip("/")
 
 
-INSTALLED_APPS = [
+# Multitenancy (django-tenants): the public schema is the platform, each agency has its own schema.
+TENANT_BASE_DOMAIN = env("TENANT_BASE_DOMAIN")
+TENANT_MODEL = "tenants.Tenant"
+TENANT_DOMAIN_MODEL = "tenants.Domain"
+PUBLIC_SCHEMA_URLCONF = "config.urls_public"
+DEFAULT_NOT_FOUND_TENANT_VIEW = "tenants.views.no_tenant"
+DATABASE_ROUTERS = ["django_tenants.routers.TenantSyncRouter"]
+
+DJANGO_APPS = [
     "config.apps.SuperuserAdminConfig",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+]
+
+# The public schema: tenants, the shared airports, and the system owner's accounts.
+SHARED_APPS = [
+    "django_tenants",
+    "tenants",
+    "airports",
+    *DJANGO_APPS,
     "rest_framework",
     "django_filters",
     "corsheaders",
+    "accounts",
+]
+
+# Each agency's schema.
+TENANT_APPS = [
+    *DJANGO_APPS,
     "accounts",
     "catalog",
     "customer_requests.apps.RequestsConfig",
@@ -31,8 +54,13 @@ INSTALLED_APPS = [
     "core",
 ]
 
+INSTALLED_APPS = [*SHARED_APPS, *[app for app in TENANT_APPS if app not in SHARED_APPS]]
+
 MIDDLEWARE = [
+    # First, so that the no-tenant and suspended responses also carry CORS headers.
     "corsheaders.middleware.CorsMiddleware",
+    "django_tenants.middleware.main.TenantMainMiddleware",
+    "tenants.middleware.SuspendedTenantMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -68,7 +96,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {"default": env.db_url("DATABASE_URL")}
+DATABASES = {"default": {**env.db_url("DATABASE_URL"), "ENGINE": "django_tenants.postgresql_backend"}}
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "accounts.User"
@@ -114,12 +142,13 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 ADMIN_EMAIL = env("ADMIN_EMAIL")
 
 
-CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
+# Every tenant's web app origin, e.g. ^http://([a-z0-9-]+\.)?localhost:8081$
+CORS_ALLOWED_ORIGIN_REGEXES = env.list("CORS_ALLOWED_ORIGIN_REGEXES", default=[])
 
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "accounts.tokens.TenantJWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",

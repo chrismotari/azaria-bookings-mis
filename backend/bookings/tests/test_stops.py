@@ -9,7 +9,7 @@ from bookings.models import Booking, BookingStop
 from bookings.services import transition
 from core.emails import format_duration, format_stops
 from core.models import AppSettings
-from core.tests.helpers import html_part
+from core.tests.helpers import TEST_SCHEMA, html_part
 
 pytestmark = pytest.mark.django_db
 
@@ -115,6 +115,6 @@ def test_every_booking_email_shows_stops(customer_api, offer_with_stops, status,
     booking = book(customer_api, offer_with_stops)
     Booking.objects.filter(pk=booking.pk).update(status=status, payment_deadline=timezone.now() + timedelta(hours=2))
     mail.outbox.clear()
-    task(booking.pk)
+    task(TEST_SCHEMA, booking.pk)
     assert "Stops: Dubai (DXB), 2 h 15 min layover" in mail.outbox[0].body
     assert "Dubai (DXB), 2 h 15 min layover" in html_part(mail.outbox[0])

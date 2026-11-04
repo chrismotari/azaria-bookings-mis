@@ -1,9 +1,35 @@
 import pytest
 from django.core.cache import cache
+from django.db import connection
 from rest_framework.test import APIClient
 
 from accounts.models import User
 from config.celery import app as celery_app
+from core.tests.helpers import OTHER_DOMAIN, OTHER_SCHEMA, TEST_DOMAIN, TEST_SCHEMA
+
+
+@pytest.fixture(scope="session")
+def django_db_setup(django_db_setup, django_db_blocker):
+    """Two agencies for the whole session: every test runs in the first; the second is for isolation tests."""
+    from tenants.models import Domain, Tenant
+
+    with django_db_blocker.unblock():
+        connection.set_schema_to_public()
+        for schema_name, domain, name in [
+            (TEST_SCHEMA, TEST_DOMAIN, "Test Agency"),
+            (OTHER_SCHEMA, OTHER_DOMAIN, "Other Agency"),
+        ]:
+            tenant = Tenant(schema_name=schema_name, name=name)
+            tenant.save(verbosity=0)
+            Domain.objects.create(domain=domain, tenant=tenant, is_primary=True)
+
+
+@pytest.fixture(autouse=True)
+def _in_test_tenant():
+    """Tests run in the test agency's schema, as requests to its domain (the test client's testserver) do."""
+    connection.set_schema(TEST_SCHEMA)
+    yield
+    connection.set_schema(TEST_SCHEMA)
 
 
 @pytest.fixture(autouse=True)
@@ -67,7 +93,7 @@ def admin_api(admin_user):
 
 @pytest.fixture
 def airports(db):
-    from catalog.models import Airport
+    from airports.models import Airport
 
     return {
         a.code: a

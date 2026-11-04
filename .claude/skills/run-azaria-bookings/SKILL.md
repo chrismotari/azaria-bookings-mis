@@ -20,8 +20,8 @@ cd .claude/skills/run-azaria-bookings/driver && npm install
 Check first: the user often already runs the API and the web app in their own terminals. Reuse them if they answer.
 
 ```bash
-curl -s -o /dev/null -w 'api %{http_code}\n' http://localhost:8000/api/offers
-curl -s -o /dev/null -w 'web %{http_code}\n' http://localhost:8081
+curl -s -o /dev/null -w 'api %{http_code}\n' http://azaria.localhost:8000/api/offers
+curl -s -o /dev/null -w 'web %{http_code}\n' http://azaria.localhost:8081
 ```
 
 Start only what is missing; each line stands alone, run from the repo root. Logs go to `/tmp/azaria-run/`. Always start your own worker: the worker log is where you read emails (console backend), including password-reset links.
@@ -32,13 +32,13 @@ mkdir -p /tmp/azaria-run
 (cd backend && source .venv/bin/activate && nohup celery -A config worker -l info > /tmp/azaria-run/worker.log 2>&1 &)
 (cd backend && source .venv/bin/activate && nohup celery -A config beat -l info -s /tmp/azaria-run/beat-schedule > /tmp/azaria-run/beat.log 2>&1 &)
 (cd frontend && CI=1 nohup npx expo start --web --port 8081 > /tmp/azaria-run/expo.log 2>&1 &)
-timeout 120 bash -c 'until curl -sf http://localhost:8081 >/dev/null && curl -sf http://localhost:8000/api/offers >/dev/null; do sleep 1; done' && echo ready
+timeout 120 bash -c 'until curl -sf http://azaria.localhost:8081 >/dev/null && curl -sf http://azaria.localhost:8000/api/offers >/dev/null; do sleep 1; done' && echo ready
 ```
 
 You need an admin account (the user's admin password is unknown to you). Create one; it refuses an email that exists, so reuse it next time:
 
 ```bash
-cd backend && source .venv/bin/activate && python manage.py create_admin --email agent.admin@example.com --password 'Agent-Admin-2026!' --name "Agent Admin"
+cd backend && source .venv/bin/activate && python manage.py tenant_command create_admin --schema=azaria --email agent.admin@example.com --password 'Agent-Admin-2026!' --name "Agent Admin"
 ```
 
 ## Run (agent path)
@@ -49,7 +49,7 @@ All driver commands run from `.claude/skills/run-azaria-bookings/driver/`. Scree
 |---|---|
 | `AZARIA_ADMIN_EMAIL=... AZARIA_ADMIN_PASSWORD=... node flow.mjs` | Full flow with a fresh customer: guest search with no results → Request options → gate → register → request → admin responds with a custom offer → book 2 passengers → confirm → mark paid → upload PDF + PNG → send → customer downloads both and checks the bytes. Prints `FLOW OK (request <uuid>, booking <uuid>)`. About 1 minute. |
 | `node login.mjs <role> <email> <password>` | Signs in and saves the session as `/tmp/azaria-run/profiles/<role>.json` |
-| `node shot.mjs <role> <path> [width]` | Screenshots `http://localhost:8081<path>` as `<role>` (`guest` = signed out) and prints horizontal overflow. Use width `390` for the phone layout (bottom tabs). |
+| `node shot.mjs <role> <path> [width]` | Screenshots `<APP_URL><path>` (default `http://azaria.localhost:8081`) as `<role>` (`guest` = signed out) and prints horizontal overflow. Use width `390` for the phone layout (bottom tabs). |
 
 ```bash
 cd .claude/skills/run-azaria-bookings/driver
@@ -64,10 +64,10 @@ For a new flow, write a script next to these and import from `lib.mjs`: `run(rol
 Read an email (e.g. the password-reset link). The console backend wraps lines with `=` and writes `=` as `=3D`:
 
 ```bash
-sed -e ':a;/=$/{N;s/=\n//;ba}' /tmp/azaria-run/worker.log | grep -o 'http://localhost:8081/reset-password?uid=3D[^&]*&token=3D[^ ]*' | tail -1 | sed 's/=3D/=/g'
+sed -e ':a;/=$/{N;s/=\n//;ba}' /tmp/azaria-run/worker.log | grep -o 'http://[a-z0-9.-]*localhost:8081/reset-password?uid=3D[^&]*&token=3D[^ ]*' | tail -1 | sed 's/=3D/=/g'
 ```
 
-Run a scheduled task now instead of waiting for beat (expire every 5 min, reminders every 15 min, stale requests hourly):
+Run a scheduled task now instead of waiting for beat (expire every 5 min, reminders every 15 min, stale requests hourly). Each runs in every active agency and returns the total:
 
 ```bash
 cd backend && source .venv/bin/activate && DJANGO_SETTINGS_MODULE=config.settings python -c "
@@ -81,8 +81,9 @@ Expiry case: a confirmed booking's deadline is 24h away. Move it into the past, 
 ```bash
 cd backend && source .venv/bin/activate && DJANGO_SETTINGS_MODULE=config.settings python -c "
 import django; django.setup()
-from datetime import timedelta; from django.utils import timezone; from bookings.models import Booking
-print(Booking.objects.filter(pk='BOOKING_UUID', status='availability_confirmed').update(payment_deadline=timezone.now() - timedelta(minutes=1)))"
+from datetime import timedelta; from django.utils import timezone; from django_tenants.utils import schema_context; from bookings.models import Booking
+with schema_context('azaria'):
+    print(Booking.objects.filter(pk='BOOKING_UUID', status='availability_confirmed').update(payment_deadline=timezone.now() - timedelta(minutes=1)))"
 ```
 
 ## Stop
@@ -97,7 +98,7 @@ pkill -f '[m]anage.py runserver'   # only if you started the API
 
 ## Run (human path)
 
-The four terminals in `README.md` (runserver, worker, beat, `npx expo start --web`), then open http://localhost:8081.
+The four terminals in `README.md` (runserver, worker, beat, `npx expo start --web`), then open http://azaria.localhost:8081.
 
 ## Test
 
@@ -109,6 +110,10 @@ cd frontend && npx tsc --noEmit
 About 400 backend tests in ~15 s. They need PostgreSQL only, not the worker, Redis or the web app.
 
 ## Gotchas
+
+- **Every agency is a host.** The app and API of the agency `<schema>` are at `http://<schema>.localhost:8081` and `:8000` (Chrome resolves `*.localhost` itself). Set `APP_URL` for another agency, e.g. `APP_URL=http://acme-travel.localhost:8081 node shot.mjs guest /offers`. Sessions, roles and profiles are per host, so sign in again for each agency. The root host (`localhost`) shows "There is no agency at this address."
+- **The platform admin** is `http://localhost:8000/django-admin/` (public-schema superusers: `createsuperuser`). Add an agency there or with `python manage.py create_agency --schema <name> --name ... --admin-email ... --admin-password ... --admin-name ...`.
+- **Shell commands on tenant data** need the schema: `python manage.py tenant_command <command> --schema=azaria`, or `from django_tenants.utils import schema_context; with schema_context("azaria"): ...` in `manage.py shell`. Without it you are in the public schema, where bookings and offers do not exist.
 
 - **Hidden stack screens match selectors.** React Navigation keeps earlier screens mounted (Login stays under Register). `getByLabel`/`getByText` then resolve to the invisible copy and time out. Use `field`/`seen` from `lib.mjs` (`:visible` selectors); `getByRole` already skips hidden nodes.
 - **The auth gate's pending action lives in memory.** Guest → "Request options" → register must happen in one page session, without a reload or a new browser, or the app lands on Explore instead of the prefilled form.
@@ -124,6 +129,6 @@ About 400 backend tests in ~15 s. They need PostgreSQL only, not the worker, Red
 ## Troubleshooting
 
 - **`locator.waitFor: Timeout ... resolved to hidden <div>`**: a hidden stack screen matched. Use `seen()` / `field()`, or wait on `page.waitForURL(...)`.
-- **`page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8081`**: the Expo dev server is not running. Start it (see above) and wait for the `ready` loop.
+- **`page.goto: net::ERR_CONNECTION_REFUSED at http://azaria.localhost:8081`**: the Expo dev server is not running. Start it (see above) and wait for the `ready` loop.
 - **Shell exits with code 144 right after `pkill -f`**: the pattern matched the shell itself. Use the bracketed patterns in Stop.
 - **`showmigrations` lists an unapplied migration / upload fails with a missing table**: the dev DB is behind. Run `python manage.py migrate`.

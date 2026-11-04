@@ -5,9 +5,11 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { useTenantProblem } from './src/api/tenant';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { ConfirmProvider } from './src/components/ConfirmDialog';
 import { LoadingState } from './src/components/StatusViews';
+import { TenantUnavailable } from './src/components/TenantUnavailable';
 import { linking } from './src/navigation/linking';
 import { navigationRef } from './src/navigation/navigationRef';
 import { RootNavigator } from './src/navigation/RootNavigator';
@@ -22,6 +24,10 @@ function shouldRetry(failureCount: number, error: unknown) {
 
 function Navigation() {
   const { ready } = useAuth();
+  const tenantProblem = useTenantProblem();
+  if (tenantProblem) {
+    return <TenantUnavailable message={tenantProblem} />;
+  }
   if (!ready) {
     return <LoadingState />;
   }

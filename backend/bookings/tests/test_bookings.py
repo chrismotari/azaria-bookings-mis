@@ -11,7 +11,7 @@ from bookings import tasks
 from bookings.models import BoardingPass, Booking, BookingEvent
 from bookings.services import TRANSITIONS, InvalidTransition, create_booking, transition
 from core.models import AppSettings
-from core.tests.helpers import html_part
+from core.tests.helpers import TEST_SCHEMA, html_part
 from customer_requests.models import Query, QueryResponse
 
 pytestmark = pytest.mark.django_db
@@ -439,7 +439,7 @@ def test_dashboard_counts(admin_api, make_booking, other_customer, airports):
 @freeze_time(NOW)
 def test_availability_email_has_instructions_and_deadline_in_nairobi_time(make_booking, payment_instructions):
     booking = make_booking(status=Status.AVAILABILITY_CONFIRMED, payment_deadline=timezone.now() + timedelta(hours=24))
-    tasks.notify_customer_availability_confirmed(booking.id)
+    tasks.notify_customer_availability_confirmed(TEST_SCHEMA, booking.id)
     [email] = mail.outbox
     assert email.to == ["customer@example.com"]
     for expected in [
@@ -471,7 +471,7 @@ def test_availability_email_has_instructions_and_deadline_in_nairobi_time(make_b
 )
 def test_customer_email_content(make_booking, task, status, expected):
     booking = make_booking(status=status)
-    task(booking.id)
+    task(TEST_SCHEMA, booking.id)
     [email] = mail.outbox
     assert email.to == ["customer@example.com"]
     assert "Hello Cara Customer" in email.body
@@ -494,6 +494,6 @@ def test_customer_email_content(make_booking, task, status, expected):
 )
 def test_email_tasks_skip_when_state_has_changed(make_booking, task, stale_status):
     booking = make_booking(status=stale_status)
-    task(booking.id)
-    task(999999)
+    task(TEST_SCHEMA, booking.id)
+    task(TEST_SCHEMA, 999999)
     assert mail.outbox == []

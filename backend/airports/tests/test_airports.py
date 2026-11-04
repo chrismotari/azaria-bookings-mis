@@ -1,7 +1,7 @@
 import pytest
 from django.core.management import call_command
 
-from catalog.models import Airport
+from airports.models import Airport
 
 pytestmark = pytest.mark.django_db
 

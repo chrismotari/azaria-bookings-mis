@@ -9,7 +9,7 @@ from django.utils import timezone
 from bookings import tasks
 from bookings.models import BoardingPass, Booking
 from bookings.services import InvalidTransition, transition
-from core.tests.helpers import html_part
+from core.tests.helpers import TEST_SCHEMA, html_part
 
 pytestmark = pytest.mark.django_db
 
@@ -67,7 +67,7 @@ def test_admin_uploads_pdf_png_or_jpeg_while_paid(admin_api, make_booking, priva
     assert response.data["original_name"] == name
 
     boarding_pass = BoardingPass.objects.get(pk=response.data["id"])
-    assert boarding_pass.file.name.startswith(f"boarding_passes/{booking.id}/")
+    assert boarding_pass.file.name.startswith(f"boarding_passes/{TEST_SCHEMA}/{booking.id}/")
     assert name not in boarding_pass.file.name
     assert (private_media / boarding_pass.file.name).read_bytes() == content
 
@@ -197,8 +197,8 @@ def test_complete_sends_every_file_attached(
 def test_completion_email_skipped_unless_completed(make_booking, add_pass):
     booking = make_booking()
     add_pass(booking)
-    tasks.notify_customer_boarding_passes(booking.id)
-    tasks.notify_customer_boarding_passes(999999)
+    tasks.notify_customer_boarding_passes(TEST_SCHEMA, booking.id)
+    tasks.notify_customer_boarding_passes(TEST_SCHEMA, 999999)
     assert mail.outbox == []
 
 

@@ -9,6 +9,7 @@ from rest_framework.exceptions import ValidationError
 from catalog.models import Offer
 from core.exceptions import Conflict
 from core.models import AppSettings
+from core.tenancy import queue
 from customer_requests.models import Query
 from customer_requests.services import add_response
 
@@ -59,7 +60,7 @@ def _role(booking, actor):
 
 
 def _queue_email(task, booking_id):
-    transaction.on_commit(lambda: task.delay(booking_id))
+    queue(task, booking_id)
 
 
 def create_booking(user, data):

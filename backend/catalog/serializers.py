@@ -2,7 +2,9 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import Airport, Offer, Stop
+from airports.models import Airport
+
+from .models import Offer, Stop
 
 
 class AirportSerializer(serializers.ModelSerializer):

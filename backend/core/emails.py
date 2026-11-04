@@ -30,7 +30,9 @@ def send_email(template, subject, to, context, attachments=()):
 
     attachments: (filename, content, mimetype) tuples.
     """
-    context = {**context, "frontend_url": settings.FRONTEND_URL, "brand": BRAND}
+    from core.tenancy import frontend_url
+
+    context = {**context, "frontend_url": frontend_url(), "brand": BRAND}
     body = engines["emails"].get_template(f"emails/{template}.txt").render(context)
     html = engines["django"].get_template(f"emails/{template}.html").render(context)
     message = EmailMultiAlternatives(subject=subject, body=body, to=[to])

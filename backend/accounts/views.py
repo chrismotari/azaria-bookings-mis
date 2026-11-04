@@ -1,10 +1,10 @@
-from django.db import transaction
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from core.tenancy import queue
 from core.throttling import IPScopedRateThrottle
 
 from .models import User
@@ -53,7 +53,7 @@ class PasswordResetRequestView(APIView):
         email = User.objects.normalize_email(serializer.validated_data["email"])
         user = User.objects.filter(email=email, is_active=True).first()
         if user is not None:
-            transaction.on_commit(lambda: send_password_reset_email.delay(user.pk))
+            queue(send_password_reset_email, user.pk)
         return Response({"detail": "If an account exists for this email, a reset link has been sent."})
 
 

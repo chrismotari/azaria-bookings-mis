@@ -25,8 +25,10 @@ The app is **web first**: it is developed and checked in the browser. It still c
 
 ```
 backend/                 Django project "config"
+  tenants/               Agencies (tenants) and their domains, create_agency, the platform's Django admin
+  airports/              Airports (seed_airports), shared by every agency
   accounts/              Custom user (login by email, role customer/admin), auth endpoints, create_admin
-  catalog/               Airports (seed_airports) and flight offers
+  catalog/               Flight offers and their stops
   customer_requests/     Customer requests for options and the admin's responses (app label "requests")
   bookings/              Bookings, the status state machine (services.py), boarding passes, scheduled tasks
   core/                  App settings, permissions, private storage, email templates
@@ -67,21 +69,27 @@ python3 -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env               # then edit .env
-python manage.py migrate
-python manage.py seed_airports
-python manage.py create_admin --email owner@example.com --password '<strong password>' --name "Agency Owner"
+python manage.py migrate_schemas --shared      # the platform (public schema)
+python manage.py seed_airports                 # shared airports, once
+python manage.py createsuperuser               # the system owner, for /django-admin/ on the root host
+python manage.py create_agency --schema azaria --name "Azaria Bookings" \
+    --admin-email owner@example.com --admin-password '<strong password>' --admin-name "Agency Owner"
 ```
 
-#### Resetting the database after the UUID change
+`create_agency` creates the agency's schema (and migrates it), its domain `azaria.localhost`, its settings and its first admin. Create as many agencies as you like the same way; each one gets `<schema>.localhost`.
 
-All records use UUID primary keys, and the migrations were regenerated from scratch when that change was made. A database created before it cannot be migrated forward, so drop it and start again (this deletes all local data):
+#### Resetting the database after the multitenancy change
+
+The migrations were regenerated from scratch when agencies got their own schemas (and again earlier, for UUID primary keys). A database created before that cannot be migrated forward, so drop it and start again (this deletes all local data):
 
 ```bash
 sudo -u postgres psql -c "DROP DATABASE azaria;"
 sudo -u postgres psql -c "CREATE DATABASE azaria OWNER azaria;"
-python manage.py migrate
+python manage.py migrate_schemas --shared
 python manage.py seed_airports
-python manage.py create_admin --email owner@example.com --password '<strong password>' --name "Agency Owner"
+python manage.py createsuperuser
+python manage.py create_agency --schema azaria --name "Azaria Bookings" \
+    --admin-email owner@example.com --admin-password '<strong password>' --admin-name "Agency Owner"
 ```
 
 Uploaded boarding passes in `backend/private_media/` belong to the old records and can be deleted too.
@@ -90,27 +98,31 @@ The settings in `backend/.env`:
 
 | Variable | Purpose |
 | --- | --- |
-| `SECRET_KEY`, `DEBUG`, `ALLOWED_HOSTS` | Standard Django settings |
+| `SECRET_KEY`, `DEBUG` | Standard Django settings |
+| `ALLOWED_HOSTS` | Include the base domain and its subdomains, e.g. `localhost,.localhost` |
+| `TENANT_BASE_DOMAIN` | The root host, which is the platform itself (`localhost` in development). Agencies are reached at `<schema>.<this>` |
 | `DATABASE_URL` | e.g. `postgres://azaria:password@localhost:5432/azaria` |
 | `REDIS_URL` | e.g. `redis://localhost:6379/0` (Celery broker and results) |
-| `CORS_ALLOWED_ORIGINS` | The web app's origin, e.g. `http://localhost:8081` |
-| `FRONTEND_URL` | The web app's base URL, used for links in emails (password reset, bookings) |
+| `CORS_ALLOWED_ORIGIN_REGEXES` | The web app's origins on every agency's host, e.g. `^http://([a-z0-9-]+\.)?localhost:8081$` |
+| `FRONTEND_URL` | The web app's base URL for links in emails, with `{domain}` for the agency's primary domain: `http://{domain}:8081` |
 | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS` | SMTP. Leave `EMAIL_HOST` empty to print emails in the worker's console |
 | `DEFAULT_FROM_EMAIL` | Sender address |
-| `ADMIN_EMAIL` | Seeds the admin notification email on the first `migrate`; change it later in the app's Settings |
+| `ADMIN_EMAIL` | Default admin notification email for a new schema; `create_agency` replaces it with the first admin's email, and it can be changed in the app's Settings |
 
-About the two management commands:
+About the management commands:
 
-- **`seed_airports`** loads airports from `data/raw/airports.csv` and `countries.csv`. It keeps airports that have an IATA code and scheduled service, and skips closed ones. Running it again updates rows in place, so it is safe to repeat.
-- **`create_admin`** creates the agency owner's account (role `admin`). It refuses an email that already exists.
-- **`/django-admin/`**, Django's built-in admin site, is for technical support only and is open to superusers. Create one with `python manage.py createsuperuser`. It is separate from the in-app admin.
+- **`seed_airports`** loads airports from `data/raw/airports.csv` and `countries.csv` into the shared (public) schema. It keeps airports that have an IATA code and scheduled service, and skips closed ones. Running it again updates rows in place, so it is safe to repeat.
+- **`create_agency`** adds an agency: see above. The address (`--schema`) is 3 to 30 lowercase letters, digits and hyphens; `public`, `www`, `api`, `admin` and `app-admin` are reserved. If any part fails, nothing is left behind.
+- **`create_admin`** adds another admin to an agency: `python manage.py tenant_command create_admin --schema=azaria --email ... --password ... --name ...`.
+- **`/django-admin/`** on the root host (http://localhost:8000/django-admin/) is the platform admin for the system owner: list, add, rename, suspend and reactivate agencies and manage their domains. It is open to superusers of the public schema (`createsuperuser`).
+- **`/django-admin/`** on an agency's host is technical support for that agency's data, open to that agency's superusers (`python manage.py tenant_command createsuperuser --schema=azaria`). Both are separate from the in-app admin.
 
 ### 3. Web app
 
 ```bash
 cd frontend
 npm install
-cp .env.example .env               # EXPO_PUBLIC_API_URL=http://localhost:8000/api
+cp .env.example .env               # EXPO_PUBLIC_API_URL=http://{host}:8000/api
 ```
 
 ## Running
@@ -124,11 +136,13 @@ Run each of these in its own terminal. Activate the backend virtualenv in the th
 | Celery beat (schedule) | `cd backend && celery -A config beat -l info` |
 | Web app | `cd frontend && npx expo start --web` |
 
-The web app runs at http://localhost:8081 and the API at http://localhost:8000/api.
+Each agency has its own address: Azaria's web app is http://azaria.localhost:8081 and its API http://azaria.localhost:8000/api. `{host}` in `EXPO_PUBLIC_API_URL` is replaced by the page's hostname, so the app always talks to its own agency. Chrome and Firefox resolve `*.localhost` to this machine with no setup. To open the app from another device, add a domain such as `azaria.192.168.1.37.nip.io` to the agency in the platform admin, add `.nip.io` hosts to `ALLOWED_HOSTS` and the CORS regexes, and run the API with `runserver 0.0.0.0:8000`.
+
+The root host (http://localhost:8081) belongs to no agency: the app shows "There is no agency at this address."
 
 Before the admin can confirm any booking, they must add **payment instructions** under **Settings** in the app.
 
-Celery beat runs these scheduled tasks:
+Celery beat runs these scheduled tasks, each in every active agency in turn:
 
 | Task | Every | What it does |
 | --- | --- | --- |
@@ -137,6 +151,11 @@ Celery beat runs these scheduled tasks:
 | `expire_stale_requests` | hour | Expires requested bookings whose flight has already departed |
 
 ## How it works
+
+**Agencies (multitenancy).** One installation serves many travel agencies. Each agency is a tenant with its own PostgreSQL schema (django-tenants), chosen from the request's hostname, so its users, offers, requests, bookings, boarding passes and settings are separate. The public schema is the platform ("app_admin"): agencies, their domains, the shared airports and the system owner's accounts.
+- The same email can have separate accounts at different agencies. Tokens carry the agency and are refused at any other; reset links point at the agency's own domain.
+- A suspended agency's API returns 403 (`tenant_suspended`), and its scheduled tasks and emails are skipped. Agencies are never deleted.
+- Celery tasks take the agency's schema name as their first argument and run in that schema.
 
 **Who can do what**
 - **Guests** can browse deals, view a deal and search airports.
@@ -165,7 +184,7 @@ All times are Africa/Nairobi. Prices are in USD (`CURRENCY` setting).
 
 ## API overview
 
-Everything is under `/api/`. Authenticate with `Authorization: Bearer <access token>`.
+Everything is under `/api/` on an agency's host. Authenticate with `Authorization: Bearer <access token>`. On the root host, or an unknown host, `/api/` returns 404 with `"code": "no_tenant"`.
 
 | Area | Endpoints |
 | --- | --- |
@@ -184,7 +203,7 @@ cd frontend && npx tsc --noEmit                      # type-check the app
 cd frontend && npx expo export --platform web        # production web build
 ```
 
-The backend tests use an in-memory email outbox, run Celery tasks eagerly and write uploaded files to a temporary directory, so the worker and Redis don't need to be running. PostgreSQL does.
+The backend tests create two agencies for the session (`test`, reached at the test client's default host, and `other.localhost`) and run every test in the first. They use an in-memory email outbox, run Celery tasks eagerly and write uploaded files to a temporary directory, so the worker and Redis don't need to be running. PostgreSQL does.
 
 ## Decisions
 

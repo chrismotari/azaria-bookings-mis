@@ -1,4 +1,3 @@
-from django.db import transaction
 from django.db.models import Prefetch
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -6,6 +5,7 @@ from rest_framework.views import APIView
 
 from catalog.models import Offer
 from core.permissions import IsAdminRole
+from core.tenancy import queue
 
 from .models import Query, QueryResponse
 from .serializers import (
@@ -33,7 +33,7 @@ class QueryListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         query = serializer.save(user=self.request.user)
-        transaction.on_commit(lambda: notify_admin_new_query.delay(query.pk))
+        queue(notify_admin_new_query, query.pk)
 
 
 class QueryDetailView(generics.RetrieveAPIView):

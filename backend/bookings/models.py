@@ -2,7 +2,7 @@ import uuid
 
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import connection, models
 
 from catalog.models import Offer, Stop
 from core.storage import private_storage
@@ -95,8 +95,8 @@ class BookingEvent(models.Model):
 
 
 def boarding_pass_path(instance, filename):
-    # The private storage replaces the file name with a random UUID.
-    return f"boarding_passes/{instance.booking_id}/{filename}"
+    # Per tenant; the private storage replaces the file name with a random UUID.
+    return f"boarding_passes/{connection.schema_name}/{instance.booking_id}/{filename}"
 
 
 class BoardingPass(models.Model):

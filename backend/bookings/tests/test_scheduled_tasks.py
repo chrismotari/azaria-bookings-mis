@@ -12,7 +12,7 @@ from bookings import tasks
 from bookings.models import Booking, BookingEvent
 from bookings.services import InvalidTransition, transition
 from core.models import AppSettings
-from core.tests.helpers import html_part
+from core.tests.helpers import TEST_SCHEMA, html_part
 
 Status = Booking.Status
 
@@ -171,8 +171,8 @@ def test_reminder_email_skipped_when_state_has_changed(make_booking, instruction
     if change == "paid":
         Booking.objects.filter(pk=booking.pk).update(status=Status.PAID)
     with freeze_time(DEADLINE if change == "deadline_passed" else REMINDER_FROM):
-        tasks.notify_customer_payment_reminder(booking.id)
-    tasks.notify_customer_payment_reminder(999999)
+        tasks.notify_customer_payment_reminder(TEST_SCHEMA, booking.id)
+    tasks.notify_customer_payment_reminder(TEST_SCHEMA, 999999)
     assert mail.outbox == []
 
 
@@ -221,6 +221,7 @@ def test_mark_paid_racing_expiry_ends_in_exactly_one_outcome(make_booking, admin
     outcomes = {}
 
     def attempt(name, to_status, actor):
+        connection.set_schema(TEST_SCHEMA)
         barrier.wait()
         try:
             transition(booking.id, to_status, actor)

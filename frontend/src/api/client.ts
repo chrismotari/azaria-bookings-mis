@@ -2,6 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 import { API_URL } from '../config';
 import { tokenStorage } from './storage';
+import { reportTenantProblem } from './tenant';
 
 export const api = axios.create({ baseURL: API_URL });
 
@@ -44,6 +45,10 @@ type RetriableConfig = InternalAxiosRequestConfig & { _retried?: boolean };
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
+    // No agency at this address, or it is suspended: the app shows a full-page message instead.
+    if (reportTenantProblem(error.response?.data)) {
+      throw error;
+    }
     const config = error.config as RetriableConfig | undefined;
     const isAuthPath = AUTH_PATHS.some((path) => config?.url?.startsWith(path));
     if (error.response?.status !== 401 || !config || isAuthPath) {

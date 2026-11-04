@@ -37,7 +37,9 @@ class OfferFilter(django_filters.FilterSet):
         return queryset.filter(_airport_matches(name, value))
 
     def filter_max_stops(self, queryset, name, value):
-        return queryset.annotate(number_of_stops=Count("stops")).filter(number_of_stops__lte=value)
+        # A subquery rather than annotating the queryset, which would group it and drop the default ordering.
+        too_many = Offer.objects.annotate(number_of_stops=Count("stops")).filter(number_of_stops__gt=value)
+        return queryset.exclude(pk__in=too_many.values("pk"))
 
 
 class AdminOfferFilter(OfferFilter):

@@ -2,7 +2,8 @@
 import { chromium } from 'playwright-core';
 import fs from 'node:fs';
 
-export const APP = process.env.APP_URL ?? 'http://localhost:8081';
+// Each agency has its own host; Azaria is the first tenant.
+export const APP = process.env.APP_URL ?? 'http://azaria.localhost:8081';
 export const OUT = process.env.OUT ?? '/tmp/azaria-run';
 const CHROME = process.env.CHROME ?? '/usr/bin/google-chrome';
 

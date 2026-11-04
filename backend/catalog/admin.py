@@ -1,12 +1,6 @@
 from django.contrib import admin
 
-from .models import Airport, Offer
-
-
-@admin.register(Airport)
-class AirportAdmin(admin.ModelAdmin):
-    list_display = ["code", "name", "city", "country"]
-    search_fields = ["code", "name", "city", "country"]
+from .models import Offer
 
 
 @admin.register(Offer)

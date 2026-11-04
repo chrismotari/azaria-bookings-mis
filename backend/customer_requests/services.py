@@ -2,6 +2,7 @@ from django.db import transaction
 
 from catalog.models import Offer
 from core.exceptions import Conflict
+from core.tenancy import queue
 
 from .models import Query, QueryResponse
 from .tasks import notify_customer_query_responded
@@ -33,7 +34,7 @@ def respond_to_query(query_id, message, offers, new_offers):
         if query.status == Query.Status.CLOSED:
             raise Conflict("This request has been closed by the customer.")
         response = add_response(query, message, offers, new_offers)
-        transaction.on_commit(lambda: notify_customer_query_responded.delay(response.pk))
+        queue(notify_customer_query_responded, response.pk)
     return query
 
 

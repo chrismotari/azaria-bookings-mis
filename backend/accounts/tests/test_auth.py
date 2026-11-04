@@ -112,11 +112,11 @@ def test_password_reset_same_response_for_known_and_unknown(api, customer, djang
     assert mail.outbox[0].to == [customer.email]
 
 
-def test_password_reset_email_link(api, customer, settings, django_capture_on_commit_callbacks):
+def test_password_reset_email_link(api, customer, django_capture_on_commit_callbacks):
     with django_capture_on_commit_callbacks(execute=True):
         api.post("/api/auth/password-reset", {"email": customer.email}, format="json")
     link, uid, token = _reset_link_parts(mail.outbox[0].body)
-    assert link.startswith(f"{settings.FRONTEND_URL}/reset-password?uid=")
+    assert link.startswith("http://testserver:8081/reset-password?uid=")
     assert uid == urlsafe_base64_encode(force_bytes(customer.pk))
     assert default_token_generator.check_token(customer, token)
     assert f'href="{escape(link)}"' in html_part(mail.outbox[0])

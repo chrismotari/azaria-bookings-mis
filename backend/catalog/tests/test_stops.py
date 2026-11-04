@@ -195,3 +195,12 @@ def test_respond_rejects_custom_offer_with_invalid_stops(admin_api, customer, ai
     assert "new_offers" in response.data
     query.refresh_from_db()
     assert query.status == Query.Status.OPEN
+
+
+def test_max_stopovers_filter_keeps_the_default_order(api, make_offer, airports):
+    later = make_offer(departure_date=timezone.localdate() + timedelta(days=40))
+    sooner = make_offer(departure_date=timezone.localdate() + timedelta(days=20))
+    with_stop = make_offer()
+    with_stop.set_stops([{"airport": airports["DXB"], "duration_minutes": 60}])
+    results = api.get("/api/offers", {"max_stopovers": 0}).data["results"]
+    assert [o["id"] for o in results] == [str(sooner.id), str(later.id)]
