@@ -112,3 +112,6 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - Suspending and reactivating in /django-admin/ go through the same billing.set_active as the platform app.
 - Preview first decides by the file name's extension (pdf, png, jpg, jpeg, webp, gif), so the new tab can be opened during the click, before the file is fetched; browsers block tabs opened later as pop-ups.
 - The preview tab shows the file from a blob: URL (the file is fetched with the auth header), so its tab title is the browser's, not the file name; the browser's own viewer offers saving it.
+- Dashboard: agencies suspended by the owner count as "suspended" and the rest of the inactive ones as "for non-payment"; the Agencies card links to the Suspended filter when any agency is suspended, otherwise to all agencies; Revenue links to paid invoices and Monthly recurring to Plans.
+- The Agencies and Invoices status filters live in the URL (?status=), like the agency admin's lists, so dashboard cards open them filtered.
+- Signing out on the platform returns to the public home page; a platform page opened while signed out goes to /login and reopens after signing in.

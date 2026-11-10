@@ -48,12 +48,13 @@ const platformLinking: LinkingOptions<RootStackParamList> = {
   prefixes: [],
   config: {
     screens: {
+      // '/' is the public introduction; the owner's screens have their own paths.
+      PlatformHome: '',
       PlatformLogin: 'login',
       PlatformTabs: {
-        path: '',
         screens: {
-          // Agencies is the platform's home; '/' opens it too.
-          PlatformAgencies: { path: 'agencies/:id?', alias: [''] },
+          PlatformDashboard: 'dashboard',
+          PlatformAgencies: 'agencies/:id?',
           PlatformPlans: 'plans',
           PlatformInvoices: 'invoices/:id?',
           PlatformSettings: 'settings',

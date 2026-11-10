@@ -33,10 +33,14 @@ export type AdminTabParamList = {
 };
 
 /** The platform's screens (root host only). */
+export type AgencyStatusFilter = 'all' | 'active' | 'suspended';
+export type InvoiceStatusFilter = 'all' | 'unpaid' | 'overdue' | 'paid' | 'void';
+
 export type PlatformTabParamList = {
-  PlatformAgencies: { id?: string } | undefined;
+  PlatformDashboard: undefined;
+  PlatformAgencies: { status?: AgencyStatusFilter; id?: string } | undefined;
   PlatformPlans: undefined;
-  PlatformInvoices: { id?: string; tenant?: string } | undefined;
+  PlatformInvoices: { status?: InvoiceStatusFilter; id?: string } | undefined;
   PlatformSettings: undefined;
 };
 
@@ -52,6 +56,7 @@ export type RootStackParamList = {
   AdminOfferNew: undefined;
   AdminQueryRespond: { id: string };
   AdminBilling: undefined;
+  PlatformHome: undefined;
   PlatformLogin: undefined;
   PlatformTabs: NavigatorScreenParams<PlatformTabParamList> | undefined;
 };

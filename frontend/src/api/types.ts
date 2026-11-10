@@ -300,3 +300,23 @@ export type AgencyBilling = {
   billing_contact_email: string;
   overdue: { number: string; amount: string; currency: string; due_on: string; suspends_on: string } | null;
 };
+
+/** The system owner's dashboard; amounts are decimals as strings in the platform's currency. */
+export type PlatformDashboard = {
+  currency: string;
+  agencies: { total: number; active: number; suspended: number; non_payment: number; no_plan: number };
+  revenue: { this_month: string; this_year: string; all_time: string };
+  recurring: { monthly_value: string; subscriptions: number; support: number };
+  outstanding: { count: number; total: string; overdue_count: number; overdue_total: string };
+  /** The last 12 months, oldest first; month is "YYYY-MM". */
+  revenue_by_month: { month: string; total: string }[];
+  plans: { id: string; name: string; kind: PlanKind; agencies: number }[];
+  attention: {
+    id: string;
+    number: string;
+    tenant: { id: number; name: string };
+    amount: string;
+    due_on: string;
+    suspends_on: string | null;
+  }[];
+};

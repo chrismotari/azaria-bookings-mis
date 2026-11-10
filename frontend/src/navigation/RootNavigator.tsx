@@ -1,5 +1,5 @@
 import { BottomTabScreenProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useFocusEffect, useLinkTo, useNavigation } from '@react-navigation/native';
+import { StackActions, useFocusEffect, useLinkTo, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useRef } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
@@ -28,6 +28,8 @@ import { AgenciesScreen } from '../screens/platform/AgenciesScreen';
 import { InvoicesScreen } from '../screens/platform/InvoicesScreen';
 import { PlansScreen } from '../screens/platform/PlansScreen';
 import { PlatformSettingsScreen } from '../screens/platform/PlatformSettingsScreen';
+import { PlatformDashboardScreen } from '../screens/platform/PlatformDashboardScreen';
+import { PlatformHomeScreen } from '../screens/platform/PlatformHomeScreen';
 import { PlatformLoginScreen } from '../screens/platform/PlatformLoginScreen';
 import { IS_PLATFORM } from '../config';
 import { ExploreScreen } from '../screens/explore/ExploreScreen';
@@ -35,6 +37,7 @@ import { QueryNewScreen } from '../screens/requests/QueryNewScreen';
 import { RequestsScreen } from '../screens/requests/RequestsScreen';
 import { colors, useIsWide } from '../theme';
 import { AppBar } from './AppBar';
+import { PlatformPublicBar } from './PlatformPublicBar';
 import { ResponsiveTabBar } from './ResponsiveTabBar';
 import { AdminTabParamList, MainTabParamList, PlatformTabParamList, RootStackParamList } from './types';
 
@@ -231,13 +234,41 @@ function AdminTabsNavigator() {
   );
 }
 
+/** A platform page opened while signed out: remember it, sign in first, and PlatformTabsNavigator reopens it. */
+function PlatformSignInFirst() {
+  const navigation = useNavigation();
+  // Read on the first render, before the redirect changes the address.
+  const path = useRef(Platform.OS === 'web' ? `${window.location.pathname}${window.location.search}` : null);
+  useFocusEffect(
+    useCallback(() => {
+      if (path.current) {
+        setPendingPath(path.current);
+      }
+      navigation.dispatch(StackActions.replace('PlatformLogin'));
+    }, [navigation]),
+  );
+  return null;
+}
+
 function PlatformTabsNavigator() {
   const isWide = useIsWide();
+  const linkTo = useLinkTo();
+  useEffect(() => {
+    const path = takePendingPath();
+    if (path) {
+      linkTo(path);
+    }
+  }, [linkTo]);
   return (
     <PlatformTabs.Navigator
       tabBar={(props) => <ResponsiveTabBar {...props} />}
       screenOptions={tabScreenOptions(isWide)}
     >
+      <PlatformTabs.Screen
+        name="PlatformDashboard"
+        component={PlatformDashboardScreen}
+        options={tab('Dashboard', 'grid-outline', 'grid')}
+      />
       <PlatformTabs.Screen
         name="PlatformAgencies"
         component={AgenciesScreen}
@@ -258,19 +289,27 @@ function PlatformTabsNavigator() {
   );
 }
 
-/** The root host: the system owner signs in, then manages agencies. Agency screens are not reachable here. */
+/**
+ * The root host: a public home page, the system owner's sign-in, and once signed in the owner's screens (the
+ * dashboard first). Agency screens are not reachable here.
+ */
 function PlatformStack() {
   const { user } = useAuth();
+  const publicPage = { header: () => <PlatformPublicBar /> };
   return (
     <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
       {user ? (
-        <Stack.Screen name="PlatformTabs" component={PlatformTabsNavigator} options={{ headerShown: false }} />
+        <>
+          <Stack.Screen name="PlatformTabs" component={PlatformTabsNavigator} options={{ headerShown: false }} />
+          <Stack.Screen name="PlatformHome" component={PlatformHomeScreen} options={{ title: 'Home', ...publicPage }} />
+        </>
       ) : (
-        <Stack.Screen
-          name="PlatformLogin"
-          component={PlatformLoginScreen}
-          options={{ title: 'Sign in', header: () => <AppBar brandOnly /> }}
-        />
+        <>
+          <Stack.Screen name="PlatformHome" component={PlatformHomeScreen} options={{ title: 'Home', ...publicPage }} />
+          <Stack.Screen name="PlatformLogin" component={PlatformLoginScreen} options={{ title: 'Sign in', ...publicPage }} />
+          {/* The owner's pages opened while signed out go to sign-in first. */}
+          <Stack.Screen name="PlatformTabs" component={PlatformSignInFirst} options={{ title: 'Sign in', ...publicPage }} />
+        </>
       )}
     </Stack.Navigator>
   );

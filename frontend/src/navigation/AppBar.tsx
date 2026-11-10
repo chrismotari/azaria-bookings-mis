@@ -24,7 +24,11 @@ export function AppBar({ children, brandOnly }: { children?: ReactNode; brandOnl
   const isWide = useIsWide();
   const goHome = () => {
     if (IS_PLATFORM) {
-      navigation.navigate(user ? 'PlatformTabs' : 'PlatformLogin');
+      if (user) {
+        navigation.navigate('PlatformTabs', { screen: 'PlatformDashboard' });
+      } else {
+        navigation.navigate('PlatformHome');
+      }
     } else if (user?.role === 'admin') {
       navigation.navigate('AdminTabs', { screen: 'AdminDashboard' });
     } else {

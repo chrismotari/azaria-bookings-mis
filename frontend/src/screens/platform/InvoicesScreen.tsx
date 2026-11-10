@@ -21,9 +21,10 @@ import { StatusChip, Tone, TONES } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { Column, Table, TableRow } from '../../components/Table';
 import { TripCard } from '../../components/TripCard';
-import { PlatformTabParamList } from '../../navigation/types';
+import { InvoiceStatusFilter, PlatformTabParamList } from '../../navigation/types';
 import { colors, font, radius, space, useIsWide, weight } from '../../theme';
 import { openFile } from '../../utils/download';
+import { useListPage } from '../../utils/listPage';
 import { formatDate, formatMoney, todayInNairobi } from '../../utils/format';
 import { AGENCIES_KEY, INVOICES_KEY } from './keys';
 
@@ -49,9 +50,7 @@ export function openInvoice(invoice: AgencyInvoice, path: string) {
   return openFile(path, `${invoice.number}.pdf`);
 }
 
-type Filter = 'all' | 'unpaid' | 'overdue' | 'paid' | 'void';
-
-const FILTERS: { value: Filter; label: string }[] = [
+const FILTERS: { value: InvoiceStatusFilter; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'unpaid', label: 'Unpaid' },
   { value: 'overdue', label: 'Overdue' },
@@ -72,8 +71,9 @@ export function InvoicesScreen({ navigation, route }: BottomTabScreenProps<Platf
   const selected = route.params?.id;
   const close = useCallback(() => navigation.setParams({ id: undefined }), [navigation]);
   const asTable = useIsWide() && selected === undefined;
-  const [filter, setFilter] = useState<Filter>('all');
-  const [page, setPage] = useState(1);
+  // In the URL, so the dashboard can link to a filtered list.
+  const filter = route.params?.status ?? 'all';
+  const [page, setPage] = useListPage(filter);
   const invoices = useQuery({
     queryKey: [...INVOICES_KEY, 'list', filter, page],
     queryFn: async () => {
@@ -103,10 +103,7 @@ export function InvoicesScreen({ navigation, route }: BottomTabScreenProps<Platf
             options={FILTERS}
             value={filter}
             wrap
-            onChange={(value) => {
-              setFilter(value);
-              setPage(1);
-            }}
+            onChange={(value) => navigation.setParams({ status: value })}
           />
           {invoices.isPending ? (
             <LoadingState />

@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 
 from core.permissions import IsAdminRole
 
-from . import billing
+from . import billing, dashboard
 from .billing_serializers import (
     AgencyInvoiceSerializer,
     InvoiceSerializer,
@@ -196,6 +196,13 @@ class PlatformSettingsView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return PlatformSettings.get()
+
+
+class PlatformDashboardView(APIView):
+    permission_classes = [IsPlatformOwner]
+
+    def get(self, request):
+        return Response(dashboard.summary())
 
 
 # The agency's own billing (its host, its admins)

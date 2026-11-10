@@ -15,8 +15,9 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/StatusVie
 import { Column, Table, TableRow } from '../../components/Table';
 import { TextField } from '../../components/TextField';
 import { TripCard } from '../../components/TripCard';
-import { PlatformTabParamList } from '../../navigation/types';
+import { AgencyStatusFilter, PlatformTabParamList } from '../../navigation/types';
 import { colors, font, space, useIsWide, weight } from '../../theme';
+import { useListPage } from '../../utils/listPage';
 import { useDebounced } from '../../utils/useDebounced';
 import { AGENCIES_KEY, AgencyDetailView, createdOn, NewAgencyDialog, tenantStatus } from './AgencyDetailView';
 
@@ -27,12 +28,10 @@ const COLUMNS: Column[] = [
   { label: 'Created', flex: 1.6 },
 ];
 
-type Filter = 'all' | 'true' | 'false';
-
-const FILTERS: { value: Filter; label: string }[] = [
+const FILTERS: { value: AgencyStatusFilter; label: string }[] = [
   { value: 'all', label: 'All' },
-  { value: 'true', label: 'Active' },
-  { value: 'false', label: 'Suspended' },
+  { value: 'active', label: 'Active' },
+  { value: 'suspended', label: 'Suspended' },
 ];
 
 export function AgenciesScreen({ navigation, route }: BottomTabScreenProps<PlatformTabParamList, 'PlatformAgencies'>) {
@@ -42,13 +41,14 @@ export function AgenciesScreen({ navigation, route }: BottomTabScreenProps<Platf
   const asTable = useIsWide() && selected === undefined;
   const [text, setText] = useState('');
   const search = useDebounced(text.trim(), 300);
-  const [filter, setFilter] = useState<Filter>('all');
-  const [page, setPage] = useState(1);
+  // In the URL, so the dashboard can link to a filtered list.
+  const filter = route.params?.status ?? 'all';
+  const [page, setPage] = useListPage(filter);
   const [creating, setCreating] = useState(false);
   const tenants = useQuery({
     queryKey: [...AGENCIES_KEY, search, filter, page],
     queryFn: async () => {
-      const params = { page, ...(search ? { search } : {}), ...(filter !== 'all' ? { is_active: filter } : {}) };
+      const params = { page, ...(search ? { search } : {}), ...(filter !== 'all' ? { is_active: String(filter === 'active') } : {}) };
       return (await api.get<Paginated<Tenant>>('/platform/tenants', { params })).data;
     },
     placeholderData: keepPreviousData,
@@ -83,10 +83,7 @@ export function AgenciesScreen({ navigation, route }: BottomTabScreenProps<Platf
             label="Status"
             options={FILTERS}
             value={filter}
-            onChange={(value) => {
-              setFilter(value);
-              setPage(1);
-            }}
+            onChange={(value) => navigation.setParams({ status: value })}
           />
           {tenants.isPending ? (
             <LoadingState />

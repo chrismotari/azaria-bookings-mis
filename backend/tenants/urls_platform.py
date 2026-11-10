@@ -29,4 +29,5 @@ urlpatterns = [
         for action in ["mark-paid", "mark-unpaid", "void", "resend"]
     ],
     path("settings", billing.PlatformSettingsView.as_view()),
+    path("dashboard", billing.PlatformDashboardView.as_view()),
 ]
