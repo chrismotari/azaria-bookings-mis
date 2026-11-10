@@ -7,7 +7,7 @@ import { PressState } from '../components/pressState';
 import { colors, font, radius, space, useIsWide, weight } from '../theme';
 import { APP_BAR_HEIGHT } from './AppBar';
 
-/** The root host's public pages (home, pricing, sign-in): the brand, Pricing, and Admin sign in or Open admin. */
+/** The root host's public pages (home, pricing, sign-in): the brand, Pricing, and Open admin for the signed-in owner. */
 export function PlatformPublicBar() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -29,19 +29,16 @@ export function PlatformPublicBar() {
         >
           <Text style={[styles.linkText, !isWide && styles.linkTextNarrow]}>Pricing</Text>
         </Pressable>
-        <Pressable
-          accessibilityRole="link"
-          onPress={() =>
-            user
-              ? navigation.navigate('PlatformTabs', { screen: 'PlatformDashboard' })
-              : navigation.navigate('PlatformLogin')
-          }
-          style={({ hovered }: PressState) => [styles.link, hovered && styles.linkHovered]}
-        >
-          <Text style={[styles.linkText, !isWide && styles.linkTextNarrow]}>
-            {user ? 'Open admin' : 'Admin sign in'}
-          </Text>
-        </Pressable>
+        {/* No sign-in link: the owner goes to /login directly. Signed in, the way back to the admin. */}
+        {user ? (
+          <Pressable
+            accessibilityRole="link"
+            onPress={() => navigation.navigate('PlatformTabs', { screen: 'PlatformDashboard' })}
+            style={({ hovered }: PressState) => [styles.link, hovered && styles.linkHovered]}
+          >
+            <Text style={[styles.linkText, !isWide && styles.linkTextNarrow]}>Open admin</Text>
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );

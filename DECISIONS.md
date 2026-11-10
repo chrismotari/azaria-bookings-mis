@@ -136,3 +136,4 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - The platform desk is notified at PlatformSettings.support_email; with it blank no desk email is sent (the Settings screen warns).
 - Plan enquiries prefill subject "Plan enquiry: <plan> (monthly|annual)" and an editable message; on the pricing page they open the floating panel, in the agency app a dialog, after which the admin lands on the chat in Settings > Support.
 - A Dialog whose content has its own buttons (footer null) draws no footer bar.
+- The admin-address redirects (admin.<root host> and <root host>/admin) are done in the web app before it starts (config.ts), so they work wherever the app is served; a production proxy can also redirect admin.<root host> itself.

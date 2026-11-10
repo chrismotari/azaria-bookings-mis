@@ -25,7 +25,7 @@ const POINTS: { icon: IconName; title: string; text: string }[] = [
   },
 ];
 
-/** The root host's public home page: what the system is, and the way in for the system owner. */
+/** The root host's public home page: what the system is, and its pricing. */
 export function PlatformHomeScreen() {
   const navigation = useNavigation();
   const { user } = useAuth();
@@ -41,20 +41,19 @@ export function PlatformHomeScreen() {
         <View style={styles.actions}>
           <Button
             title="See pricing"
-            variant="secondary"
+            variant="accent"
             icon="pricetags-outline"
             onPress={() => navigation.navigate('PlatformPricing')}
           />
-          <Button
-            title={user ? 'Open admin' : 'Admin sign in'}
-            variant="accent"
-            icon={user ? 'grid-outline' : 'log-in-outline'}
-            onPress={() =>
-              user
-                ? navigation.navigate('PlatformTabs', { screen: 'PlatformDashboard' })
-                : navigation.navigate('PlatformLogin')
-            }
-          />
+          {/* No sign-in link: the owner goes to /login directly. Signed in, the way back to the admin. */}
+          {user ? (
+            <Button
+              title="Open admin"
+              variant="secondary"
+              icon="grid-outline"
+              onPress={() => navigation.navigate('PlatformTabs', { screen: 'PlatformDashboard' })}
+            />
+          ) : null}
         </View>
       </View>
       <View style={[styles.points, isWide && styles.pointsWide]}>

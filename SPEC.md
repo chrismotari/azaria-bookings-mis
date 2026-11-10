@@ -24,6 +24,7 @@ HARD RULES
 - Time zone Africa/Nairobi with USE_TZ = True. Times in emails and UI are shown in Nairobi time.
 - "Admin" means the agency owner's role in the app (User.role == "admin"). Django's built-in admin site is only for technical support: mount it at /django-admin/, superusers only. Never mix the two in code, naming or docs.
 - Access model: guests (no account) may only browse offers and view offer details, plus airport search. Every other capability needs an account.
+- Identifiers are always UUIDs, never sequential numbers: every model's primary key is a UUIDField (default uuid.uuid4), and every id in a URL, API body or response is a UUID. Only Django's own framework tables (permissions, groups, sessions, migration records) keep their numeric keys.
 
 ======================================================================
 BACKEND CONFIGURATION
@@ -559,8 +560,9 @@ PLATFORM HOME PAGE AND DASHBOARD (step 29)
 Goal: the root host opens on a short public introduction to the system, and the system owner lands on a dashboard of agencies, revenue and what needs attention.
 
 Root host home page
-- / on the root host is a short public introduction to the system for travel agencies, whether or not the owner is signed in: a headline and one or two sentences on what Azaria Bookings is (a booking platform where each travel agency gets its own site to publish flight deals, answer customers' requests, take bookings and send boarding passes), three short points (own address and data per agency; deals, requests and bookings in one place; boarding passes by email and in the app), and two links: "See pricing" (/pricing) and "Admin sign in" (/login; "Open admin" when the owner is already signed in, going to the Dashboard).
-- The root host's pages share a slim public bar: the brand (linking to /), Pricing, and Admin sign in (or Open admin).
+- / on the root host is a short public introduction to the system for travel agencies, whether or not the owner is signed in: a headline and one or two sentences on what Azaria Bookings is (a booking platform where each travel agency gets its own site to publish flight deals, answer customers' requests, take bookings and send boarding passes), three short points (own address and data per agency; deals, requests and bookings in one place; boarding passes by email and in the app), and a "See pricing" link (/pricing). Nothing on the public pages links to the owner's sign-in: the owner opens /login directly. Signed in, the owner also sees "Open admin" (to the Dashboard).
+- The root host's pages share a slim public bar: the brand (linking to /), Pricing, and, for the signed-in owner only, Open admin.
+- The usual guesses lead to the sign-in: admin.<root host> (e.g. admin.localhost:8081, admin.azariabookings.com) redirects to <root host>/login, and <root host>/admin (and any path under it) opens /login (the dashboard when signed in). In production the reverse proxy serves the web app on admin.<root host> too (or redirects it there itself).
 - The owner's sign-in moves to /login and Agencies to /agencies; / no longer opens Agencies.
 - Until step 30 adds the pricing page, "See pricing" and Pricing are left out.
 
