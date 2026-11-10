@@ -41,7 +41,8 @@ export function ResponsiveTabBar({ state, descriptors, navigation, hiddenRoutes 
         navigation.navigate(route.name, { ...route.params, id: undefined });
       }
     };
-    return [{ key: route.key, label, focused, onPress, icon }];
+    const badge = options.tabBarBadge;
+    return [{ key: route.key, label, focused, onPress, icon, badge }];
   });
 
   if (isWide) {
@@ -54,6 +55,7 @@ export function ResponsiveTabBar({ state, descriptors, navigation, hiddenRoutes 
             icon={route.icon(colors.primaryText)}
             focused={route.focused}
             onPress={route.onPress}
+            badge={route.badge}
           />
         ))}
       </AppBar>
@@ -73,7 +75,10 @@ export function ResponsiveTabBar({ state, descriptors, navigation, hiddenRoutes 
             route.focused && styles.focused,
           ]}
         >
-          {route.icon(route.focused ? colors.primary : colors.muted)}
+          <View>
+            {route.icon(route.focused ? colors.primary : colors.muted)}
+            {route.badge ? <TabBadge value={route.badge} /> : null}
+          </View>
           <Text style={[styles.label, route.focused && styles.focusedLabel]} numberOfLines={1}>
             {route.label}
           </Text>
@@ -83,7 +88,29 @@ export function ResponsiveTabBar({ state, descriptors, navigation, hiddenRoutes 
   );
 }
 
+/** An unread count on a tab (e.g. Chats). */
+export function TabBadge({ value }: { value: string | number }) {
+  return (
+    <View style={styles.badge} accessibilityLabel={`${value} unread`}>
+      <Text style={styles.badgeText}>{value}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  badge: {
+    position: 'absolute',
+    top: -6,
+    right: -10,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: { color: colors.accentText, fontSize: font.caption, fontWeight: weight.bold },
   bottomBar: {
     flexDirection: 'row',
     backgroundColor: colors.surface,

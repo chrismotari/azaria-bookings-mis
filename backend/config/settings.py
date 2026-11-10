@@ -53,6 +53,8 @@ TENANT_APPS = [
     "customer_requests.apps.RequestsConfig",
     "bookings",
     "core",
+    # Each agency's support desk (step 31); the platform's desk joins SHARED_APPS in step 32.
+    "support",
 ]
 
 INSTALLED_APPS = [*SHARED_APPS, *[app for app in TENANT_APPS if app not in SHARED_APPS]]
@@ -170,6 +172,8 @@ REST_FRAMEWORK = {
         "register": "10/min",
         "login": "10/min",
         "password_reset": "10/min",
+        # New chats from guests (signed-in requesters are not throttled).
+        "support_guest": "10/hour",
     },
 }
 
@@ -198,6 +202,10 @@ CELERY_BEAT_SCHEDULE = {
     },
     "expire-stale-requests": {
         "task": "bookings.tasks.expire_stale_requests",
+        "schedule": timedelta(hours=1),
+    },
+    "close-idle-chats": {
+        "task": "support.tasks.close_idle_chats",
         "schedule": timedelta(hours=1),
     },
     # The platform's billing (public schema), once a day.

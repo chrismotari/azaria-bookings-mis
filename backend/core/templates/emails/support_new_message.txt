@@ -1,0 +1,14 @@
+{% if first %}A new chat{% else %}A new message{% endif %} on your support desk.
+
+Subject: {{ conversation.subject }}
+From: {% if conversation.name %}{{ conversation.name }} <{{ conversation.email }}>{% else %}Guest <{{ conversation.email }}>{% endif %}
+{% if is_guest %}A guest: replies reach them by email only.
+{% endif %}
+{{ message.body }}
+{% if message.attachment_name %}
+Attached: {{ message.attachment_name }}
+{% endif %}
+Open the chat:
+{{ frontend_url }}{{ desk_path }}
+
+Azaria Bookings

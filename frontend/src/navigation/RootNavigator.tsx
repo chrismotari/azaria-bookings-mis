@@ -26,6 +26,10 @@ import { ResetPasswordScreen } from '../screens/auth/ResetPasswordScreen';
 import { AccountScreen } from '../screens/customer/AccountScreen';
 import { AdminBillingScreen, OverdueBanner } from '../screens/admin/AdminBillingScreen';
 import { AdminPlansScreen } from '../screens/admin/AdminPlansScreen';
+import { DeskChatsScreen } from '../screens/support/DeskChatsScreen';
+import { SupportScreen } from '../screens/support/SupportScreen';
+import { useDeskUnread } from '../support/api';
+import { ChatLauncher } from '../support/ChatLauncher';
 import { AgenciesScreen } from '../screens/platform/AgenciesScreen';
 import { InvoicesScreen } from '../screens/platform/InvoicesScreen';
 import { PlansScreen } from '../screens/platform/PlansScreen';
@@ -162,9 +166,17 @@ function GatedBookingNew(props: BottomTabScreenProps<MainTabParamList, 'BookingN
 // Login-required tabs, left out of the bar for guests.
 const GATED_TABS: (keyof MainTabParamList)[] = ['Requests', 'Bookings', 'Account'];
 
-// Form pages: never in the bar; the tab they belong to stays highlighted on them.
-const MAIN_FORM_PAGES: (keyof MainTabParamList)[] = ['QueryNew', 'BookingNew'];
-const MAIN_PARENT_ROUTES: Record<string, string> = { QueryNew: 'Requests', BookingNew: 'Explore' };
+// Pages under a tab (forms, Support): never in the bar; the tab they belong to stays highlighted on them.
+const MAIN_FORM_PAGES: (keyof MainTabParamList)[] = ['QueryNew', 'BookingNew', 'Support'];
+const MAIN_PARENT_ROUTES: Record<string, string> = { QueryNew: 'Requests', BookingNew: 'Explore', Support: 'Account' };
+
+function GatedSupport(props: BottomTabScreenProps<MainTabParamList, 'Support'>) {
+  return (
+    <RequireAuth target={{ screen: 'Main', params: { screen: 'Support', params: props.route.params } }}>
+      <SupportScreen {...props} />
+    </RequireAuth>
+  );
+}
 
 /** Wide: the brand bar is the tab bar, on top. Narrow: a slim brand bar as the header, tabs at the bottom. */
 function tabScreenOptions(isWide: boolean) {
@@ -225,6 +237,7 @@ function MainTabsNavigator() {
       />
       <MainTabs.Screen name="QueryNew" component={GatedQueryNew} options={{ title: 'Request options' }} />
       <MainTabs.Screen name="BookingNew" component={GatedBookingNew} options={{ title: 'Book' }} />
+      <MainTabs.Screen name="Support" component={GatedSupport} options={{ title: 'Support' }} />
     </MainTabs.Navigator>
   );
 }
@@ -240,6 +253,7 @@ const ADMIN_PARENT_ROUTES: Record<string, string> = {
 
 function AdminTabsNavigator() {
   const isWide = useIsWide();
+  const unreadChats = useDeskUnread();
   return (
     <AdminTabs.Navigator
       tabBar={(props) => (
@@ -271,6 +285,14 @@ function AdminTabsNavigator() {
         name="AdminUsers"
         component={AdminUsersScreen}
         options={tab('Users', 'people-outline', 'people')}
+      />
+      <AdminTabs.Screen
+        name="AdminChats"
+        component={DeskChatsScreen}
+        options={{
+          ...tab('Chats', 'chatbubbles-outline', 'chatbubbles'),
+          tabBarBadge: unreadChats.data ? (unreadChats.data > 9 ? '9+' : unreadChats.data) : undefined,
+        }}
       />
       <AdminTabs.Screen
         name="AdminSettings"
@@ -393,20 +415,24 @@ export function RootNavigator() {
   }
 
   return (
-    <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
-      <Stack.Screen name="Main" component={MainTabsNavigator} options={{ headerShown: false }} />
-      {/* Guests only: for a signed-in customer these URLs match no screen and open Explore. */}
-      {user ? null : (
-        <Stack.Group screenOptions={{ header: () => <AppBar brandOnly /> }}>
-          <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Sign in' }} />
-          <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Create account' }} />
-          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ title: 'Forgot password' }} />
-          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ title: 'Reset password' }} />
-          {/* Admin links opened while signed out go to Login first. */}
-          <Stack.Screen name="AdminTabs" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
-        </Stack.Group>
-      )}
-    </Stack.Navigator>
+    <View style={styles.fill}>
+      <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
+        <Stack.Screen name="Main" component={MainTabsNavigator} options={{ headerShown: false }} />
+        {/* Guests only: for a signed-in customer these URLs match no screen and open Explore. */}
+        {user ? null : (
+          <Stack.Group screenOptions={{ header: () => <AppBar brandOnly /> }}>
+            <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Sign in' }} />
+            <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Create account' }} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ title: 'Forgot password' }} />
+            <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ title: 'Reset password' }} />
+            {/* Admin links opened while signed out go to Login first. */}
+            <Stack.Screen name="AdminTabs" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
+          </Stack.Group>
+        )}
+      </Stack.Navigator>
+      {/* Guests and customers write to the agency from every page; its admins answer in Chats. */}
+      <ChatLauncher />
+    </View>
   );
 }
 

@@ -16,6 +16,7 @@ const agencyLinking: LinkingOptions<RootStackParamList> = {
           Account: 'account',
           BookingNew: 'offers/:offer/book',
           QueryNew: 'requests/new',
+          Support: 'account/support/:id?',
         },
       },
       Login: {
@@ -33,6 +34,7 @@ const agencyLinking: LinkingOptions<RootStackParamList> = {
           AdminRequests: 'requests/:id?',
           AdminBookings: 'bookings/:id?',
           AdminUsers: 'users/:id?',
+          AdminChats: 'chats/:id?',
           AdminSettings: 'settings',
           AdminOfferNew: 'offers/new',
           AdminQueryRespond: 'requests/:id/respond',

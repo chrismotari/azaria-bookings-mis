@@ -54,10 +54,10 @@ export function AppBar({ children, brandOnly }: { children?: ReactNode; brandOnl
   );
 }
 
-type ItemProps = { label: string; icon: ReactNode; focused: boolean; onPress: () => void };
+type ItemProps = { label: string; icon: ReactNode; focused: boolean; onPress: () => void; badge?: string | number };
 
 /** A navigation item in the bar; the focused one is underlined in amber. */
-export function AppBarItem({ label, icon, focused, onPress }: ItemProps) {
+export function AppBarItem({ label, icon, focused, onPress, badge }: ItemProps) {
   return (
     <Pressable
       accessibilityRole="tab"
@@ -69,6 +69,11 @@ export function AppBarItem({ label, icon, focused, onPress }: ItemProps) {
       <Text style={[styles.itemText, focused && styles.itemTextFocused]} numberOfLines={1}>
         {label}
       </Text>
+      {badge ? (
+        <View style={styles.itemBadge} accessibilityLabel={`${badge} unread`}>
+          <Text style={styles.itemBadgeText}>{badge}</Text>
+        </View>
+      ) : null}
     </Pressable>
   );
 }
@@ -127,14 +132,24 @@ function AccountMenu() {
               {user?.email}
             </Text>
             {user?.role === 'customer' ? (
-              <MenuItem
-                label="Account"
-                icon="person-circle-outline"
-                onPress={() => {
-                  close();
-                  navigation.navigate('Main', { screen: 'Account' });
-                }}
-              />
+              <>
+                <MenuItem
+                  label="Account"
+                  icon="person-circle-outline"
+                  onPress={() => {
+                    close();
+                    navigation.navigate('Main', { screen: 'Account' });
+                  }}
+                />
+                <MenuItem
+                  label="Support"
+                  icon="chatbubbles-outline"
+                  onPress={() => {
+                    close();
+                    navigation.navigate('Main', { screen: 'Support' });
+                  }}
+                />
+              </>
             ) : null}
             <MenuItem
               label="Sign out"
@@ -202,6 +217,16 @@ const styles = StyleSheet.create({
   itemFocused: { borderBottomColor: colors.accent },
   itemText: { fontSize: font.body, color: colors.primaryText, opacity: 0.85 },
   itemTextFocused: { fontWeight: weight.bold, opacity: 1 },
+  itemBadge: {
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    backgroundColor: colors.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  itemBadgeText: { color: colors.accentText, fontSize: font.caption, fontWeight: weight.bold },
   actions: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   link: { paddingHorizontal: space.xs, paddingVertical: space.sm },
   linkText: { color: colors.primaryText, fontWeight: weight.semibold, fontSize: font.body },

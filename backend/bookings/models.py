@@ -5,6 +5,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import connection, models
 
 from catalog.models import Offer, Stop
+from core import files
 from core.storage import private_storage
 from customer_requests.models import Query
 
@@ -104,9 +105,9 @@ class BoardingPass(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     MAX_PER_BOOKING = 10
-    MAX_SIZE = 5 * 1024 * 1024
-    # Allowed extension -> the content type it must be uploaded with.
-    CONTENT_TYPES = {".pdf": "application/pdf", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg"}
+    # The upload rules shared with chat attachments (core.files).
+    MAX_SIZE = files.MAX_SIZE
+    CONTENT_TYPES = files.CONTENT_TYPES
 
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name="boarding_passes")
     file = models.FileField(storage=private_storage, upload_to=boarding_pass_path, max_length=255)

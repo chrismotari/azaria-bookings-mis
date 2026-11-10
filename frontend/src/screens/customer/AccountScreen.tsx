@@ -1,3 +1,4 @@
+import { useNavigation } from '@react-navigation/native';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '../../auth/AuthContext';
@@ -10,6 +11,7 @@ import { colors, font, weight } from '../../theme';
 export function AccountScreen() {
   const { user } = useAuth();
   const signOut = useSignOut();
+  const navigation = useNavigation();
   if (!user) {
     return null;
   }
@@ -20,6 +22,12 @@ export function AccountScreen() {
         <Row label="Email" value={user.email} />
         <Row label="Phone" value={user.phone} />
       </Card>
+      <Button
+        title="Support: your chats with us"
+        icon="chatbubbles-outline"
+        variant="secondary"
+        onPress={() => navigation.navigate('Main', { screen: 'Support' })}
+      />
       <Button title="Log out" variant="secondary" onPress={signOut} />
     </Screen>
   );

@@ -1,22 +1,13 @@
-import os
-
 from rest_framework import serializers
 
 from accounts.models import User
 from accounts.serializers import UserSerializer
 from catalog.serializers import OfferSerializer, StopInputSerializer, stop_errors, stops_data
+from core.files import check_upload
 from core.models import AppSettings
 from customer_requests.models import Query
 
 from .models import BoardingPass, Booking, BookingEvent
-
-# How each allowed content type's files begin.
-FILE_SIGNATURES = {
-    "application/pdf": b"%PDF-",
-    "image/png": b"\x89PNG\r\n\x1a\n",
-    "image/jpeg": b"\xff\xd8\xff",
-}
-
 
 class BookingEventSerializer(serializers.ModelSerializer):
     class Meta:
@@ -36,18 +27,7 @@ class BoardingPassUploadSerializer(serializers.Serializer):
     file = serializers.FileField(max_length=255)
 
     def validate_file(self, file):
-        extension = os.path.splitext(file.name)[1].lower()
-        content_type = BoardingPass.CONTENT_TYPES.get(extension)
-        if content_type is None or file.content_type != content_type:
-            raise serializers.ValidationError("Upload a PDF, PNG or JPEG file.")
-        signature = FILE_SIGNATURES[content_type]
-        head = file.read(len(signature))
-        file.seek(0)
-        if head != signature:
-            raise serializers.ValidationError("The file's content does not match its type.")
-        if file.size > BoardingPass.MAX_SIZE:
-            raise serializers.ValidationError("The file is larger than 5 MB.")
-        return file
+        return check_upload(file)
 
 
 class BookingCreateSerializer(serializers.ModelSerializer):

@@ -335,3 +335,41 @@ export type PublicPlan = Pick<
 export type PublicPlans = { plans: PublicPlan[]; billing_contact_email: string };
 
 export type AgencyPlans = PublicPlans & { current_plan_ids: string[] };
+
+/** A support chat message; attachments open through /support/attachments/<id>. */
+export type ChatMessage = {
+  id: string;
+  from_staff: boolean;
+  author_name: string;
+  body: string;
+  has_attachment: boolean;
+  attachment_name: string;
+  created_at: string;
+};
+
+export type ChatStatus = 'open' | 'closed';
+
+/** A support chat as the person who wrote in sees it. */
+export type Chat = {
+  id: string;
+  subject: string;
+  email: string;
+  status: ChatStatus;
+  last_message_at: string;
+  /** The desk's latest message is unseen. */
+  unread: boolean;
+  closed_at: string | null;
+  created_at: string;
+};
+
+export type ChatDetail = Chat & { messages: ChatMessage[] };
+
+/** A support chat as the desk sees it. */
+export type DeskChat = Chat & {
+  name: string;
+  /** A guest's chat: a single message, replies go by email only. */
+  is_guest: boolean;
+  closed_by_name: string | null;
+};
+
+export type DeskChatDetail = DeskChat & { messages: ChatMessage[] };

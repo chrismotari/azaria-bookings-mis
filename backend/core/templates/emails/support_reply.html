@@ -1,0 +1,8 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hello{% if conversation.name %} {{ conversation.name }}{% endif %},</p>
+<p style="margin:0 0 16px 0;">{{ message.author_name|default:"We" }} replied to <strong>{{ conversation.subject }}</strong>:</p>
+{% include "emails/_box.html" with text=message.body %}
+{% if message.attachment_name %}<p style="margin:0 0 16px 0;">Attached: {{ message.attachment_name }}</p>{% endif %}
+{% if is_guest %}<p style="margin:0 0 16px 0;">To write to us again, use the message button on our site.</p>{% else %}{% include "emails/_button.html" with url=frontend_url|add:chat_path label="Read and reply" %}{% endif %}
+{% endblock %}

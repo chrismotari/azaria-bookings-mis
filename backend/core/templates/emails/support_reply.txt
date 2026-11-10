@@ -1,0 +1,14 @@
+Hello{% if conversation.name %} {{ conversation.name }}{% endif %},
+
+{{ message.author_name|default:"We" }} replied to "{{ conversation.subject }}":
+
+{{ message.body }}
+{% if message.attachment_name %}
+Attached: {{ message.attachment_name }}
+{% endif %}{% if is_guest %}
+To write to us again, use the message button on our site.
+{% else %}
+Read and reply in the app:
+{{ frontend_url }}{{ chat_path }}
+{% endif %}
+Azaria Bookings

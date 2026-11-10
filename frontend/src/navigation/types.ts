@@ -24,6 +24,8 @@ export type MainTabParamList = {
   /** Not in the bar: shown under Requests and Explore. */
   QueryNew: QueryPrefill | undefined;
   BookingNew: { offer: string; query?: string };
+  /** Account > Support: the customer's chats. */
+  Support: { id?: string } | undefined;
 };
 
 export type AdminTabParamList = {
@@ -32,6 +34,8 @@ export type AdminTabParamList = {
   AdminRequests: { status?: QueryStatus | 'all'; id?: string } | undefined;
   AdminBookings: { status?: BookingStatus | 'all'; id?: string } | undefined;
   AdminUsers: { id?: string } | undefined;
+  /** The desk: chats from the site's visitors and customers. */
+  AdminChats: { id?: string } | undefined;
   AdminSettings: undefined;
   /** Not in the bar: shown under Offers and Requests. */
   AdminOfferNew: undefined;
