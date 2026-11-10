@@ -1,3 +1,4 @@
+import { useNavigation } from '@react-navigation/native';
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -20,6 +21,7 @@ export const BILLING_KEY = ['admin', 'billing'];
 
 /** The agency's plans and invoices with the platform, read-only (payment happens outside the app). */
 export function AdminBillingScreen() {
+  const navigation = useNavigation();
   const billing = useBilling();
   const [page, setPage] = useState(1);
   const invoices = useQuery({
@@ -66,6 +68,14 @@ export function AdminBillingScreen() {
         {billing_contact_email ? (
           <Text style={styles.text}>Questions about billing: {billing_contact_email}</Text>
         ) : null}
+        <View style={styles.open}>
+          <Button
+            title="Compare plans"
+            variant="secondary"
+            icon="layers-outline"
+            onPress={() => navigation.navigate('AdminPlans')}
+          />
+        </View>
       </Card>
       <Card>
         <Text style={styles.section}>Invoices</Text>

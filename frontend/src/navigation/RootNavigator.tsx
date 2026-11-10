@@ -24,6 +24,7 @@ import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { ResetPasswordScreen } from '../screens/auth/ResetPasswordScreen';
 import { AccountScreen } from '../screens/customer/AccountScreen';
 import { AdminBillingScreen, OverdueBanner } from '../screens/admin/AdminBillingScreen';
+import { AdminPlansScreen } from '../screens/admin/AdminPlansScreen';
 import { AgenciesScreen } from '../screens/platform/AgenciesScreen';
 import { InvoicesScreen } from '../screens/platform/InvoicesScreen';
 import { PlansScreen } from '../screens/platform/PlansScreen';
@@ -31,6 +32,7 @@ import { PlatformSettingsScreen } from '../screens/platform/PlatformSettingsScre
 import { PlatformDashboardScreen } from '../screens/platform/PlatformDashboardScreen';
 import { PlatformHomeScreen } from '../screens/platform/PlatformHomeScreen';
 import { PlatformLoginScreen } from '../screens/platform/PlatformLoginScreen';
+import { PlatformPricingScreen } from '../screens/platform/PlatformPricingScreen';
 import { IS_PLATFORM } from '../config';
 import { ExploreScreen } from '../screens/explore/ExploreScreen';
 import { QueryNewScreen } from '../screens/requests/QueryNewScreen';
@@ -89,6 +91,7 @@ function AdminStack() {
           options={{ title: 'Respond to request' }}
         />
         <Stack.Screen name="AdminBilling" component={AdminBillingScreen} options={{ title: 'Billing' }} />
+        <Stack.Screen name="AdminPlans" component={AdminPlansScreen} options={{ title: 'Plans' }} />
       </Stack.Navigator>
     </View>
   );
@@ -302,10 +305,20 @@ function PlatformStack() {
         <>
           <Stack.Screen name="PlatformTabs" component={PlatformTabsNavigator} options={{ headerShown: false }} />
           <Stack.Screen name="PlatformHome" component={PlatformHomeScreen} options={{ title: 'Home', ...publicPage }} />
+          <Stack.Screen
+            name="PlatformPricing"
+            component={PlatformPricingScreen}
+            options={{ title: 'Pricing', ...publicPage }}
+          />
         </>
       ) : (
         <>
           <Stack.Screen name="PlatformHome" component={PlatformHomeScreen} options={{ title: 'Home', ...publicPage }} />
+          <Stack.Screen
+            name="PlatformPricing"
+            component={PlatformPricingScreen}
+            options={{ title: 'Pricing', ...publicPage }}
+          />
           <Stack.Screen name="PlatformLogin" component={PlatformLoginScreen} options={{ title: 'Sign in', ...publicPage }} />
           {/* The owner's pages opened while signed out go to sign-in first. */}
           <Stack.Screen name="PlatformTabs" component={PlatformSignInFirst} options={{ title: 'Sign in', ...publicPage }} />
@@ -342,6 +355,7 @@ export function RootNavigator() {
           <Stack.Screen name="AdminTabs" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
           <Stack.Screen name="AdminQueryRespond" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
           <Stack.Screen name="AdminBilling" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
+          <Stack.Screen name="AdminPlans" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
         </Stack.Group>
       )}
     </Stack.Navigator>

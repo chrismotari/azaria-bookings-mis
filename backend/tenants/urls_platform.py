@@ -30,4 +30,5 @@ urlpatterns = [
     ],
     path("settings", billing.PlatformSettingsView.as_view()),
     path("dashboard", billing.PlatformDashboardView.as_view()),
+    path("public-plans", billing.PublicPlansView.as_view()),
 ]

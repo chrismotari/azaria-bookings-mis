@@ -10,7 +10,7 @@ type Props = {
   /** Escape, the close button and a click on the dimmed page call this, unless busy. */
   onClose: () => void;
   /** Small for confirmations, large for forms. */
-  size?: 'small' | 'large';
+  size?: 'small' | 'large' | 'wide';
   /** While saving, the dialog cannot be closed. */
   busy?: boolean;
   /** The action buttons, shown in the footer. */
@@ -38,7 +38,7 @@ export function Dialog({ open, title, onClose, size = 'small', busy, footer, err
         {/* The dimmed page: clicking it closes the dialog. */}
         <Pressable style={StyleSheet.absoluteFill} onPress={close} accessible={false} />
         <View
-          style={[styles.card, size === 'large' ? styles.large : styles.small, !isWide && styles.cardNarrow]}
+          style={[styles.card, size === 'wide' ? styles.wide : size === 'large' ? styles.large : styles.small, !isWide && styles.cardNarrow]}
           aria-label={title}
         >
           <View style={styles.header}>
@@ -89,6 +89,7 @@ const styles = StyleSheet.create({
   },
   small: { maxWidth: 440 },
   large: { maxWidth: 760 },
+  wide: { maxWidth: 960 },
   cardNarrow: { maxWidth: '100%', height: '100%', borderRadius: 0 },
   header: {
     flexDirection: 'row',

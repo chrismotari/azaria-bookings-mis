@@ -7,7 +7,7 @@ import { PressState } from '../components/pressState';
 import { colors, font, radius, space, useIsWide, weight } from '../theme';
 import { APP_BAR_HEIGHT } from './AppBar';
 
-/** The root host's public pages (home, sign-in): the brand, and Admin sign in or Open admin. */
+/** The root host's public pages (home, pricing, sign-in): the brand, Pricing, and Admin sign in or Open admin. */
 export function PlatformPublicBar() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -22,6 +22,13 @@ export function PlatformPublicBar() {
           </Text>
         </Pressable>
         <View style={styles.fill} />
+        <Pressable
+          accessibilityRole="link"
+          onPress={() => navigation.navigate('PlatformPricing')}
+          style={({ hovered }: PressState) => [styles.link, hovered && styles.linkHovered]}
+        >
+          <Text style={[styles.linkText, !isWide && styles.linkTextNarrow]}>Pricing</Text>
+        </Pressable>
         <Pressable
           accessibilityRole="link"
           onPress={() =>

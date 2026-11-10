@@ -1,7 +1,7 @@
 from django.conf import settings
 from rest_framework import serializers
 
-from . import billing
+from . import billing, richtext
 from .models import Invoice, Plan, PlatformSettings, Subscription
 
 
@@ -17,6 +17,9 @@ class CurrencyField(serializers.Field):
 
 class PlanSerializer(serializers.ModelSerializer):
     currency = CurrencyField()
+    # Declared so the model's one-plan-per-tag check (with its generic message) does not run before validate,
+    # which names the plan holding the tag.
+    tag = serializers.ChoiceField(choices=Plan.Tag.choices, allow_blank=True, required=False)
     monthly_price = serializers.DecimalField(
         max_digits=12, decimal_places=2, min_value=0, allow_null=True, required=False
     )
@@ -28,6 +31,7 @@ class PlanSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "kind",
+            "tag",
             "description",
             "monthly_price",
             "annual_price",
@@ -36,6 +40,14 @@ class PlanSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["id", "created_at"]
+
+    def validate_description(self, value):
+        cleaned = richtext.sanitize(value)
+        if len(cleaned) > richtext.MAX_LENGTH:
+            raise serializers.ValidationError(
+                f"Keep the description under {richtext.MAX_LENGTH:,} characters of formatted text."
+            )
+        return cleaned
 
     def validate_name(self, value):
         if not value.strip():
@@ -50,6 +62,7 @@ class PlanSerializer(serializers.ModelSerializer):
             cycle: attrs.get(f"{cycle}_price", getattr(plan, f"{cycle}_price", None))
             for cycle in ["monthly", "annual"]
         }
+        self._validate_tag(attrs)
         if all(price is None for price in prices.values()):
             raise serializers.ValidationError({"monthly_price": "Set a monthly price, an annual price or both."})
         if plan:
@@ -59,6 +72,34 @@ class PlanSerializer(serializers.ModelSerializer):
                         {f"{cycle}_price": f"Agencies pay this plan {cycle}; keep a {cycle} price."}
                     )
         return attrs
+
+    def _validate_tag(self, attrs):
+        plan = self.instance
+        active = attrs.get("is_active", plan.is_active if plan else True)
+        if not active:
+            # Deactivating a plan clears its tag.
+            attrs["tag"] = ""
+            return
+        tag = attrs.get("tag", plan.tag if plan else "")
+        if not tag:
+            return
+        kind = attrs.get("kind", plan.kind if plan else None)
+        if kind != Plan.Kind.SUBSCRIPTION:
+            raise serializers.ValidationError({"tag": "Only subscription plans can be tagged."})
+        holder = Plan.objects.filter(tag=tag).exclude(pk=plan.pk if plan else None).first()
+        if holder:
+            raise serializers.ValidationError({"tag": f"Already used by {holder.name}."})
+
+
+class PublicPlanSerializer(serializers.ModelSerializer):
+    """A plan on the pricing pages."""
+
+    currency = CurrencyField()
+
+    class Meta:
+        model = Plan
+        fields = ["id", "name", "kind", "tag", "description", "monthly_price", "annual_price", "currency"]
+        read_only_fields = fields
 
 
 class PlanSummarySerializer(serializers.ModelSerializer):

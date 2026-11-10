@@ -39,6 +39,7 @@ const agencyLinking: LinkingOptions<RootStackParamList> = {
       AdminOfferNew: 'admin/offers/new',
       AdminQueryRespond: 'admin/requests/:id/respond',
       AdminBilling: 'admin/billing',
+      AdminPlans: 'admin/plans',
     },
   },
 };
@@ -50,6 +51,7 @@ const platformLinking: LinkingOptions<RootStackParamList> = {
     screens: {
       // '/' is the public introduction; the owner's screens have their own paths.
       PlatformHome: '',
+      PlatformPricing: 'pricing',
       PlatformLogin: 'login',
       PlatformTabs: {
         screens: {

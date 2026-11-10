@@ -40,6 +40,12 @@ export function PlatformHomeScreen() {
         </Text>
         <View style={styles.actions}>
           <Button
+            title="See pricing"
+            variant="secondary"
+            icon="pricetags-outline"
+            onPress={() => navigation.navigate('PlatformPricing')}
+          />
+          <Button
             title={user ? 'Open admin' : 'Admin sign in'}
             variant="accent"
             icon={user ? 'grid-outline' : 'log-in-outline'}

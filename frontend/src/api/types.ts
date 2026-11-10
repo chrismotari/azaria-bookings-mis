@@ -223,10 +223,15 @@ export type PlanKind = 'subscription' | 'support';
 export type BillingCycle = 'monthly' | 'annual';
 
 /** What agencies pay the platform for. Prices are decimals as strings, in the platform's currency. */
+export type PlanTag = '' | 'recommended' | 'basic' | 'advanced';
+
 export type Plan = {
   id: string;
   name: string;
   kind: PlanKind;
+  /** Its place on the plans page (subscription plans only). */
+  tag: PlanTag;
+  /** Sanitized HTML. */
   description: string;
   monthly_price: string | null;
   annual_price: string | null;
@@ -320,3 +325,13 @@ export type PlatformDashboard = {
     suspends_on: string | null;
   }[];
 };
+
+/** A plan as the plans pages show it. */
+export type PublicPlan = Pick<
+  Plan,
+  'id' | 'name' | 'kind' | 'tag' | 'description' | 'monthly_price' | 'annual_price' | 'currency'
+>;
+
+export type PublicPlans = { plans: PublicPlan[]; billing_contact_email: string };
+
+export type AgencyPlans = PublicPlans & { current_plan_ids: string[] };

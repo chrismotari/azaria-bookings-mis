@@ -2,18 +2,22 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { z } from 'zod';
 
 import { api } from '../../api/client';
 import { applyServerErrors } from '../../api/errors';
-import { Paginated, Plan, PlanKind } from '../../api/types';
+import { Paginated, Plan, PlanKind, PlanTag } from '../../api/types';
 import { Button } from '../../components/Button';
 import { Dialog } from '../../components/Dialog';
 import { FieldGrid } from '../../components/Field';
 import { Pagination } from '../../components/Pagination';
+import { TAG_LABEL } from '../../components/PlanShowcase';
+import { textOf } from '../../components/rich/css';
+import { RichTextEditor } from '../../components/rich/RichTextEditor';
 import { Screen } from '../../components/Screen';
 import { SegmentedControl } from '../../components/SegmentedControl';
+import { SelectField } from '../../components/SelectField';
 import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { Column, Table, TableRow } from '../../components/Table';
@@ -31,10 +35,26 @@ export const KINDS: { value: PlanKind; label: string }[] = [
 
 const COLUMNS: Column[] = [
   { label: 'Name', flex: 2.4 },
-  { label: 'Monthly', flex: 1.4 },
-  { label: 'Annual', flex: 1.4 },
-  { label: 'Status', flex: 1.2 },
+  { label: 'Tag', flex: 1.2 },
+  { label: 'Monthly', flex: 1.3 },
+  { label: 'Annual', flex: 1.3 },
+  { label: 'Status', flex: 1.1 },
 ];
+
+const TAGS: { value: PlanTag; label: string }[] = [
+  { value: '', label: 'No tag' },
+  { value: 'recommended', label: 'Recommended (1st card)' },
+  { value: 'basic', label: 'Basic (2nd card)' },
+  { value: 'advanced', label: 'Advanced (3rd card)' },
+];
+
+function PlanTagChip({ plan }: { plan: Plan }) {
+  return plan.tag ? (
+    <StatusChip label={TAG_LABEL[plan.tag]} tone={plan.tag === 'recommended' ? 'info' : 'neutral'} />
+  ) : (
+    <Text style={styles.muted}>—</Text>
+  );
+}
 
 const price = (amount: string | null, currency: string) => (amount === null ? '—' : formatMoney(amount, currency));
 
@@ -59,7 +79,17 @@ export function PlansScreen() {
     <Screen card>
       <View style={styles.header}>
         <Text style={styles.title}>Plans</Text>
-        <Button title="New plan" icon="add-outline" onPress={() => setEditing('new')} />
+        <View style={styles.headerActions}>
+          {Platform.OS === 'web' ? (
+            <Button
+              title="View pricing page"
+              variant="secondary"
+              icon="open-outline"
+              onPress={() => window.open('/pricing', '_blank', 'noopener')}
+            />
+          ) : null}
+          <Button title="New plan" icon="add-outline" onPress={() => setEditing('new')} />
+        </View>
       </View>
       <Text style={styles.muted}>
         Subscription plans are what agencies use the platform on; support plans are bought separately. An agency has at
@@ -101,10 +131,11 @@ export function PlansScreen() {
                       </Text>
                       {plan.description ? (
                         <Text style={styles.muted} numberOfLines={1}>
-                          {plan.description}
+                          {textOf(plan.description)}
                         </Text>
                       ) : null}
                     </View>,
+                    <PlanTagChip key="tag" plan={plan} />,
                     <Text key="monthly" style={styles.text}>
                       {price(plan.monthly_price, plan.currency)}
                     </Text>,
@@ -130,13 +161,20 @@ export function PlansScreen() {
                     <Text style={styles.name} numberOfLines={1}>
                       {plan.name}
                     </Text>
-                    <PlanStatus plan={plan} />
+                    <View style={styles.chips}>
+                      <PlanTagChip plan={plan} />
+                      <PlanStatus plan={plan} />
+                    </View>
                   </View>
                   <Text style={styles.text}>
                     {price(plan.monthly_price, plan.currency)} a month · {price(plan.annual_price, plan.currency)} a
                     year
                   </Text>
-                  {plan.description ? <Text style={styles.muted}>{plan.description}</Text> : null}
+                  {plan.description ? (
+                    <Text style={styles.muted} numberOfLines={2}>
+                      {textOf(plan.description)}
+                    </Text>
+                  ) : null}
                 </TripCard>
               ))}
             </View>
@@ -166,6 +204,7 @@ const schema = z
   .object({
     name: z.string().trim().min(1, "Enter the plan's name.").max(100),
     kind: z.enum(['subscription', 'support']),
+    tag: z.enum(['', 'recommended', 'basic', 'advanced']),
     description: z.string(),
     monthly_price: priceField,
     annual_price: priceField,
@@ -178,17 +217,18 @@ const schema = z
 
 type Values = z.infer<typeof schema>;
 
-const FIELDS = ['name', 'kind', 'description', 'monthly_price', 'annual_price', 'is_active'] as const;
+const FIELDS = ['name', 'kind', 'tag', 'description', 'monthly_price', 'annual_price', 'is_active'] as const;
 
 /** Creates a plan (of the kind on show) or edits one; its kind is fixed once created. */
 function PlanDialog({ plan, kind, onClose }: { plan: Plan | null; kind: PlanKind; onClose: () => void }) {
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
-  const { control, handleSubmit, setError, formState } = useForm<Values>({
+  const { control, handleSubmit, setError, formState, watch } = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
       name: plan?.name ?? '',
       kind: plan?.kind ?? kind,
+      tag: plan?.tag ?? '',
       description: plan?.description ?? '',
       monthly_price: plan?.monthly_price ?? '',
       annual_price: plan?.annual_price ?? '',
@@ -200,6 +240,8 @@ function PlanDialog({ plan, kind, onClose }: { plan: Plan | null; kind: PlanKind
     setFormError(null);
     const body = {
       ...values,
+      // Only subscription plans carry a tag.
+      tag: values.kind === 'subscription' ? values.tag : '',
       monthly_price: values.monthly_price || null,
       annual_price: values.annual_price || null,
     };
@@ -216,7 +258,8 @@ function PlanDialog({ plan, kind, onClose }: { plan: Plan | null; kind: PlanKind
     }
   });
 
-  const text = (name: 'name' | 'description' | 'monthly_price' | 'annual_price', label: string, numeric = false) => (
+  const subscription = watch('kind') === 'subscription';
+  const text = (name: 'name' | 'monthly_price' | 'annual_price', label: string, numeric = false) => (
     <Controller
       control={control}
       name={name}
@@ -228,7 +271,6 @@ function PlanDialog({ plan, kind, onClose }: { plan: Plan | null; kind: PlanKind
           onBlur={field.onBlur}
           error={fieldState.error?.message}
           keyboardType={numeric ? 'decimal-pad' : 'default'}
-          multiline={name === 'description'}
         />
       )}
     />
@@ -238,7 +280,7 @@ function PlanDialog({ plan, kind, onClose }: { plan: Plan | null; kind: PlanKind
     <Dialog
       open
       title={plan ? 'Edit plan' : 'New plan'}
-      size="large"
+      size="wide"
       onClose={onClose}
       busy={formState.isSubmitting}
       error={formError}
@@ -263,7 +305,35 @@ function PlanDialog({ plan, kind, onClose }: { plan: Plan | null; kind: PlanKind
         />
       )}
       {text('name', 'Name')}
-      {text('description', 'Description (optional)')}
+      {subscription ? (
+        <Controller
+          control={control}
+          name="tag"
+          render={({ field, fieldState }) => (
+            <>
+              <SelectField
+                label="Place on the plans page"
+                options={TAGS}
+                value={field.value}
+                onChange={field.onChange}
+              />
+              {fieldState.error ? <Text style={styles.error}>{fieldState.error.message}</Text> : null}
+            </>
+          )}
+        />
+      ) : null}
+      <Controller
+        control={control}
+        name="description"
+        render={({ field, fieldState }) => (
+          <RichTextEditor
+            label="Description (optional): what the plan includes"
+            value={field.value}
+            onChange={field.onChange}
+            error={fieldState.error?.message}
+          />
+        )}
+      />
       <FieldGrid columns={2}>
         {text('monthly_price', 'Monthly price', true)}
         {text('annual_price', 'Annual price', true)}
@@ -281,6 +351,9 @@ function PlanDialog({ plan, kind, onClose }: { plan: Plan | null; kind: PlanKind
 }
 
 const styles = StyleSheet.create({
+  headerActions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  chips: { flexDirection: 'row', gap: space.xs, alignItems: 'center' },
+  error: { color: colors.dangerText, fontSize: font.small },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

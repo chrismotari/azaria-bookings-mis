@@ -56,7 +56,9 @@ export type RootStackParamList = {
   AdminOfferNew: undefined;
   AdminQueryRespond: { id: string };
   AdminBilling: undefined;
+  AdminPlans: undefined;
   PlatformHome: undefined;
+  PlatformPricing: undefined;
   PlatformLogin: undefined;
   PlatformTabs: NavigatorScreenParams<PlatformTabParamList> | undefined;
 };

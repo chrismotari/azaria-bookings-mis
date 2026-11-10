@@ -115,3 +115,9 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - Dashboard: agencies suspended by the owner count as "suspended" and the rest of the inactive ones as "for non-payment"; the Agencies card links to the Suspended filter when any agency is suspended, otherwise to all agencies; Revenue links to paid invoices and Monthly recurring to Plans.
 - The Agencies and Invoices status filters live in the URL (?status=), like the agency admin's lists, so dashboard cards open them filtered.
 - Signing out on the platform returns to the public home page; a platform page opened while signed out goes to /login and reopens after signing in.
+- TipTap's own peer @tiptap/core comes in with @tiptap/react and @tiptap/starter-kit; the link and underline extensions are part of the starter kit, so nothing else is installed.
+- The editor's H1 and H2 buttons make h3 and h4 (the heading levels descriptions allow), and links are added through the browser's prompt.
+- The editor's toolbar uses plain buttons whose mousedown is cancelled, so clicking one never moves focus out of the text.
+- An inactive plan never holds a tag: saving a plan as inactive clears its tag, and tagging an inactive plan is ignored.
+- On the plans pages the featured cards are centred in their row; "Show all plans" gives the number of subscription plans in all.
+- public-plans ignores any Authorization header, so a stale or agency token never turns the public pricing page into an error.

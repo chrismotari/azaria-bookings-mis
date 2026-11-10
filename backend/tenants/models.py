@@ -80,10 +80,20 @@ class Plan(models.Model):
         SUBSCRIPTION = "subscription", "Subscription"
         SUPPORT = "support", "Support"
 
+    class Tag(models.TextChoices):
+        """Featured places on the plans page, shown in this order."""
+
+        RECOMMENDED = "recommended", "Recommended"
+        BASIC = "basic", "Basic"
+        ADVANCED = "advanced", "Advanced"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=100)
     kind = models.CharField(max_length=20, choices=Kind.choices)
+    # Sanitized HTML (tenants.richtext).
     description = models.TextField(blank=True)
+    # Subscription plans only; each tag on at most one plan; cleared when the plan is deactivated.
+    tag = models.CharField(max_length=20, choices=Tag.choices, blank=True)
     monthly_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     annual_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     is_active = models.BooleanField(default=True)
@@ -91,6 +101,9 @@ class Plan(models.Model):
 
     class Meta:
         ordering = ["kind", "name"]
+        constraints = [
+            models.UniqueConstraint(fields=["tag"], condition=~models.Q(tag=""), name="one_plan_per_tag"),
+        ]
 
     def __str__(self):
         return self.name

@@ -18,6 +18,7 @@ fpdf2==2.9.0
 freezegun==1.5.5
 iniconfig==2.3.1
 kombu==5.6.2
+nh3==0.3.7
 packaging==26.3
 pillow==13.0.0
 pluggy==1.7.0

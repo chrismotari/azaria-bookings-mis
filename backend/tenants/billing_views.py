@@ -7,6 +7,7 @@ from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, serializers, status
 from rest_framework.exceptions import APIException
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -19,6 +20,7 @@ from .billing_serializers import (
     MarkPaidSerializer,
     PlanSerializer,
     PlatformSettingsSerializer,
+    PublicPlanSerializer,
     SubscriptionChangeSerializer,
     SubscriptionCreateSerializer,
     SubscriptionSerializer,
@@ -198,6 +200,26 @@ class PlatformSettingsView(generics.RetrieveUpdateAPIView):
         return PlatformSettings.get()
 
 
+def offered_plans():
+    return Plan.objects.filter(is_active=True).order_by("kind", "name")
+
+
+class PublicPlansView(APIView):
+    """The pricing page's plans, open to anyone on the root host."""
+
+    permission_classes = [AllowAny]
+    # A visitor's stale or foreign token must not turn a public page into a 401.
+    authentication_classes = []
+
+    def get(self, request):
+        return Response(
+            {
+                "plans": PublicPlanSerializer(offered_plans(), many=True).data,
+                "billing_contact_email": PlatformSettings.get().billing_contact_email,
+            }
+        )
+
+
 class PlatformDashboardView(APIView):
     permission_classes = [IsPlatformOwner]
 
@@ -241,6 +263,22 @@ class AgencyBillingView(APIView):
                     "due_on": overdue.due_on,
                     "suspends_on": billing.suspends_on(overdue),
                 },
+            }
+        )
+
+
+class AgencyPlansView(APIView):
+    """The plans page in the agency app: the offered plans and which of them the agency is on."""
+
+    permission_classes = [IsAdminRole]
+
+    def get(self, request):
+        running = this_tenant().subscriptions.filter(ended_on__isnull=True).values_list("plan_id", flat=True)
+        return Response(
+            {
+                "plans": PublicPlanSerializer(offered_plans(), many=True).data,
+                "current_plan_ids": [str(pk) for pk in running],
+                "billing_contact_email": PlatformSettings.get().billing_contact_email,
             }
         )
 
