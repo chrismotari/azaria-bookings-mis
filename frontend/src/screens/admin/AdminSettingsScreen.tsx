@@ -191,6 +191,19 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
           />
         </View>
       </FormSection>
+      <FormSection
+        title="Support"
+        description="Chat with Azaria Bookings, the platform: questions, plans and billing. Replies also come by email."
+      >
+        <View style={styles.billing}>
+          <Button
+            title="Open support"
+            variant="secondary"
+            icon="chatbubbles-outline"
+            onPress={() => navigation.navigate('AdminTabs', { screen: 'AdminSupport' })}
+          />
+        </View>
+      </FormSection>
     </Screen>
   );
 }

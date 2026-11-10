@@ -18,8 +18,16 @@ import { SegmentedControl } from '../../components/SegmentedControl';
 import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { TripCard } from '../../components/TripCard';
-import { AdminTabParamList } from '../../navigation/types';
-import { DESK_KEY, messageBody, useDeskChat, useDeskChats } from '../../support/api';
+import { AdminTabParamList, PlatformTabParamList } from '../../navigation/types';
+import {
+  AGENCY_DESK,
+  DESK_KEY,
+  DeskEndpoints,
+  messageBody,
+  PLATFORM_DESK,
+  useDeskChat,
+  useDeskChats,
+} from '../../support/api';
 import { ChatThread, chatTime } from '../../support/ChatThread';
 import { colors, font, space, weight } from '../../theme';
 
@@ -30,26 +38,56 @@ const FILTERS: { value: Status; label: string }[] = [
   { value: 'closed', label: 'Closed' },
 ];
 
-/** The desk: chats from guests and customers, unread first; reply and close. */
+/** An agency's desk: chats from its site's guests and customers. */
 export function DeskChatsScreen({ navigation, route }: BottomTabScreenProps<AdminTabParamList, 'AdminChats'>) {
-  const selected = route.params?.id;
-  const close = useCallback(() => navigation.setParams({ id: undefined }), [navigation]);
+  return (
+    <DeskChats
+      endpoints={AGENCY_DESK}
+      selected={route.params?.id}
+      select={(id) => navigation.setParams({ id })}
+      intro="Messages from your site's visitors and customers. Chats close by themselves 48 hours after their last message."
+    />
+  );
+}
+
+/** The platform's desk: chats from root-host visitors and from agencies' admins (with their agency). */
+export function PlatformChatsScreen({
+  navigation,
+  route,
+}: BottomTabScreenProps<PlatformTabParamList, 'PlatformChats'>) {
+  return (
+    <DeskChats
+      endpoints={PLATFORM_DESK}
+      selected={route.params?.id}
+      select={(id) => navigation.setParams({ id })}
+      intro="Messages from visitors to the platform's pages (plan enquiries among them) and from agencies' admins. Chats close by themselves 48 hours after their last message."
+    />
+  );
+}
+
+type DeskChatsProps = {
+  endpoints: DeskEndpoints;
+  selected: string | undefined;
+  select: (id: string | undefined) => void;
+  intro: string;
+};
+
+/** A desk: chats, unread first; reply and close. */
+function DeskChats({ endpoints, selected, select, intro }: DeskChatsProps) {
+  const close = useCallback(() => select(undefined), [select]);
   const [status, setStatus] = useState<Status>('open');
   const [page, setPage] = useState(1);
-  const chats = useDeskChats(status, page);
+  const chats = useDeskChats(endpoints, status, page);
   return (
     <DetailLayout
       title="Chat"
       backLabel="All chats"
       onClose={close}
-      detail={selected ? <DeskChatView key={selected} id={selected} /> : null}
+      detail={selected ? <DeskChatView key={selected} endpoints={endpoints} id={selected} /> : null}
       list={
         <Screen card>
           <Text style={styles.title}>Chats</Text>
-          <Text style={styles.muted}>
-            Messages from your site's visitors and customers. Chats close by themselves 48 hours after their last
-            message.
-          </Text>
+          <Text style={styles.muted}>{intro}</Text>
           <SegmentedControl
             label="Status"
             options={FILTERS}
@@ -81,7 +119,7 @@ export function DeskChatsScreen({ navigation, route }: BottomTabScreenProps<Admi
                     key={chat.id}
                     chat={chat}
                     selected={chat.id === selected}
-                    onPress={() => navigation.setParams({ id: chat.id })}
+                    onPress={() => select(chat.id)}
                   />
                 ))}
               </View>
@@ -94,8 +132,9 @@ export function DeskChatsScreen({ navigation, route }: BottomTabScreenProps<Admi
   );
 }
 
+/** "Guest · email" or "Name · email", with the agency on the platform's desk. */
 export const requesterLabel = (chat: DeskChat) =>
-  chat.is_guest ? `Guest · ${chat.email}` : `${chat.name} · ${chat.email}`;
+  `${chat.is_guest ? 'Guest' : chat.name}${chat.agency ? ` (${chat.agency.name})` : ''} · ${chat.email}`;
 
 function DeskChatCard({ chat, selected, onPress }: { chat: DeskChat; selected: boolean; onPress: () => void }) {
   return (
@@ -123,13 +162,13 @@ function DeskChatCard({ chat, selected, onPress }: { chat: DeskChat; selected: b
   );
 }
 
-function DeskChatView({ id }: { id: string }) {
+function DeskChatView({ endpoints, id }: { endpoints: DeskEndpoints; id: string }) {
   const queryClient = useQueryClient();
   const confirm = useConfirm();
-  const chat = useDeskChat(id);
+  const chat = useDeskChat(endpoints, id);
   const refresh = () => queryClient.invalidateQueries({ queryKey: DESK_KEY });
   const closeChat = useMutation({
-    mutationFn: async () => api.post(`/admin/chats/${id}/close`),
+    mutationFn: async () => api.post(`${endpoints.chats}/${id}/close`),
     onSuccess: refresh,
   });
   if (chat.isPending) {
@@ -176,13 +215,14 @@ function DeskChatView({ id }: { id: string }) {
           </Text>
         ) : null}
         <ChatThread
+          attachments={endpoints.attachments}
           side="desk"
           messages={data.messages}
           closedNote="This chat is closed."
           onSend={
             open
               ? async (body, attachment) => {
-                  await api.post(`/admin/chats/${id}/messages`, messageBody({ body }, attachment));
+                  await api.post(`${endpoints.chats}/${id}/messages`, messageBody({ body }, attachment));
                   await refresh();
                 }
               : null

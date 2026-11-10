@@ -15,36 +15,78 @@ import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { TripCard } from '../../components/TripCard';
-import { MainTabParamList } from '../../navigation/types';
-import { CHATS_KEY, messageBody, useMyChat, useMyChats } from '../../support/api';
+import { AdminTabParamList, MainTabParamList } from '../../navigation/types';
+import {
+  AGENCY_REQUESTER,
+  AGENCY_TO_PLATFORM,
+  ChatEndpoints,
+  CHATS_KEY,
+  messageBody,
+  useMyChat,
+  useMyChats,
+} from '../../support/api';
 import { ChatThread, chatTime } from '../../support/ChatThread';
 import { NewChatForm } from '../../support/NewChatForm';
 import { colors, font, space, weight } from '../../theme';
 
-/** Every chat the customer started, open and closed; open ones can be answered, and new ones started. */
+/** Account > Support: the customer's chats with their agency. */
 export function SupportScreen({ navigation, route }: BottomTabScreenProps<MainTabParamList, 'Support'>) {
+  return (
+    <SupportChats
+      endpoints={AGENCY_REQUESTER}
+      selected={route.params?.id}
+      select={(id) => navigation.setParams({ id })}
+      backLabel="Account"
+      onBack={() => navigation.navigate('Account')}
+      intro="Your chats with us. Closed chats stay here to read; start a new one to write again."
+    />
+  );
+}
+
+/** Settings > Support: the agency admin's chats with the platform (Azaria Bookings). */
+export function AdminSupportScreen({ navigation, route }: BottomTabScreenProps<AdminTabParamList, 'AdminSupport'>) {
+  return (
+    <SupportChats
+      endpoints={AGENCY_TO_PLATFORM}
+      selected={route.params?.id}
+      select={(id) => navigation.setParams({ id })}
+      backLabel="Settings"
+      onBack={() => navigation.navigate('AdminSettings')}
+      intro="Your agency's chats with Azaria Bookings, the platform: questions, plans and billing. Replies also come by email."
+    />
+  );
+}
+
+type SupportChatsProps = {
+  endpoints: ChatEndpoints;
+  selected: string | undefined;
+  select: (id: string | undefined) => void;
+  backLabel: string;
+  onBack: () => void;
+  intro: string;
+};
+
+/** Every chat the person started, open and closed; open ones can be answered, and new ones started. */
+function SupportChats({ endpoints, selected, select, backLabel, onBack, intro }: SupportChatsProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const selected = route.params?.id;
-  const close = useCallback(() => navigation.setParams({ id: undefined }), [navigation]);
-  const chats = useMyChats();
+  const close = useCallback(() => select(undefined), [select]);
+  const chats = useMyChats(endpoints);
   const [creating, setCreating] = useState(false);
   return (
     <DetailLayout
       title="Chat"
       backLabel="All chats"
       onClose={close}
-      detail={selected ? <ChatDetailView key={selected} id={selected} /> : null}
+      detail={selected ? <ChatDetailView key={selected} endpoints={endpoints} id={selected} /> : null}
       list={
         <Screen card>
-          <BackLink label="Account" onPress={() => navigation.navigate('Account')} />
+          <BackLink label={backLabel} onPress={onBack} />
           <View style={styles.header}>
             <Text style={styles.title}>Support</Text>
             <Button title="New chat" icon="add-outline" onPress={() => setCreating(true)} />
           </View>
-          <Text style={styles.muted}>
-            Your chats with us. Closed chats stay here to read; start a new one to write again.
-          </Text>
+          <Text style={styles.muted}>{intro}</Text>
           {chats.isPending ? (
             <LoadingState />
           ) : chats.isError ? (
@@ -58,12 +100,7 @@ export function SupportScreen({ navigation, route }: BottomTabScreenProps<MainTa
           ) : (
             <View style={styles.cards}>
               {chats.data.map((chat) => (
-                <ChatCard
-                  key={chat.id}
-                  chat={chat}
-                  selected={chat.id === selected}
-                  onPress={() => navigation.setParams({ id: chat.id })}
-                />
+                <ChatCard key={chat.id} chat={chat} selected={chat.id === selected} onPress={() => select(chat.id)} />
               ))}
             </View>
           )}
@@ -71,11 +108,12 @@ export function SupportScreen({ navigation, route }: BottomTabScreenProps<MainTa
             <Dialog open title="New chat" size="large" onClose={() => setCreating(false)} footer={null}>
               <NewChatForm
                 email={user?.email ?? ''}
+                path={endpoints.chats}
                 onSent={(chat) => {
                   setCreating(false);
                   void queryClient.invalidateQueries({ queryKey: CHATS_KEY });
                   if (chat) {
-                    navigation.setParams({ id: chat.id });
+                    select(chat.id);
                   }
                 }}
               />
@@ -110,9 +148,9 @@ function ChatCard({ chat, selected, onPress }: { chat: Chat; selected: boolean; 
   );
 }
 
-function ChatDetailView({ id }: { id: string }) {
+function ChatDetailView({ endpoints, id }: { endpoints: ChatEndpoints; id: string }) {
   const queryClient = useQueryClient();
-  const chat = useMyChat(id);
+  const chat = useMyChat(endpoints, id);
   if (chat.isPending) {
     return <LoadingState />;
   }
@@ -128,13 +166,14 @@ function ChatDetailView({ id }: { id: string }) {
       </View>
       <Text style={styles.muted}>Replies also go to {chat.data.email}.</Text>
       <ChatThread
+        attachments={endpoints.attachments}
         side="requester"
         messages={chat.data.messages}
         closedNote="This chat is closed. Start a new one to write again."
         onSend={
           open
             ? async (body, attachment) => {
-                await api.post(`/support/chats/${id}/messages`, messageBody({ body }, attachment));
+                await api.post(`${endpoints.chats}/${id}/messages`, messageBody({ body }, attachment));
                 await queryClient.invalidateQueries({ queryKey: CHATS_KEY });
               }
             : null

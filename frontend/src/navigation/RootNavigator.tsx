@@ -26,9 +26,9 @@ import { ResetPasswordScreen } from '../screens/auth/ResetPasswordScreen';
 import { AccountScreen } from '../screens/customer/AccountScreen';
 import { AdminBillingScreen, OverdueBanner } from '../screens/admin/AdminBillingScreen';
 import { AdminPlansScreen } from '../screens/admin/AdminPlansScreen';
-import { DeskChatsScreen } from '../screens/support/DeskChatsScreen';
-import { SupportScreen } from '../screens/support/SupportScreen';
-import { useDeskUnread } from '../support/api';
+import { DeskChatsScreen, PlatformChatsScreen } from '../screens/support/DeskChatsScreen';
+import { AdminSupportScreen, SupportScreen } from '../screens/support/SupportScreen';
+import { AGENCY_DESK, AGENCY_REQUESTER, PLATFORM_DESK, PLATFORM_VISITOR, useDeskUnread } from '../support/api';
 import { ChatLauncher } from '../support/ChatLauncher';
 import { AgenciesScreen } from '../screens/platform/AgenciesScreen';
 import { InvoicesScreen } from '../screens/platform/InvoicesScreen';
@@ -243,17 +243,24 @@ function MainTabsNavigator() {
 }
 
 // Pages under a tab (forms, Billing and Plans): not in the bar, which keeps their tab highlighted on them.
-const ADMIN_SETTINGS_PAGES: (keyof AdminTabParamList)[] = ['AdminOfferNew', 'AdminQueryRespond', 'AdminBilling', 'AdminPlans'];
+const ADMIN_SETTINGS_PAGES: (keyof AdminTabParamList)[] = [
+  'AdminOfferNew',
+  'AdminQueryRespond',
+  'AdminBilling',
+  'AdminPlans',
+  'AdminSupport',
+];
 const ADMIN_PARENT_ROUTES: Record<string, string> = {
   AdminOfferNew: 'AdminOffers',
   AdminQueryRespond: 'AdminRequests',
   AdminBilling: 'AdminSettings',
   AdminPlans: 'AdminSettings',
+  AdminSupport: 'AdminSettings',
 };
 
 function AdminTabsNavigator() {
   const isWide = useIsWide();
-  const unreadChats = useDeskUnread();
+  const unreadChats = useDeskUnread(AGENCY_DESK);
   return (
     <AdminTabs.Navigator
       tabBar={(props) => (
@@ -307,6 +314,7 @@ function AdminTabsNavigator() {
       />
       <AdminTabs.Screen name="AdminBilling" component={AdminBillingScreen} options={{ title: 'Billing' }} />
       <AdminTabs.Screen name="AdminPlans" component={AdminPlansScreen} options={{ title: 'Plans' }} />
+      <AdminTabs.Screen name="AdminSupport" component={AdminSupportScreen} options={{ title: 'Support' }} />
     </AdminTabs.Navigator>
   );
 }
@@ -336,6 +344,7 @@ function PlatformTabsNavigator() {
       linkTo(path);
     }
   }, [linkTo]);
+  const unreadChats = useDeskUnread(PLATFORM_DESK);
   return (
     <PlatformTabs.Navigator
       tabBar={(props) => <ResponsiveTabBar {...props} />}
@@ -358,6 +367,14 @@ function PlatformTabsNavigator() {
         options={tab('Invoices', 'document-text-outline', 'document-text')}
       />
       <PlatformTabs.Screen
+        name="PlatformChats"
+        component={PlatformChatsScreen}
+        options={{
+          ...tab('Chats', 'chatbubbles-outline', 'chatbubbles'),
+          tabBarBadge: unreadChats.data ? (unreadChats.data > 9 ? '9+' : unreadChats.data) : undefined,
+        }}
+      />
+      <PlatformTabs.Screen
         name="PlatformSettings"
         component={PlatformSettingsScreen}
         options={tab('Settings', 'settings-outline', 'settings')}
@@ -374,31 +391,35 @@ function PlatformStack() {
   const { user } = useAuth();
   const publicPage = { header: () => <PlatformPublicBar /> };
   return (
-    <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
-      {user ? (
-        <>
-          <Stack.Screen name="PlatformTabs" component={PlatformTabsNavigator} options={{ headerShown: false }} />
-          <Stack.Screen name="PlatformHome" component={PlatformHomeScreen} options={{ title: 'Home', ...publicPage }} />
-          <Stack.Screen
-            name="PlatformPricing"
-            component={PlatformPricingScreen}
-            options={{ title: 'Pricing', ...publicPage }}
-          />
-        </>
-      ) : (
-        <>
-          <Stack.Screen name="PlatformHome" component={PlatformHomeScreen} options={{ title: 'Home', ...publicPage }} />
-          <Stack.Screen
-            name="PlatformPricing"
-            component={PlatformPricingScreen}
-            options={{ title: 'Pricing', ...publicPage }}
-          />
-          <Stack.Screen name="PlatformLogin" component={PlatformLoginScreen} options={{ title: 'Sign in', ...publicPage }} />
-          {/* The owner's pages opened while signed out go to sign-in first. */}
-          <Stack.Screen name="PlatformTabs" component={PlatformSignInFirst} options={{ title: 'Sign in', ...publicPage }} />
-        </>
-      )}
-    </Stack.Navigator>
+    <View style={styles.fill}>
+      <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
+        {user ? (
+          <>
+            <Stack.Screen name="PlatformTabs" component={PlatformTabsNavigator} options={{ headerShown: false }} />
+            <Stack.Screen name="PlatformHome" component={PlatformHomeScreen} options={{ title: 'Home', ...publicPage }} />
+            <Stack.Screen
+              name="PlatformPricing"
+              component={PlatformPricingScreen}
+              options={{ title: 'Pricing', ...publicPage }}
+            />
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="PlatformHome" component={PlatformHomeScreen} options={{ title: 'Home', ...publicPage }} />
+            <Stack.Screen
+              name="PlatformPricing"
+              component={PlatformPricingScreen}
+              options={{ title: 'Pricing', ...publicPage }}
+            />
+            <Stack.Screen name="PlatformLogin" component={PlatformLoginScreen} options={{ title: 'Sign in', ...publicPage }} />
+            {/* The owner's pages opened while signed out go to sign-in first. */}
+            <Stack.Screen name="PlatformTabs" component={PlatformSignInFirst} options={{ title: 'Sign in', ...publicPage }} />
+          </>
+        )}
+      </Stack.Navigator>
+      {/* Visitors write to the platform from its public pages (plan enquiries too); the owner answers in Chats. */}
+      {user ? null : <ChatLauncher endpoints={PLATFORM_VISITOR} />}
+    </View>
   );
 }
 
@@ -431,7 +452,7 @@ export function RootNavigator() {
         )}
       </Stack.Navigator>
       {/* Guests and customers write to the agency from every page; its admins answer in Chats. */}
-      <ChatLauncher />
+      <ChatLauncher endpoints={AGENCY_REQUESTER} />
     </View>
   );
 }

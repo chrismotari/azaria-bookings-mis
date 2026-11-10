@@ -3,6 +3,8 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from accounts.tokens import TenantTokenRefreshSerializer
 
+from support import views as support
+
 from . import billing_views as billing
 from . import platform_views as views
 
@@ -31,4 +33,12 @@ urlpatterns = [
     path("settings", billing.PlatformSettingsView.as_view()),
     path("dashboard", billing.PlatformDashboardView.as_view()),
     path("public-plans", billing.PublicPlansView.as_view()),
+    # The platform's support desk (step 32).
+    path("support/chats", support.PlatformChatsView.as_view()),
+    path("support/attachments/<uuid:pk>", support.PlatformAttachmentView.as_view()),
+    path("chats", support.PlatformDeskChatListView.as_view()),
+    path("chats/unread", support.PlatformDeskUnreadView.as_view()),
+    path("chats/<uuid:pk>", support.PlatformDeskChatDetailView.as_view()),
+    path("chats/<uuid:pk>/messages", support.PlatformDeskChatMessageView.as_view()),
+    path("chats/<uuid:pk>/close", support.PlatformDeskChatCloseView.as_view()),
 ]

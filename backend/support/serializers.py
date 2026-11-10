@@ -42,6 +42,8 @@ class DeskConversationSerializer(serializers.ModelSerializer):
     unread = serializers.BooleanField(source="staff_unread", read_only=True)
     is_guest = serializers.BooleanField(read_only=True)
     closed_by_name = serializers.SerializerMethodField()
+    # Platform desk: the agency an agency admin wrote from; null for visitors and on an agency's desk.
+    agency = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
@@ -56,9 +58,13 @@ class DeskConversationSerializer(serializers.ModelSerializer):
             "unread",
             "closed_at",
             "closed_by_name",
+            "agency",
             "created_at",
         ]
         read_only_fields = fields
+
+    def get_agency(self, conversation):
+        return {"id": conversation.agency_id, "name": conversation.agency.name} if conversation.agency_id else None
 
     def get_closed_by_name(self, conversation):
         return conversation.closed_by.full_name if conversation.closed_by else None

@@ -3,7 +3,8 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { PublicPlans } from '../../api/types';
-import { PlanShowcase } from '../../components/PlanShowcase';
+import { billed, enquirySubject, PlanShowcase } from '../../components/PlanShowcase';
+import { openChat } from '../../support/launcher';
 import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { colors, font, space, weight } from '../../theme';
@@ -29,8 +30,13 @@ export function PlatformPricingScreen() {
       ) : (
         <PlanShowcase
           plans={plans.data.plans}
-          contactEmail={plans.data.billing_contact_email}
           actionLabel="Get started"
+          onEnquire={(plan, cycle) =>
+            openChat({
+              subject: enquirySubject(plan, cycle),
+              message: `I would like to know more about the ${plan.name} plan, billed ${billed(cycle)}.`,
+            })
+          }
         />
       )}
     </Screen>

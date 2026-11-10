@@ -34,10 +34,12 @@ type Props = {
   closedNote?: string;
   /** Keeps the newest message in view inside a bounded box (the floating panel). */
   scroll?: boolean;
+  /** Where attachments open: <attachments>/<message id>. */
+  attachments: string;
 };
 
 /** A chat's messages, oldest first, and a reply box with an optional attachment. */
-export function ChatThread({ messages, side, onSend, closedNote, scroll }: Props) {
+export function ChatThread({ messages, side, onSend, closedNote, scroll, attachments }: Props) {
   const list = useRef<ScrollViewInstance | null>(null);
   useEffect(() => {
     list.current?.scrollToEnd({ animated: false });
@@ -52,7 +54,7 @@ export function ChatThread({ messages, side, onSend, closedNote, scroll }: Props
         </Text>
         <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleTheirs]}>
           <Text style={styles.body}>{message.body}</Text>
-          {message.has_attachment ? <Attachment message={message} /> : null}
+          {message.has_attachment ? <Attachment message={message} base={attachments} /> : null}
         </View>
       </View>
     );
@@ -72,9 +74,9 @@ export function ChatThread({ messages, side, onSend, closedNote, scroll }: Props
   );
 }
 
-function Attachment({ message }: { message: ChatMessage }) {
+function Attachment({ message, base }: { message: ChatMessage; base: string }) {
   const open = useMutation({
-    mutationFn: () => openFile(`/support/attachments/${message.id}`, message.attachment_name),
+    mutationFn: () => openFile(`${base}/${message.id}`, message.attachment_name),
   });
   return (
     <>

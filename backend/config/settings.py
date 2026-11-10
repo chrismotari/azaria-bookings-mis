@@ -43,6 +43,8 @@ SHARED_APPS = [
     "django_filters",
     "corsheaders",
     "accounts",
+    # The platform's support desk (step 32); each agency's desk is in TENANT_APPS.
+    "support",
 ]
 
 # Each agency's schema.
@@ -53,7 +55,7 @@ TENANT_APPS = [
     "customer_requests.apps.RequestsConfig",
     "bookings",
     "core",
-    # Each agency's support desk (step 31); the platform's desk joins SHARED_APPS in step 32.
+    # Each agency's support desk (step 31).
     "support",
 ]
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Linking, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { BillingCycle, PlanTag, PublicPlan } from '../api/types';
 import { colors, font, radius, shadow, shadowRaised, space, useIsWide, weight } from '../theme';
@@ -32,17 +32,24 @@ type Props = {
   plans: PublicPlan[];
   /** The agency's running plans: shown as "Your plan" instead of a button. */
   currentPlanIds?: string[];
-  /** Where the action buttons write to (payment is outside the system); no buttons without it. */
-  contactEmail: string;
   /** "Get started" on the public page, "Ask to switch" in the agency app. */
   actionLabel: string;
+  /** Starts a plan enquiry chat with the platform (payment is outside the system). */
+  onEnquire: (plan: PublicPlan, cycle: BillingCycle) => void;
 };
+
+/** A plan enquiry's subject, e.g. "Plan enquiry: Starter (annual)". */
+export const enquirySubject = (plan: PublicPlan, cycle: BillingCycle) =>
+  `Plan enquiry: ${plan.name} (${cycle === 'monthly' ? 'monthly' : 'annual'})`;
+
+/** "monthly" or "annually", as in "billed annually". */
+export const billed = (cycle: BillingCycle) => (cycle === 'monthly' ? 'monthly' : 'annually');
 
 /**
  * Plans as a pricing page: a Monthly / Annual switch, the Recommended, Basic and Advanced plans as featured cards
  * (in that order), every other subscription plan behind "Show all plans", and support plans in their own section.
  */
-export function PlanShowcase({ plans, currentPlanIds = [], contactEmail, actionLabel }: Props) {
+export function PlanShowcase({ plans, currentPlanIds = [], actionLabel, onEnquire }: Props) {
   const isWide = useIsWide();
   const [cycle, setCycle] = useState<BillingCycle>('monthly');
   const [showAll, setShowAll] = useState(false);
@@ -62,8 +69,8 @@ export function PlanShowcase({ plans, currentPlanIds = [], contactEmail, actionL
       compact={compact}
       wide={isWide}
       current={currentPlanIds.includes(plan.id)}
-      contactEmail={contactEmail}
       actionLabel={actionLabel}
+      onEnquire={() => onEnquire(plan, cycle)}
     />
   );
 
@@ -110,16 +117,16 @@ function PlanCard({
   compact,
   wide,
   current,
-  contactEmail,
   actionLabel,
+  onEnquire,
 }: {
   plan: PublicPlan;
   cycle: BillingCycle;
   compact: boolean;
   wide: boolean;
   current: boolean;
-  contactEmail: string;
   actionLabel: string;
+  onEnquire: () => void;
 }) {
   const recommended = plan.tag === 'recommended';
   const price = cycle === 'monthly' ? plan.monthly_price : plan.annual_price;
@@ -127,10 +134,6 @@ function PlanCard({
     cycle === 'annual' && plan.monthly_price && plan.annual_price
       ? Math.round((1 - Number(plan.annual_price) / (12 * Number(plan.monthly_price))) * 100)
       : 0;
-  const ask = () =>
-    Linking.openURL(
-      `mailto:${contactEmail}?subject=${encodeURIComponent(`${actionLabel}: ${plan.name} (${cycle === 'monthly' ? 'monthly' : 'annual'})`)}`,
-    );
 
   return (
     <View
@@ -163,9 +166,14 @@ function PlanCard({
       <View style={styles.description}>
         <RichText html={plan.description} />
       </View>
-      {current ? null : contactEmail ? (
-        <Button title={actionLabel} variant={recommended ? 'primary' : 'secondary'} onPress={ask} icon="mail-outline" />
-      ) : null}
+      {current ? null : (
+        <Button
+          title={actionLabel}
+          variant={recommended ? 'primary' : 'secondary'}
+          onPress={onEnquire}
+          icon="chatbubble-ellipses-outline"
+        />
+      )}
     </View>
   );
 }

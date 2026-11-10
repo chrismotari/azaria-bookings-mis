@@ -43,6 +43,8 @@ export type AdminTabParamList = {
   /** Not in the bar: opened from Settings, shown under it. */
   AdminBilling: undefined;
   AdminPlans: undefined;
+  /** Settings > Support: the agency's chats with the platform. */
+  AdminSupport: { id?: string } | undefined;
 };
 
 /** The platform's screens (root host only). */
@@ -54,6 +56,8 @@ export type PlatformTabParamList = {
   PlatformAgencies: { status?: AgencyStatusFilter; id?: string } | undefined;
   PlatformPlans: undefined;
   PlatformInvoices: { status?: InvoiceStatusFilter; id?: string } | undefined;
+  /** The platform's desk: chats from visitors and agencies' admins. */
+  PlatformChats: { id?: string } | undefined;
   PlatformSettings: undefined;
 };
 

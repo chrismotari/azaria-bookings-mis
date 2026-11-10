@@ -25,6 +25,7 @@ const schema = z.object({
   invoice_due_days: z.string().trim().regex(DAYS, 'Enter a whole number of days.'),
   invoice_lead_days: z.string().trim().regex(DAYS, 'Enter a whole number of days.'),
   billing_contact_email: z.union([z.literal(''), z.email('Enter a valid email address.')]),
+  support_email: z.union([z.literal(''), z.email('Enter a valid email address.')]),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -35,6 +36,7 @@ const FIELDS = [
   'invoice_due_days',
   'invoice_lead_days',
   'billing_contact_email',
+  'support_email',
 ] as const;
 
 const SETTINGS_KEY = ['platform', 'settings'];
@@ -60,6 +62,7 @@ function toValues(settings: PlatformSettings): FormValues {
     invoice_due_days: String(settings.invoice_due_days),
     invoice_lead_days: String(settings.invoice_lead_days),
     billing_contact_email: settings.billing_contact_email,
+    support_email: settings.support_email,
   };
 }
 
@@ -82,6 +85,7 @@ function SettingsForm({ settings }: { settings: PlatformSettings }) {
         invoice_due_days: Number(values.invoice_due_days),
         invoice_lead_days: Number(values.invoice_lead_days),
         billing_contact_email: values.billing_contact_email.trim(),
+        support_email: values.support_email.trim(),
       });
       queryClient.setQueryData(SETTINGS_KEY, data);
       reset(toValues(data));
@@ -116,8 +120,8 @@ function SettingsForm({ settings }: { settings: PlatformSettings }) {
           error={fieldState.error?.message}
           multiline={options.multiline}
           numberOfLines={options.multiline ? 5 : undefined}
-          keyboardType={options.numeric ? 'number-pad' : name === 'billing_contact_email' ? 'email-address' : 'default'}
-          autoCapitalize={name === 'billing_contact_email' ? 'none' : 'sentences'}
+          keyboardType={options.numeric ? 'number-pad' : name.endsWith('_email') ? 'email-address' : 'default'}
+          autoCapitalize={name.endsWith('_email') ? 'none' : 'sentences'}
         />
       )}
     />
@@ -158,6 +162,15 @@ function SettingsForm({ settings }: { settings: PlatformSettings }) {
         description="Shown to agencies on their Billing screen, in emails and when suspended for non-payment."
       >
         {field('billing_contact_email', 'Billing contact email')}
+      </FormSection>
+      <FormSection
+        title="Support"
+        description="New chats and messages on the platform's desk (from visitors, plan enquiries and agencies' admins) are emailed here; answer them in Chats."
+      >
+        {field('support_email', 'Support email')}
+        {!settings.support_email ? (
+          <Text style={styles.warning}>Add a support email to be told about new chats.</Text>
+        ) : null}
       </FormSection>
       <FormError message={formError} />
       {saved && !formState.isDirty ? <Text style={styles.saved}>Settings saved.</Text> : null}

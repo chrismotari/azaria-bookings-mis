@@ -13,7 +13,7 @@ type Props = {
   size?: 'small' | 'large' | 'wide';
   /** While saving, the dialog cannot be closed. */
   busy?: boolean;
-  /** The action buttons, shown in the footer. */
+  /** The action buttons, shown in the footer; null for a form with its own buttons (no footer bar). */
   footer: ReactNode;
   /** Why the last action failed, shown in the footer above the buttons so it is in view. */
   error?: string | null;
@@ -56,14 +56,17 @@ export function Dialog({ open, title, onClose, size = 'small', busy, footer, err
           <ScrollView style={[styles.scroll, !isWide && styles.scrollNarrow]} contentContainerStyle={styles.body}>
             {children}
           </ScrollView>
-          <View style={styles.footer}>
-            {error ? (
-              <Text style={styles.error} role="alert">
-                {error}
-              </Text>
-            ) : null}
-            {footer}
-          </View>
+          {/* A dialog whose form carries its own buttons (footer null) has no footer bar. */}
+          {footer || error ? (
+            <View style={styles.footer}>
+              {error ? (
+                <Text style={styles.error} role="alert">
+                  {error}
+                </Text>
+              ) : null}
+              {footer}
+            </View>
+          ) : null}
         </View>
       </View>
     </Modal>

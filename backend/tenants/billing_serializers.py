@@ -225,5 +225,6 @@ class PlatformSettingsSerializer(serializers.ModelSerializer):
             "invoice_due_days",
             "invoice_lead_days",
             "billing_contact_email",
+            "support_email",
             "currency",
         ]

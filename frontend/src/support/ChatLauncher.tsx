@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,8 +11,9 @@ import { Icon } from '../components/Icon';
 import { PressState } from '../components/pressState';
 import { EmptyState, ErrorState, LoadingState } from '../components/StatusViews';
 import { colors, font, radius, shadowRaised, space, useIsWide, weight } from '../theme';
-import { CHATS_KEY, messageBody, useMyChat, useMyChats, useMyUnread } from './api';
+import { ChatEndpoints, CHATS_KEY, messageBody, useMyChat, useMyChats, useMyUnread } from './api';
 import { ChatThread, chatTime } from './ChatThread';
+import { ChatPrefill, closeChat, openChat, useChatLauncher } from './launcher';
 import { NewChatForm } from './NewChatForm';
 
 type View_ = { name: 'list' } | { name: 'new' } | { name: 'thread'; id: string } | { name: 'sent'; email: string };
@@ -22,24 +23,39 @@ const NARROW_OFFSET = 72;
 
 /**
  * The floating message button on every page for people who write to this host's desk (guests and customers on an
- * agency's site). It opens a panel: a signed-in person's open chats and threads, or a guest's new chat form.
+ * agency's site, visitors on the root host). It opens a panel: a signed-in person's open chats and threads, or a
+ * guest's new chat form. Other screens open it through openChat (e.g. a plan enquiry).
  */
-export function ChatLauncher() {
+export function ChatLauncher({ endpoints }: { endpoints: ChatEndpoints }) {
   const { user } = useAuth();
   const isWide = useIsWide();
   const insets = useSafeAreaInsets();
-  const [open, setOpen] = useState(false);
-  const unread = useMyUnread(!!user);
-  const signedIn = !!user;
+  const launcher = useChatLauncher();
+  const open = launcher.open;
+  // Only hosts whose requesters can read chats back (an agency's site) have a signed-in mode.
+  const signedIn = !!user && !!endpoints.unread;
+  const unread = useMyUnread(endpoints, signedIn);
   const [view, setView] = useState<View_>(signedIn ? { name: 'list' } : { name: 'new' });
 
-  const show = () => {
-    setView(signedIn ? { name: 'list' } : { name: 'new' });
-    setOpen(true);
-  };
+  // Each opening starts on the list (signed in) or a new chat (guests, or a prefilled enquiry).
+  useEffect(() => {
+    if (launcher.open) {
+      setView(signedIn && !launcher.prefill ? { name: 'list' } : { name: 'new' });
+    }
+  }, [launcher.version]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const count = unread.data ?? 0;
   const panel = (
-    <Panel view={view} setView={setView} onClose={() => setOpen(false)} signedIn={signedIn} email={user?.email ?? ''} />
+    <Panel
+      key={launcher.version}
+      endpoints={endpoints}
+      prefill={launcher.prefill}
+      view={view}
+      setView={setView}
+      onClose={closeChat}
+      signedIn={signedIn}
+      email={user?.email ?? ''}
+    />
   );
 
   return (
@@ -48,14 +64,14 @@ export function ChatLauncher() {
         <View style={[styles.panelWide, { bottom: space.lg + 64 + insets.bottom }]}>{panel}</View>
       ) : null}
       {open && !isWide ? (
-        <Modal visible animationType="slide" onRequestClose={() => setOpen(false)}>
+        <Modal visible animationType="slide" onRequestClose={closeChat}>
           <View style={[styles.panelNarrow, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>{panel}</View>
         </Modal>
       ) : null}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={open ? 'Close messages' : count ? `Messages, ${count} unread` : 'Messages'}
-        onPress={() => (open ? setOpen(false) : show())}
+        onPress={() => (open ? closeChat() : openChat())}
         style={({ hovered, pressed }: PressState) => [
           styles.button,
           { bottom: (isWide ? space.lg : NARROW_OFFSET) + insets.bottom },
@@ -74,6 +90,8 @@ export function ChatLauncher() {
 }
 
 type PanelProps = {
+  endpoints: ChatEndpoints;
+  prefill: ChatPrefill | null;
   view: View_;
   setView: (view: View_) => void;
   onClose: () => void;
@@ -81,7 +99,7 @@ type PanelProps = {
   email: string;
 };
 
-function Panel({ view, setView, onClose, signedIn, email }: PanelProps) {
+function Panel({ endpoints, prefill, view, setView, onClose, signedIn, email }: PanelProps) {
   const queryClient = useQueryClient();
   const back = signedIn && view.name !== 'list' ? () => setView({ name: 'list' }) : null;
   const title =
@@ -118,12 +136,19 @@ function Panel({ view, setView, onClose, signedIn, email }: PanelProps) {
         </Pressable>
       </View>
       {view.name === 'list' ? (
-        <ChatList onOpen={(chat) => setView({ name: 'thread', id: chat.id })} onNew={() => setView({ name: 'new' })} />
+        <ChatList
+          endpoints={endpoints}
+          onOpen={(chat) => setView({ name: 'thread', id: chat.id })}
+          onNew={() => setView({ name: 'new' })}
+        />
       ) : view.name === 'new' ? (
         <ScrollView contentContainerStyle={styles.body}>
           {!signedIn ? <Text style={styles.muted}>Send us a message and we will reply by email.</Text> : null}
           <NewChatForm
             email={email}
+            path={endpoints.chats}
+            subject={prefill?.subject}
+            message={prefill?.message}
             onSent={(chat, sentTo) => {
               void queryClient.invalidateQueries({ queryKey: CHATS_KEY });
               setView(chat ? { name: 'thread', id: chat.id } : { name: 'sent', email: sentTo });
@@ -140,14 +165,22 @@ function Panel({ view, setView, onClose, signedIn, email }: PanelProps) {
           <Button title="Send another message" variant="secondary" onPress={() => setView({ name: 'new' })} />
         </View>
       ) : (
-        <Thread id={view.id} />
+        <Thread endpoints={endpoints} id={view.id} />
       )}
     </View>
   );
 }
 
-function ChatList({ onOpen, onNew }: { onOpen: (chat: Chat) => void; onNew: () => void }) {
-  const chats = useMyChats('open');
+function ChatList({
+  endpoints,
+  onOpen,
+  onNew,
+}: {
+  endpoints: ChatEndpoints;
+  onOpen: (chat: Chat) => void;
+  onNew: () => void;
+}) {
+  const chats = useMyChats(endpoints, 'open');
   return (
     <ScrollView contentContainerStyle={styles.body}>
       <Button title="New chat" icon="add-outline" onPress={onNew} />
@@ -181,9 +214,9 @@ function ChatList({ onOpen, onNew }: { onOpen: (chat: Chat) => void; onNew: () =
   );
 }
 
-function Thread({ id }: { id: string }) {
+function Thread({ endpoints, id }: { endpoints: ChatEndpoints; id: string }) {
   const queryClient = useQueryClient();
-  const chat = useMyChat(id);
+  const chat = useMyChat(endpoints, id);
   if (chat.isPending) {
     return <LoadingState />;
   }
@@ -196,13 +229,14 @@ function Thread({ id }: { id: string }) {
       <Text style={styles.subject}>{chat.data.subject}</Text>
       <ChatThread
         scroll
+        attachments={endpoints.attachments}
         side="requester"
         messages={chat.data.messages}
         closedNote="This chat is closed. Start a new one to write again."
         onSend={
           open
             ? async (body, attachment) => {
-                await api.post(`/support/chats/${id}/messages`, messageBody({ body }, attachment));
+                await api.post(`${endpoints.chats}/${id}/messages`, messageBody({ body }, attachment));
                 await queryClient.invalidateQueries({ queryKey: CHATS_KEY });
               }
             : null

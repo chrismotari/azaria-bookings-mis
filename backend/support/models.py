@@ -23,6 +23,11 @@ class Conversation(models.Model):
     name = models.CharField(max_length=150, blank=True)
     # The signed-in user who started it (an id, not a key: on the platform desk it is a user of an agency's schema).
     requester = models.UUIDField(null=True, blank=True, db_index=True)
+    # Platform desk only: the agency an agency admin wrote from (no database constraint: the table also exists in
+    # every agency's schema, where this stays empty).
+    agency = models.ForeignKey(
+        "tenants.Tenant", null=True, blank=True, on_delete=models.PROTECT, db_constraint=False, related_name="+"
+    )
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.OPEN)
     closed_at = models.DateTimeField(null=True, blank=True)
     # Who closed it; null when it closed by itself.

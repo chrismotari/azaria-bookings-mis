@@ -4,6 +4,7 @@
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
   {% include "emails/_row.html" with label="Subject" value=conversation.subject %}
   {% if conversation.name %}{% include "emails/_row.html" with label="From" value=conversation.name|add:" <"|add:conversation.email|add:">" %}{% else %}{% include "emails/_row.html" with label="From" value="Guest <"|add:conversation.email|add:">" %}{% endif %}
+  {% if agency_name %}{% include "emails/_row.html" with label="Agency" value=agency_name %}{% endif %}
   {% if message.attachment_name %}{% include "emails/_row.html" with label="Attached" value=message.attachment_name %}{% endif %}
 </table>
 {% include "emails/_box.html" with text=message.body %}

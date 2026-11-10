@@ -289,6 +289,8 @@ export type PlatformSettings = {
   invoice_due_days: number;
   invoice_lead_days: number;
   billing_contact_email: string;
+  /** Notified of new chats and messages on the platform's desk. */
+  support_email: string;
   currency: string;
 };
 
@@ -370,6 +372,8 @@ export type DeskChat = Chat & {
   /** A guest's chat: a single message, replies go by email only. */
   is_guest: boolean;
   closed_by_name: string | null;
+  /** Platform desk: the agency an agency admin wrote from. */
+  agency: { id: number; name: string } | null;
 };
 
 export type DeskChatDetail = DeskChat & { messages: ChatMessage[] };

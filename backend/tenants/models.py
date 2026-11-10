@@ -55,6 +55,8 @@ class PlatformSettings(models.Model):
     invoice_due_days = models.PositiveIntegerField(default=14)
     invoice_lead_days = models.PositiveIntegerField(default=7)
     billing_contact_email = models.EmailField(blank=True)
+    # Where the platform's support desk is notified of new chats and messages.
+    support_email = models.EmailField(blank=True)
 
     class Meta:
         verbose_name = "platform settings"

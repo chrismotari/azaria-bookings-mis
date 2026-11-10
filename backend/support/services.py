@@ -3,8 +3,9 @@
 from datetime import timedelta
 
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import connection, transaction
 from django.utils import timezone
+from django_tenants.utils import get_public_schema_name
 
 from core.tenancy import queue
 
@@ -23,30 +24,40 @@ def _add(conversation, *, body, attachment, from_staff, author_name):
     return message
 
 
-def start_chat(*, email, subject, body, attachment=None, user=None):
-    """A new chat with the desk; a signed-in user's chat is theirs to follow, a guest's is a single message."""
-    from .tasks import notify_desk_new_message
+def _notify(conversation, message):
+    """Queues email 13 (to the desk) or 14 (to the requester) on commit, for the desk the chat belongs to."""
+    from . import tasks
 
+    to_desk = not message.from_staff
+    if connection.schema_name == get_public_schema_name():
+        task = tasks.notify_platform_desk if to_desk else tasks.notify_platform_requester
+        transaction.on_commit(lambda: task.delay(str(conversation.pk), str(message.pk)))
+    else:
+        queue(tasks.notify_desk_new_message if to_desk else tasks.notify_requester_reply, str(conversation.pk), str(message.pk))
+
+
+def start_chat(*, email, subject, body, attachment=None, user=None, agency=None):
+    """A new chat with the current schema's desk; a signed-in user's chat is theirs to follow, a guest's is a single
+    message. agency: on the platform desk, the agency an agency admin writes from."""
     with transaction.atomic():
         conversation = Conversation.objects.create(
             subject=subject.strip(),
             email=email,
             name=user.full_name if user else "",
             requester=user.pk if user else None,
+            agency=agency,
             last_message_at=timezone.now(),
             staff_unread=True,
         )
         message = _add(
             conversation, body=body, attachment=attachment, from_staff=False, author_name=conversation.name
         )
-        queue(notify_desk_new_message, str(conversation.pk), str(message.pk))
+        _notify(conversation, message)
     return conversation
 
 
 def write(conversation, *, body, attachment=None, from_staff, author_name):
     """A message on an open chat; the other side gets it unread and by email."""
-    from .tasks import notify_desk_new_message, notify_requester_reply
-
     with transaction.atomic():
         conversation = Conversation.objects.select_for_update().get(pk=conversation.pk)
         if conversation.status != Conversation.Status.OPEN:
@@ -58,8 +69,7 @@ def write(conversation, *, body, attachment=None, from_staff, author_name):
         else:
             conversation.staff_unread = True
         conversation.save(update_fields=["last_message_at", "requester_unread", "staff_unread"])
-        task = notify_requester_reply if from_staff else notify_desk_new_message
-        queue(task, str(conversation.pk), str(message.pk))
+        _notify(conversation, message)
     return message
 
 

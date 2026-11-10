@@ -130,3 +130,9 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - Support chat: the requester's list and new chats share POST/GET support/chats; only POST is open to guests (and throttled for them, 10 an hour per IP); the desk cannot start chats with itself (403).
 - Support chat: a reply's subject and email are never taken from the request; the chat's own are kept. The desk's list puts unread chats first, then the most recent.
 - Support chat: customers reach Support from Account (and the account menu); the floating panel lists only open chats and points to Account > Support for closed ones.
+- Platform desk (step 32): the support app is now in SHARED_APPS too. Conversation.agency has no database constraint because the same table exists in every agency's schema (where it stays empty). Existing dev databases that ran step 31 need `migrate_schemas --shared support zero --fake` once before migrating, since that run recorded the public schema's support migration without creating its tables.
+- Platform desk: the owner's API is /api/platform/chats (the agency desk's admin/chats), visitors write to /api/platform/support/chats; the same views, with the owner's permission.
+- Agency admins' chats with the platform are read and written from their own host (support/platform-chats); the agency is read before switching to the public schema. Reply emails link to /admin/support/<id> on the agency's own domain.
+- The platform desk is notified at PlatformSettings.support_email; with it blank no desk email is sent (the Settings screen warns).
+- Plan enquiries prefill subject "Plan enquiry: <plan> (monthly|annual)" and an editable message; on the pricing page they open the floating panel, in the agency app a dialog, after which the admin lands on the chat in Settings > Support.
+- A Dialog whose content has its own buttons (footer null) draws no footer bar.
