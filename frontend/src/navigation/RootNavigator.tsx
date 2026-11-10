@@ -90,8 +90,6 @@ function AdminStack() {
           component={AdminQueryRespondScreen}
           options={{ title: 'Respond to request' }}
         />
-        <Stack.Screen name="AdminBilling" component={AdminBillingScreen} options={{ title: 'Billing' }} />
-        <Stack.Screen name="AdminPlans" component={AdminPlansScreen} options={{ title: 'Plans' }} />
       </Stack.Navigator>
     </View>
   );
@@ -199,10 +197,19 @@ function MainTabsNavigator() {
   );
 }
 
+// Pages under Settings: not in the bar, which keeps Settings highlighted on them.
+const ADMIN_SETTINGS_PAGES: (keyof AdminTabParamList)[] = ['AdminBilling', 'AdminPlans'];
+const ADMIN_PARENT_ROUTES: Record<string, string> = { AdminBilling: 'AdminSettings', AdminPlans: 'AdminSettings' };
+
 function AdminTabsNavigator() {
   const isWide = useIsWide();
   return (
-    <AdminTabs.Navigator tabBar={(props) => <ResponsiveTabBar {...props} />} screenOptions={tabScreenOptions(isWide)}>
+    <AdminTabs.Navigator
+      tabBar={(props) => (
+        <ResponsiveTabBar {...props} hiddenRoutes={ADMIN_SETTINGS_PAGES} parentRoutes={ADMIN_PARENT_ROUTES} />
+      )}
+      screenOptions={tabScreenOptions(isWide)}
+    >
       <AdminTabs.Screen
         name="AdminDashboard"
         component={AdminDashboardScreen}
@@ -233,6 +240,8 @@ function AdminTabsNavigator() {
         component={AdminSettingsScreen}
         options={tab('Settings', 'settings-outline', 'settings')}
       />
+      <AdminTabs.Screen name="AdminBilling" component={AdminBillingScreen} options={{ title: 'Billing' }} />
+      <AdminTabs.Screen name="AdminPlans" component={AdminPlansScreen} options={{ title: 'Plans' }} />
     </AdminTabs.Navigator>
   );
 }
@@ -354,8 +363,6 @@ export function RootNavigator() {
           {/* Admin links opened while signed out go to Login first. */}
           <Stack.Screen name="AdminTabs" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
           <Stack.Screen name="AdminQueryRespond" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
-          <Stack.Screen name="AdminBilling" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
-          <Stack.Screen name="AdminPlans" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
         </Stack.Group>
       )}
     </Stack.Navigator>

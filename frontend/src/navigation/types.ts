@@ -30,6 +30,9 @@ export type AdminTabParamList = {
   AdminBookings: { status?: BookingStatus | 'all'; id?: string } | undefined;
   AdminUsers: { id?: string } | undefined;
   AdminSettings: undefined;
+  /** Not in the bar: opened from Settings, shown under it. */
+  AdminBilling: undefined;
+  AdminPlans: undefined;
 };
 
 /** The platform's screens (root host only). */
@@ -55,8 +58,6 @@ export type RootStackParamList = {
   AdminTabs: NavigatorScreenParams<AdminTabParamList> | undefined;
   AdminOfferNew: undefined;
   AdminQueryRespond: { id: string };
-  AdminBilling: undefined;
-  AdminPlans: undefined;
   PlatformHome: undefined;
   PlatformPricing: undefined;
   PlatformLogin: undefined;

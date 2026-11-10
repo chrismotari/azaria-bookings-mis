@@ -121,3 +121,5 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - An inactive plan never holds a tag: saving a plan as inactive clears its tag, and tagging an inactive plan is ignored.
 - On the plans pages the featured cards are centred in their row; "Show all plans" gives the number of subscription plans in all.
 - public-plans ignores any Authorization header, so a stale or agency token never turns the public pricing page into an error.
+- The agency's Billing and Plans pages are admin tabs left out of the bar (Settings stays highlighted on them), so they keep the top bar; each has a back link (Billing to Settings, Plans to Billing).
+- Plain web form elements (select, date input, rich text) use React Native Web's system font stack (WEB_SYSTEM_FONT in theme.ts) instead of inheriting the browser's default serif.

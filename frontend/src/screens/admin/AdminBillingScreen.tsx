@@ -44,6 +44,13 @@ export function AdminBillingScreen() {
   const { subscriptions, billing_contact_email } = billing.data;
   return (
     <Screen maxWidth={760}>
+      <View style={styles.back}>
+        <Button
+          title="← Settings"
+          variant="link"
+          onPress={() => navigation.navigate('AdminTabs', { screen: 'AdminSettings' })}
+        />
+      </View>
       <Text style={styles.title}>Billing</Text>
       <Text style={styles.muted}>
         Your agency's plans with Azaria Bookings and their invoices. Invoices are also emailed to your billing email;
@@ -73,7 +80,7 @@ export function AdminBillingScreen() {
             title="Compare plans"
             variant="secondary"
             icon="layers-outline"
-            onPress={() => navigation.navigate('AdminPlans')}
+            onPress={() => navigation.navigate('AdminTabs', { screen: 'AdminPlans' })}
           />
         </View>
       </Card>
@@ -142,6 +149,7 @@ export function OverdueBanner() {
 }
 
 const styles = StyleSheet.create({
+  back: { alignSelf: 'flex-start' },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   section: {
     fontSize: font.heading,

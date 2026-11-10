@@ -10,10 +10,12 @@ import { AppBar, AppBarItem } from './AppBar';
 type Props = BottomTabBarProps & {
   /** Routes not offered in the bar (still reachable by URL). */
   hiddenRoutes?: string[];
+  /** Hidden routes shown as part of a tab, e.g. Billing under Settings: that tab stays highlighted on them. */
+  parentRoutes?: Record<string, string>;
 };
 
 /** The brand bar with navigation on wide viewports, bottom tabs on narrow ones. */
-export function ResponsiveTabBar({ state, descriptors, navigation, hiddenRoutes = [] }: Props) {
+export function ResponsiveTabBar({ state, descriptors, navigation, hiddenRoutes = [], parentRoutes = {} }: Props) {
   const isWide = useIsWide();
   const insets = useSafeAreaInsets();
 
@@ -23,7 +25,8 @@ export function ResponsiveTabBar({ state, descriptors, navigation, hiddenRoutes 
     }
     const { options } = descriptors[route.key];
     const label = typeof options.tabBarLabel === 'string' ? options.tabBarLabel : (options.title ?? route.name);
-    const focused = state.index === index;
+    const current = state.routes[state.index].name;
+    const focused = state.index === index || parentRoutes[current] === route.name;
     // The bar draws icons in its own colours: light on the brand bar, indigo or text below.
     const icon = (color: string): ReactNode => options.tabBarIcon?.({ focused, color, size: isWide ? 18 : 22 });
     const onPress = () => {

@@ -46,6 +46,9 @@ export const font = { display: 28, title: 22, heading: 18, body: 15, small: 13, 
 /** Weights for the type scale: headings heavy, labels semibold. */
 export const weight = { heavy: '800', bold: '700', semibold: '600', regular: '400' } as const;
 
+/** React Native Web's own system font stack, which every Text uses; for plain web elements (select, date, rich text). */
+export const WEB_SYSTEM_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+
 export const radius = { sm: 6, md: 8, lg: 12, pill: 999 };
 
 export const shadow = { boxShadow: '0 1px 3px rgba(37, 37, 37, 0.08)' } as const;

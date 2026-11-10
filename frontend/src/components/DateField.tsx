@@ -1,6 +1,7 @@
 import { createElement } from 'react';
 import { Platform, TextInput } from 'react-native';
 
+import { WEB_SYSTEM_FONT } from '../theme';
 import { Field, inputStyle } from './Field';
 
 type Props = {
@@ -20,7 +21,7 @@ export function DateField({ label, value, onChange, error }: Props) {
           value,
           'aria-label': label,
           onChange: (event: { target: { value: string } }) => onChange(event.target.value),
-          style: { ...inputStyle, fontFamily: 'inherit', borderStyle: 'solid', boxSizing: 'border-box', width: '100%' },
+          style: { ...inputStyle, fontFamily: WEB_SYSTEM_FONT, borderStyle: 'solid', boxSizing: 'border-box', width: '100%' },
         })
       ) : (
         <TextInput

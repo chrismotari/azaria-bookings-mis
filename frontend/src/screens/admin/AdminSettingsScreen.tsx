@@ -187,7 +187,7 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
             title="View billing"
             variant="secondary"
             icon="document-text-outline"
-            onPress={() => navigation.navigate('AdminBilling')}
+            onPress={() => navigation.navigate('AdminTabs', { screen: 'AdminBilling' })}
           />
         </View>
       </FormSection>

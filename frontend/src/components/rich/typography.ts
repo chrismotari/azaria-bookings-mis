@@ -1,7 +1,7 @@
-import { colors, font } from '../../theme';
+import { colors, font, WEB_SYSTEM_FONT } from '../../theme';
 
-/** React Native Web's own system font stack, which every Text in the app uses. */
-export const SYSTEM_FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+export const SYSTEM_FONT = WEB_SYSTEM_FONT;
+
 
 /** The app's typography for rendered rich text (descriptions) and for the editor, scoped to a class. */
 export function richTextCss(scope: string) {
