@@ -404,7 +404,7 @@ Celery
 - Beat keeps the same three schedules, each now a public-level task that runs the job in every active tenant's schema in turn; an error in one tenant is logged and does not stop the others.
 
 The system owner (app_admin, public schema)
-- System owner accounts are Django superusers in the public schema, created with python manage.py createsuperuser. They sign in to /django-admin/ on the root host. There is no app_admin screen in the Expo app.
+- System owner accounts are Django superusers in the public schema, created with python manage.py createsuperuser. They sign in to /django-admin/ on the root host. There is no app_admin screen in the Expo app (until step 26, see PLATFORM APP: AGENCIES).
 - /django-admin/ on the root host lists tenants (name, schema, primary domain, active, created) with search and an active filter, lets the owner rename, suspend and reactivate a tenant and manage its domains, and has an "Add tenant" form: name, schema_name, and the first admin's full name, email and password.
 - Adding a tenant, from that form or from python manage.py create_agency --schema --name --admin-email --admin-password --admin-name, goes through one function, tenants.services.create_agency: it validates the schema name, creates the Tenant (which creates and migrates its schema), the primary Domain, sets AppSettings.admin_notification_email to the first admin's email, and creates that admin (role admin) inside the new schema. If any part fails, nothing is left behind (no tenant row, no schema).
 - /django-admin/ on a tenant host stays what it was: technical support for that tenant's data, superusers of that tenant's schema only (created with tenant_command createsuperuser --schema=<schema>).
@@ -464,6 +464,95 @@ Tests
 - seed_airlines filtering, duplicate codes, idempotence and leaving curated rows alone; offer create and edit by airline id, refusing an inactive or unknown airline; the API shape with and without a logo (absolute URL on the request's host); the airline search; logo upload rules (type, content, size) and file deletion on replace and remove; the platform admin listing airlines and tenant hosts not exposing them.
 
 ======================================================================
+PLATFORM APP: AGENCIES (step 26)
+======================================================================
+Goal: the system owner manages agencies (tenants) in the Expo web app on the root host instead of only in /django-admin/. Same look as the agency admin (theme, top bar, tables, detail drawer, confirm dialogs). /django-admin/ on the root host keeps working unchanged as the technical fallback; airlines and logos stay there.
+
+Who signs in
+- Only active superusers of the public schema (the same system owner accounts as /django-admin/). Anyone else gets 401 {"detail": "No platform account found with the given credentials."}.
+- Tokens are issued on the root host and so carry tenant "public"; the existing tenant check already refuses them at every agency and refuses agency tokens here.
+- No registration and no password reset on the platform; owners use createsuperuser and changepassword.
+
+API (root host only, added to PUBLIC_SCHEMA_URLCONF; every other /api/ path there still returns no_tenant)
+- POST /api/platform/login, POST /api/platform/refresh, GET /api/platform/me (id, email, full_name).
+- All endpoints below require a platform superuser (IsPlatformOwner).
+- GET /api/platform/tenants?search=&is_active=: paginated like the other lists; search on name, schema name and domains; each row: id, name, slug (schema name with hyphens, as typed), primary_domain, is_active, created_at. The public schema's row is never listed.
+- POST /api/platform/tenants: name, slug, admin_name, admin_email, admin_password; goes through tenants.services.create_agency; field errors come back under the same names.
+- GET /api/platform/tenants/<id>: the row plus domains [{id, domain, is_primary}].
+- PATCH /api/platform/tenants/<id>: name and/or is_active (suspend and reactivate). Tenants are never deleted.
+- POST /api/platform/tenants/<id>/domains {domain}: adds a non-primary domain (a valid hostname not used by any tenant). DELETE /api/platform/tenants/<id>/domains/<domain_id> removes it; the primary domain cannot be removed (409). POST .../domains/<domain_id>/make-primary moves the primary flag to it.
+
+Frontend
+- New setting EXPO_PUBLIC_PLATFORM_HOST (development: localhost). When the web app's hostname equals it, the app shows the platform instead of an agency: its own sign-in screen and its own screens; the agency screens are not reachable there, and the no_tenant page is not shown. The platform is web only.
+- Top bar: Agencies, and Sign out.
+- Agencies: table (name, address, status chip Active/Suspended, created), search box, active filter, "New agency" button. A row opens the detail drawer.
+- Detail drawer, in sections so later sections (plans and billing, step 27) slot in: Agency (name with an Edit action, address, created, status with a Suspend or Reactivate button behind a confirm dialog), Domains (list with the primary marked, Make primary and Remove on the others, an add field).
+- New agency form: name, address (with the live hint "<address>.<base domain>"), first admin's full name, email and password; server field errors shown on their fields.
+
+Tests
+- Platform login: superuser ok; non-superuser, inactive user and agency users refused; a platform token refused at an agency and an agency token refused on the root host; agency hosts have no /api/platform/.
+- Tenant list, search, filter, public row hidden; create through create_agency (errors mapped to fields, nothing left behind on failure); rename; suspend and reactivate (the agency then answers tenant_suspended or works again); domain add, duplicate refused, remove, primary not removable, make-primary.
+- Browser check at 390 px and 1280 px: sign in, create an agency, open it at its address, suspend it, see the suspended page there, reactivate.
+
+======================================================================
+PLANS, INVOICES AND SUSPENSION FOR NON-PAYMENT (step 27)
+======================================================================
+Goal: agencies pay the platform for a plan. Payment happens outside the system; the platform issues invoices, the system owner marks them paid, and agencies whose invoices stay unpaid are suspended. Everything here lives in the public schema (shared app tenants) and is managed in the platform app.
+
+Settings
+- PLATFORM_CURRENCY in .env (e.g. KES). Every plan and invoice uses it; amounts are decimals with 2 places.
+- PlatformSettings (singleton, pk=1, created by a data migration in public): issuer_details (the platform's name and address as printed on invoices), payment_instructions (printed on invoices and in invoice emails), invoice_due_days (default 14), invoice_lead_days (default 7), billing_contact_email (shown to agencies). Edited on the platform Settings screen.
+
+Models
+- Plan: id (UUID), name, kind (subscription or support), description (blank allowed), monthly_price and annual_price (each nullable; at least one set), is_active (default true), created_at. The owner creates and edits plans as needed; plans are deactivated, never deleted. An inactive plan cannot be chosen for a new or changed subscription; existing subscriptions keep it.
+- Tenant gains billing_email (used for invoices; required before a subscription can start), suspension_reason (blank, manual or non_payment) and suspended_at. Suspending from the platform sets manual; the overdue job sets non_payment; reactivating clears both.
+- Subscription: id (UUID), tenant, plan, billing_cycle (monthly or annual; the plan must have that price), started_on (date), next_period_start (date), ended_on (date, null while running), created_at. An agency has at most one running subscription per plan kind (so one subscription plan and at most one support plan, each on its own cycle). Changing the plan or cycle edits the running subscription and applies from the next invoice issued; invoices already issued are unchanged (no proration). Ending a subscription sets ended_on; no further invoices are issued.
+- Invoice: id (UUID), number (INV-<year>-<4-digit sequence per year>, unique), tenant, subscription, plan_name, billing_cycle, period_start, period_end, amount (all copied at issue, so later plan edits never change it), issued_on, due_on (issued_on + invoice_due_days), status (unpaid, paid or void), paid_on (date, set when marked paid), suspension_waived (default false), pdf (private file, like boarding passes, under invoices/<schema_name>/), created_at. One invoice covers one subscription for one period. A paid invoice means the agency is in good standing for that period.
+
+Issuing
+- issue_invoice(subscription) in tenants/billing.py: creates the invoice for next_period_start to the day before next_period_start + one month or one year, advances next_period_start, renders the PDF and queues the invoice email on commit. Starting a subscription issues its first invoice at once for the period starting on started_on.
+- Beat, daily: issue_due_invoices issues the next invoice for every running subscription whose next_period_start - invoice_lead_days <= today (one per subscription per run, so a missed day catches up the next).
+- The owner can also issue the next invoice of a subscription early ("Issue next invoice"), resend an invoice email, void an unpaid invoice, mark an unpaid invoice paid (paid_on today unless another date is given) and mark a paid invoice unpaid again (to correct a mistake).
+
+Suspension and reactivation
+- Beat, daily: suspend_overdue_tenants suspends (is_active false, reason non_payment) every active tenant with an unpaid, not waived invoice whose due_on + one month < today, and queues the suspension email. An error for one tenant is logged and does not stop the others.
+- Marking an invoice paid reactivates a tenant suspended for non_payment when it has no other unpaid, not waived invoice past that limit. Manual suspensions are never lifted automatically.
+- The owner may reactivate a tenant suspended for non_payment while its invoices are unpaid: every unpaid invoice past the limit gets suspension_waived true, so the job does not suspend it again for them. A later invoice that goes past the limit suspends it again.
+- A tenant suspended for non_payment answers tenant_suspended with detail "This agency's account is suspended for non-payment. Contact <billing_contact_email>." Manual suspensions keep the existing message.
+
+Invoice PDF and emails (public-level tasks, IDs only, same retry and re-check rules as the other email tasks, HTML plus plain text in the app's theme)
+- PDF: issuer_details, agency name and billing_email, number, issued and due dates, plan, cycle, period, amount with currency, payment instructions, status. Generated with fpdf2 (the only new dependency; pure Python, no system libraries).
+- 11. send_invoice(invoice_id) -> tenant billing_email, PDF attached: number, period, amount, due date, payment instructions. Runs only if the invoice is unpaid.
+- 12. notify_tenant_suspended_non_payment(tenant_id) -> tenant billing_email: the overdue invoice numbers and amounts, how to pay, and that access returns once payment is recorded. Runs only if the tenant is still suspended for non_payment.
+
+Platform API (root host, IsPlatformOwner)
+- /api/platform/plans: list (kind and is_active filters), create, edit (PATCH, including is_active). No delete.
+- /api/platform/tenants/<id>: also returns and accepts billing_email; returns suspension_reason and suspended_at.
+- /api/platform/tenants/<id>/subscriptions: list, create {plan, billing_cycle, started_on}; /api/platform/subscriptions/<id>: PATCH {plan, billing_cycle}, POST .../end, POST .../issue-invoice.
+- /api/platform/invoices?tenant=&status=&overdue=: paginated, newest first; /api/platform/invoices/<id>: detail; POST .../mark-paid {paid_on?}, .../mark-unpaid, .../void, .../resend; GET .../pdf (download).
+- /api/platform/settings: GET and PATCH.
+
+Agency API (tenant host, IsAdminRole, read-only)
+- GET /api/admin/billing: the agency's running subscriptions (plan name, kind, cycle, price, next_period_start), billing_contact_email, and an overdue notice when an unpaid, not waived invoice is past due_on: {invoice number, amount, due_on, suspends_on (due_on + one month)}.
+- GET /api/admin/billing/invoices: paginated, newest first (number, period, amount, due_on, status, paid_on); GET /api/admin/billing/invoices/<id>/pdf.
+
+Frontend
+- Platform top bar: Agencies, Plans, Invoices, Settings, Sign out.
+- Plans: table with kind tabs (Subscription, Support), name, monthly and annual price, active; create and edit form; deactivate toggle.
+- Agency drawer gains a "Plan & billing" section: billing email (editable), the running subscription and support plan (plan, cycle, price, next invoice date) with Start, Change, End and Issue next invoice actions, and the agency's invoices; the status shows "Suspended for non-payment" when that is the reason.
+- Invoices: table (number, agency, period, amount, due, status chip Unpaid / Overdue / Paid / Void) with status and overdue filters; the drawer shows the invoice with Download PDF, Mark paid (date field, default today), Mark unpaid, Void and Resend, each behind a confirm dialog.
+- Settings: the PlatformSettings fields.
+- Agency app, admins only: a Billing screen (Settings area) with the plans, the invoices with Download PDF, and the billing contact; and, on every admin screen, a warning banner while the overdue notice is present: "Invoice <number> is overdue. This agency will be suspended on <suspends_on> unless payment is received."
+
+Tests
+- Plans: price rules, inactive plans refused for new or changed subscriptions, no delete.
+- Subscriptions: one running per kind, billing_email required, the first invoice at start, plan changes applying only to later invoices, end stops invoicing.
+- Issuing: periods for monthly and annual (month ends, leap years), lead days, catching up a missed day, numbering per year, amounts copied, PDF stored under the tenant's folder, email 11 sent with the PDF and skipped once paid or void.
+- Suspension: suspended only past due_on + one month, not for paid, void or waived invoices, inactive tenants skipped, one tenant's error not stopping others, email 12; marking paid reactivates only non_payment suspensions with nothing else overdue; owner reactivation waives and a later overdue invoice suspends again; the non-payment message.
+- Permissions: platform endpoints for platform owners only; agency billing endpoints for that agency's admins only, never another agency's invoices.
+- Browser check at 390 px and 1280 px: create plans, start a subscription, see the invoice and its PDF, mark it paid; with frozen dates, an overdue banner at the agency, suspension, owner reactivation.
+
+======================================================================
 DELIVERY ORDER (commit after each step; the app must run at each step)
 ======================================================================
 1. Backend foundation: settings from .env, DRF/JWT/CORS/Celery wiring, accounts app with register, login, refresh, me, password reset and email task 10, create_admin, core AppSettings and migration, catalog.Airport and seed_airports, /django-admin/ mount, private storage setup, migrate and tests passing.
@@ -496,5 +585,7 @@ DELIVERY ORDER (commit after each step; the app must run at each step)
 23. User management.
 24. Admin books for a customer.
 25. Airlines, logos and flags (see AIRLINES, LOGOS AND FLAGS).
+26. Platform app: agencies (see PLATFORM APP: AGENCIES).
+27. Plans, invoices and suspension for non-payment (see PLANS, INVOICES AND SUSPENSION FOR NON-PAYMENT).
 
 Finish each step before starting the next. At the end, run the full test suite and do a manual browser walkthrough of the entire flow as guest and as customer (browse as a guest -> no result -> sign up -> query -> admin responds -> book -> confirm -> pay -> upload pass -> send -> customer downloads, plus an expiry case and a password reset) and report any deviations from this spec.
