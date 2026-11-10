@@ -601,7 +601,7 @@ Plans page (one shared PlanShowcase component, used by both pages below)
 - Each card: tag chip, plan name, price for the chosen cycle, the rich description, and one action button.
 - "Show all plans" under the grid reveals every other active subscription plan as cards in the same style, cheapest first (by monthly price, else annual), and turns into "Show fewer".
 - Support plans: a separate "Add support" section below, cheapest first, in a smaller card style.
-- Payment is outside the system, so actions are mailto links to billing_contact_email with the plan in the subject: "Get started" on the public page, "Ask to switch" in the agency app. The agency's running plans show "Your plan" instead of a button. Without a billing contact email the buttons are left out.
+- Payment is outside the system, so actions are mailto links to billing_contact_email with the plan in the subject: "Get started" on the public page, "Ask to switch" in the agency app. (Step 32 replaces these with plan enquiry chats, see SUPPORT CHAT.) The agency's running plans show "Your plan" instead of a button. Without a billing contact email the buttons are left out.
 
 Where it shows
 - Public: http://<root host>/pricing (e.g. localhost:8081/pricing), open without signing in. The rest of the platform still needs the owner's sign-in.
@@ -618,6 +618,68 @@ Tests
 - Tags: one plan per tag, support plans refused, deactivating clears the tag, the error names the plan holding it.
 - public-plans open without signing in on the root host, only active plans, and absent on agency hosts; admin/plans for that agency's admins only, with its current plan ids.
 - Browser check at 390 px and 1280 px: the grid order Recommended, Basic, Advanced, the Monthly/Annual switch, Show all plans and Show fewer, the support section, "Your plan" in the agency app, the public page signed out, and the editor's toolbar saving formatted text that then shows on the cards.
+
+======================================================================
+SUPPORT CHAT (steps 31 and 32)
+======================================================================
+Goal: anyone who is not answering a desk can write to it from a floating message button on every page, and the people answering see every conversation in a Chats tab, reply and close it. There are two desks with the same design: each agency's desk (its guests and customers write in, its admins answer; step 31) and the platform's desk (visitors to the root host and agency admins write in, the system owner answers; step 32). Messages arrive by polling now; the API is shaped so websockets can replace it later without changing the screens.
+
+Who writes where
+- On an agency's host: guests and customers write to that agency's desk. The agency's admins answer it and never see the floating button there.
+- On the root host: visitors (public pages) write to the platform's desk. The system owner answers it and never sees the floating button.
+- Agency admins write to the platform's desk from their Settings > Support page (no floating button for them; step 32).
+
+Model (a new app support, in SHARED_APPS and TENANT_APPS like accounts, so each agency's schema holds its own desk and the public schema holds the platform's)
+- Conversation: id (UUID), subject (at most 150 characters), email (where replies go), name (the requester's name, blank for guests), requester (UUID of the signed-in user, null for guests; for the platform desk the agency admin's id in the agency's schema), agency (Tenant, platform desk only: set for chats from agency admins), status (open or closed), closed_at, closed_by (the user who closed it, null when it closed by itself), last_message_at, requester_unread and staff_unread (whether the other side's latest message is unseen), created_at.
+- Message: id (UUID), conversation, from_staff (true for the desk's replies), author_name, body (at most 5,000 characters), attachment (optional, one per message: PDF, PNG or JPEG, at most 5 MB, the content checked against the type as for boarding passes; private storage under support/<schema_name>/<conversation id>/), attachment_name, created_at.
+- A guest's chat is a single message: the guest cannot read or continue it, and every reply goes to them by email only. To add something they start a new chat.
+
+Rules
+- Writing to an open chat (either side) sets last_message_at, marks the other side unread and queues the matching email. Closed chats cannot be written to.
+- The desk closes a chat from the Chats tab; it then leaves the requester's open list (and the floating button's). A chat also closes by itself 48 hours after its last message (beat, hourly, in the public schema and in every active agency).
+- New guest chats are throttled per IP (10 per hour); signed-in requesters' messages are not.
+
+Emails (HTML and plain text in the app's theme, same task rules as the others)
+- 13. notify_desk_new_message(conversation_id, message_id) -> the desk: the agency's admin_notification_email, or the platform's support_email (a new PlatformSettings field, edited on the platform Settings screen). Subject, who wrote (name, email, and for the platform desk the agency), the message, the attachment attached, and a link to the chat in the Chats tab.
+- 14. notify_requester_reply(conversation_id, message_id) -> the conversation's email: the reply, the attachment attached, the original subject; for signed-in requesters a link to the chat in their Support page, for guests a note that they can write again from the site's message button. Runs only if the conversation is still open.
+
+Floating message button (step 31 on agency hosts, step 32 on the root host)
+- A round button fixed at the bottom right of every page (above the bottom tab bar on phones) with an unread badge for signed-in requesters; hidden for whoever answers that desk.
+- It opens a panel (about 380 px wide beside the page on wide screens, full screen on phones):
+  - Signed in: their open chats (subject, last message time, unread dot) and "New chat"; a chat opens as a thread with a reply box (the subject and email are fixed) and an optional attachment.
+  - Guests: the new chat form only; after sending, "Thanks, we will reply by email to <email>."
+- New chat form: email (prefilled with the signed-in user's email, editable), subject, message, optional attachment.
+- While a thread is open it checks for new messages every 10 seconds; the badge checks every 30 seconds.
+
+Support page (signed-in requesters)
+- Customers: Account > Support (/account/support). Agency admins: Settings > Support (/admin/support, to the platform; step 32).
+- Every chat they started, open and closed, newest first; open ones can be answered; "New chat" starts one. Same thread view as the panel.
+
+Chats tab (the desk)
+- Agency admins: a Chats tab before Settings (/admin/chats). System owner: a Chats tab before Settings on the platform (/chats; step 32).
+- List with Open / Closed filter and unread first: subject, requester (name or "Guest"), email, for the platform desk the agency, last message time, unread badge; the tab itself shows the number of chats with unread messages, checked every 30 seconds.
+- Detail drawer: the thread (attachments open in a new tab, preview first), a reply box with an optional attachment, and Close (behind a confirm dialog). Opening a chat marks it read for the desk. A guest's chat says replies go by email only.
+
+API (agency host for the agency desk; root host /api/platform/ for the platform desk; the same shapes)
+- POST support/chats (open to guests, multipart): email, subject, body, attachment?; links the signed-in user when there is one.
+- Signed-in requesters: GET support/chats (theirs; ?status=open for the panel), GET support/chats/<id> (marks it read for them), POST support/chats/<id>/messages {body, attachment?}, GET support/unread (count).
+- Desk: GET admin/chats (?status=, unread first), GET admin/chats/<id> (marks read), POST admin/chats/<id>/messages, POST admin/chats/<id>/close, GET admin/chats/unread (count).
+- GET support/attachments/<message id>: for the desk, and for the requester of a signed-in chat.
+- Step 32 adds, on agency hosts for agency admins, GET/POST support/platform-chats and .../<id> and .../<id>/messages, which act on the platform's desk (public schema) with agency set to the admin's agency.
+
+Plan enquiries (step 32)
+- The plans pages' buttons start a chat to the platform's desk instead of opening an email: "Get started" on the public pricing page opens the floating panel's new chat form, and "Ask to switch" on the agency's Plans page opens the same form in a dialog (sent through support/platform-chats, so it carries the agency and shows in the admin's Settings > Support).
+- The form is prefilled and stays editable: subject "Plan enquiry: <plan name> (monthly or annual)", message "I would like to know more about the <plan name> plan, billed <monthly or annually>." (for an agency: "We would like to switch to the <plan name> plan, billed <monthly or annually>.").
+- The buttons show whether or not a billing contact email is set (chats do not need one); the mailto links of step 30 go.
+
+Tests
+- Guests: create a chat, cannot list or read it, throttled; attachment type, content and size checks.
+- Requesters see only their own chats, reply only while open, subject and email fixed on replies; unread flags both ways.
+- Desk: list, read, reply, close; closed chats refuse messages and leave the requester's open list; auto-close 48 hours after the last message only, in every active agency and the public schema.
+- Emails 13 and 14 with attachments and the right links; 14 skipped once closed.
+- Isolation: an agency's chats are invisible to other agencies and to the platform desk; the platform desk shows the agency of agency-admin chats; agency admins see only their own agency's platform chats.
+- Browser check at 390 px and 1280 px: the button and panel as a guest and as a customer, hidden for admins and the owner; a full exchange with an attachment; closing; the Support page; the Chats tab badge.
+- Plan enquiries (step 32): Get started opens a prefilled chat to the platform desk; Ask to switch sends one that shows the agency.
 
 ======================================================================
 DELIVERY ORDER (commit after each step; the app must run at each step)
@@ -657,5 +719,7 @@ DELIVERY ORDER (commit after each step; the app must run at each step)
 28. Preview first: boarding passes and invoice PDFs open in a new tab instead of downloading (see FRONTEND). Browser check: a PDF and a PNG boarding pass and an invoice open in a new tab showing the right file.
 29. Platform home page and dashboard (see PLATFORM HOME PAGE AND DASHBOARD).
 30. Plans page and rich descriptions (see PLANS PAGE AND RICH DESCRIPTIONS).
+31. Support chat, agency desk: guests and customers write to their agency, its admins answer in a Chats tab (see SUPPORT CHAT).
+32. Support chat, platform desk: root-host visitors and agency admins write to the platform, the system owner answers, and the plans pages' buttons send plan enquiries as chats (see SUPPORT CHAT).
 
 Finish each step before starting the next. At the end, run the full test suite and do a manual browser walkthrough of the entire flow as guest and as customer (browse as a guest -> no result -> sign up -> query -> admin responds -> book -> confirm -> pay -> upload pass -> send -> customer opens them, plus an expiry case and a password reset) and report any deviations from this spec.
