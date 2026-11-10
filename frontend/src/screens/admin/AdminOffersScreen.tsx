@@ -115,7 +115,7 @@ export function AdminOffersScreen({ navigation, route }: BottomTabScreenProps<Ad
         <Screen card>
           <View style={styles.header}>
             <Text style={styles.title}>Offers</Text>
-            <Button title="New offer" onPress={() => rootNavigation.navigate('AdminOfferNew')} />
+            <Button title="New offer" onPress={() => rootNavigation.navigate('AdminTabs', { screen: 'AdminOfferNew' })} />
           </View>
 
           {!isWide ? (

@@ -114,7 +114,7 @@ export function BookingDetailView({ id }: { id: string }) {
               <Button
                 title="Request other options"
                 variant="secondary"
-                onPress={() => navigation.navigate('QueryNew')}
+                onPress={() => navigation.navigate('Main', { screen: 'QueryNew' })}
               />
             )}
           </View>

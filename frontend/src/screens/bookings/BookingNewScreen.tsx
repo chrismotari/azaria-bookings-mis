@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
@@ -10,6 +10,7 @@ import { api } from '../../api/client';
 import { applyServerErrors } from '../../api/errors';
 import { BookingDetail, Offer } from '../../api/types';
 import { AirlineBadge } from '../../components/AirlineBadge';
+import { BackLink } from '../../components/BackLink';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { FormError } from '../../components/Field';
@@ -20,7 +21,7 @@ import { Screen } from '../../components/Screen';
 import { Stepper } from '../../components/Stepper';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
-import { RootStackParamList } from '../../navigation/types';
+import { MainTabParamList } from '../../navigation/types';
 import { colors, font, space, weight } from '../../theme';
 import { formatDate, formatPrice, ticketClassLabel } from '../../utils/format';
 
@@ -37,7 +38,7 @@ type FormValues = z.infer<typeof schema>;
 
 const FIELDS = ['passenger_count', 'notes'] as const;
 
-export function BookingNewScreen({ navigation, route }: NativeStackScreenProps<RootStackParamList, 'BookingNew'>) {
+export function BookingNewScreen({ navigation, route }: BottomTabScreenProps<MainTabParamList, 'BookingNew'>) {
   const { offer: offerId, query } = route.params;
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
@@ -69,7 +70,7 @@ export function BookingNewScreen({ navigation, route }: NativeStackScreenProps<R
         query: query ?? null,
       });
       await queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      navigation.popTo('Main', { screen: 'Bookings', params: { id: booking.id } });
+      navigation.navigate('Bookings', { id: booking.id });
     } catch (error) {
       setFormError(applyServerErrors(error, setError, FIELDS));
     }
@@ -77,6 +78,7 @@ export function BookingNewScreen({ navigation, route }: NativeStackScreenProps<R
 
   return (
     <Screen maxWidth={640}>
+      <BackLink label="Offer" onPress={() => navigation.navigate('Explore', { id: offerId, ...(query ? { query } : {}) })} />
       <Text style={styles.title}>Book this flight</Text>
       <Card>
         <RouteLine origin={data.origin} destination={data.destination} stopCount={data.stop_count} />

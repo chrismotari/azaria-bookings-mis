@@ -21,6 +21,9 @@ export type MainTabParamList = {
   Requests: { id?: string } | undefined;
   Bookings: { id?: string } | undefined;
   Account: undefined;
+  /** Not in the bar: shown under Requests and Explore. */
+  QueryNew: QueryPrefill | undefined;
+  BookingNew: { offer: string; query?: string };
 };
 
 export type AdminTabParamList = {
@@ -30,6 +33,9 @@ export type AdminTabParamList = {
   AdminBookings: { status?: BookingStatus | 'all'; id?: string } | undefined;
   AdminUsers: { id?: string } | undefined;
   AdminSettings: undefined;
+  /** Not in the bar: shown under Offers and Requests. */
+  AdminOfferNew: undefined;
+  AdminQueryRespond: { id: string };
   /** Not in the bar: opened from Settings, shown under it. */
   AdminBilling: undefined;
   AdminPlans: undefined;
@@ -49,15 +55,11 @@ export type PlatformTabParamList = {
 
 export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
-  BookingNew: { offer: string; query?: string };
-  QueryNew: QueryPrefill | undefined;
   Login: { passwordReset?: boolean } | undefined;
   Register: undefined;
   ForgotPassword: undefined;
   ResetPassword: { uid?: string; token?: string } | undefined;
   AdminTabs: NavigatorScreenParams<AdminTabParamList> | undefined;
-  AdminOfferNew: undefined;
-  AdminQueryRespond: { id: string };
   PlatformHome: undefined;
   PlatformPricing: undefined;
   PlatformLogin: undefined;

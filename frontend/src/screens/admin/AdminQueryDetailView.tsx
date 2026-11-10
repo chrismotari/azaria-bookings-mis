@@ -42,7 +42,7 @@ export function AdminQueryDetailView({ id }: { id: string }) {
         <ActionBar>
           <Button
             title={data.responses.length ? 'Send more options' : 'Respond'}
-            onPress={() => navigation.navigate('AdminQueryRespond', { id })}
+            onPress={() => navigation.navigate('AdminTabs', { screen: 'AdminQueryRespond', params: { id } })}
           />
         </ActionBar>
       )}

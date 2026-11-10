@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -11,6 +11,7 @@ import { api } from '../../api/client';
 import { applyServerErrors } from '../../api/errors';
 import { Airport, Query, TICKET_CLASSES, TicketClass } from '../../api/types';
 import { AirportPicker } from '../../components/AirportPicker';
+import { BackLink } from '../../components/BackLink';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { DateField } from '../../components/DateField';
@@ -19,7 +20,7 @@ import { OptionChips } from '../../components/OptionChips';
 import { Screen } from '../../components/Screen';
 import { LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
-import { QueryPrefill, RootStackParamList } from '../../navigation/types';
+import { MainTabParamList, QueryPrefill } from '../../navigation/types';
 import { colors, font, weight } from '../../theme';
 import { todayInNairobi } from '../../utils/format';
 
@@ -95,7 +96,7 @@ function useAirportByCode(code: string | undefined) {
   });
 }
 
-export function QueryNewScreen({ route }: NativeStackScreenProps<RootStackParamList, 'QueryNew'>) {
+export function QueryNewScreen({ route }: BottomTabScreenProps<MainTabParamList, 'QueryNew'>) {
   const prefill = route.params ?? {};
   const origin = useAirportByCode(prefill.origin);
   const destination = useAirportByCode(prefill.destination);
@@ -108,7 +109,7 @@ export function QueryNewScreen({ route }: NativeStackScreenProps<RootStackParamL
 type FormProps = { prefill: QueryPrefill; origin: Airport | null; destination: Airport | null };
 
 function QueryForm({ prefill, origin, destination }: FormProps) {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation();
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
   const isClass = TICKET_CLASSES.some((option) => option.value === prefill.ticket_class);
@@ -143,7 +144,7 @@ function QueryForm({ prefill, origin, destination }: FormProps) {
         message: values.message.trim(),
       });
       await queryClient.invalidateQueries({ queryKey: ['queries'] });
-      navigation.popTo('Main', { screen: 'Requests', params: { id: data.id } });
+      navigation.navigate('Main', { screen: 'Requests', params: { id: data.id } });
     } catch (error) {
       setFormError(applyServerErrors(error, setError, FIELDS));
     }
@@ -151,6 +152,7 @@ function QueryForm({ prefill, origin, destination }: FormProps) {
 
   return (
     <Screen maxWidth={760}>
+      <BackLink label="Requests" onPress={() => navigation.navigate('Main', { screen: 'Requests' })} />
       <Text style={styles.title}>Request flight options</Text>
       <Text style={styles.help}>Tell us what you are looking for and we will send you options by email and here.</Text>
       <Card>

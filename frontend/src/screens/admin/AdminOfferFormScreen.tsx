@@ -8,6 +8,7 @@ import { StyleSheet, Text } from 'react-native';
 import { api } from '../../api/client';
 import { applyServerErrors } from '../../api/errors';
 import { AdminOffer } from '../../api/types';
+import { BackLink } from '../../components/BackLink';
 import { Button } from '../../components/Button';
 import { FormError } from '../../components/Field';
 import { FormFooter } from '../../components/FormSection';
@@ -60,6 +61,7 @@ export function AdminOfferNewScreen() {
   const backToOffers = () => navigation.navigate('AdminTabs', { screen: 'AdminOffers' });
   return (
     <Screen maxWidth={760}>
+      <BackLink label="Offers" onPress={backToOffers} />
       <Text style={styles.title}>New offer</Text>
       <OfferForm initial={EMPTY} onDone={backToOffers} />
     </Screen>

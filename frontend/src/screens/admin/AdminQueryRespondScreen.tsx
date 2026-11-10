@@ -1,4 +1,4 @@
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
@@ -6,6 +6,7 @@ import { StyleSheet, Text } from 'react-native';
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
 import { AdminQueryDetail } from '../../api/types';
+import { BackLink } from '../../components/BackLink';
 import { Button } from '../../components/Button';
 import { FormError } from '../../components/Field';
 import { FormFooter, FormSection } from '../../components/FormSection';
@@ -13,14 +14,14 @@ import { OfferFilterValues } from '../../components/OfferFilterFields';
 import { QuerySummary } from '../../components/QuerySummary';
 import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
-import { RootStackParamList } from '../../navigation/types';
+import { AdminTabParamList } from '../../navigation/types';
 import { colors, font, weight } from '../../theme';
 import { todayInNairobi } from '../../utils/format';
 import { useAdminQuery } from './AdminQueryDetailView';
 import { ChosenOffers, MessageField, OfferOptionsSections, useOfferOptions } from './OfferOptions';
 import { OfferFormValues } from './offerSchema';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'AdminQueryRespond'>;
+type Props = BottomTabScreenProps<AdminTabParamList, 'AdminQueryRespond'>;
 
 export function AdminQueryRespondScreen({ navigation, route }: Props) {
   const query = useAdminQuery(route.params.id);
@@ -33,7 +34,8 @@ export function AdminQueryRespondScreen({ navigation, route }: Props) {
   return (
     <RespondForm
       query={query.data}
-      onSent={() => navigation.popTo('AdminTabs', { screen: 'AdminRequests', params: { id: query.data.id } })}
+      onSent={() => navigation.navigate('AdminRequests', { id: query.data.id })}
+      onBack={() => navigation.navigate('AdminRequests', { id: query.data.id })}
     />
   );
 }
@@ -67,7 +69,7 @@ function customOfferDefaults(query: AdminQueryDetail): OfferFormValues {
   };
 }
 
-function RespondForm({ query, onSent }: { query: AdminQueryDetail; onSent: () => void }) {
+function RespondForm({ query, onSent, onBack }: { query: AdminQueryDetail; onSent: () => void; onBack: () => void }) {
   const queryClient = useQueryClient();
   const options = useOfferOptions(initialFilters(query), customOfferDefaults(query));
   const [message, setMessage] = useState('');
@@ -94,6 +96,7 @@ function RespondForm({ query, onSent }: { query: AdminQueryDetail; onSent: () =>
 
   return (
     <Screen maxWidth={1000}>
+      <BackLink label="Request" onPress={onBack} />
       <Text style={styles.title}>Respond to {query.user.full_name}</Text>
       <FormSection title="The request">
         <QuerySummary query={query} />

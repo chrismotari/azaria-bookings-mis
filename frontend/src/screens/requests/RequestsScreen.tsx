@@ -42,7 +42,7 @@ export function RequestsScreen({ navigation, route }: BottomTabScreenProps<MainT
         <Screen maxWidth={900} card>
           <View style={styles.header}>
             <Text style={styles.title}>My requests</Text>
-            <Button title="New request" onPress={() => rootNavigation.navigate('QueryNew')} />
+            <Button title="New request" onPress={() => rootNavigation.navigate('Main', { screen: 'QueryNew' })} />
           </View>
           {queries.isPending ? (
             <LoadingState />

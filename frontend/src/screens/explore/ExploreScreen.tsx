@@ -175,7 +175,7 @@ export function ExploreScreen({ navigation, route }: BottomTabScreenProps<MainTa
                     message="No flight deals match your search right now. Tell us what you need and we will find options for you."
                     action={{
                       title: 'Request options',
-                      onPress: () => requireAuth({ screen: 'QueryNew', params: queryPrefill(filters) }),
+                      onPress: () => requireAuth({ screen: 'Main', params: { screen: 'QueryNew', params: queryPrefill(filters) } }),
                     }}
                   />
                 ) : (

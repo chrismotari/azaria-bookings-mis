@@ -1,7 +1,7 @@
 import { BottomTabScreenProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { StackActions, useFocusEffect, useLinkTo, useNavigation } from '@react-navigation/native';
+import { StackActions, useFocusEffect, useIsFocused, useLinkTo, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator, NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useRef } from 'react';
+import { Fragment, ReactNode, useCallback, useEffect, useRef } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { useAuth } from '../auth/AuthContext';
@@ -84,12 +84,6 @@ function AdminStack() {
       <OverdueBanner />
       <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
         <Stack.Screen name="AdminTabs" component={AdminTabsNavigator} options={{ headerShown: false }} />
-        <Stack.Screen name="AdminOfferNew" component={AdminOfferNewScreen} options={{ title: 'New offer' }} />
-        <Stack.Screen
-          name="AdminQueryRespond"
-          component={AdminQueryRespondScreen}
-          options={{ title: 'Respond to request' }}
-        />
       </Stack.Navigator>
     </View>
   );
@@ -111,11 +105,38 @@ function GatedRequests(props: BottomTabScreenProps<MainTabParamList, 'Requests'>
   );
 }
 
-function GatedQueryNew(props: NativeStackScreenProps<RootStackParamList, 'QueryNew'>) {
+/**
+ * Form pages kept in a tab navigator would stay mounted, with whatever was typed last time; these are rebuilt each
+ * time they open (and when opened again with other params, e.g. other prefilled criteria).
+ */
+function FreshEachVisit({ params, children }: { params: unknown; children: ReactNode }) {
+  const focused = useIsFocused();
+  return focused ? <Fragment key={JSON.stringify(params ?? {})}>{children}</Fragment> : null;
+}
+
+function GatedQueryNew(props: BottomTabScreenProps<MainTabParamList, 'QueryNew'>) {
   return (
-    <RequireAuth target={{ screen: 'QueryNew', params: props.route.params }}>
-      <QueryNewScreen {...props} />
+    <RequireAuth target={{ screen: 'Main', params: { screen: 'QueryNew', params: props.route.params } }}>
+      <FreshEachVisit params={props.route.params}>
+        <QueryNewScreen {...props} />
+      </FreshEachVisit>
     </RequireAuth>
+  );
+}
+
+function FreshOfferNew(props: BottomTabScreenProps<AdminTabParamList, 'AdminOfferNew'>) {
+  return (
+    <FreshEachVisit params={props.route.params}>
+      <AdminOfferNewScreen />
+    </FreshEachVisit>
+  );
+}
+
+function FreshQueryRespond(props: BottomTabScreenProps<AdminTabParamList, 'AdminQueryRespond'>) {
+  return (
+    <FreshEachVisit params={props.route.params}>
+      <AdminQueryRespondScreen {...props} />
+    </FreshEachVisit>
   );
 }
 
@@ -127,16 +148,22 @@ function GatedBookings(props: BottomTabScreenProps<MainTabParamList, 'Bookings'>
   );
 }
 
-function GatedBookingNew(props: NativeStackScreenProps<RootStackParamList, 'BookingNew'>) {
+function GatedBookingNew(props: BottomTabScreenProps<MainTabParamList, 'BookingNew'>) {
   return (
-    <RequireAuth target={{ screen: 'BookingNew', params: props.route.params }}>
-      <BookingNewScreen {...props} />
+    <RequireAuth target={{ screen: 'Main', params: { screen: 'BookingNew', params: props.route.params } }}>
+      <FreshEachVisit params={props.route.params}>
+        <BookingNewScreen {...props} />
+      </FreshEachVisit>
     </RequireAuth>
   );
 }
 
 // Login-required tabs, left out of the bar for guests.
 const GATED_TABS: (keyof MainTabParamList)[] = ['Requests', 'Bookings', 'Account'];
+
+// Form pages: never in the bar; the tab they belong to stays highlighted on them.
+const MAIN_FORM_PAGES: (keyof MainTabParamList)[] = ['QueryNew', 'BookingNew'];
+const MAIN_PARENT_ROUTES: Record<string, string> = { QueryNew: 'Requests', BookingNew: 'Explore' };
 
 /** Wide: the brand bar is the tab bar, on top. Narrow: a slim brand bar as the header, tabs at the bottom. */
 function tabScreenOptions(isWide: boolean) {
@@ -157,7 +184,7 @@ function tab(title: string, icon: IconName, focusedIcon: IconName) {
   };
 }
 
-/** Stack pages (the forms) keep a back button, in the brand colours. */
+/** The few stack headers left (e.g. the platform's sign-in redirect), in the brand colours. */
 const STACK_SCREEN_OPTIONS = {
   headerStyle: { backgroundColor: colors.primary },
   headerTintColor: colors.primaryText,
@@ -167,10 +194,12 @@ function MainTabsNavigator() {
   const isWide = useIsWide();
   const { user } = useAuth();
   // Signed in on a wide screen, Account sits in the bar's account menu instead.
-  const hiddenRoutes = !user ? GATED_TABS : isWide ? ['Account'] : [];
+  const hiddenRoutes = [...MAIN_FORM_PAGES, ...(!user ? GATED_TABS : isWide ? ['Account'] : [])];
   return (
     <MainTabs.Navigator
-      tabBar={(props) => <ResponsiveTabBar {...props} hiddenRoutes={hiddenRoutes} />}
+      tabBar={(props) => (
+        <ResponsiveTabBar {...props} hiddenRoutes={hiddenRoutes} parentRoutes={MAIN_PARENT_ROUTES} />
+      )}
       screenOptions={tabScreenOptions(isWide)}
     >
       <MainTabs.Screen
@@ -193,13 +222,20 @@ function MainTabsNavigator() {
         component={GatedAccount}
         options={tab('Account', 'person-circle-outline', 'person-circle')}
       />
+      <MainTabs.Screen name="QueryNew" component={GatedQueryNew} options={{ title: 'Request options' }} />
+      <MainTabs.Screen name="BookingNew" component={GatedBookingNew} options={{ title: 'Book' }} />
     </MainTabs.Navigator>
   );
 }
 
-// Pages under Settings: not in the bar, which keeps Settings highlighted on them.
-const ADMIN_SETTINGS_PAGES: (keyof AdminTabParamList)[] = ['AdminBilling', 'AdminPlans'];
-const ADMIN_PARENT_ROUTES: Record<string, string> = { AdminBilling: 'AdminSettings', AdminPlans: 'AdminSettings' };
+// Pages under a tab (forms, Billing and Plans): not in the bar, which keeps their tab highlighted on them.
+const ADMIN_SETTINGS_PAGES: (keyof AdminTabParamList)[] = ['AdminOfferNew', 'AdminQueryRespond', 'AdminBilling', 'AdminPlans'];
+const ADMIN_PARENT_ROUTES: Record<string, string> = {
+  AdminOfferNew: 'AdminOffers',
+  AdminQueryRespond: 'AdminRequests',
+  AdminBilling: 'AdminSettings',
+  AdminPlans: 'AdminSettings',
+};
 
 function AdminTabsNavigator() {
   const isWide = useIsWide();
@@ -239,6 +275,12 @@ function AdminTabsNavigator() {
         name="AdminSettings"
         component={AdminSettingsScreen}
         options={tab('Settings', 'settings-outline', 'settings')}
+      />
+      <AdminTabs.Screen name="AdminOfferNew" component={FreshOfferNew} options={{ title: 'New offer' }} />
+      <AdminTabs.Screen
+        name="AdminQueryRespond"
+        component={FreshQueryRespond}
+        options={{ title: 'Respond to request' }}
       />
       <AdminTabs.Screen name="AdminBilling" component={AdminBillingScreen} options={{ title: 'Billing' }} />
       <AdminTabs.Screen name="AdminPlans" component={AdminPlansScreen} options={{ title: 'Plans' }} />
@@ -351,8 +393,6 @@ export function RootNavigator() {
   return (
     <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
       <Stack.Screen name="Main" component={MainTabsNavigator} options={{ headerShown: false }} />
-      <Stack.Screen name="QueryNew" component={GatedQueryNew} options={{ title: 'Request options' }} />
-      <Stack.Screen name="BookingNew" component={GatedBookingNew} options={{ title: 'Book' }} />
       {/* Guests only: for a signed-in customer these URLs match no screen and open Explore. */}
       {user ? null : (
         <Stack.Group screenOptions={{ header: () => <AppBar brandOnly /> }}>
@@ -362,7 +402,6 @@ export function RootNavigator() {
           <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ title: 'Reset password' }} />
           {/* Admin links opened while signed out go to Login first. */}
           <Stack.Screen name="AdminTabs" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
-          <Stack.Screen name="AdminQueryRespond" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
         </Stack.Group>
       )}
     </Stack.Navigator>
