@@ -684,6 +684,16 @@ Tests
 - Plan enquiries (step 32): Get started opens a prefilled chat to the platform desk; Ask to switch sends one that shows the agency.
 
 ======================================================================
+UUIDS EVERYWHERE (step 33)
+======================================================================
+Goal: the last models with sequential keys move to UUIDs, so the rule in HARD RULES holds everywhere.
+- tenants.Tenant, tenants.Domain, tenants.PlatformSettings and core.AppSettings get id = UUIDField(primary_key=True, default=uuid.uuid4, editable=False). Every key pointing at them follows (Domain.tenant, Subscription.tenant, Invoice.tenant, Conversation.agency).
+- The two settings models stay single rows, created by their data migrations, but are fetched as the one row (get() returns it) instead of by pk=1.
+- Platform URLs and the API use the UUIDs: /agencies/<uuid> in the app; /api/platform/tenants/<uuid>, .../domains/<uuid>, invoice and dashboard agency ids, ?tenant=<uuid>; a malformed id is a 404 (or an empty list for the filter).
+- There is no production data: the migrations of tenants, core and support are regenerated, and README.md says how to move a development database (rebuild those tables and copy their rows back with new keys; the agencies' own data keeps its keys and stays).
+- Tests: every model's primary key is a UUID (one test walks all project models), the platform endpoints by UUID, a malformed id refused.
+
+======================================================================
 DELIVERY ORDER (commit after each step; the app must run at each step)
 ======================================================================
 1. Backend foundation: settings from .env, DRF/JWT/CORS/Celery wiring, accounts app with register, login, refresh, me, password reset and email task 10, create_admin, core AppSettings and migration, catalog.Airport and seed_airports, /django-admin/ mount, private storage setup, migrate and tests passing.
@@ -723,5 +733,6 @@ DELIVERY ORDER (commit after each step; the app must run at each step)
 30. Plans page and rich descriptions (see PLANS PAGE AND RICH DESCRIPTIONS).
 31. Support chat, agency desk: guests and customers write to their agency, its admins answer in a Chats tab (see SUPPORT CHAT).
 32. Support chat, platform desk: root-host visitors and agency admins write to the platform, the system owner answers, and the plans pages' buttons send plan enquiries as chats (see SUPPORT CHAT).
+33. UUIDs everywhere: agencies, domains and both settings rows (see UUIDS EVERYWHERE).
 
 Finish each step before starting the next. At the end, run the full test suite and do a manual browser walkthrough of the entire flow as guest and as customer (browse as a guest -> no result -> sign up -> query -> admin responds -> book -> confirm -> pay -> upload pass -> send -> customer opens them, plus an expiry case and a password reset) and report any deviations from this spec.
