@@ -23,7 +23,7 @@ import { Column, Table, TableRow } from '../../components/Table';
 import { TripCard } from '../../components/TripCard';
 import { PlatformTabParamList } from '../../navigation/types';
 import { colors, font, radius, space, useIsWide, weight } from '../../theme';
-import { downloadFile } from '../../utils/download';
+import { openFile } from '../../utils/download';
 import { formatDate, formatMoney, todayInNairobi } from '../../utils/format';
 import { AGENCIES_KEY, INVOICES_KEY } from './keys';
 
@@ -44,9 +44,9 @@ export function invoiceStatus(invoice: AgencyInvoice): {
 export const period = (invoice: AgencyInvoice) =>
   `${formatDate(invoice.period_start)} – ${formatDate(invoice.period_end)}`;
 
-/** Web only: saves the invoice's PDF. */
-export function downloadInvoice(invoice: AgencyInvoice, path: string) {
-  return downloadFile(path, `${invoice.number}.pdf`);
+/** Web only: opens the invoice's PDF in a new tab (preview first). */
+export function openInvoice(invoice: AgencyInvoice, path: string) {
+  return openFile(path, `${invoice.number}.pdf`);
 }
 
 type Filter = 'all' | 'unpaid' | 'overdue' | 'paid' | 'void';
@@ -180,7 +180,7 @@ export function InvoicesScreen({ navigation, route }: BottomTabScreenProps<Platf
 
 /**
  * An invoice in a card list; also used in the agency drawer and the agency's own Billing screen. With onPress it
- * opens the invoice; without, it is a static card that can hold an action (e.g. Download PDF).
+ * opens the invoice; without, it is a static card that can hold an action (e.g. Open PDF).
  */
 export function InvoiceCard({
   invoice,
@@ -266,8 +266,8 @@ function InvoiceDetail({ invoice }: { invoice: Invoice }) {
       return queryClient.invalidateQueries({ queryKey: AGENCIES_KEY });
     },
   });
-  const download = useMutation({
-    mutationFn: () => downloadInvoice(invoice, `/platform/invoices/${invoice.id}/pdf`),
+  const pdf = useMutation({
+    mutationFn: () => openInvoice(invoice, `/platform/invoices/${invoice.id}/pdf`),
   });
 
   const run = async (action: Exclude<Action, 'mark-paid'>) => {
@@ -302,11 +302,11 @@ function InvoiceDetail({ invoice }: { invoice: Invoice }) {
     <>
       <ActionBar>
         <Button
-          title="Download PDF"
+          title="Open PDF"
           variant="secondary"
-          icon="download-outline"
-          onPress={() => download.mutate()}
-          loading={download.isPending}
+          icon="open-outline"
+          onPress={() => pdf.mutate()}
+          loading={pdf.isPending}
         />
         {invoice.status === 'unpaid' ? (
           <>
@@ -319,7 +319,7 @@ function InvoiceDetail({ invoice }: { invoice: Invoice }) {
         ) : null}
       </ActionBar>
       <FormError
-        message={act.isError ? errorMessage(act.error) : download.isError ? errorMessage(download.error) : null}
+        message={act.isError ? errorMessage(act.error) : pdf.isError ? errorMessage(pdf.error) : null}
       />
       {notice ? <Text style={styles.saved}>{notice}</Text> : null}
 

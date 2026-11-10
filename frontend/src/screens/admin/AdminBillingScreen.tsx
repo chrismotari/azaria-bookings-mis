@@ -14,7 +14,7 @@ import { Screen } from '../../components/Screen';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { colors, font, space, weight } from '../../theme';
 import { formatDate, formatMoney } from '../../utils/format';
-import { downloadInvoice, InvoiceCard } from '../platform/InvoicesScreen';
+import { InvoiceCard, openInvoice } from '../platform/InvoicesScreen';
 
 export const BILLING_KEY = ['admin', 'billing'];
 
@@ -78,7 +78,7 @@ export function AdminBillingScreen() {
         ) : (
           <>
             {invoices.data.results.map((invoice) => (
-              <InvoiceCard key={invoice.id} invoice={invoice} action={<DownloadButton invoice={invoice} />} />
+              <InvoiceCard key={invoice.id} invoice={invoice} action={<OpenButton invoice={invoice} />} />
             ))}
             <Pagination page={page} count={invoices.data.count} onChange={setPage} />
           </>
@@ -88,20 +88,20 @@ export function AdminBillingScreen() {
   );
 }
 
-function DownloadButton({ invoice }: { invoice: AgencyInvoice }) {
-  const download = useMutation({
-    mutationFn: () => downloadInvoice(invoice, `/admin/billing/invoices/${invoice.id}/pdf`),
+function OpenButton({ invoice }: { invoice: AgencyInvoice }) {
+  const pdf = useMutation({
+    mutationFn: () => openInvoice(invoice, `/admin/billing/invoices/${invoice.id}/pdf`),
   });
   return (
-    <View style={styles.download}>
+    <View style={styles.open}>
       <Button
-        title="Download PDF"
+        title="Open PDF"
         variant="secondary"
-        icon="download-outline"
-        onPress={() => download.mutate()}
-        loading={download.isPending}
+        icon="open-outline"
+        onPress={() => pdf.mutate()}
+        loading={pdf.isPending}
       />
-      <FormError message={download.isError ? errorMessage(download.error) : null} />
+      <FormError message={pdf.isError ? errorMessage(pdf.error) : null} />
     </View>
   );
 }
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
   },
   text: { color: colors.text },
   muted: { color: colors.muted },
-  download: { alignItems: 'flex-start', gap: space.xs },
+  open: { alignItems: 'flex-start', gap: space.xs },
   banner: {
     flexDirection: 'row',
     alignItems: 'center',

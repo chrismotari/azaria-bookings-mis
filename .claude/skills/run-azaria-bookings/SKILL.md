@@ -47,7 +47,7 @@ All driver commands run from `.claude/skills/run-azaria-bookings/driver/`. Scree
 
 | command | what it does |
 |---|---|
-| `AZARIA_ADMIN_EMAIL=... AZARIA_ADMIN_PASSWORD=... node flow.mjs` | Full flow with a fresh customer: guest search with no results → Request options → gate → register → request → admin responds with a custom offer → book 2 passengers → confirm → mark paid → upload PDF + PNG → send → customer downloads both and checks the bytes. Prints `FLOW OK (request <uuid>, booking <uuid>)`. About 1 minute. |
+| `AZARIA_ADMIN_EMAIL=... AZARIA_ADMIN_PASSWORD=... node flow.mjs` | Full flow with a fresh customer: guest search with no results → Request options → gate → register → request → admin responds with a custom offer → book 2 passengers → confirm → mark paid → upload PDF + PNG → send → customer opens both (each in a new tab, preview first) and checks the bytes. Prints `FLOW OK (request <uuid>, booking <uuid>)`. About 1 minute. |
 | `node login.mjs <role> <email> <password>` | Signs in and saves the session as `/tmp/azaria-run/profiles/<role>.json` |
 | `node shot.mjs <role> <path> [width]` | Screenshots `<APP_URL><path>` (default `http://azaria.localhost:8081`) as `<role>` (`guest` = signed out) and prints horizontal overflow. Use width `390` for the phone layout (bottom tabs). |
 

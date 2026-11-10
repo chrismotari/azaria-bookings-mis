@@ -1,7 +1,7 @@
 // End-to-end flow in the browser:
 // guest searches (no results) -> Request options -> gate -> register -> request sent
 // -> admin responds with a custom offer -> customer books it -> admin confirms, marks paid,
-// uploads a PDF and a PNG, sends them -> customer downloads both and they match.
+// uploads a PDF and a PNG, sends them -> customer opens both (each in a new tab) and they match.
 //
 // Usage: AZARIA_ADMIN_EMAIL=... AZARIA_ADMIN_PASSWORD=... node flow.mjs
 // Needs the API, a Celery worker and the web app running (see SKILL.md).
@@ -201,16 +201,24 @@ await run('admin', async ({ page, shot }) => {
   await shot('completed');
 });
 
-console.log('== customer downloads');
+console.log('== customer opens the boarding passes');
 await run(`customer-${stamp}`, async ({ page, shot }) => {
   await page.goto(`${APP}/bookings/${bookingId}`);
   await seen(page, 'We have also emailed these to you.').waitFor();
   await shot('customer-completed');
   for (const [index, file] of [files.pdf, files.png].entries()) {
-    const [download] = await Promise.all([page.waitForEvent('download'), button(page, 'Download').nth(index).click()]);
-    const same = Buffer.compare(fs.readFileSync(await download.path()), fs.readFileSync(file)) === 0;
-    if (!same) throw new Error(`${download.suggestedFilename()} differs from the uploaded file`);
-    console.log('downloaded', download.suggestedFilename(), '- matches upload');
+    // Preview first: each pass opens in a new tab (a blob: URL) instead of downloading.
+    const [tab] = await Promise.all([page.waitForEvent('popup'), button(page, 'Open').nth(index).click()]);
+    await tab.waitForURL(/^blob:/);
+    const opened = await tab.evaluate(async () => {
+      const response = await fetch(location.href);
+      return { type: response.headers.get('content-type'), bytes: Array.from(new Uint8Array(await response.arrayBuffer())) };
+    });
+    const name = file.split('/').pop();
+    const same = Buffer.compare(Buffer.from(opened.bytes), fs.readFileSync(file)) === 0;
+    if (!same) throw new Error(`${name} opened with different content than the uploaded file`);
+    console.log('opened', name, `in a new tab (${opened.type}) - matches upload`);
+    await tab.close();
   }
 });
 console.log(process.exitCode ? 'FLOW FAILED' : `FLOW OK (request ${queryId}, booking ${bookingId})`);

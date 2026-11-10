@@ -110,3 +110,5 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - Plans, invoices and subscriptions return the currency (PLATFORM_CURRENCY) so the app can format amounts; the agency Billing screen is a stack page opened from Settings.
 - The overdue notice (and banner) is the oldest unpaid, not waived invoice past its due date.
 - Suspending and reactivating in /django-admin/ go through the same billing.set_active as the platform app.
+- Preview first decides by the file name's extension (pdf, png, jpg, jpeg, webp, gif), so the new tab can be opened during the click, before the file is fetched; browsers block tabs opened later as pop-ups.
+- The preview tab shows the file from a blob: URL (the file is fetched with the auth header), so its tab title is the browser's, not the file name; the browser's own viewer offers saving it.

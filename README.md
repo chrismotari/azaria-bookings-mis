@@ -2,7 +2,7 @@
 
 A flight-offers and booking portal for a Nairobi travel agency ([azariabookings.com](https://azariabookings.com)).
 
-The agency owner (the **admin**) lists flight deals. Anyone can browse them. Registered **customers** can ask for options when nothing fits and can book a deal. The admin then confirms availability, the customer pays outside the system, the admin marks the booking paid, uploads the boarding passes and sends them. The customer receives them by email and can also download them in the app.
+The agency owner (the **admin**) lists flight deals. Anyone can browse them. Registered **customers** can ask for options when nothing fits and can book a deal. The admin then confirms availability, the customer pays outside the system, the admin marks the booking paid, uploads the boarding passes and sends them. The customer receives them by email and can also open them in the app.
 
 The full specification is in [SPEC.md](SPEC.md). Choices made where the spec is silent are listed in [DECISIONS.md](DECISIONS.md).
 
@@ -19,7 +19,7 @@ The full specification is in [SPEC.md](SPEC.md). Choices made where the spec is 
 | App | Expo 58 (React Native 0.88, React 19) with react-native-web, TypeScript 6 |
 | App libraries | React Navigation 7 (every screen has a browser URL), TanStack Query 5, axios, react-hook-form + zod, expo-secure-store (native token storage) |
 
-The app is **web first**: it is developed and checked in the browser. It still compiles for iOS and Android, but native behaviour isn't tested yet, and file upload and download are web only.
+The app is **web first**: it is developed and checked in the browser. It still compiles for iOS and Android, but native behaviour isn't tested yet, and file upload and opening files are web only. Files open in a new tab for preview (PDFs and images); only a file the browser cannot show is downloaded.
 
 ## Project layout
 
@@ -179,7 +179,7 @@ And two for the platform's billing (public schema):
 
 **Who can do what**
 - **Guests** can browse deals, view a deal and search airports.
-- **Customers** can also request options, book, cancel their own bookings and download their boarding passes once they are sent.
+- **Customers** can also request options, book, cancel their own bookings and open their boarding passes once they are sent.
 - **The admin** manages deals, answers requests, moves bookings through their statuses, uploads and sends boarding passes, manages customers (add, edit, deactivate and reactivate), books flights for customers (for example one who phoned; the customer is emailed as usual once availability is confirmed) and edits settings. A customer the admin adds is emailed a link to choose their password; a deactivated customer cannot sign in, but their requests and bookings stay.
 
 **Booking lifecycle.** Every status change goes through `bookings/services.py`. The service locks the booking, checks that the move is allowed and that the right person is making it, records the change on the booking's timeline, and queues the matching email. Moves that aren't allowed return HTTP 409.
@@ -198,7 +198,7 @@ requested ──admin──▶ availability_confirmed ──admin──▶ paid 
 - The admin uploads them only while a booking is paid.
 - Each file must be a PDF, PNG or JPEG of at most 5 MB, with at most 10 per booking.
 - "Send boarding passes" completes the booking and emails every file to the customer.
-- Customers can see and download their passes only after that.
+- Customers can see and open their passes only after that.
 
 All times are Africa/Nairobi. Prices are in USD (`CURRENCY` setting).
 

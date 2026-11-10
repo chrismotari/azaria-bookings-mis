@@ -4,7 +4,7 @@ import { Platform, StyleSheet, Text, View } from 'react-native';
 import { errorMessage } from '../api/errors';
 import { BoardingPass } from '../api/types';
 import { colors, font, radius, space, weight } from '../theme';
-import { downloadBoardingPass } from '../utils/download';
+import { openBoardingPass } from '../utils/download';
 import { formatDateTime } from '../utils/format';
 import { Button } from './Button';
 import { FormError } from './Field';
@@ -17,20 +17,20 @@ type Props = {
   deletingId?: string | null;
 };
 
-/** Boarding passes with a Download button each (web only), and optionally Delete. */
+/** Boarding passes with an Open button each (web only; preview first), and optionally Delete. */
 export function BoardingPassList({ passes, onDelete, deletingId }: Props) {
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [openingId, setOpeningId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const download = async (boardingPass: BoardingPass) => {
+  const open = async (boardingPass: BoardingPass) => {
     setError(null);
-    setDownloadingId(boardingPass.id);
+    setOpeningId(boardingPass.id);
     try {
-      await downloadBoardingPass(boardingPass.id, boardingPass.original_name);
-    } catch (downloadError) {
-      setError(errorMessage(downloadError));
+      await openBoardingPass(boardingPass.id, boardingPass.original_name);
+    } catch (openError) {
+      setError(errorMessage(openError));
     } finally {
-      setDownloadingId(null);
+      setOpeningId(null);
     }
   };
 
@@ -54,11 +54,11 @@ export function BoardingPassList({ passes, onDelete, deletingId }: Props) {
           <View style={styles.actions}>
             {Platform.OS === 'web' ? (
               <Button
-                title="Download"
-                icon="download-outline"
+                title="Open"
+                icon="open-outline"
                 variant="secondary"
-                onPress={() => download(boardingPass)}
-                loading={downloadingId === boardingPass.id}
+                onPress={() => open(boardingPass)}
+                loading={openingId === boardingPass.id}
               />
             ) : null}
             {onDelete ? (
@@ -73,7 +73,7 @@ export function BoardingPassList({ passes, onDelete, deletingId }: Props) {
         </View>
       ))}
       {Platform.OS !== 'web' ? (
-        <Text style={styles.muted}>Downloading boarding passes is available on the web app.</Text>
+        <Text style={styles.muted}>Opening boarding passes is available on the web app.</Text>
       ) : null}
       <FormError message={error} />
     </View>
