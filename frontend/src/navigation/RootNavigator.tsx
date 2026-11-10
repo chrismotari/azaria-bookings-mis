@@ -6,6 +6,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 
 import { useAuth } from '../auth/AuthContext';
 import { RequireAuth, toLogin } from '../auth/gate';
+import { useLoginAfterSignOut } from '../auth/useSignOut';
 import { setPendingPath, takePendingAction, takePendingPath } from '../auth/pendingAction';
 import { Icon, IconName } from '../components/Icon';
 import { AdminBookingsScreen } from '../screens/admin/AdminBookingsScreen';
@@ -381,6 +382,7 @@ function PlatformStack() {
 
 export function RootNavigator() {
   const { user } = useAuth();
+  useLoginAfterSignOut(user !== null);
 
   if (IS_PLATFORM) {
     return <PlatformStack />;

@@ -1,11 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
-import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
 import { api, setSessionExpiredHandler } from '../api/client';
 import { tokenStorage } from '../api/storage';
 import { AuthResponse, User } from '../api/types';
 import { AUTH_PATH, IS_PLATFORM } from '../config';
+import { requestLoginAfterSignOut } from './loginRedirect';
 import { clearPendingAction } from './pendingAction';
 
 export type RegisterData = {
@@ -33,6 +34,8 @@ function asUser(user: User): User {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
+  const userRef = useRef(user);
+  userRef.current = user;
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -93,6 +96,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setSessionExpiredHandler(() => {
+      // An admin's or the owner's session ending is a sign-out: their area opens its sign-in page. A customer
+      // stays where they are (signed-in-only pages ask them to sign in by themselves).
+      if (userRef.current && userRef.current.role !== 'customer') {
+        requestLoginAfterSignOut();
+      }
       setUser(null);
       queryClient.clear();
     });
