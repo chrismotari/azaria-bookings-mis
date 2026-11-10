@@ -554,6 +554,72 @@ Tests
 - Browser check at 390 px and 1280 px: create plans, start a subscription, see the invoice and its PDF, mark it paid; with frozen dates, an overdue banner at the agency, suspension, owner reactivation.
 
 ======================================================================
+PLATFORM HOME PAGE AND DASHBOARD (step 29)
+======================================================================
+Goal: the root host opens on a short public introduction to the system, and the system owner lands on a dashboard of agencies, revenue and what needs attention.
+
+Root host home page
+- / on the root host is a short public introduction to the system for travel agencies, whether or not the owner is signed in: a headline and one or two sentences on what Azaria Bookings is (a booking platform where each travel agency gets its own site to publish flight deals, answer customers' requests, take bookings and send boarding passes), three short points (own address and data per agency; deals, requests and bookings in one place; boarding passes by email and in the app), and two links: "See pricing" (/pricing) and "Admin sign in" (/login; "Open admin" when the owner is already signed in, going to the Dashboard).
+- The root host's pages share a slim public bar: the brand (linking to /), Pricing, and Admin sign in (or Open admin).
+- The owner's sign-in moves to /login and Agencies to /agencies; / no longer opens Agencies.
+- Until step 30 adds the pricing page, "See pricing" and Pricing are left out.
+
+Platform dashboard
+- The owner's home after signing in: /dashboard, first in the platform's top bar (Dashboard, Agencies, Plans, Invoices, Settings).
+- GET /api/platform/dashboard (IsPlatformOwner), all amounts in PLATFORM_CURRENCY, "this month" and "this year" in Nairobi time:
+  - agencies: total, active, suspended (manual) and suspended for non-payment, and how many have no running subscription plan.
+  - revenue: paid invoices summed by paid_on, for this month, this year and all time.
+  - recurring: the monthly value of all running subscriptions (a monthly price as is, an annual price divided by 12), and the count of running subscription and support plans.
+  - outstanding: unpaid invoices (count and total), and of those the overdue ones (count and total).
+  - revenue_by_month: paid totals for each of the last 12 months, oldest first, months without payments as 0.
+  - plans: for each plan with running subscriptions, its name, kind and how many agencies are on it, most first.
+  - attention: up to 5 overdue invoices, oldest due first (number, agency, amount, due_on, suspends_on or null when waived).
+- Screen: a row of summary cards (Agencies, Revenue this month, Monthly recurring, Outstanding, Overdue), each linking to the matching list (Agencies with the Suspended filter for the suspended count, Invoices with the Unpaid or Overdue filter); a simple bar chart of revenue_by_month drawn with plain views (no chart library), each bar labelled with its month and showing its amount on hover or press; "Agencies per plan"; and "Needs attention" with the overdue invoices, each opening the invoice. Empty states when there are no agencies or invoices yet.
+
+Tests
+- Dashboard: each figure against known data (revenue by paid_on across month and year boundaries, annual prices counted as a twelfth, void and unpaid invoices left out of revenue, waived invoices with suspends_on null), months without payments as 0, platform owners only.
+- / and /login on the root host open without signing in; /dashboard needs the owner's sign-in.
+- Browser check at 390 px and 1280 px: the root host's home page signed out and signed in (its links), signing in landing on the dashboard, each summary card's link, the chart, Agencies per plan and Needs attention, and the empty states.
+
+======================================================================
+PLANS PAGE AND RICH DESCRIPTIONS (step 30)
+======================================================================
+Goal: plans are presented like a pricing page (three featured cards, one highlighted, with every other plan one click away), to prospective agencies on a public page and to agencies' admins in their app, and plan descriptions are written in a rich text editor. Layout patterns only, after pricing pages such as Google One's: no copied branding, imagery or wording.
+
+Model
+- Plan gains tag: blank, recommended, basic or advanced (default blank). Only subscription plans can be tagged, and each tag is held by at most one plan (a database constraint on non-blank tags). Deactivating a plan clears its tag.
+- Plan.description becomes rich text, stored as sanitized HTML (at most 5,000 characters after sanitizing). The server keeps only p, br, strong, em, u, s, h3, h4, ul, ol, li and a (href with http, https or mailto only; rel="noopener noreferrer" and target="_blank" added); everything else is stripped, with nh3 (the only new backend dependency). A data migration turns existing plain-text descriptions into escaped paragraphs.
+
+API
+- Platform: plans accept and return tag; giving a tag held by another plan is refused on the tag field ("Already used by <plan name>."), as is tagging a support plan.
+- GET /api/platform/public-plans on the root host, open without signing in: the active plans (id, name, kind, tag, description, monthly_price, annual_price, currency), plus billing_contact_email.
+- GET /api/admin/plans on an agency host (IsAdminRole): the same list, plus the ids of the agency's running plans (current_plan_ids) and billing_contact_email.
+
+Plans page (one shared PlanShowcase component, used by both pages below)
+- A Monthly / Annual switch on top (Monthly first). Annual shows the yearly price and, when the plan has both prices, the saving against twelve monthly payments ("Save 17%"). A plan without a price on the chosen cycle shows "Annual only" or "Monthly only" in place of the price.
+- The featured grid: the subscription plans tagged recommended, basic and advanced, always in that order (Recommended first, Basic second, Advanced third), each with its tag as a chip. Three cards side by side on wide screens, stacked in the same order on narrow ones. The Recommended card stands out (brand-coloured border and chip, slightly raised). A missing tag leaves its place out; with no tagged plans, all plans show and there is no "Show all plans".
+- Each card: tag chip, plan name, price for the chosen cycle, the rich description, and one action button.
+- "Show all plans" under the grid reveals every other active subscription plan as cards in the same style, cheapest first (by monthly price, else annual), and turns into "Show fewer".
+- Support plans: a separate "Add support" section below, cheapest first, in a smaller card style.
+- Payment is outside the system, so actions are mailto links to billing_contact_email with the plan in the subject: "Get started" on the public page, "Ask to switch" in the agency app. The agency's running plans show "Your plan" instead of a button. Without a billing contact email the buttons are left out.
+
+Where it shows
+- Public: http://<root host>/pricing (e.g. localhost:8081/pricing), open without signing in. The rest of the platform still needs the owner's sign-in.
+- The root host's home page gains its "See pricing" link and the public bar its Pricing item (see step 29).
+- Agency app: a Plans page for admins (admin/plans), opened from the Billing screen ("Compare plans").
+- Platform Plans screen: a "View pricing page" link that opens /pricing in a new tab, and a Tag column.
+
+Rich text
+- Editor: TipTap on web (@tiptap/react, @tiptap/pm and @tiptap/starter-kit, the new frontend dependencies) with a toolbar for bold, italic, underline, strike, headings (two sizes), bullet and numbered lists, link and undo/redo, in an editing area at least 200 px tall that grows with its content. It replaces the description field in the plan dialog, which is widened for it. On native the field is a multiline text box (descriptions are edited on the web).
+- Display: a RichText component renders the sanitized HTML on web with the app's typography (lists indented, links in the brand colour); on native it shows the text without tags.
+
+Tests
+- Sanitizing: allowed tags kept, scripts, styles, event attributes and javascript: links removed, rel and target added to links, the length limit; the migration of plain text.
+- Tags: one plan per tag, support plans refused, deactivating clears the tag, the error names the plan holding it.
+- public-plans open without signing in on the root host, only active plans, and absent on agency hosts; admin/plans for that agency's admins only, with its current plan ids.
+- Browser check at 390 px and 1280 px: the grid order Recommended, Basic, Advanced, the Monthly/Annual switch, Show all plans and Show fewer, the support section, "Your plan" in the agency app, the public page signed out, and the editor's toolbar saving formatted text that then shows on the cards.
+
+======================================================================
 DELIVERY ORDER (commit after each step; the app must run at each step)
 ======================================================================
 1. Backend foundation: settings from .env, DRF/JWT/CORS/Celery wiring, accounts app with register, login, refresh, me, password reset and email task 10, create_admin, core AppSettings and migration, catalog.Airport and seed_airports, /django-admin/ mount, private storage setup, migrate and tests passing.
@@ -589,5 +655,7 @@ DELIVERY ORDER (commit after each step; the app must run at each step)
 26. Platform app: agencies (see PLATFORM APP: AGENCIES).
 27. Plans, invoices and suspension for non-payment (see PLANS, INVOICES AND SUSPENSION FOR NON-PAYMENT).
 28. Preview first: boarding passes and invoice PDFs open in a new tab instead of downloading (see FRONTEND). Browser check: a PDF and a PNG boarding pass and an invoice open in a new tab showing the right file.
+29. Platform home page and dashboard (see PLATFORM HOME PAGE AND DASHBOARD).
+30. Plans page and rich descriptions (see PLANS PAGE AND RICH DESCRIPTIONS).
 
 Finish each step before starting the next. At the end, run the full test suite and do a manual browser walkthrough of the entire flow as guest and as customer (browse as a guest -> no result -> sign up -> query -> admin responds -> book -> confirm -> pay -> upload pass -> send -> customer opens them, plus an expiry case and a password reset) and report any deviations from this spec.
