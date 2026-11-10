@@ -10,6 +10,7 @@ The full specification is in @SPEC.md. Treat it as the source of truth.
 - Do not add anything the spec does not describe: no extra models, endpoints, fields or dependencies.
 - If the spec is ambiguous, pick the simplest option and add one line to DECISIONS.md.
 - No Docker. PostgreSQL and Redis run locally.
+- Files: preview first. Anything the browser can display (PDF, images) opens in a new tab; download only when a preview is not possible. This holds for any new file type too.
 
 ## Commands
 - API: `cd backend && python manage.py runserver`

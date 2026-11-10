@@ -181,7 +181,8 @@ Libraries: React Navigation (with linking configured so every screen has a real 
 - Config: API base URL from EXPO_PUBLIC_API_URL (document in frontend/.env.example).
 - Token storage: a small storage module using localStorage on web and expo-secure-store on native. axios interceptor refreshes once on 401, then logs out.
 - Dates: use a web-native date input on web (<input type="date"> through a small cross-platform DateField component). Native fallback uses a plain text input in YYYY-MM-DD format validated by zod.
-- File upload and download are web-only for now: upload through <input type="file"> in a small FileField component, download by fetching the file with the auth header as a blob and triggering a browser download. On native these controls show a short notice that the feature is available on the web app.
+- File upload and download are web-only for now: upload through <input type="file"> in a small FileField component; files are fetched with the auth header as a blob. On native these controls show a short notice that the feature is available on the web app.
+- Preview first (step 28): a file the browser can display (PDF, PNG, JPEG, WebP, GIF) opens in a new tab for preview, from an Open button ("Open PDF" for invoices). Only a file that cannot be previewed is downloaded, and if the browser blocks the new tab the file is downloaded instead. This applies to every file the app offers (boarding passes, invoice PDFs) and to any file type added later.
 - Responsive layout: on wide viewports (>= 900 px) navigation is a top bar and content is centred with a max width; on narrow viewports it collapses to bottom tabs. Lists become tables or multi-column grids on wide screens where it helps. See LOOK AND LAYOUT for the details (this replaces the earlier left sidebar).
 
 Guest, customer and admin navigation
@@ -193,7 +194,7 @@ Guest, customer and admin navigation
 Customer navigation
 1. Explore (open to guests): From and To (airport autocomplete from /airports; free text also allowed), filters (dates, price range, class, max stopovers), results (route, date, class, airline, stopovers, price, valid until). If there are zero results, show an empty state with a "Request options" button that opens the query form pre-filled with the filters (airports only when chosen from autocomplete), through the auth gate.
 2. Requests: my queries with status; detail shows my filter and the admin's responses with the offers listed; each offer opens the offer detail with a Book button.
-3. Bookings: list with status chips; detail shows route, total price, payment instructions and deadline when availability_confirmed, the event timeline, a Cancel button when allowed, and, when completed, the list of boarding passes with a Download button each.
+3. Bookings: list with status chips; detail shows route, total price, payment instructions and deadline when availability_confirmed, the event timeline, a Cancel button when allowed, and, when completed, the list of boarding passes with an Open button each (preview first, see FRONTEND).
 4. Account: name, email, phone, logout.
 Offer detail (open to guests) has a Book button, through the auth gate, that opens a small form (passenger_count, notes) and creates the booking.
 
@@ -201,7 +202,7 @@ Admin navigation
 1. Dashboard: the four counts, each linking to the matching filtered list.
 2. Offers: list with filters; create and edit form (airport pickers, date fields, class, price, stopovers, airline, valid until, public toggle); deactivate toggle.
 3. Requests: inbox filtered by status; detail shows the filter and customer; a Respond screen lets the admin select existing offers (search by route and date), add new custom offers inline (is_public false), and write a message.
-4. Bookings: status tabs; detail shows customer, offer, passenger count, notes, timeline. Action buttons appear only for valid next states (Confirm availability, Mark unavailable, Mark paid) with a confirm dialog. When the booking is paid, show a boarding pass section: upload files, list them with name and a Delete button, and a "Send boarding passes" button (calls /complete) that is disabled until at least one file exists. When completed, show the sent files with Download.
+4. Bookings: status tabs; detail shows customer, offer, passenger count, notes, timeline. Action buttons appear only for valid next states (Confirm availability, Mark unavailable, Mark paid) with a confirm dialog. When the booking is paid, show a boarding pass section: upload files, list them with name and a Delete button, and a "Send boarding passes" button (calls /complete) that is disabled until at least one file exists. When completed, show the sent files with Open.
 5. Settings: payment instructions, payment hold hours, reminder hours, notification email.
 
 UX requirements: loading, empty and error states on every list; form validation with zod mirroring server rules; prices formatted as USD; dates in a readable format; no horizontal scrolling at any width.
@@ -301,7 +302,7 @@ Customer requests and bookings (step 15)
 - Lists: trip cards showing the route line, date, airline and passengers (bookings) or dates and criteria (requests), the status chip, and for bookings the total in the price style. A thin left edge in the status colour.
 - Booking detail: a progress tracker across the top for the normal path, Requested → Confirmed → Paid → Completed, with done, current and upcoming steps; a terminal status (unavailable, cancelled, expired) shows as a single banner in its status colour instead. The existing event timeline stays below as "History".
 - While availability_confirmed: a highlighted payment box with the payment instructions, the deadline in Nairobi time and a countdown ("12 h 30 min left", updated each minute on the client; "Deadline passed" after it). The Cancel button stays where allowed.
-- Completed: boarding passes as file rows with a file icon, name, upload time and a Download button.
+- Completed: boarding passes as file rows with a file icon, name, upload time and an Open button (a Download button before step 28).
 - Request detail: the criteria as a compact summary with icons; each response as a card with the admin's message and the offers as the same flight result rows used on Explore.
 
 Admin screens (step 16)
@@ -540,9 +541,9 @@ Frontend
 - Platform top bar: Agencies, Plans, Invoices, Settings, Sign out.
 - Plans: table with kind tabs (Subscription, Support), name, monthly and annual price, active; create and edit form; deactivate toggle.
 - Agency drawer gains a "Plan & billing" section: billing email (editable), the running subscription and support plan (plan, cycle, price, next invoice date) with Start, Change, End and Issue next invoice actions, and the agency's invoices; the status shows "Suspended for non-payment" when that is the reason.
-- Invoices: table (number, agency, period, amount, due, status chip Unpaid / Overdue / Paid / Void) with status and overdue filters; the drawer shows the invoice with Download PDF, Mark paid (date field, default today), Mark unpaid, Void and Resend, each behind a confirm dialog.
+- Invoices: table (number, agency, period, amount, due, status chip Unpaid / Overdue / Paid / Void) with status and overdue filters; the drawer shows the invoice with Open PDF (Download PDF before step 28), Mark paid (date field, default today), Mark unpaid, Void and Resend, each behind a confirm dialog.
 - Settings: the PlatformSettings fields.
-- Agency app, admins only: a Billing screen (Settings area) with the plans, the invoices with Download PDF, and the billing contact; and, on every admin screen, a warning banner while the overdue notice is present: "Invoice <number> is overdue. This agency will be suspended on <suspends_on> unless payment is received."
+- Agency app, admins only: a Billing screen (Settings area) with the plans, the invoices with Open PDF (Download PDF before step 28), and the billing contact; and, on every admin screen, a warning banner while the overdue notice is present: "Invoice <number> is overdue. This agency will be suspended on <suspends_on> unless payment is received."
 
 Tests
 - Plans: price rules, inactive plans refused for new or changed subscriptions, no delete.
@@ -587,5 +588,6 @@ DELIVERY ORDER (commit after each step; the app must run at each step)
 25. Airlines, logos and flags (see AIRLINES, LOGOS AND FLAGS).
 26. Platform app: agencies (see PLATFORM APP: AGENCIES).
 27. Plans, invoices and suspension for non-payment (see PLANS, INVOICES AND SUSPENSION FOR NON-PAYMENT).
+28. Preview first: boarding passes and invoice PDFs open in a new tab instead of downloading (see FRONTEND). Browser check: a PDF and a PNG boarding pass and an invoice open in a new tab showing the right file.
 
-Finish each step before starting the next. At the end, run the full test suite and do a manual browser walkthrough of the entire flow as guest and as customer (browse as a guest -> no result -> sign up -> query -> admin responds -> book -> confirm -> pay -> upload pass -> send -> customer downloads, plus an expiry case and a password reset) and report any deviations from this spec.
+Finish each step before starting the next. At the end, run the full test suite and do a manual browser walkthrough of the entire flow as guest and as customer (browse as a guest -> no result -> sign up -> query -> admin responds -> book -> confirm -> pay -> upload pass -> send -> customer opens them, plus an expiry case and a password reset) and report any deviations from this spec.
