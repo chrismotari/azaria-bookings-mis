@@ -32,6 +32,11 @@ export type AdminTabParamList = {
   AdminSettings: undefined;
 };
 
+/** The platform's screens (root host only). */
+export type PlatformTabParamList = {
+  PlatformAgencies: { id?: string } | undefined;
+};
+
 export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList> | undefined;
   BookingNew: { offer: string; query?: string };
@@ -43,6 +48,8 @@ export type RootStackParamList = {
   AdminTabs: NavigatorScreenParams<AdminTabParamList> | undefined;
   AdminOfferNew: undefined;
   AdminQueryRespond: { id: string };
+  PlatformLogin: undefined;
+  PlatformTabs: NavigatorScreenParams<PlatformTabParamList> | undefined;
 };
 
 /** A screen and its params, e.g. what a guest was trying to open before signing in. */

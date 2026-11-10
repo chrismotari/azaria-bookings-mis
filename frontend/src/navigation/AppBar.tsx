@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../auth/AuthContext';
 import { useSignOut } from '../auth/useSignOut';
+import { IS_PLATFORM } from '../config';
 import { Icon, IconName } from '../components/Icon';
 import { colors, font, radius, shadow, space, useIsWide, weight } from '../theme';
 import { PressState } from '../components/pressState';
@@ -21,10 +22,15 @@ export function AppBar({ children, brandOnly }: { children?: ReactNode; brandOnl
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const isWide = useIsWide();
-  const goHome = () =>
-    user?.role === 'admin'
-      ? navigation.navigate('AdminTabs', { screen: 'AdminDashboard' })
-      : navigation.navigate('Main', { screen: 'Explore' });
+  const goHome = () => {
+    if (IS_PLATFORM) {
+      navigation.navigate(user ? 'PlatformTabs' : 'PlatformLogin');
+    } else if (user?.role === 'admin') {
+      navigation.navigate('AdminTabs', { screen: 'AdminDashboard' });
+    } else {
+      navigation.navigate('Main', { screen: 'Explore' });
+    }
+  };
 
   return (
     <View style={[styles.bar, { paddingTop: insets.top }]}>
@@ -32,6 +38,7 @@ export function AppBar({ children, brandOnly }: { children?: ReactNode; brandOnl
         <Pressable accessibilityRole="link" onPress={goHome}>
           <Text style={[styles.brand, !isWide && styles.brandNarrow]} numberOfLines={1}>
             Azaria Bookings
+            {IS_PLATFORM ? <Text style={styles.brandTag}> Platform</Text> : null}
           </Text>
         </Pressable>
         <View style={styles.items} accessibilityRole="tablist">
@@ -176,6 +183,7 @@ const styles = StyleSheet.create({
   innerNarrow: { gap: space.sm, paddingHorizontal: space.md },
   brand: { fontSize: font.heading, fontWeight: weight.bold, color: colors.primaryText },
   brandNarrow: { fontSize: font.body },
+  brandTag: { fontWeight: weight.regular, opacity: 0.8 },
   textNarrow: { fontSize: font.small },
   items: { flex: 1, flexDirection: 'row', alignSelf: 'stretch', gap: space.xs, minWidth: 0 },
   item: {

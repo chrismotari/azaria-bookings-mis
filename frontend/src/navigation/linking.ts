@@ -1,8 +1,9 @@
 import { LinkingOptions } from '@react-navigation/native';
 
+import { IS_PLATFORM } from '../config';
 import { RootStackParamList } from './types';
 
-export const linking: LinkingOptions<RootStackParamList> = {
+const agencyLinking: LinkingOptions<RootStackParamList> = {
   prefixes: [],
   config: {
     screens: {
@@ -40,3 +41,22 @@ export const linking: LinkingOptions<RootStackParamList> = {
     },
   },
 };
+
+/** The root host: the system owner's screens only. */
+const platformLinking: LinkingOptions<RootStackParamList> = {
+  prefixes: [],
+  config: {
+    screens: {
+      PlatformLogin: 'login',
+      PlatformTabs: {
+        path: '',
+        screens: {
+          // Agencies is the platform's home; '/' opens it too.
+          PlatformAgencies: { path: 'agencies/:id?', alias: [''] },
+        },
+      },
+    },
+  },
+};
+
+export const linking = IS_PLATFORM ? platformLinking : agencyLinking;

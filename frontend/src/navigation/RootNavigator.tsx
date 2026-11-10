@@ -23,17 +23,21 @@ import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { ResetPasswordScreen } from '../screens/auth/ResetPasswordScreen';
 import { AccountScreen } from '../screens/customer/AccountScreen';
+import { AgenciesScreen } from '../screens/platform/AgenciesScreen';
+import { PlatformLoginScreen } from '../screens/platform/PlatformLoginScreen';
+import { IS_PLATFORM } from '../config';
 import { ExploreScreen } from '../screens/explore/ExploreScreen';
 import { QueryNewScreen } from '../screens/requests/QueryNewScreen';
 import { RequestsScreen } from '../screens/requests/RequestsScreen';
 import { colors, useIsWide } from '../theme';
 import { AppBar } from './AppBar';
 import { ResponsiveTabBar } from './ResponsiveTabBar';
-import { AdminTabParamList, MainTabParamList, RootStackParamList } from './types';
+import { AdminTabParamList, MainTabParamList, PlatformTabParamList, RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const MainTabs = createBottomTabNavigator<MainTabParamList>();
 const AdminTabs = createBottomTabNavigator<AdminTabParamList>();
+const PlatformTabs = createBottomTabNavigator<PlatformTabParamList>();
 
 /**
  * An admin URL (e.g. the link in a new-booking email) opened while signed out: remember the path and sign in
@@ -218,8 +222,46 @@ function AdminTabsNavigator() {
   );
 }
 
+function PlatformTabsNavigator() {
+  const isWide = useIsWide();
+  return (
+    <PlatformTabs.Navigator
+      tabBar={(props) => <ResponsiveTabBar {...props} />}
+      screenOptions={tabScreenOptions(isWide)}
+    >
+      <PlatformTabs.Screen
+        name="PlatformAgencies"
+        component={AgenciesScreen}
+        options={tab('Agencies', 'business-outline', 'business')}
+      />
+    </PlatformTabs.Navigator>
+  );
+}
+
+/** The root host: the system owner signs in, then manages agencies. Agency screens are not reachable here. */
+function PlatformStack() {
+  const { user } = useAuth();
+  return (
+    <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
+      {user ? (
+        <Stack.Screen name="PlatformTabs" component={PlatformTabsNavigator} options={{ headerShown: false }} />
+      ) : (
+        <Stack.Screen
+          name="PlatformLogin"
+          component={PlatformLoginScreen}
+          options={{ title: 'Sign in', header: () => <AppBar brandOnly /> }}
+        />
+      )}
+    </Stack.Navigator>
+  );
+}
+
 export function RootNavigator() {
   const { user } = useAuth();
+
+  if (IS_PLATFORM) {
+    return <PlatformStack />;
+  }
 
   if (user?.role === 'admin') {
     return <AdminStack />;

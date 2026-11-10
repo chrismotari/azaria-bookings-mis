@@ -96,3 +96,6 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - The airline badge is a rounded square (no longer a circle) for both logos and initials, so the two look alike in lists; picker results use a smaller one.
 - seed_airlines drops OpenFlights rows whose name is empty and whose ICAO code is not three letters (the code is then left blank).
 - The airline search (GET /airlines) lives on agency hosts for the admin's picker; the airline list itself is only edited in the platform admin.
+- On the platform the app gives the signed-in account the role "owner" itself (the platform API returns no role), so the shared auth context, app bar and sign-out work unchanged there.
+- The platform's agency ids are the Tenant table's numeric ids (Tenant keeps django-tenants' default key); only system owners see them.
+- Domains added on the platform are refused when they equal TENANT_BASE_DOMAIN (the root host) or are used by any agency; making a hostname reachable still needs ALLOWED_HOSTS and the CORS regexes.

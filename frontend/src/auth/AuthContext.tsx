@@ -5,6 +5,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { api, setSessionExpiredHandler } from '../api/client';
 import { tokenStorage } from '../api/storage';
 import { AuthResponse, User } from '../api/types';
+import { AUTH_PATH, IS_PLATFORM } from '../config';
 import { clearPendingAction } from './pendingAction';
 
 export type RegisterData = {
@@ -24,6 +25,11 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+/** Platform accounts come without phone and role; on the platform every account is the system owner. */
+function asUser(user: User): User {
+  return IS_PLATFORM ? { ...user, phone: '', role: 'owner' } : user;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
@@ -34,9 +40,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     (async () => {
       if (await tokenStorage.getAccess()) {
         try {
-          const { data } = await api.get<User>('/auth/me');
+          const { data } = await api.get<User>(`${AUTH_PATH}/me`);
           if (!cancelled) {
-            setUser(data);
+            setUser(asUser(data));
           }
         } catch (error) {
           // Only a rejected session signs the user out (the client has already tried a refresh). If the
@@ -57,13 +63,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = useCallback(async (data: AuthResponse) => {
     await tokenStorage.setTokens(data.access, data.refresh);
-    setUser(data.user);
-    return data.user;
+    const user = asUser(data.user);
+    setUser(user);
+    return user;
   }, []);
 
   const login = useCallback(
     async (email: string, password: string) => {
-      const { data } = await api.post<AuthResponse>('/auth/login', { email, password });
+      const { data } = await api.post<AuthResponse>(`${AUTH_PATH}/login`, { email, password });
       return signIn(data);
     },
     [signIn],

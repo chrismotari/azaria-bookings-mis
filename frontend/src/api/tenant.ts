@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
+import { IS_PLATFORM } from '../config';
+
 /** Set when the API says this address has no agency (no_tenant) or the agency is suspended (tenant_suspended). */
 let problem: string | null = null;
 const listeners = new Set<() => void>();
@@ -9,7 +11,8 @@ const TENANT_CODES = ['no_tenant', 'tenant_suspended'];
 /** Records a tenant error from an API response body; returns whether it was one. */
 export function reportTenantProblem(body: unknown): boolean {
   const { code, detail } = (body ?? {}) as { code?: unknown; detail?: unknown };
-  if (typeof code !== 'string' || !TENANT_CODES.includes(code)) {
+  // The platform is not an agency: it never shows the no-agency page.
+  if (IS_PLATFORM || typeof code !== 'string' || !TENANT_CODES.includes(code)) {
     return false;
   }
   if (problem === null) {

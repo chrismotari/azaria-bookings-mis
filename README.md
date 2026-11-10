@@ -119,6 +119,7 @@ About the management commands:
 - **`seed_airlines`** adds airlines from `data/raw/airlines.dat` to the shared (public) schema: active airlines with a two-character IATA code, one per code. It only adds airlines that are missing and never changes existing ones, so corrections made in the platform admin survive a re-run. The data is old (largely 2014 to 2017), so treat it as a starting point and curate the list in the platform admin.
 - **`create_agency`** adds an agency: see above. The address (`--schema`) is 3 to 30 lowercase letters, digits and hyphens; `public`, `www`, `api`, `admin` and `app-admin` are reserved. If any part fails, nothing is left behind.
 - **`create_admin`** adds another admin to an agency: `python manage.py tenant_command create_admin --schema=azaria --email ... --password ... --name ...`.
+- **The platform app** on the root host (http://localhost:8081) is where the system owner manages agencies: sign in with a public-schema superuser (`createsuperuser`), then list, search, add, rename, suspend and reactivate agencies and manage their domains. It is web only and has no registration or password reset (use `createsuperuser` and `changepassword`). `EXPO_PUBLIC_PLATFORM_HOST` in `frontend/.env` names the root host.
 - **`/django-admin/`** on the root host (http://localhost:8000/django-admin/) is the platform admin for the system owner: list, add, rename, suspend and reactivate agencies and manage their domains, and curate the shared airline list (add, edit, deactivate, and upload each airline's logo: PNG, JPEG or WebP, up to 200 KB). It is open to superusers of the public schema (`createsuperuser`).
 - **`/django-admin/`** on an agency's host is technical support for that agency's data, open to that agency's superusers (`python manage.py tenant_command createsuperuser --schema=azaria`). Both are separate from the in-app admin.
 
@@ -127,7 +128,7 @@ About the management commands:
 ```bash
 cd frontend
 npm install
-cp .env.example .env               # EXPO_PUBLIC_API_URL=http://{host}:8000/api
+cp .env.example .env               # EXPO_PUBLIC_API_URL=http://{host}:8000/api, EXPO_PUBLIC_PLATFORM_HOST=localhost
 ```
 
 ### Files and media

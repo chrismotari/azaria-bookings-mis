@@ -5,5 +5,5 @@ SUSPENDED = {"detail": "This agency is not available at the moment.", "code": "t
 
 
 def no_tenant(request, *args, **kwargs):
-    """For unknown hosts, and for /api/ on the root host (the platform has no API)."""
+    """For unknown hosts, and for agency API paths on the root host."""
     return JsonResponse(NO_TENANT, status=404)

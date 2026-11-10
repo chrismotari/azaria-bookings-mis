@@ -1,4 +1,5 @@
-export type Role = 'customer' | 'admin';
+/** 'owner' is the system owner signed in on the platform (the platform API itself has no roles). */
+export type Role = 'customer' | 'admin' | 'owner';
 
 export type User = {
   id: string;
@@ -193,3 +194,23 @@ export type AdminCustomer = {
   phone: string;
   is_active: boolean;
 };
+
+/** A domain (hostname) that reaches an agency; the primary one is used in email links. */
+export type TenantDomain = {
+  id: number;
+  domain: string;
+  is_primary: boolean;
+};
+
+/** An agency as the system owner manages it on the platform. */
+export type Tenant = {
+  id: number;
+  name: string;
+  /** The address typed when it was created: <slug>.<base domain>. */
+  slug: string;
+  primary_domain: string | null;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type TenantDetail = Tenant & { domains: TenantDomain[] };

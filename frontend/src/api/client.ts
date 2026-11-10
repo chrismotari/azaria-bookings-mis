@@ -1,13 +1,13 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-import { API_URL } from '../config';
+import { API_URL, AUTH_PATH } from '../config';
 import { tokenStorage } from './storage';
 import { reportTenantProblem } from './tenant';
 
 export const api = axios.create({ baseURL: API_URL });
 
 // Requests that must never trigger a token refresh.
-const AUTH_PATHS = ['/auth/login', '/auth/register', '/auth/refresh'];
+const AUTH_PATHS = [`${AUTH_PATH}/login`, `${AUTH_PATH}/register`, `${AUTH_PATH}/refresh`];
 
 let onSessionExpired: () => void = () => {};
 
@@ -32,7 +32,7 @@ async function refreshAccessToken(): Promise<string | null> {
     return null;
   }
   try {
-    const { data } = await axios.post<{ access: string }>(`${API_URL}/auth/refresh`, { refresh });
+    const { data } = await axios.post<{ access: string }>(`${API_URL}${AUTH_PATH}/refresh`, { refresh });
     await tokenStorage.setAccess(data.access);
     return data.access;
   } catch {

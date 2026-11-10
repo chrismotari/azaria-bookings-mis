@@ -1,0 +1,191 @@
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useCallback, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+
+import { api } from '../../api/client';
+import { Paginated, Tenant } from '../../api/types';
+import { Button } from '../../components/Button';
+import { DetailLayout } from '../../components/DetailLayout';
+import { Pagination } from '../../components/Pagination';
+import { Screen } from '../../components/Screen';
+import { SegmentedControl } from '../../components/SegmentedControl';
+import { StatusChip } from '../../components/StatusChip';
+import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
+import { Column, Table, TableRow } from '../../components/Table';
+import { TextField } from '../../components/TextField';
+import { TripCard } from '../../components/TripCard';
+import { PlatformTabParamList } from '../../navigation/types';
+import { colors, font, space, useIsWide, weight } from '../../theme';
+import { useDebounced } from '../../utils/useDebounced';
+import { AGENCIES_KEY, AgencyDetailView, createdOn, NewAgencyDialog, TENANT_STATUS } from './AgencyDetailView';
+
+const COLUMNS: Column[] = [
+  { label: 'Name', flex: 2 },
+  { label: 'Address', flex: 2.4 },
+  { label: 'Status', flex: 1.2 },
+  { label: 'Created', flex: 1.6 },
+];
+
+type Filter = 'all' | 'true' | 'false';
+
+const FILTERS: { value: Filter; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'true', label: 'Active' },
+  { value: 'false', label: 'Suspended' },
+];
+
+export function AgenciesScreen({ navigation, route }: BottomTabScreenProps<PlatformTabParamList, 'PlatformAgencies'>) {
+  const selected = route.params?.id;
+  const close = useCallback(() => navigation.setParams({ id: undefined }), [navigation]);
+  // With an agency open the list is too narrow for the table.
+  const asTable = useIsWide() && selected === undefined;
+  const [text, setText] = useState('');
+  const search = useDebounced(text.trim(), 300);
+  const [filter, setFilter] = useState<Filter>('all');
+  const [page, setPage] = useState(1);
+  const [creating, setCreating] = useState(false);
+  const tenants = useQuery({
+    queryKey: [...AGENCIES_KEY, search, filter, page],
+    queryFn: async () => {
+      const params = { page, ...(search ? { search } : {}), ...(filter !== 'all' ? { is_active: filter } : {}) };
+      return (await api.get<Paginated<Tenant>>('/platform/tenants', { params })).data;
+    },
+    placeholderData: keepPreviousData,
+  });
+  const open = (tenant: Tenant) => navigation.setParams({ id: String(tenant.id) });
+  const filtered = search !== '' || filter !== 'all';
+
+  return (
+    <DetailLayout
+      title="Agency"
+      backLabel="All agencies"
+      onClose={close}
+      detail={selected ? <AgencyDetailView key={selected} id={selected} /> : null}
+      list={
+        <Screen card>
+          <View style={styles.header}>
+            <Text style={styles.title}>Agencies</Text>
+            <Button title="New agency" icon="add-outline" onPress={() => setCreating(true)} />
+          </View>
+          <TextField
+            label="Search"
+            value={text}
+            onChangeText={(value) => {
+              setText(value);
+              setPage(1);
+            }}
+            placeholder="Name, address or domain"
+            autoCorrect={false}
+            autoCapitalize="none"
+          />
+          <SegmentedControl
+            label="Status"
+            options={FILTERS}
+            value={filter}
+            onChange={(value) => {
+              setFilter(value);
+              setPage(1);
+            }}
+          />
+          {tenants.isPending ? (
+            <LoadingState />
+          ) : tenants.isError ? (
+            <ErrorState error={tenants.error} onRetry={() => tenants.refetch()} />
+          ) : tenants.data.results.length === 0 ? (
+            <EmptyState
+              icon="business-outline"
+              title={filtered ? 'No matching agencies' : 'No agencies yet'}
+              message={filtered ? 'No agency matches that search and status.' : 'Add the first one with New agency.'}
+            />
+          ) : (
+            <>
+              {asTable ? (
+                <Table columns={COLUMNS}>
+                  {tenants.data.results.map((tenant) => (
+                    <AgencyTableRow key={tenant.id} tenant={tenant} onPress={() => open(tenant)} />
+                  ))}
+                </Table>
+              ) : (
+                <View style={styles.cards}>
+                  {tenants.data.results.map((tenant) => (
+                    <AgencyCard
+                      key={tenant.id}
+                      tenant={tenant}
+                      selected={String(tenant.id) === selected}
+                      onPress={() => open(tenant)}
+                    />
+                  ))}
+                </View>
+              )}
+              <Pagination page={page} count={tenants.data.count} onChange={setPage} />
+            </>
+          )}
+          <NewAgencyDialog
+            open={creating}
+            onClose={() => setCreating(false)}
+            onCreated={(tenant) => {
+              setCreating(false);
+              open(tenant);
+            }}
+          />
+        </Screen>
+      }
+    />
+  );
+}
+
+function label(tenant: Tenant) {
+  return `${tenant.name}, ${tenant.primary_domain ?? tenant.slug}, ${TENANT_STATUS[String(tenant.is_active)].label}`;
+}
+
+function AgencyTableRow({ tenant, onPress }: { tenant: Tenant; onPress: () => void }) {
+  const status = TENANT_STATUS[String(tenant.is_active)];
+  return (
+    <TableRow
+      columns={COLUMNS}
+      onPress={onPress}
+      accessibilityLabel={label(tenant)}
+      cells={[
+        <Text key="name" style={styles.name} numberOfLines={1}>
+          {tenant.name}
+        </Text>,
+        <Text key="address" style={styles.text} numberOfLines={1}>
+          {tenant.primary_domain ?? '—'}
+        </Text>,
+        <StatusChip key="status" label={status.label} tone={status.tone} />,
+        <Text key="created" style={styles.text}>
+          {createdOn(tenant)}
+        </Text>,
+      ]}
+    />
+  );
+}
+
+function AgencyCard({ tenant, selected, onPress }: { tenant: Tenant; selected: boolean; onPress: () => void }) {
+  const status = TENANT_STATUS[String(tenant.is_active)];
+  return (
+    <TripCard tone={status.tone} selected={selected} onPress={onPress} accessibilityLabel={label(tenant)}>
+      <View style={styles.between}>
+        <Text style={styles.name} numberOfLines={1}>
+          {tenant.name}
+        </Text>
+        <StatusChip label={status.label} tone={status.tone} />
+      </View>
+      <Text style={styles.text} numberOfLines={1}>
+        {tenant.primary_domain ?? '—'}
+      </Text>
+      <Text style={styles.muted}>Created {createdOn(tenant)}</Text>
+    </TripCard>
+  );
+}
+
+const styles = StyleSheet.create({
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
+  title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
+  cards: { gap: space.md },
+  between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
+  name: { fontSize: font.body, fontWeight: weight.bold, color: colors.text, flexShrink: 1 },
+  text: { color: colors.text },
+  muted: { color: colors.muted },
+});
