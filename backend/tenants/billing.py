@@ -141,7 +141,7 @@ def issue_invoice(subscription):
     from .tasks import send_invoice
 
     with transaction.atomic():
-        platform = PlatformSettings.objects.select_for_update().get(pk=1)
+        platform = PlatformSettings.objects.select_for_update().get()
         subscription = Subscription.objects.select_for_update().select_related("plan", "tenant").get(
             pk=subscription.pk
         )

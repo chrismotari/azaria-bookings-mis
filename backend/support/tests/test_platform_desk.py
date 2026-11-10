@@ -24,7 +24,7 @@ ROOT = "localhost"
 
 @pytest.fixture(autouse=True)
 def support_email():
-    PlatformSettings.objects.filter(pk=1).update(support_email="support@platform.test")
+    PlatformSettings.objects.update(support_email="support@platform.test")
 
 
 def public_chats():
@@ -108,7 +108,7 @@ def test_an_agency_admin_writes_to_the_platform(platform, django_capture_on_comm
     assert email.to == ["support@platform.test"] and "Agency: Test Agency" in email.body
     assert client.get("/api/admin/chats").data["results"] == []
     [row] = platform.get("/api/platform/chats").data["results"]
-    assert row["agency"] == {"id": chat.agency_id, "name": "Test Agency"}
+    assert row["agency"] == {"id": str(chat.agency_id), "name": "Test Agency"}
 
     # The owner replies: the admin gets an email linking to their Support page on their agency's site.
     mail.outbox.clear()
@@ -157,7 +157,7 @@ def test_platform_chats_close_after_48_hours_too():
 
 
 def test_no_desk_email_without_a_support_email():
-    PlatformSettings.objects.filter(pk=1).update(support_email="")
+    PlatformSettings.objects.update(support_email="")
     APIClient(HTTP_HOST=ROOT).post("/api/platform/support/chats", {"email": "a@b.c", "subject": "x", "body": "y"})
     assert mail.outbox == []
 

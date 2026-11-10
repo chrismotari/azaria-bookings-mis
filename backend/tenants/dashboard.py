@@ -95,7 +95,7 @@ def summary():
             {
                 "id": str(invoice.pk),
                 "number": invoice.number,
-                "tenant": {"id": invoice.tenant_id, "name": invoice.tenant.name},
+                "tenant": {"id": str(invoice.tenant_id), "name": invoice.tenant.name},
                 "amount": money(invoice.amount),
                 "due_on": invoice.due_on,
                 "suspends_on": None if invoice.suspension_waived else billing.suspends_on(invoice),

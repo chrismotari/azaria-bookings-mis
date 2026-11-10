@@ -137,3 +137,5 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - Plan enquiries prefill subject "Plan enquiry: <plan> (monthly|annual)" and an editable message; on the pricing page they open the floating panel, in the agency app a dialog, after which the admin lands on the chat in Settings > Support.
 - A Dialog whose content has its own buttons (footer null) draws no footer bar.
 - The admin-address redirects (admin.<root host> and <root host>/admin) are done in the web app before it starts (config.ts), so they work wherever the app is served; a production proxy can also redirect admin.<root host> itself.
+- UUIDs everywhere (step 33): the singleton settings rows are fetched as the one row (objects.get()), and their data migrations create the row only when there is none. The plain-text-to-HTML description migration of step 30 went with the regenerated migrations (and its helper, now unused).
+- A test walks every project model and fails on any non-UUID primary key, so the rule cannot be broken silently.

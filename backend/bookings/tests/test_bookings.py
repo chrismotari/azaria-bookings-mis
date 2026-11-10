@@ -23,7 +23,7 @@ NOW = "2026-03-02 09:00:00+03:00"
 
 @pytest.fixture
 def payment_instructions(db):
-    AppSettings.objects.filter(pk=1).update(payment_instructions="M-Pesa paybill 123456, account AZARIA.")
+    AppSettings.objects.update(payment_instructions="M-Pesa paybill 123456, account AZARIA.")
 
 
 @pytest.fixture
@@ -311,7 +311,7 @@ def test_booking_creation_queues_exactly_the_admin_email(customer, offer, django
 
 @freeze_time(NOW)
 def test_confirm_availability_sets_deadline_and_clears_reminder(admin_api, make_booking, payment_instructions):
-    AppSettings.objects.filter(pk=1).update(payment_hold_hours=6)
+    AppSettings.objects.update(payment_hold_hours=6)
     booking = make_booking(reminder_sent_at=timezone.now())
     response = admin_api.post(f"/api/admin/bookings/{booking.id}/confirm-availability")
     assert response.status_code == 200, response.data
@@ -323,7 +323,7 @@ def test_confirm_availability_sets_deadline_and_clears_reminder(admin_api, make_
 
 
 def test_confirm_availability_fails_without_payment_instructions(admin_api, make_booking):
-    AppSettings.objects.filter(pk=1).update(payment_instructions="  ")
+    AppSettings.objects.update(payment_instructions="  ")
     booking = make_booking()
     response = admin_api.post(f"/api/admin/bookings/{booking.id}/confirm-availability")
     assert response.status_code == 409

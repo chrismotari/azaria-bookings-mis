@@ -53,7 +53,7 @@ export function AgenciesScreen({ navigation, route }: BottomTabScreenProps<Platf
     },
     placeholderData: keepPreviousData,
   });
-  const open = (tenant: Tenant) => navigation.setParams({ id: String(tenant.id) });
+  const open = (tenant: Tenant) => navigation.setParams({ id: tenant.id });
   const filtered = search !== '' || filter !== 'all';
 
   return (
@@ -109,7 +109,7 @@ export function AgenciesScreen({ navigation, route }: BottomTabScreenProps<Platf
                     <AgencyCard
                       key={tenant.id}
                       tenant={tenant}
-                      selected={String(tenant.id) === selected}
+                      selected={tenant.id === selected}
                       onPress={() => open(tenant)}
                     />
                   ))}

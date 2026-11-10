@@ -89,7 +89,7 @@ def test_emails_show_the_booking_stops(
     assert f"Stops: {expected}" in new_booking.body
     assert expected in html_part(new_booking)
 
-    AppSettings.objects.filter(pk=1).update(payment_instructions="M-Pesa paybill 123456.")
+    AppSettings.objects.update(payment_instructions="M-Pesa paybill 123456.")
     with django_capture_on_commit_callbacks(execute=True):
         transition(booking.pk, Booking.Status.AVAILABILITY_CONFIRMED, admin_user)
     confirmed = mail.outbox[-1]

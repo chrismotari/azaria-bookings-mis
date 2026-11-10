@@ -19,7 +19,7 @@ Status = Booking.Status
 
 @pytest.fixture(autouse=True)
 def payment_instructions(db):
-    AppSettings.objects.filter(pk=1).update(payment_instructions="M-Pesa paybill 123456.")
+    AppSettings.objects.update(payment_instructions="M-Pesa paybill 123456.")
 
 
 @pytest.fixture

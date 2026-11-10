@@ -12,6 +12,8 @@ class Tenant(TenantMixin):
     Tenants are suspended (is_active false), never deleted.
     """
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     class SuspensionReason(models.TextChoices):
         MANUAL = "manual", "Suspended by the system owner"
         NON_PAYMENT = "non_payment", "Suspended for non-payment"
@@ -43,12 +45,16 @@ class Tenant(TenantMixin):
 class Domain(DomainMixin):
     """A hostname that reaches a tenant; the primary one is used in email links."""
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     def __str__(self):
         return self.domain
 
 
 class PlatformSettings(models.Model):
-    """The platform's billing settings. Single row (pk=1) created by a data migration."""
+    """The platform's billing and support settings. Single row, created by a data migration."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     issuer_details = models.TextField(blank=True, help_text="The platform's name and address, printed on invoices.")
     payment_instructions = models.TextField(blank=True)
@@ -67,7 +73,7 @@ class PlatformSettings(models.Model):
 
     @classmethod
     def get(cls):
-        return cls.objects.get(pk=1)
+        return cls.objects.get()
 
 
 class BillingCycle(models.TextChoices):

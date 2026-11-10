@@ -64,7 +64,7 @@ class DeskConversationSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_agency(self, conversation):
-        return {"id": conversation.agency_id, "name": conversation.agency.name} if conversation.agency_id else None
+        return {"id": str(conversation.agency_id), "name": conversation.agency.name} if conversation.agency_id else None
 
     def get_closed_by_name(self, conversation):
         return conversation.closed_by.full_name if conversation.closed_by else None

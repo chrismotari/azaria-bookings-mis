@@ -197,14 +197,14 @@ export type AdminCustomer = {
 
 /** A domain (hostname) that reaches an agency; the primary one is used in email links. */
 export type TenantDomain = {
-  id: number;
+  id: string;
   domain: string;
   is_primary: boolean;
 };
 
 /** An agency as the system owner manages it on the platform. */
 export type Tenant = {
-  id: number;
+  id: string;
   name: string;
   /** The address typed when it was created: <slug>.<base domain>. */
   slug: string;
@@ -275,7 +275,7 @@ export type AgencyInvoice = {
 
 /** An invoice as the system owner sees it. */
 export type Invoice = AgencyInvoice & {
-  tenant: { id: number; name: string };
+  tenant: { id: string; name: string };
   subscription: string;
   suspension_waived: boolean;
   /** The first day the agency can be suspended for it; null once paid, void or waived. */
@@ -321,7 +321,7 @@ export type PlatformDashboard = {
   attention: {
     id: string;
     number: string;
-    tenant: { id: number; name: string };
+    tenant: { id: string; name: string };
     amount: string;
     due_on: string;
     suspends_on: string | null;
@@ -373,7 +373,7 @@ export type DeskChat = Chat & {
   is_guest: boolean;
   closed_by_name: string | null;
   /** Platform desk: the agency an agency admin wrote from. */
-  agency: { id: number; name: string } | null;
+  agency: { id: string; name: string } | null;
 };
 
 export type DeskChatDetail = DeskChat & { messages: ChatMessage[] };

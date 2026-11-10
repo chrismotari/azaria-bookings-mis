@@ -1,5 +1,7 @@
 """The platform API on the root host: the system owner's sign-in and agency management (step 26)."""
 
+import uuid
+
 import pytest
 from django_tenants.utils import schema_context, schema_exists
 from rest_framework.test import APIClient
@@ -294,3 +296,14 @@ def test_another_agencys_domain_cannot_be_changed_through_this_one(platform):
     url = f"/api/platform/tenants/{test_tenant.pk}/domains/{other_primary.pk}"
     assert platform.delete(url).status_code == 404
     assert platform.post(f"{url}/make-primary").status_code == 404
+
+
+def test_agency_and_domain_ids_are_uuids(platform):
+    row = platform.get("/api/platform/tenants").data["results"][0]
+    assert uuid.UUID(str(row["id"]))
+    detail = platform.get(f"/api/platform/tenants/{row['id']}").data
+    assert uuid.UUID(str(detail["domains"][0]["id"]))
+    # Numbers and malformed ids are not found; a malformed invoice filter is an empty list.
+    assert platform.get("/api/platform/tenants/1").status_code == 404
+    assert platform.get("/api/platform/tenants/not-a-uuid").status_code == 404
+    assert platform.get("/api/platform/invoices", {"tenant": "12"}).data["results"] == []

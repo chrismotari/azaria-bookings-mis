@@ -22,7 +22,7 @@ DEADLINE = datetime(2026, 3, 2, 18, 0, tzinfo=NAIROBI)
 
 @pytest.fixture
 def instructions(db):
-    AppSettings.objects.filter(pk=1).update(
+    AppSettings.objects.update(
         payment_instructions="M-Pesa paybill 123456, account AZARIA.", reminder_hours_before=4
     )
 
@@ -148,7 +148,7 @@ def test_reminder_is_sent_only_once(make_booking, instructions, django_capture_o
 
 @pytest.mark.django_db
 def test_reminder_uses_reminder_hours_from_settings(make_booking, instructions):
-    AppSettings.objects.filter(pk=1).update(reminder_hours_before=1)
+    AppSettings.objects.update(reminder_hours_before=1)
     make_booking()
     with freeze_time(DEADLINE - timedelta(hours=2)):
         assert tasks.send_payment_reminders() == 0

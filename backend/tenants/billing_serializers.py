@@ -149,7 +149,7 @@ class SubscriptionChangeSerializer(serializers.Serializer):
 
 
 class InvoiceTenantSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
+    id = serializers.UUIDField()
     name = serializers.CharField()
 
 

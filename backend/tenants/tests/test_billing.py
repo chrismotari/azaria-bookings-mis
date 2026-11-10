@@ -22,7 +22,7 @@ MONTHLY, ANNUAL = BillingCycle.MONTHLY, BillingCycle.ANNUAL
 
 @pytest.fixture(autouse=True)
 def platform_settings():
-    PlatformSettings.objects.filter(pk=1).update(
+    PlatformSettings.objects.update(
         issuer_details="Azaria Platform Ltd\nNairobi",
         payment_instructions="Bank transfer to account 123, quoting the invoice number.",
         invoice_due_days=14,
@@ -412,7 +412,7 @@ def test_platform_billing_api_flow(platform, agency):
     assert issued.status_code == 201 and issued.data["amount"] == "100.00"
 
     listed = platform.get("/api/platform/invoices", {"tenant": agency.pk}).data["results"]
-    assert len(listed) == 2 and listed[0]["tenant"] == {"id": agency.pk, "name": "Other Agency"}
+    assert len(listed) == 2 and listed[0]["tenant"] == {"id": str(agency.pk), "name": "Other Agency"}
     invoice_url = f"/api/platform/invoices/{listed[0]['id']}"
     assert platform.get(invoice_url).data["number"] == listed[0]["number"]
     pdf = platform.get(f"{invoice_url}/pdf")

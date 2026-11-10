@@ -1,6 +1,8 @@
 """Plans, subscriptions, invoices and platform settings: the system owner's API on the root host, and the
 read-only billing API for an agency's admins on its own host (step 27)."""
 
+import uuid
+
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import connection
 from django.http import FileResponse, Http404
@@ -143,7 +145,10 @@ class InvoiceListView(generics.ListAPIView):
         queryset = Invoice.objects.select_related("tenant")
         params = self.request.query_params
         if params.get("tenant"):
-            queryset = queryset.filter(tenant_id=params["tenant"]) if params["tenant"].isdigit() else queryset.none()
+            try:
+                queryset = queryset.filter(tenant_id=uuid.UUID(params["tenant"]))
+            except ValueError:
+                queryset = queryset.none()
         if params.get("status") in Invoice.Status.values:
             queryset = queryset.filter(status=params["status"])
         if params.get("overdue") == "true":

@@ -1,8 +1,12 @@
+import uuid
+
 from django.db import models
 
 
 class AppSettings(models.Model):
-    """Single row (pk=1) created by a data migration."""
+    """Single row, created by a data migration."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     payment_instructions = models.TextField(blank=True)
     payment_hold_hours = models.PositiveIntegerField(default=24)
@@ -18,4 +22,4 @@ class AppSettings(models.Model):
 
     @classmethod
     def get(cls):
-        return cls.objects.get(pk=1)
+        return cls.objects.get()

@@ -55,7 +55,7 @@ def test_admin_books_for_a_customer(
 
 
 def test_the_booking_then_follows_the_normal_flow(admin_api, customer_api, customer, make_offer):
-    AppSettings.objects.filter(pk=1).update(payment_instructions="M-Pesa paybill 123456.")
+    AppSettings.objects.update(payment_instructions="M-Pesa paybill 123456.")
     booking_id = book(admin_api, customer, make_offer()).data["id"]
     assert customer_api.get(f"/api/bookings/{booking_id}").status_code == 200
     assert admin_api.post(f"/api/admin/bookings/{booking_id}/confirm-availability").status_code == 200

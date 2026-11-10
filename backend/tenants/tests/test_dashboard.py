@@ -117,7 +117,7 @@ def test_the_figures(platform):
         (late.number, str(billing.suspends_on(late))),
         (waived.number, None),
     ]
-    assert data["attention"][0]["tenant"] == {"id": other.pk, "name": "Other Agency"}
+    assert data["attention"][0]["tenant"] == {"id": str(other.pk), "name": "Other Agency"}
 
 
 def test_manual_suspensions_are_counted_apart(platform):

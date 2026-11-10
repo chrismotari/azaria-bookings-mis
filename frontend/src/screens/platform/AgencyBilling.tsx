@@ -32,7 +32,7 @@ const CYCLES: { value: BillingCycle; label: string }[] = [
   { value: 'annual', label: 'Annual' },
 ];
 
-const subscriptionsKey = (id: number) => ['platform', 'tenants', 'subscriptions', id];
+const subscriptionsKey = (id: string) => ['platform', 'tenants', 'subscriptions', id];
 
 /** The agency drawer's "Plan & billing" section: billing email, its two plans and its invoices. */
 export function AgencyBilling({ tenant, onSaved }: { tenant: TenantDetail; onSaved: (data: TenantDetail) => void }) {

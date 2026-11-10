@@ -65,7 +65,7 @@ function useRefresh(tenant: TenantDetail) {
   const queryClient = useQueryClient();
   return (data?: TenantDetail) => {
     if (data) {
-      queryClient.setQueryData(detailKey(String(tenant.id)), data);
+      queryClient.setQueryData(detailKey(tenant.id), data);
     }
     return queryClient.invalidateQueries({ queryKey: AGENCIES_KEY });
   };

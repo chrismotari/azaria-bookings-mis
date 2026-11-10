@@ -24,7 +24,7 @@ def pdf(name="details.pdf", content=PDF, content_type="application/pdf"):
 
 @pytest.fixture(autouse=True)
 def desk_email():
-    AppSettings.objects.filter(pk=1).update(admin_notification_email="desk@agency.test")
+    AppSettings.objects.update(admin_notification_email="desk@agency.test")
 
 
 def start(client, **data):

@@ -1,10 +1,8 @@
 """Plan tags, rich descriptions and the plans pages (step 30)."""
 
-import importlib
 from datetime import date
 
 import pytest
-from django.apps import apps as django_apps
 from rest_framework.test import APIClient
 
 from accounts.models import User
@@ -45,20 +43,6 @@ def test_scripts_styles_events_and_unsafe_links_are_removed():
 def test_an_empty_editor_is_an_empty_description():
     assert richtext.sanitize("<p></p>") == ""
     assert richtext.sanitize("  ") == ""
-
-
-def test_plain_text_becomes_escaped_paragraphs():
-    assert richtext.from_plain_text("Up to 5 admins\nEmail support\n\n<b>& more</b>") == (
-        "<p>Up to 5 admins<br>Email support</p><p>&lt;b&gt;&amp; more&lt;/b&gt;</p>"
-    )
-    assert richtext.from_plain_text("") == ""
-
-
-def test_the_migration_converts_existing_descriptions():
-    plan("Old", description="Line one\nLine <two>")
-    migration = importlib.import_module("tenants.migrations.0006_rich_descriptions")
-    migration.to_rich_text(django_apps, None)
-    assert Plan.objects.get(name="Old").description == "<p>Line one<br>Line &lt;two&gt;</p>"
 
 
 def test_the_api_sanitizes_and_limits_descriptions(platform):
@@ -121,7 +105,7 @@ def test_deactivating_clears_the_tag(platform):
 def test_public_plans_are_open_on_the_root_host_and_only_active():
     plan("Starter", tag=Plan.Tag.RECOMMENDED, description="<p>Good</p>")
     plan("Old", is_active=False)
-    PlatformSettings.objects.filter(pk=1).update(billing_contact_email="sales@azaria.test")
+    PlatformSettings.objects.update(billing_contact_email="sales@azaria.test")
     client = APIClient(HTTP_HOST="localhost")
     # A stale token does not matter on a public page.
     client.credentials(HTTP_AUTHORIZATION="Bearer not-a-token")

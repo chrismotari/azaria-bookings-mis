@@ -10,7 +10,7 @@ pytestmark = pytest.mark.django_db
 
 def test_app_settings_row_seeded(settings):
     app_settings = AppSettings.get()
-    assert app_settings.pk == 1
+    assert AppSettings.objects.count() == 1
     assert app_settings.admin_notification_email == settings.ADMIN_EMAIL
     assert app_settings.payment_instructions == ""
     assert app_settings.payment_hold_hours == 24
@@ -42,3 +42,17 @@ def test_django_admin_mounted_for_superusers_only(client, customer, admin_user):
     superuser = User.objects.create_superuser(email="root@example.com", password="x", full_name="Root")
     client.force_login(superuser)
     assert client.get("/django-admin/").status_code == 200
+
+
+def test_every_model_has_a_uuid_primary_key():
+    """Identifiers are always UUIDs (HARD RULES); only Django's own framework models keep numeric keys."""
+    from django.apps import apps
+    from django.db import models
+
+    framework = {"admin", "auth", "contenttypes", "sessions"}
+    numeric = [
+        model._meta.label
+        for model in apps.get_models()
+        if model._meta.app_label not in framework and not isinstance(model._meta.pk, models.UUIDField)
+    ]
+    assert numeric == []

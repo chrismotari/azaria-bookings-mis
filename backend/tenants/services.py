@@ -79,7 +79,7 @@ def create_agency(*, slug, name, admin_email, admin_password, admin_name):
         tenant.save(verbosity=0)
         Domain.objects.create(domain=domain_for(slug), tenant=tenant, is_primary=True)
         with schema_context(tenant.schema_name):
-            AppSettings.objects.filter(pk=1).update(admin_notification_email=admin_email)
+            AppSettings.objects.update(admin_notification_email=admin_email)
             User.objects.create_user(
                 email=admin_email, password=admin_password, full_name=admin_name.strip(), role=User.Role.ADMIN
             )
