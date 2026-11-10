@@ -35,6 +35,9 @@ export type AdminTabParamList = {
 /** The platform's screens (root host only). */
 export type PlatformTabParamList = {
   PlatformAgencies: { id?: string } | undefined;
+  PlatformPlans: undefined;
+  PlatformInvoices: { id?: string; tenant?: string } | undefined;
+  PlatformSettings: undefined;
 };
 
 export type RootStackParamList = {
@@ -48,6 +51,7 @@ export type RootStackParamList = {
   AdminTabs: NavigatorScreenParams<AdminTabParamList> | undefined;
   AdminOfferNew: undefined;
   AdminQueryRespond: { id: string };
+  AdminBilling: undefined;
   PlatformLogin: undefined;
   PlatformTabs: NavigatorScreenParams<PlatformTabParamList> | undefined;
 };

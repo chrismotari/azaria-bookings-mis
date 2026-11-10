@@ -1,0 +1,18 @@
+Hello {{ tenant.name }},
+
+Your invoice {{ invoice.number }} is attached.
+
+Plan: {{ invoice.plan_name }} ({{ cycle }})
+Period: {{ period }}
+Amount: {{ amount }}
+Due by: {{ due }}
+
+How to pay:
+{{ payment_instructions }}
+
+Please include the invoice number with your payment. Your admins can also see this invoice and download it under Billing in the app:
+{{ frontend_url }}/admin/billing
+{% if billing_contact_email %}
+Questions about billing: {{ billing_contact_email }}
+{% endif %}
+Azaria Bookings

@@ -124,6 +124,8 @@ PUBLIC_MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
 
 CURRENCY = "USD"
+# What agencies pay the platform in: every plan and invoice (step 27).
+PLATFORM_CURRENCY = env("PLATFORM_CURRENCY", default="USD")
 
 
 # Email: console in development unless EMAIL_HOST is set; tests use locmem.
@@ -197,5 +199,14 @@ CELERY_BEAT_SCHEDULE = {
     "expire-stale-requests": {
         "task": "bookings.tasks.expire_stale_requests",
         "schedule": timedelta(hours=1),
+    },
+    # The platform's billing (public schema), once a day.
+    "issue-due-invoices": {
+        "task": "tenants.tasks.issue_due_invoices",
+        "schedule": timedelta(days=1),
+    },
+    "suspend-overdue-tenants": {
+        "task": "tenants.tasks.suspend_overdue_tenants",
+        "schedule": timedelta(days=1),
     },
 }

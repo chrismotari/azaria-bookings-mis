@@ -6,7 +6,7 @@ from django_tenants.utils import get_public_schema_name
 
 from config.admin_site import platform_site
 
-from . import services
+from . import billing, services
 from .models import Domain, Tenant
 
 
@@ -56,8 +56,8 @@ class TenantAdmin(admin.ModelAdmin):
     list_display = ["name", "schema_name", "primary_domain", "is_active", "created_at"]
     list_filter = ["is_active"]
     search_fields = ["name", "schema_name", "domains__domain"]
-    readonly_fields = ["schema_name", "created_at"]
-    fields = ["name", "schema_name", "is_active", "created_at"]
+    readonly_fields = ["schema_name", "created_at", "suspension_reason", "suspended_at"]
+    fields = ["name", "schema_name", "is_active", "suspension_reason", "suspended_at", "billing_email", "created_at"]
     inlines = [DomainInline]
 
     def get_queryset(self, request):
@@ -83,7 +83,14 @@ class TenantAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         if change:
+            # Suspending and reactivating go through billing.set_active (reason, waived invoices).
+            toggled = "is_active" in form.changed_data
+            active = obj.is_active
+            if toggled:
+                obj.is_active = not active
             obj.save()
+            if toggled:
+                billing.set_active(obj, active)
             return
         data = form.cleaned_data
         tenant = services.create_agency(

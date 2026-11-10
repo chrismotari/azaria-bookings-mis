@@ -17,10 +17,13 @@ async function readErrorBody(error: unknown): Promise<never> {
 }
 
 /** Web only: fetches a boarding pass with the auth header and saves it under its original name. */
-export async function downloadBoardingPass(id: string, filename: string) {
-  const { data } = await api
-    .get<Blob>(`/boarding-passes/${id}/download`, { responseType: 'blob' })
-    .catch(readErrorBody);
+export function downloadBoardingPass(id: string, filename: string) {
+  return downloadFile(`/boarding-passes/${id}/download`, filename);
+}
+
+/** Web only: fetches an API file (e.g. an invoice PDF) with the auth header and saves it as filename. */
+export async function downloadFile(path: string, filename: string) {
+  const { data } = await api.get<Blob>(path, { responseType: 'blob' }).catch(readErrorBody);
   const url = URL.createObjectURL(data);
   const link = document.createElement('a');
   link.href = url;

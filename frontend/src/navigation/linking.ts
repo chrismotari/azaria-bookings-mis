@@ -38,6 +38,7 @@ const agencyLinking: LinkingOptions<RootStackParamList> = {
       },
       AdminOfferNew: 'admin/offers/new',
       AdminQueryRespond: 'admin/requests/:id/respond',
+      AdminBilling: 'admin/billing',
     },
   },
 };
@@ -53,6 +54,9 @@ const platformLinking: LinkingOptions<RootStackParamList> = {
         screens: {
           // Agencies is the platform's home; '/' opens it too.
           PlatformAgencies: { path: 'agencies/:id?', alias: [''] },
+          PlatformPlans: 'plans',
+          PlatformInvoices: 'invoices/:id?',
+          PlatformSettings: 'settings',
         },
       },
     },

@@ -1,0 +1,12 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hello {{ tenant.name }},</p>
+<p style="margin:0 0 16px 0;">Your agency's account is <strong>suspended</strong> because these invoices are more than a month past their due date:</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
+  {% for invoice in invoices %}{% include "emails/_row.html" with label=invoice.number value=invoice.amount|add:", due "|add:invoice.due %}{% endfor %}
+</table>
+<p style="margin:0 0 16px 0;">Until payment is recorded, nobody can use your agency's app (your admins and your customers).</p>
+{% include "emails/_box.html" with title="How to pay" text=payment_instructions %}
+<p style="margin:0 0 16px 0;">Access returns as soon as your payment is recorded.</p>
+{% if billing_contact_email %}<p style="margin:0 0 16px 0;">Questions about billing: <a href="mailto:{{ billing_contact_email }}" style="color:{{ brand.primary }};">{{ billing_contact_email }}</a></p>{% endif %}
+{% endblock %}

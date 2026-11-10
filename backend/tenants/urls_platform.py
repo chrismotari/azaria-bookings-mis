@@ -3,6 +3,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from accounts.tokens import TenantTokenRefreshSerializer
 
+from . import billing_views as billing
 from . import platform_views as views
 
 urlpatterns = [
@@ -14,4 +15,18 @@ urlpatterns = [
     path("tenants/<int:pk>/domains", views.PlatformDomainListView.as_view()),
     path("tenants/<int:pk>/domains/<int:domain_id>", views.PlatformDomainDetailView.as_view()),
     path("tenants/<int:pk>/domains/<int:domain_id>/make-primary", views.PlatformDomainMakePrimaryView.as_view()),
+    path("tenants/<int:pk>/subscriptions", billing.TenantSubscriptionListView.as_view()),
+    path("plans", billing.PlanListView.as_view()),
+    path("plans/<uuid:pk>", billing.PlanDetailView.as_view()),
+    path("subscriptions/<uuid:pk>", billing.SubscriptionDetailView.as_view()),
+    path("subscriptions/<uuid:pk>/end", billing.SubscriptionEndView.as_view()),
+    path("subscriptions/<uuid:pk>/issue-invoice", billing.SubscriptionIssueInvoiceView.as_view()),
+    path("invoices", billing.InvoiceListView.as_view()),
+    path("invoices/<uuid:pk>", billing.InvoiceDetailView.as_view()),
+    path("invoices/<uuid:pk>/pdf", billing.InvoicePdfView.as_view()),
+    *[
+        path(f"invoices/<uuid:pk>/{action}", billing.InvoiceActionView.as_view(action=action))
+        for action in ["mark-paid", "mark-unpaid", "void", "resend"]
+    ],
+    path("settings", billing.PlatformSettingsView.as_view()),
 ]

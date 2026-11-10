@@ -43,8 +43,18 @@ class TenantSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tenant
-        fields = ["id", "name", "slug", "primary_domain", "is_active", "created_at"]
-        read_only_fields = ["id", "slug", "primary_domain", "created_at"]
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "primary_domain",
+            "is_active",
+            "suspension_reason",
+            "suspended_at",
+            "billing_email",
+            "created_at",
+        ]
+        read_only_fields = ["id", "slug", "primary_domain", "suspension_reason", "suspended_at", "created_at"]
 
     def get_slug(self, tenant):
         return slug_of(tenant)

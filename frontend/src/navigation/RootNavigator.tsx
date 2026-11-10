@@ -2,7 +2,7 @@ import { BottomTabScreenProps, createBottomTabNavigator } from '@react-navigatio
 import { useFocusEffect, useLinkTo, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { useAuth } from '../auth/AuthContext';
 import { RequireAuth, toLogin } from '../auth/gate';
@@ -23,7 +23,11 @@ import { LoginScreen } from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import { ResetPasswordScreen } from '../screens/auth/ResetPasswordScreen';
 import { AccountScreen } from '../screens/customer/AccountScreen';
+import { AdminBillingScreen, OverdueBanner } from '../screens/admin/AdminBillingScreen';
 import { AgenciesScreen } from '../screens/platform/AgenciesScreen';
+import { InvoicesScreen } from '../screens/platform/InvoicesScreen';
+import { PlansScreen } from '../screens/platform/PlansScreen';
+import { PlatformSettingsScreen } from '../screens/platform/PlatformSettingsScreen';
 import { PlatformLoginScreen } from '../screens/platform/PlatformLoginScreen';
 import { IS_PLATFORM } from '../config';
 import { ExploreScreen } from '../screens/explore/ExploreScreen';
@@ -70,15 +74,20 @@ function AdminStack() {
     }
   }, [linkTo]);
   return (
-    <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
-      <Stack.Screen name="AdminTabs" component={AdminTabsNavigator} options={{ headerShown: false }} />
-      <Stack.Screen name="AdminOfferNew" component={AdminOfferNewScreen} options={{ title: 'New offer' }} />
-      <Stack.Screen
-        name="AdminQueryRespond"
-        component={AdminQueryRespondScreen}
-        options={{ title: 'Respond to request' }}
-      />
-    </Stack.Navigator>
+    <View style={styles.fill}>
+      {/* While an invoice to the platform is overdue, on every admin screen. */}
+      <OverdueBanner />
+      <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
+        <Stack.Screen name="AdminTabs" component={AdminTabsNavigator} options={{ headerShown: false }} />
+        <Stack.Screen name="AdminOfferNew" component={AdminOfferNewScreen} options={{ title: 'New offer' }} />
+        <Stack.Screen
+          name="AdminQueryRespond"
+          component={AdminQueryRespondScreen}
+          options={{ title: 'Respond to request' }}
+        />
+        <Stack.Screen name="AdminBilling" component={AdminBillingScreen} options={{ title: 'Billing' }} />
+      </Stack.Navigator>
+    </View>
   );
 }
 
@@ -234,6 +243,17 @@ function PlatformTabsNavigator() {
         component={AgenciesScreen}
         options={tab('Agencies', 'business-outline', 'business')}
       />
+      <PlatformTabs.Screen name="PlatformPlans" component={PlansScreen} options={tab('Plans', 'layers-outline', 'layers')} />
+      <PlatformTabs.Screen
+        name="PlatformInvoices"
+        component={InvoicesScreen}
+        options={tab('Invoices', 'document-text-outline', 'document-text')}
+      />
+      <PlatformTabs.Screen
+        name="PlatformSettings"
+        component={PlatformSettingsScreen}
+        options={tab('Settings', 'settings-outline', 'settings')}
+      />
     </PlatformTabs.Navigator>
   );
 }
@@ -282,8 +302,13 @@ export function RootNavigator() {
           {/* Admin links opened while signed out go to Login first. */}
           <Stack.Screen name="AdminTabs" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
           <Stack.Screen name="AdminQueryRespond" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
+          <Stack.Screen name="AdminBilling" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
         </Stack.Group>
       )}
     </Stack.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  fill: { flex: 1 },
+});

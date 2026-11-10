@@ -1,0 +1,16 @@
+Hello {{ tenant.name }},
+
+Your agency's account is suspended because these invoices are more than a month past their due date:
+{% for invoice in invoices %}
+- {{ invoice.number }}: {{ invoice.amount }}, due {{ invoice.due }}{% endfor %}
+
+Until payment is recorded, nobody can use your agency's app (your admins and your customers).
+
+How to pay:
+{{ payment_instructions }}
+
+Access returns as soon as your payment is recorded.
+{% if billing_contact_email %}
+Questions about billing: {{ billing_contact_email }}
+{% endif %}
+Azaria Bookings

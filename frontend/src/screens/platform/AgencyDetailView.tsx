@@ -20,7 +20,9 @@ import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
 import { PLATFORM_HOST } from '../../config';
 import { colors, font, radius, space, weight } from '../../theme';
-import { formatDate } from '../../utils/format';
+import { formatDate, formatDateTime } from '../../utils/format';
+import { AgencyBilling } from './AgencyBilling';
+import { AGENCIES_KEY } from './keys';
 
 /** Keyed by String(is_active). */
 export const TENANT_STATUS: Record<string, { label: string; tone: Tone }> = {
@@ -28,8 +30,15 @@ export const TENANT_STATUS: Record<string, { label: string; tone: Tone }> = {
   false: { label: 'Suspended', tone: 'danger' },
 };
 
-/** Every platform agency query (the list pages and each detail) starts with this key. */
-export const AGENCIES_KEY = ['platform', 'tenants'];
+export { AGENCIES_KEY };
+
+/** Active, Suspended, or Suspended for non-payment. */
+export function tenantStatus(tenant: Tenant): { label: string; tone: Tone } {
+  if (!tenant.is_active && tenant.suspension_reason === 'non_payment') {
+    return { label: 'Suspended for non-payment', tone: 'danger' };
+  }
+  return TENANT_STATUS[String(tenant.is_active)];
+}
 
 const detailKey = (id: string) => [...AGENCIES_KEY, 'detail', id];
 
@@ -94,7 +103,7 @@ function Agency({ tenant }: { tenant: TenantDetail }) {
     }
   };
 
-  const status = TENANT_STATUS[String(tenant.is_active)];
+  const status = tenantStatus(tenant);
   return (
     <>
       <ActionBar>
@@ -113,12 +122,19 @@ function Agency({ tenant }: { tenant: TenantDetail }) {
           <StatusChip label={status.label} tone={status.tone} />
         </View>
         {!tenant.is_active ? (
-          <Text style={styles.muted}>Suspended: its app answers that the agency is not available. Data is kept.</Text>
+          <Text style={styles.muted}>
+            {tenant.suspension_reason === 'non_payment'
+              ? 'Suspended automatically: an invoice is more than a month overdue. Marking it paid reactivates the agency; reactivating it now waives that invoice for suspension.'
+              : 'Suspended: its app answers that the agency is not available. Data is kept.'}
+            {tenant.suspended_at ? ` Since ${formatDateTime(tenant.suspended_at)}.` : ''}
+          </Text>
         ) : null}
         <NameForm tenant={tenant} />
         <Detail label="Address" value={tenant.primary_domain ?? '—'} />
         <Detail label="Created" value={createdOn(tenant)} />
       </Card>
+
+      <AgencyBilling tenant={tenant} onSaved={refresh} />
 
       <Domains tenant={tenant} />
     </>

@@ -12,4 +12,5 @@ urlpatterns = [
     path("api/", include("customer_requests.urls")),
     path("api/", include("bookings.urls")),
     path("api/", include("core.urls")),
+    path("api/", include("tenants.urls_billing")),
 ] + static(settings.MEDIA_URL, document_root=settings.PUBLIC_MEDIA_ROOT)

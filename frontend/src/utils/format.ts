@@ -6,6 +6,11 @@ export function formatPrice(amount: string | number): string {
   return usd.format(Number(amount));
 }
 
+/** An amount in the given currency (the platform's plans and invoices), e.g. "KES 1,000.00". */
+export function formatMoney(amount: string | number, currency: string): string {
+  return `${currency} ${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
 const dateFormat = new Intl.DateTimeFormat('en-GB', {
   weekday: 'short',
   day: 'numeric',

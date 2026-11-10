@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from django_tenants.utils import get_public_schema_name
 
-from .views import SUSPENDED
+from .views import suspended_body
 
 
 class SuspendedTenantMiddleware:
@@ -18,5 +18,5 @@ class SuspendedTenantMiddleware:
             and not tenant.is_active
             and request.path.startswith("/api/")
         ):
-            return JsonResponse(SUSPENDED, status=403)
+            return JsonResponse(suspended_body(tenant), status=403)
         return self.get_response(request)

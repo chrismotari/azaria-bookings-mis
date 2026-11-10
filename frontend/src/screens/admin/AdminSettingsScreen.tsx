@@ -1,8 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useNavigation } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { z } from 'zod';
 
 import { api } from '../../api/client';
@@ -57,6 +58,7 @@ function toValues(settings: AppSettings): FormValues {
 }
 
 function SettingsForm({ settings }: { settings: AppSettings }) {
+  const navigation = useNavigation();
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -179,11 +181,22 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
         {saved ? <Text style={styles.saved}>Settings saved.</Text> : null}
         <Button title="Save settings" onPress={onSubmit} loading={formState.isSubmitting} />
       </FormFooter>
+      <FormSection title="Billing" description="Your agency's plans with Azaria Bookings and their invoices.">
+        <View style={styles.billing}>
+          <Button
+            title="View billing"
+            variant="secondary"
+            icon="document-text-outline"
+            onPress={() => navigation.navigate('AdminBilling')}
+          />
+        </View>
+      </FormSection>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  billing: { alignItems: 'flex-start' },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   warning: { color: colors.danger },
   saved: { color: colors.success, fontWeight: weight.semibold },

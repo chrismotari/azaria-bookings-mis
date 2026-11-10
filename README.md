@@ -120,6 +120,7 @@ About the management commands:
 - **`create_agency`** adds an agency: see above. The address (`--schema`) is 3 to 30 lowercase letters, digits and hyphens; `public`, `www`, `api`, `admin` and `app-admin` are reserved. If any part fails, nothing is left behind.
 - **`create_admin`** adds another admin to an agency: `python manage.py tenant_command create_admin --schema=azaria --email ... --password ... --name ...`.
 - **The platform app** on the root host (http://localhost:8081) is where the system owner manages agencies: sign in with a public-schema superuser (`createsuperuser`), then list, search, add, rename, suspend and reactivate agencies and manage their domains. It is web only and has no registration or password reset (use `createsuperuser` and `changepassword`). `EXPO_PUBLIC_PLATFORM_HOST` in `frontend/.env` names the root host.
+- **Billing** (platform app: Plans, Invoices, Settings, and Plan & billing in an agency's drawer): agencies pay the platform outside the system. The owner creates plans (subscription or support, monthly and/or annual prices in `PLATFORM_CURRENCY`), starts an agency's plan (its first invoice is issued and emailed at once), and marks invoices paid by hand. Invoices are issued automatically before each period, due after the set number of days, and an agency with an invoice more than a month past due is suspended until it is paid or the owner reactivates it. Agency admins see their plans and invoices under Settings → Billing, with a warning banner while an invoice is overdue. Invoice PDFs are stored in `private_media/invoices/<schema>/`.
 - **`/django-admin/`** on the root host (http://localhost:8000/django-admin/) is the platform admin for the system owner: list, add, rename, suspend and reactivate agencies and manage their domains, and curate the shared airline list (add, edit, deactivate, and upload each airline's logo: PNG, JPEG or WebP, up to 200 KB). It is open to superusers of the public schema (`createsuperuser`).
 - **`/django-admin/`** on an agency's host is technical support for that agency's data, open to that agency's superusers (`python manage.py tenant_command createsuperuser --schema=azaria`). Both are separate from the in-app admin.
 
@@ -162,6 +163,13 @@ Celery beat runs these scheduled tasks, each in every active agency in turn:
 | `send_payment_reminders` | 15 minutes | Emails one reminder when a confirmed booking is within the reminder window of its deadline |
 | `expire_stale_requests` | hour | Expires requested bookings whose flight has already departed |
 
+And two for the platform's billing (public schema):
+
+| Task | Every | What it does |
+| --- | --- | --- |
+| `issue_due_invoices` | day | Issues the next invoice of each running plan whose period starts within the lead days, and emails it with its PDF |
+| `suspend_overdue_tenants` | day | Suspends agencies with an unpaid invoice more than a month past its due date, and emails them |
+
 ## How it works
 
 **Agencies (multitenancy).** One installation serves many travel agencies. Each agency is a tenant with its own PostgreSQL schema (django-tenants), chosen from the request's hostname, so its users, offers, requests, bookings, boarding passes and settings are separate. The public schema is the platform ("app_admin"): agencies, their domains, the shared airports and the system owner's accounts.
@@ -203,7 +211,10 @@ Everything is under `/api/` on an agency's host. Authenticate with `Authorizatio
 | Auth (public) | `POST auth/register`, `auth/login`, `auth/refresh`, `auth/password-reset`, `auth/password-reset-confirm`; `GET auth/me` |
 | Browse (public) | `GET airports?search=`, `GET offers` (filters: origin, destination, date range, price range, class, max stopovers; ordering), `GET offers/{id}` |
 | Customer | `queries` (list, create, detail, `close`), `bookings` (list, create, detail, `cancel`), `GET boarding-passes/{id}/download` |
+| Admin billing | `GET admin/billing` (plans, billing contact, overdue notice), `GET admin/billing/invoices`, `GET admin/billing/invoices/{id}/pdf` |
 | Admin | `admin/dashboard`, `admin/offers`, `admin/queries` (+ `respond`), `admin/bookings` (list, `POST` to book for a customer, + `confirm-availability`, `mark-unavailable`, `mark-paid`, `complete`, `boarding-passes` upload), `DELETE admin/boarding-passes/{id}`, `admin/settings`, `admin/users` (list with `search` and `is_active`, create, detail, edit; customers only) |
+
+On the root host, `/api/platform/` is the system owner's API: `login`, `refresh`, `me`, `tenants` (+ `domains`, `subscriptions`), `plans`, `subscriptions/{id}` (+ `end`, `issue-invoice`), `invoices` (+ `mark-paid`, `mark-unpaid`, `void`, `resend`, `pdf`) and `settings`.
 
 Errors use DRF's standard format.
 

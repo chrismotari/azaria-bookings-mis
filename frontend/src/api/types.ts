@@ -210,7 +210,93 @@ export type Tenant = {
   slug: string;
   primary_domain: string | null;
   is_active: boolean;
+  suspension_reason: '' | 'manual' | 'non_payment';
+  suspended_at: string | null;
+  /** Where invoices are sent. */
+  billing_email: string;
   created_at: string;
 };
 
 export type TenantDetail = Tenant & { domains: TenantDomain[] };
+
+export type PlanKind = 'subscription' | 'support';
+export type BillingCycle = 'monthly' | 'annual';
+
+/** What agencies pay the platform for. Prices are decimals as strings, in the platform's currency. */
+export type Plan = {
+  id: string;
+  name: string;
+  kind: PlanKind;
+  description: string;
+  monthly_price: string | null;
+  annual_price: string | null;
+  currency: string;
+  is_active: boolean;
+  created_at: string;
+};
+
+export type Subscription = {
+  id: string;
+  plan: { id: string; name: string; kind: PlanKind };
+  kind: PlanKind;
+  billing_cycle: BillingCycle;
+  price: string | null;
+  currency: string;
+  started_on: string;
+  next_period_start: string;
+  ended_on: string | null;
+  created_at: string;
+};
+
+export type InvoiceStatus = 'unpaid' | 'paid' | 'void';
+
+/** An invoice as an agency's admins see it. */
+export type AgencyInvoice = {
+  id: string;
+  number: string;
+  plan_name: string;
+  billing_cycle: BillingCycle;
+  period_start: string;
+  period_end: string;
+  amount: string;
+  currency: string;
+  issued_on: string;
+  due_on: string;
+  status: InvoiceStatus;
+  paid_on: string | null;
+  /** Unpaid and past its due date. */
+  overdue: boolean;
+};
+
+/** An invoice as the system owner sees it. */
+export type Invoice = AgencyInvoice & {
+  tenant: { id: number; name: string };
+  subscription: string;
+  suspension_waived: boolean;
+  /** The first day the agency can be suspended for it; null once paid, void or waived. */
+  suspends_on: string | null;
+  created_at: string;
+};
+
+export type PlatformSettings = {
+  issuer_details: string;
+  payment_instructions: string;
+  invoice_due_days: number;
+  invoice_lead_days: number;
+  billing_contact_email: string;
+  currency: string;
+};
+
+/** The agency's own billing, for its admins. */
+export type AgencyBilling = {
+  subscriptions: {
+    plan_name: string;
+    kind: PlanKind;
+    billing_cycle: BillingCycle;
+    price: string | null;
+    currency: string;
+    next_period_start: string;
+  }[];
+  billing_contact_email: string;
+  overdue: { number: string; amount: string; currency: string; due_on: string; suspends_on: string } | null;
+};

@@ -1,0 +1,15 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hello {{ tenant.name }},</p>
+<p style="margin:0 0 16px 0;">Your invoice <strong>{{ invoice.number }}</strong> is attached.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
+  {% include "emails/_row.html" with label="Plan" value=invoice.plan_name|add:" ("|add:cycle|add:")" %}
+  {% include "emails/_row.html" with label="Period" value=period %}
+  {% include "emails/_row.html" with label="Amount" value=amount price=True %}
+  {% include "emails/_row.html" with label="Due by" value=due %}
+</table>
+{% include "emails/_box.html" with title="How to pay" text=payment_instructions %}
+<p style="margin:0 0 16px 0;">Please include the invoice number with your payment. Your admins can also see this invoice and download it under Billing in the app.</p>
+{% include "emails/_button.html" with url=frontend_url|add:"/admin/billing" label="View billing" %}
+{% if billing_contact_email %}<p style="margin:0 0 16px 0;">Questions about billing: <a href="mailto:{{ billing_contact_email }}" style="color:{{ brand.primary }};">{{ billing_contact_email }}</a></p>{% endif %}
+{% endblock %}

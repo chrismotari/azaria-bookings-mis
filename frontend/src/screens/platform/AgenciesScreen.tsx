@@ -18,7 +18,7 @@ import { TripCard } from '../../components/TripCard';
 import { PlatformTabParamList } from '../../navigation/types';
 import { colors, font, space, useIsWide, weight } from '../../theme';
 import { useDebounced } from '../../utils/useDebounced';
-import { AGENCIES_KEY, AgencyDetailView, createdOn, NewAgencyDialog, TENANT_STATUS } from './AgencyDetailView';
+import { AGENCIES_KEY, AgencyDetailView, createdOn, NewAgencyDialog, tenantStatus } from './AgencyDetailView';
 
 const COLUMNS: Column[] = [
   { label: 'Name', flex: 2 },
@@ -136,11 +136,11 @@ export function AgenciesScreen({ navigation, route }: BottomTabScreenProps<Platf
 }
 
 function label(tenant: Tenant) {
-  return `${tenant.name}, ${tenant.primary_domain ?? tenant.slug}, ${TENANT_STATUS[String(tenant.is_active)].label}`;
+  return `${tenant.name}, ${tenant.primary_domain ?? tenant.slug}, ${tenantStatus(tenant).label}`;
 }
 
 function AgencyTableRow({ tenant, onPress }: { tenant: Tenant; onPress: () => void }) {
-  const status = TENANT_STATUS[String(tenant.is_active)];
+  const status = tenantStatus(tenant);
   return (
     <TableRow
       columns={COLUMNS}
@@ -163,7 +163,7 @@ function AgencyTableRow({ tenant, onPress }: { tenant: Tenant; onPress: () => vo
 }
 
 function AgencyCard({ tenant, selected, onPress }: { tenant: Tenant; selected: boolean; onPress: () => void }) {
-  const status = TENANT_STATUS[String(tenant.is_active)];
+  const status = tenantStatus(tenant);
   return (
     <TripCard tone={status.tone} selected={selected} onPress={onPress} accessibilityLabel={label(tenant)}>
       <View style={styles.between}>

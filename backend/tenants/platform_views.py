@@ -12,7 +12,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from core.throttling import IPScopedRateThrottle
 
-from . import services
+from . import billing, services
 from .models import Domain, Tenant
 from .permissions import IsPlatformOwner
 from .serializers import (
@@ -92,7 +92,10 @@ class PlatformTenantDetailView(generics.RetrieveUpdateAPIView):
         return super().get_serializer(*args, **kwargs)
 
     def perform_update(self, serializer):
+        active = serializer.validated_data.pop("is_active", None)
         tenant = serializer.save()
+        if active is not None:
+            billing.set_active(tenant, active)
         # The response lists the domains as they are now.
         serializer.instance = agencies().get(pk=tenant.pk)
 

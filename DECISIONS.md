@@ -99,3 +99,14 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in 
 - On the platform the app gives the signed-in account the role "owner" itself (the platform API returns no role), so the shared auth context, app bar and sign-out work unchanged there.
 - The platform's agency ids are the Tenant table's numeric ids (Tenant keeps django-tenants' default key); only system owners see them.
 - Domains added on the platform are refused when they equal TENANT_BASE_DOMAIN (the root host) or are used by any agency; making a hostname reachable still needs ALLOWED_HOSTS and the CORS regexes.
+- Subscription stores a copy of its plan's kind so "one running plan per kind" is a database constraint; a plan's kind cannot change after it is created.
+- One invoice covers one subscription for one period; an agency with a subscription and a support plan gets two invoices.
+- Billing periods keep the day of the month the subscription started on, clamped to shorter months (started 31 Jan: 28 Feb, then 31 Mar).
+- "More than a month past due" means due_on + one calendar month < today, so the agency can be suspended from the day after due_on + one month (shown to agencies as the suspension date).
+- Voiding an invoice lifts a non-payment suspension when nothing else keeps the agency suspended, as marking it paid does.
+- The invoice PDF is re-rendered whenever the invoice's status changes (it shows the status), and the old file is deleted.
+- A plan's price cannot be cleared while a running subscription pays on that cycle; a plan's prices can otherwise change, applying from the next invoice.
+- Invoice PDFs use fpdf2's built-in Helvetica, which covers Latin-1 only; other characters print as "?".
+- Plans, invoices and subscriptions return the currency (PLATFORM_CURRENCY) so the app can format amounts; the agency Billing screen is a stack page opened from Settings.
+- The overdue notice (and banner) is the oldest unpaid, not waived invoice past its due date.
+- Suspending and reactivating in /django-admin/ go through the same billing.set_active as the platform app.
