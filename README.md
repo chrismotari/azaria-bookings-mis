@@ -133,7 +133,7 @@ One shared "Azaria Bookings" app serves every agency. It learns its agency from 
 - **Ids:** bundle id and Android package `com.azariabookings.app` (`frontend/app.config.ts`). The build reads `EXPO_PUBLIC_TENANT_BASE_DOMAIN` to declare `applinks:*.<base>` (iOS) and an auto-verified intent filter for `*.<base>` (Android).
 - **Verification files:** set `IOS_APP_ID` (Apple Team ID plus bundle id, e.g. `ABCDE12345.com.azariabookings.app`), `ANDROID_PACKAGE` (`com.azariabookings.app`) and `ANDROID_CERT_FINGERPRINTS` (the SHA-256 fingerprints of the signing certificates, comma-separated; for Play App Signing take them from the Play Console). Django then serves `/.well-known/apple-app-site-association` and `/.well-known/assetlinks.json` on every agency host and on the root host; in production the reverse proxy must send `/.well-known/` to the API over HTTPS, without redirects.
 - **Builds:** `cd frontend && npx expo run:ios` / `npx expo run:android` locally, or EAS Build for store builds. Universal and app links need HTTPS on a real domain, so test them on a staging base domain rather than `localhost`.
-- **Custom domains:** links only open the app on `<code>.<base>`, which is why every email link uses that address.
+- **Custom domains:** links only open the app on `<code>.<base>`, which is why every email link uses that address. An agency that wants links on its own custom domain to open an app needs a separate app of its own: a build that declares that domain (and its own bundle id, package and store listings), with the verification files served for that app. The shared app cannot declare agencies' custom domains.
 
 ## Files
 
