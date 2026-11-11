@@ -1,141 +1,104 @@
 # Decisions
 
-Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each, in the order they were made.
+Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 
-- Emails are stored lowercased; login, registration and password reset match emails case-insensitively.
-- Registration requires `phone`; the `create_admin` command does not take a phone, so the model allows it blank.
-- Logout is client-side only (tokens are discarded); no JWT blacklist table.
-- Throttling (10/min per IP) uses Django's default local-memory cache, so counts are per server process. The password-reset request and confirm endpoints share one limit.
-- `GET /api/airports` with an empty `search` returns an empty list.
-- Python 3.12+ is supported; the development virtualenv runs Python 3.14 (Django 6.1).
-- Email settings use Django 6.1's `MAILERS` setting (console backend when `EMAIL_HOST` is empty, SMTP otherwise).
-- Plain-text email templates render through a separate template engine with autoescaping off, so links are not HTML-escaped.
-- Offer airports are written by id and returned as nested airport objects.
-- Airport text filters on offers match the code case-insensitively and exactly; city, country and name match by "contains".
-- "valid_until >= today" is enforced on offer create only; edits re-check the other rules against the stored values.
-- Offer detail returns any active public offer, with an `is_bookable` flag; only browse is limited to bookable ones.
-- The admin offer list includes every offer (private, deactivated and lapsed), filterable by `is_active` and `is_public`.
-- The frontend uses React Navigation as the spec requires, not Expo Router (which `frontend/AGENTS.md` suggests).
-- Explore's From/To send the chosen airport's code when picked from the suggestions, otherwise the typed text.
-- Explore and the admin offers list apply filters on "Search"/"Apply filters", not on every keystroke.
-- The spec's `requests` app lives in the `customer_requests` package (app label `requests`) so it does not shadow the PyPI `requests` library.
-- Query airports are written by id and returned as nested airport objects, like offers.
-- Closing an already closed query, or responding to a closed one, returns 409 Conflict; open and responded queries can both be closed.
-- A response's `offer_ids` must refer to currently bookable offers (active, not past `valid_until`, and not yet departed).
-- Booking an offer that is not bookable or not visible to the customer returns 400 on `offer`; a second active booking of the same offer returns 409.
-- A booking's optional `query` must be one of the customer's own queries; the app sets it when the booking starts from a request's options.
-- The customer booking detail includes `payment_instructions` (from AppSettings) only while the booking is `availability_confirmed`, and `null` otherwise.
-- A status change by the wrong actor is refused with 409, like any other invalid move.
-- "Payment deadline has passed" means now is later than `payment_deadline`; marking paid at the deadline itself is allowed.
-- The booking timeline exposes each event's statuses and time, not the actor.
-- A boarding pass upload must agree on all three: extension (.pdf, .png, .jpg, .jpeg), declared content type, and the file's leading bytes.
-- Uploading or deleting a pass outside the paid status returns 409; an 11th file, a wrong type or an oversize file returns 400 on `file`.
-- The pass delete endpoint is `/api/admin/boarding-passes/{id}` (it is listed under the admin API); its file is removed from disk once the delete commits.
-- The customer booking detail has no `boarding_passes` key until the booking is completed.
-- The admin may pick several files at once; the app uploads them one per request.
-- Payment hold hours and reminder hours must each be at least 1; the settings endpoint accepts GET and PATCH only.
-- The payment reminder email is skipped if, when it is sent, the booking is no longer awaiting payment or its deadline has passed.
-- Stale requested bookings (flight already departed) get the same "booking expired" email 7 as lapsed payment holds, since the spec defines one expiry email.
-- Decisions are kept in this file, linked from README.md, rather than as a section of README.md.
-- Sign in, Create account, Forgot password and Reset password are guest-only screens; a signed-in user opening their URLs lands on home (Explore, or the Dashboard for the admin). To use a reset link, sign out first.
-- Form pages (Book, Request options, New offer, Respond) keep their own header with a back button, styled in the brand indigo, rather than the full navigation bar.
-- The selected item is a parameter of its list's route (e.g. the Bookings tab with id 7 is /bookings/7), so the list stays mounted with its filters and scroll while the detail is open. Explore's own URL is therefore /offers ('/' still opens it).
-- Opening a detail replaces the browser history entry (React Navigation's tab router does this for parameter changes), so browser back leaves the list; the panel closes with its close button, Escape, the narrow-screen back link, or by pressing the list's tab again.
-- An offer opened from a request's response shows on Explore (with that offer's panel open), since offer detail lives on Explore.
-- Admin Offers shows cards instead of the table while the edit panel is open, as the narrowed list has no room for the table's columns.
-- The "highlighted box" in HTML emails (payment instructions, the admin's reply message) is the app's light indigo tint with an indigo left edge; shared pieces (details row, button, box) are small includes under emails/.
-- The auth screens show the brand bar without its Sign in / Create account controls, which would repeat the form's own button; the brand still links home.
-- Offer detail has no full-screen view on wide screens (it opens in the drawer), so the price summary sits on the right, sticky, whenever the detail is at least 640 px wide, which includes the drawer.
-- Explore's filter chips apply at once and the price fields on Enter or when leaving the field; "Clear all" clears the sidebar filters only, and the search bar applies with its Search button.
-- While a detail is open, Explore uses its narrow layout (stacked search bar, Filters button, stacked rows), as the list column is too narrow for the sidebar.
-- A booking that ended (unavailable, cancelled, expired) shows its status only as the banner, without the status chip above it; the banner carries the existing help text.
-- The restyled booking summary, request criteria and boarding pass rows are shared components, so the admin detail screens show them too.
-- Admin Requests and Bookings show tables only on wide screens with no detail open, as Admin Offers does; otherwise they show the same trip cards as the customer lists.
-- Booking status filters (eight options) use the segmented control wrapping onto a second row when they do not fit.
-- On a paid booking, "Send boarding passes" sits in the drawer's action bar with the other status actions; it stays disabled until a file is uploaded and while uploads are running.
-- The request drawer's Respond / Send more options button is its action bar.
-- Stops in API responses carry the airport as the same nested object as origin and destination ({id, code, name, city, country}); they are written by IATA code.
-- Stop positions start at 1 and follow the order of the list sent; an offer edit without a stops key keeps the current stops, and its stops are rechecked against a changed origin or destination.
-- Bookings return their own stops and stop_count next to the nested offer (which shows the offer's current stops); booking screens use the booking's.
-- Durations read "2 h 15 min", "45 min" or "26 h" (no days), in the app and in emails; emails show a Stops line ("Direct" when there are none).
-- The admin offer form's Stops section sits under Route; each stop shows a live Layover or Stopover tag, and the offer detail lists stops in their own card under Flight details.
-- Confirm availability always sends the dialog's price and stops; the server records in changes only the values that differ. Accepting changes is not a status change, so it adds no timeline event.
-- The payment deadline starts when availability is confirmed, also while changes await acceptance; the changes box says the hold covers accepting and paying.
-- In the admin drawer the changes card stays after the customer answers ("accepted" or "declined"), so the admin can see what was agreed.
-- Mark unavailable sends the message only together with suggested options; the dialog says so, and without options the body is empty.
-- The existing-offer search in the Mark unavailable dialog starts from the booking's route with its departure date as both ends of the date range, any class.
-- The Respond screen and the Mark unavailable dialog share one offer chooser (search, selectable results, custom offers, chosen list).
-- The platform's Django admin (root host) and each agency's support admin (tenant hosts) are two admin sites; tenants and the shared airports are only on the platform's, so an agency's superuser cannot reach them.
-- create_agency runs in one transaction; PostgreSQL rolls back the new schema with everything else if any part fails.
-- The platform's own tenant row (schema public, name "app_admin") and its domain (TENANT_BASE_DOMAIN) are created by a data migration; the platform admin's tenant list hides it.
-- Tenant tasks keep their names; the schema name is their first argument. The three beat tasks return the total across agencies.
-- Tests: the session's test agency uses the test client's default host (testserver), so existing tests needed no host changes; a second agency (other.localhost) backs the isolation tests.
-- The full-page "no agency" message appears when an API call returns no_tenant or tenant_suspended; the root host's app shows it as soon as Explore loads offers.
-- A customer created by the admin needs only email and name; phone is optional (registration still asks for it). is_active and role are ignored on create.
-- The Users list is ordered by name then email and has a search box only; the is_active filter exists in the API but has no control in the UI.
-- The New user dialog uses the large size (a form); after saving, the new customer opens in the drawer.
-- The hook that waits for typing to stop (useDebounced) moved from the airport picker to src/utils so the Users search shares it.
-- When the admin books for a customer, the duplicate-booking message names the customer ("This customer already has…"); the customer-facing wording is unchanged.
-- The New booking dialog's customer search shows up to six active customers and asks to keep typing when more match; its offer search starts empty (any route and date) and lists active offers, with ones that can no longer be booked disabled.
-- After the admin creates a booking, the Bookings list switches to Requested so the new booking shows next to its drawer.
-- Dialogs show the reason a save failed in their footer, above the buttons, so it is in view however far the form is scrolled.
-- Throttles take the client IP from REMOTE_ADDR unless NUM_PROXIES (default 0) says how many trusted proxies to trust in X-Forwarded-For, so a forged header cannot dodge them.
-- Agency addresses that match a schema already in the database (e.g. information-schema) are refused like taken ones.
-- A host outside ALLOWED_HOSTS gets Django's plain 404 (django-tenants rejects it before any view); only allowed hosts without an agency get the no_tenant JSON.
-- POST /bookings is for customers only (403 for the admin, who books through POST /admin/bookings).
-- confirm-availability and mark-unavailable answer 409 for a move the state machine never allows before validating their optional body.
-- Scheduled expiry re-checks, under the lock, that the booking is still in the status it was selected in.
-- Stop airport codes are accepted in any case.
-- A customer can open the detail of any offer they have booked (besides public ones and those sent to them), so links to an offer the admin booked for them work.
-- In the support Django admin the booking's status, deadline, reminder and changes fields are read-only; status changes go through bookings.services only.
-- Admin links opened while signed out (e.g. from emails) go through the sign-in gate and open after the admin signs in.
-- On start-up the app only clears stored tokens when the server rejects the session (401), not when it is unreachable or the agency is suspended.
-- Paged admin lists go back to page 1 when the filter changes (also from a Dashboard link) or when the page no longer exists.
-- The web Flag component is Flag.tsx (not Flag.web.tsx) so TypeScript has a platform-neutral file to check; Metro still picks Flag.native.tsx on iOS and Android. The code lists (flagCodes.ts, flags.native.ts) are generated from public/flags/.
-- @expo/metro-config is a dev dependency so react-native-svg-transformer's Expo entry can find Expo's Babel transformer (Expo 58 keeps it nested inside the expo package).
-- The airline badge is a rounded square (no longer a circle) for both logos and initials, so the two look alike in lists; picker results use a smaller one.
-- seed_airlines drops OpenFlights rows whose name is empty and whose ICAO code is not three letters (the code is then left blank).
-- The airline search (GET /airlines) lives on agency hosts for the admin's picker; the airline list itself is only edited in the platform admin.
-- On the platform the app gives the signed-in account the role "owner" itself (the platform API returns no role), so the shared auth context, app bar and sign-out work unchanged there.
-- The platform's agency ids are the Tenant table's numeric ids (Tenant keeps django-tenants' default key); only system owners see them.
-- Domains added on the platform are refused when they equal TENANT_BASE_DOMAIN (the root host) or are used by any agency; making a hostname reachable still needs ALLOWED_HOSTS and the CORS regexes.
-- Subscription stores a copy of its plan's kind so "one running plan per kind" is a database constraint; a plan's kind cannot change after it is created.
-- One invoice covers one subscription for one period; an agency with a subscription and a support plan gets two invoices.
-- Billing periods keep the day of the month the subscription started on, clamped to shorter months (started 31 Jan: 28 Feb, then 31 Mar).
-- "More than a month past due" means due_on + one calendar month < today, so the agency can be suspended from the day after due_on + one month (shown to agencies as the suspension date).
-- Voiding an invoice lifts a non-payment suspension when nothing else keeps the agency suspended, as marking it paid does.
-- The invoice PDF is re-rendered whenever the invoice's status changes (it shows the status), and the old file is deleted.
-- A plan's price cannot be cleared while a running subscription pays on that cycle; a plan's prices can otherwise change, applying from the next invoice.
-- Invoice PDFs use fpdf2's built-in Helvetica, which covers Latin-1 only; other characters print as "?".
-- Plans, invoices and subscriptions return the currency (PLATFORM_CURRENCY) so the app can format amounts; the agency Billing screen is a stack page opened from Settings.
-- The overdue notice (and banner) is the oldest unpaid, not waived invoice past its due date.
-- Suspending and reactivating in /django-admin/ go through the same billing.set_active as the platform app.
-- Preview first decides by the file name's extension (pdf, png, jpg, jpeg, webp, gif), so the new tab can be opened during the click, before the file is fetched; browsers block tabs opened later as pop-ups.
-- The preview tab shows the file from a blob: URL (the file is fetched with the auth header), so its tab title is the browser's, not the file name; the browser's own viewer offers saving it.
-- Dashboard: agencies suspended by the owner count as "suspended" and the rest of the inactive ones as "for non-payment"; the Agencies card links to the Suspended filter when any agency is suspended, otherwise to all agencies; Revenue links to paid invoices and Monthly recurring to Plans.
-- The Agencies and Invoices status filters live in the URL (?status=), like the agency admin's lists, so dashboard cards open them filtered.
-- Signing out on the platform returns to the public home page; a platform page opened while signed out goes to /login and reopens after signing in.
-- TipTap's own peer @tiptap/core comes in with @tiptap/react and @tiptap/starter-kit; the link and underline extensions are part of the starter kit, so nothing else is installed.
-- The editor's H1 and H2 buttons make h3 and h4 (the heading levels descriptions allow), and links are added through the browser's prompt.
-- The editor's toolbar uses plain buttons whose mousedown is cancelled, so clicking one never moves focus out of the text.
-- An inactive plan never holds a tag: saving a plan as inactive clears its tag, and tagging an inactive plan is ignored.
-- On the plans pages the featured cards are centred in their row; "Show all plans" gives the number of subscription plans in all.
-- public-plans ignores any Authorization header, so a stale or agency token never turns the public pricing page into an error.
-- The agency's Billing and Plans pages are admin tabs left out of the bar (Settings stays highlighted on them), so they keep the top bar; each has a back link (Billing to Settings, Plans to Billing).
-- Plain web form elements (select, date input, rich text) use React Native Web's system font stack (WEB_SYSTEM_FONT in theme.ts) instead of inheriting the browser's default serif.
-- Every page shows the top bar: the form pages (New offer, Respond to request, Request options, Book) are tabs left out of the bar like Billing and Plans, with the tab they belong to highlighted (Offers, Requests, Requests, Explore), a back link instead of a back arrow, and a fresh form each time they open (FreshEachVisit), since tab pages otherwise stay mounted. Their URLs are unchanged.
-- Signing out lands on the area's sign-in page (/login on the agency's host for customers and admins, /login on the root host for the owner), and so does an admin's or the owner's session ending; a customer whose session ends stays on the page (signed-in-only pages ask them to sign in). The next sign-in opens the area's home, not the page signed out from.
-- Support chat: the upload checks (PDF, PNG or JPEG, content and 5 MB) moved to core/files.py and are shared by boarding passes and chat attachments.
-- Support chat (step 31): the app is in TENANT_APPS only for now; step 32 adds it to SHARED_APPS for the platform's desk. Conversation.requester is a plain UUID (not a key) because on the platform desk it names a user of an agency's schema.
-- Support chat: the requester's list and new chats share POST/GET support/chats; only POST is open to guests (and throttled for them, 10 an hour per IP); the desk cannot start chats with itself (403).
-- Support chat: a reply's subject and email are never taken from the request; the chat's own are kept. The desk's list puts unread chats first, then the most recent.
-- Support chat: customers reach Support from Account (and the account menu); the floating panel lists only open chats and points to Account > Support for closed ones.
-- Platform desk (step 32): the support app is now in SHARED_APPS too. Conversation.agency has no database constraint because the same table exists in every agency's schema (where it stays empty). Existing dev databases that ran step 31 need `migrate_schemas --shared support zero --fake` once before migrating, since that run recorded the public schema's support migration without creating its tables.
-- Platform desk: the owner's API is /api/platform/chats (the agency desk's admin/chats), visitors write to /api/platform/support/chats; the same views, with the owner's permission.
-- Agency admins' chats with the platform are read and written from their own host (support/platform-chats); the agency is read before switching to the public schema. Reply emails link to /admin/support/<id> on the agency's own domain.
-- The platform desk is notified at PlatformSettings.support_email; with it blank no desk email is sent (the Settings screen warns).
-- Plan enquiries prefill subject "Plan enquiry: <plan> (monthly|annual)" and an editable message; on the pricing page they open the floating panel, in the agency app a dialog, after which the admin lands on the chat in Settings > Support.
-- A Dialog whose content has its own buttons (footer null) draws no footer bar.
-- The admin-address redirects (admin.<root host> and <root host>/admin) are done in the web app before it starts (config.ts), so they work wherever the app is served; a production proxy can also redirect admin.<root host> itself.
-- UUIDs everywhere (step 33): the singleton settings rows are fetched as the one row (objects.get()), and their data migrations create the row only when there is none. The plain-text-to-HTML description migration of step 30 went with the regenerated migrations (and its helper, now unused).
-- A test walks every project model and fails on any non-UUID primary key, so the rule cannot be broken silently.
+## Accounts and auth
+- Emails are stored lowercased and matched case-insensitively for login, registration and password reset.
+- Registration requires `phone`; the model allows it blank because `create_admin` and admin-created customers don't need one.
+- Logout is client-side only (tokens discarded); no JWT blacklist.
+- Throttles use Django's local-memory cache (per process); password-reset request and confirm share one limit. The client IP is REMOTE_ADDR unless `NUM_PROXIES` says how many X-Forwarded-For hops to trust.
+- Auth screens are guest-only; a signed-in user opening them lands on home. To use a reset link, sign out first.
+- Signing out lands on the area's `/login`; so does an admin's or the owner's session ending. A customer whose session ends stays on the page. The next sign-in opens the area's home.
+- On start-up the app clears stored tokens only on a 401, not when the server is unreachable or the agency suspended.
+- Signed-in-only links opened while signed out (e.g. from emails) go through the sign-in gate and open afterwards.
+
+## Offers, airports and airlines
+- `GET /api/airports` with an empty search returns an empty list. Airport text filters match the code exactly (any case) and city, country and name by "contains".
+- Airports are written by id (stops by IATA code, any case) and returned as nested objects `{id, code, name, city, country, country_code}`.
+- `valid_until >= today` is enforced on create only; edits re-check the other rules.
+- Offer detail returns any active public offer with an `is_bookable` flag; only browse is limited to bookable offers. A customer can also open any offer they have booked.
+- The admin offer list includes private, deactivated and lapsed offers, filterable by `is_active` and `is_public`.
+- Stop positions start at 1 in list order; an edit without a `stops` key keeps the stops, and they are rechecked against a changed origin or destination.
+- Durations read "2 h 15 min", "45 min" or "26 h" (no days); emails show a Stops line ("Direct" when none).
+- `seed_airlines` drops rows with an empty name; an ICAO code that isn't three letters is left blank.
+- The airline search lives on agency hosts for the admin's picker; the list itself is edited only in the platform's Django admin.
+
+## Requests
+- The `requests` app lives in the `customer_requests` package (label `requests`) so it doesn't shadow the PyPI `requests` library.
+- Closing an already closed query, or responding to a closed one, returns 409; open and responded queries can be closed.
+- A response's `offer_ids` must be currently bookable.
+
+## Bookings
+- An offer that isn't bookable or visible returns 400 on `offer`; a second active booking of it returns 409.
+- A booking's optional `query` must be the customer's own. `POST /bookings` is customers only; the admin books through `POST /admin/bookings`, and the duplicate message then names the customer.
+- A move by the wrong actor returns 409 like any invalid move; confirm-availability and mark-unavailable return 409 for impossible moves before validating their body.
+- Marking paid exactly at the deadline is allowed. Scheduled expiry re-checks the status under the lock.
+- Customer booking detail includes `payment_instructions` only while `availability_confirmed`, and no `boarding_passes` key until completed.
+- The timeline shows statuses and times, not the actor.
+- Stale requests get the same "booking expired" email as lapsed payment holds. The reminder is skipped if the booking is no longer awaiting payment or the deadline has passed.
+- Payment hold and reminder hours must be at least 1; settings accept GET and PATCH only.
+- Confirm availability always sends the dialog's price and stops; the server records only values that differ. Accepting changes is not a status change and adds no timeline event. The payment deadline runs from confirmation, including while changes await acceptance.
+- Mark unavailable sends the message only together with suggested options. Its offer search starts from the booking's route and departure date, any class.
+- Bookings return their own stops and `stop_count` next to the nested offer.
+- In the support Django admin, booking status, deadline, reminder and changes are read-only.
+
+## Boarding passes and files
+- Uploads must agree on extension, declared content type and leading bytes (`core/files.py`, shared with chat attachments). Wrong type, oversize or an 11th file returns 400 on `file`; outside `paid` returns 409.
+- The admin may pick several files at once; the app uploads them one per request. A deleted pass's file is removed once the delete commits.
+- Preview first decides by file extension (pdf, png, jpg, jpeg, webp, gif) so the tab opens during the click (later tabs are blocked as pop-ups). The tab shows a blob: URL, so its title is the browser's.
+
+## Agencies and tenancy
+- The platform and each agency have separate Django admin sites; tenants and shared airports are only on the platform's.
+- `create_agency` runs in one transaction; PostgreSQL rolls back the new schema on failure. Addresses matching an existing schema (e.g. `information-schema`) are refused.
+- The platform's own tenant row (schema `public`) and its domain are created by a data migration and hidden from tenant lists.
+- Tenant tasks take the schema name first; beat tasks return the total across agencies.
+- A host outside ALLOWED_HOSTS gets Django's plain 404; allowed hosts without an agency get the `no_tenant` JSON.
+- Domains equal to the root host or used by any agency are refused; reaching a new hostname still needs ALLOWED_HOSTS and CORS.
+- Settings singletons are fetched with `objects.get()`; their data migrations create the row only when missing.
+- Tests: the session's agency uses the test client's default host (`testserver`); a second agency (`other.localhost`) backs isolation tests. One test fails on any model without a UUID primary key.
+
+## Billing
+- Subscription stores its plan's kind so "one running plan per kind" is a DB constraint; a plan's kind can't change.
+- Periods keep the start day of month, clamped to shorter months (31 Jan → 28 Feb → 31 Mar).
+- "More than a month past due" means `due_on` + one calendar month < today.
+- Voiding an invoice lifts a non-payment suspension like marking it paid does. The overdue notice shows the oldest unpaid, unwaived invoice past due.
+- The invoice PDF is re-rendered (old file deleted) on every status change. It uses fpdf2's Helvetica: Latin-1 only, other characters print as "?".
+- A plan price can't be cleared while a running subscription pays on that cycle.
+- Plans, invoices and subscriptions return the currency so the app can format amounts.
+- Suspending and reactivating in `/django-admin/` use the same `billing.set_active` as the platform app.
+- An inactive plan never holds a tag. `public-plans` ignores any Authorization header.
+
+## Support chat
+- `Conversation.requester` is a plain UUID because on the platform desk it names a user in an agency's schema; `Conversation.agency` has no DB constraint because the table exists in every schema.
+- Requesters list and create through `support/chats`; only POST is open to guests (throttled). The desk can't start chats with itself (403).
+- Replies keep the chat's own subject and email. The desk list puts unread first, then most recent.
+- The floating panel lists only open chats and points to Account > Support for closed ones.
+- Agency admins' platform chats go through their own host (`support/platform-chats`); reply emails link to `/admin/support/<id>` on the agency's domain.
+- With `PlatformSettings.support_email` blank no desk email is sent; the Settings screen warns.
+- Plan enquiries open the floating panel on the pricing page and a dialog in the agency app, after which the admin lands on the chat in Settings > Support.
+
+## App layout and navigation
+- React Navigation, not Expo Router.
+- The selected item is a route parameter of its list (e.g. `/bookings/<id>`), so the list stays mounted; Explore's URL is `/offers` (`/` also opens it). Opening a detail replaces the history entry.
+- Offer detail opens in Explore's drawer, including from a request's response; its price summary is sticky on the right when the detail is ≥ 640 px wide.
+- Lists show tables only on wide screens with no detail open; otherwise cards. Explore switches to its narrow layout while a detail is open.
+- Explore's From/To send the airport code when picked, otherwise the typed text. Filter chips apply at once, prices on Enter or blur, the search bar on Search; "Clear all" clears the sidebar only.
+- Every page has the top bar: form pages (New offer, Respond, Request options, Book) and Billing/Plans are hidden tabs with their parent tab highlighted, a back link, and a fresh form on each visit.
+- Auth screens show the brand bar without Sign in / Create account.
+- Ended bookings show the status banner only, no chip. Booking status filters wrap to a second row.
+- "Send boarding passes" sits in the action bar, disabled until a file is uploaded and while uploads run. The request drawer's Respond button is its action bar.
+- The admin drawer keeps the changes card after the customer answers.
+- The Users list is ordered by name, with search only (the `is_active` filter has no UI). New user, New booking and other forms use large dialogs; dialogs show save errors above the footer buttons, and content with its own buttons has no footer bar.
+- The New booking dialog shows up to six customers; its offer search lists active offers with unbookable ones disabled. After saving, Bookings switches to Requested.
+- Paged lists return to page 1 when the filter changes or the page no longer exists. Platform Agencies and Invoices keep their status filter in the URL.
+- The platform app assigns the signed-in account the role "owner" client-side. Platform sign-out returns to the public home; platform pages opened signed out go to `/login`.
+- Admin-address redirects (`admin.<root host>`, `/admin`) happen in the web app before it starts (`config.ts`).
+- Dashboard: owner-suspended agencies count as "suspended", the other inactive ones as "for non-payment"; cards link to the matching filtered lists.
+- Emails' highlighted box is a light indigo tint with an indigo left edge; shared pieces are includes under `emails/`.
+
+## Frontend libraries
+- The web Flag component is `Flag.tsx` (Metro picks `Flag.native.tsx` on native); `flagCodes.ts` and `flags.native.ts` are generated from `public/flags/`.
+- `@expo/metro-config` is a dev dependency so react-native-svg-transformer can find Expo's Babel transformer.
+- The airline badge is a rounded square for logos and initials alike.
+- TipTap: link and underline come with the starter kit. The H1/H2 buttons produce h3/h4; links use the browser prompt; toolbar buttons cancel mousedown to keep focus in the text.
+- Web form elements (select, date input, rich text) use `WEB_SYSTEM_FONT` from `theme.ts`.
