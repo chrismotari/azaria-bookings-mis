@@ -102,3 +102,12 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - The airline badge is a rounded square for logos and initials alike.
 - TipTap: link and underline come with the starter kit. The H1/H2 buttons produce h3/h4; links use the browser prompt; toolbar buttons cancel mousedown to keep focus in the text.
 - Web form elements (select, date input, rich text) use `WEB_SYSTEM_FONT` from `theme.ts`.
+
+## GDS search
+- Duffel is the first provider (free test mode); booking and ticketing stay manual in the agent's own GDS.
+- Fares found are reviewed before publishing by default; auto-publish is an opt-in per route.
+- The monthly search allowance is a per-agency number (default 1500) edited by the platform owner, not tied to plans.
+- Provider fares are stored and shown to admins in their original currency, converted to USD (rate and date stored) for picking, markup and comparison; customers see USD offers only.
+- Exchange rates come from a daily feed (ExchangeRate-API by default) with manual override on the platform.
+- All valid search results are kept 30 days for comparison; published ones are kept.
+- Technical stops inside a flight are not recorded.

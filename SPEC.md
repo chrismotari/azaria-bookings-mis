@@ -1,6 +1,12 @@
 # Azaria Bookings — Specification
 
-A multi-agency flight-offers and booking platform. Each travel agency (tenant) gets its own site where its admin lists flight deals, anyone can browse them, and registered customers request options or book. The admin confirms availability, the customer pays outside the system, the admin marks the booking paid, uploads boarding passes and sends them by email; the customer can also open them in the app. The platform's system owner manages agencies, plans and invoices on the root host.
+A multitenant SaaS for small and medium-sized flight ticketing agencies. Each agency (tenant) gets its own site and data: its admin lists flight deals, anyone can browse them, and registered customers request options or book. The admin confirms availability, the customer pays outside the system, the admin marks the booking paid, uploads boarding passes and sends them by email; the customer can also open them in the app. The platform's system owner manages agencies, plans and invoices on the root host.
+
+Many integrations are still to come, so much of the work is done by hand for now: bookings and invoices are paid outside the system and marked paid manually, and offers are entered by the admin.
+
+Planned (not yet specified or built):
+- GDS integrations per agency. An agency may connect any GDS or fare provider of its choosing, several at the same time, or none: the system works fully without one.
+- Payment integrations, replacing the manual "mark paid" steps.
 
 This document describes the system as it stands. Work is delivered in the numbered steps at the end; new steps are appended there.
 
@@ -8,8 +14,8 @@ This document describes the system as it stands. Work is delivered in the number
 
 - PostgreSQL only (development, tests, production). No Docker; PostgreSQL and Redis run locally.
 - No TODOs, stubs, placeholder code, mock data, or unused fields, endpoints, models or dependencies.
-- Out of scope: passenger details, payment processing, push notifications, airline APIs, email verification, re-sending passes after completion, multi-currency for bookings, multi-language, social login, reviews, packages, blog, per-agency branding.
-- Agency prices are USD, defined once as `CURRENCY`; no currency column. Platform prices use `PLATFORM_CURRENCY`.
+- Out of scope until specified in a step: payment processing and GDS or airline APIs (see Planned above). Out of scope: passenger details, push notifications, email verification, re-sending passes after completion, multi-currency for bookings, multi-language, social login, reviews, packages, blog, per-agency branding.
+- Agency prices (offers, bookings) are USD, defined once as `CURRENCY`; no currency column on them. Platform prices use `PLATFORM_CURRENCY`. Fares from providers keep their original currency and are converted to USD for every calculation and comparison (step 35).
 - Time zone Africa/Nairobi, `USE_TZ = True`; all user-facing times are Nairobi time.
 - "Admin" is the agency owner's in-app role (`User.role == "admin"`). Django's admin site is technical support only, mounted at `/django-admin/` for superusers. Never mix the two.
 - Every model's primary key is a UUID (`default=uuid.uuid4`), and so is every id in URLs and API bodies. Only Django's framework tables keep numeric keys. Airports are identified by IATA code in the API. A malformed id returns 404.
@@ -180,3 +186,136 @@ All delivered; each was one commit.
 31. Support chat: agency desk.
 32. Support chat: platform desk and plan enquiries.
 33. UUIDs on agencies, domains and settings.
+
+Pending (not yet built):
+
+34. Return trips and flight details (see §14).
+35. GDS search: integrations, routes, manual search and review (see §15).
+36. Scheduled route searches and offer refresh (see §16).
+37. Re-check a booking's fare (see §17).
+38. Second provider (see §18).
+
+## 14. Step 34: Return trips and flight details
+
+Goal: offers describe real itineraries the way airlines and GDSs do: one-way or return, each direction made of flight segments with flight numbers and local times, plus the baggage allowance and fare conditions. This works for offers the admin enters by hand and is the shape GDS results will later be mapped into. Prices stay USD.
+
+Industry conventions followed
+- An itinerary is a list of **segments** (one flight each: airline, flight number, from, to, departure, arrival). Connections are derived from consecutive segments; they are no longer entered as stops.
+- Flight times are **local times of the airport** concerned, as printed on tickets (an arrival may fall on the next day, shown as "+1"). They are stored as local date and time with no time-zone conversion. This is the one exception to the Nairobi-time rule; everything else (deadlines, timelines, chats) stays in Nairobi time.
+- A return price is the total for the round trip per adult. Return trips go back from the destination to the origin (no open jaws or multi-city).
+- Baggage is per passenger: checked pieces and their weight, and cabin bag weight (e.g. "1 × 23 kg checked, 7 kg cabin").
+- Fare conditions are summarised as refund and change policies: not allowed, with a fee, or free.
+
+Model
+- **Offer** gains `trip_type` (one_way / return, default one_way) and `return_date` (null for one-way; the date of the first return segment). `departure_date` stays and equals the first outbound segment's departure date. `airline` stays as the ticketing airline shown in the badge.
+- Offer gains baggage: `checked_bags` (0–3 pieces), `checked_bag_kg` (null = weight not stated), `cabin_bag_kg` (null = not stated); and fare conditions: `refund_policy` and `change_policy` (not_allowed / with_fee / free, default not_allowed).
+- **OfferSegment** replaces OfferStop: offer (related_name "segments", cascade), `direction` (outbound / return), `position` (from 1 within a direction), `airline` (marketing carrier, FK Airline), `flight_number` (1–4 digits plus an optional letter), `operating_airline` (FK Airline, null unless a codeshare), `origin`, `destination` (Airport), `departure_date`, `departure_time`, `arrival_date`, `arrival_time`.
+- **BookingSegment** replaces BookingStop with the same fields; a booking copies the offer's segments, trip type, return date, baggage and fare conditions at creation (like unit_price), so later offer edits do not change it.
+- Validation per direction: 1 to 5 segments (at most 4 connections, as today); the first segment leaves from the direction's start (outbound: origin; return: destination) and the last arrives at its end; each segment leaves from the airport the previous one arrived at; origin ≠ destination on each segment; a connection's departure is after the previous arrival; an arrival date is between one day before and two days after its departure date. One-way offers have no return segments; return offers need both directions, and the first return departure is after the last outbound arrival. `valid_until ≤ departure_date` as today. Only active airlines on create or change.
+- Connections are derived per direction: airport, wait in minutes (next departure minus arrival, same airport so same local time) and kind (layover < 24 h ≤ stopover).
+- **Query** gains `trip_type` (blank = any, one_way, return) and `return_date` (optional; only with return). Mark unavailable fills both from the booking.
+- There is no production data: the catalog and bookings migrations are regenerated and development databases are reset (no upgrade path).
+
+API
+- Offers (public, admin, nested in responses and bookings) return `trip_type`, `return_date`, baggage and fare-condition fields, and `itinerary`: `{outbound: {segments, connections, stop_count}, return: {...} | null}`. Segments return nested airline, operating airline and airports. `stops` and `stop_count` go.
+- Admin create and edit, `new_offers` in respond and mark-unavailable take `segments` as one ordered list of `{direction, airline (id), flight_number, operating_airline (id, optional), origin, destination (IATA codes), departure_date, departure_time, arrival_date, arrival_time}`; an edit with segments replaces them all. `origin`, `destination`, `departure_date` and `return_date` are derived from the segments, not sent.
+- Offer filters gain `trip_type` and `return_from` / `return_to` (return date range). `max_stopovers` counts the connections of the direction with the most.
+- Confirm availability with changes takes `{unit_price, segments}`; `changes` records `unit_price` and `segments` (old and new, as readable lists: flight, route, local times) with the existing accept/decline flow.
+- Bookings return their own itinerary, baggage and fare conditions next to the nested offer.
+
+Frontend
+- Admin offer form: a One way / Return switch; "Outbound flights" and "Return flights" sections, each a segment editor (airline picker, flight number, optional "Operated by", from and to airport pickers, departure and arrival date and time) with "Add connecting flight", remove and reorder; the next segment's From and the return direction's endpoints are prefilled; connections show live with wait time and a Layover/Stopover tag. A "Baggage and fare conditions" section. The same editor serves custom offers on Respond and Mark unavailable, and the Confirm availability dialog.
+- Explore search bar: Any / Return / One way control; a return date range appears for Return. Result rows show one line per direction: departure and arrival times (with "+1"), airport codes, "Direct" or "N stops", airline badge; returns show both lines; plus a short baggage summary ("23 kg checked" or "Cabin bag only").
+- Offer detail and booking detail: an itinerary card per direction, each segment with airline logo, flight number, "Operated by" when set, local departure and arrival times with airports, and connection rows between segments (wait time, Layover/Stopover tag, flag of the connection airport). A "Baggage and fare conditions" card (refund and change policy in plain words). The book form summary shows both directions.
+- Compact route lines elsewhere (trip cards, admin tables) show "NBO ⇄ LHR" for returns and "NBO → LHR" for one-way, with both dates.
+- Request options form: trip type and an optional return date.
+
+Emails
+- Every email that shows a flight shows the itinerary per direction (flight numbers, local times, connections), baggage and fare conditions, as text in both parts.
+
+Tests
+- Segment validation (chaining, endpoints per direction, connection times, arrival day window, segment limits, one-way without return segments, return needing both, active airlines).
+- Derived connections and kinds; `max_stopovers` with the busier direction; `trip_type` and return date filters.
+- Booking copies segments, baggage and conditions; later offer edits leave bookings unchanged; changes on confirm availability record segments and work with accept/decline.
+- API shapes for one-way and return; query trip type and return date; mark unavailable carrying them over.
+- Emails showing both directions, baggage and conditions.
+- Browser check at 390 px and 1280 px: create a one-way and a return offer with a connection and a codeshare, find each on Explore with the trip type filter, book the return, confirm it with a changed segment, accept, and read the itinerary in the booking and the email.
+
+## 15. Step 35: GDS search — integrations, routes, manual search and review
+
+Goal: an agency connects one or more fare providers and keeps a list of routes; the admin searches a route over a date range, reviews the fares found and publishes the chosen ones as offers with the agency's markup. Agencies without an integration see none of this and work as before. Booking and ticketing stay manual: the agent books in their own GDS terminal, and the app's booking flow is unchanged. Duffel is the first provider.
+
+Providers
+- `integrations/` app (agency schema). One provider interface: `search(request) -> results`, where the request holds origin, destination, departure date, return date (or none), cabin and max connections for 1 adult, and each result is normalised into step 34's itinerary shape plus net amount and its currency (as the provider priced it), baggage, fare conditions, fare type (public / private / unknown), seats left (or null), the provider's reference and its expiry.
+- Duffel provider: offer requests over its REST API with `httpx` (new dependency; tests use its built-in mock transport, never the network). Mapping: slices → directions, segments → segments (marketing and operating carrier, flight number, airports, local departure and arrival), included checked and carry-on bags → `checked_bags` (weight null when not given), refund and change conditions → policies. Technical stops inside a segment are ignored.
+- A result is skipped, and counted as an error on the run, when an airline or airport is not in the shared tables or when it breaks step 34's itinerary rules. Every other result is valid and is stored, whatever its currency.
+
+Currency conversion
+- New shared app `rates` (public schema). **ExchangeRate**: currency (ISO 4217), units_per_usd (decimal, 8 places), date, source (feed / manual), fetched_at; one row per currency per date. USD is always 1 and has no rows.
+- Beat, daily (public): `fetch_exchange_rates` loads the day's rates for every currency from the feed at `EXCHANGE_RATES_URL` (default the free ExchangeRate-API USD feed, credited where rates are shown). A manual rate for a currency and date is never overwritten by the feed.
+- `rates.convert(amount, currency, on=date)` returns the USD amount (amount ÷ units_per_usd, rounded half-up to the cent), the rate and the rate's date, using the latest rate on or before that date. With no rate at all it raises; a rate older than 3 days is used but reported as stale.
+- Every stored conversion keeps the rate and rate date it used, so figures never change when rates do.
+- Platform Settings › Exchange rates: the currencies seen, each with its latest rate, date and source, a stale warning, and a manual rate entry for today.
+
+Model
+- **Integration**: provider (duffel), name, mode (test / live), credentials (encrypted with Fernet from `cryptography`, new dependency, key `INTEGRATIONS_KEY` in `.env`; never returned by the API), is_active, last_tested_at, last_test_ok, last_test_message, created_at. Several per agency. Disabled, never deleted.
+- **Route**: origin, destination, trip_type, stay_nights (return only, 1–60), ticket_class, max_connections (null = any), airlines (optional M2M; empty = any), integrations (optional M2M; empty = every active one), weekdays (departure weekdays to search; empty = every day), pick rule (`pick_cheapest`, `pick_cheapest_direct`, `max_per_date` 1–5), markup (`markup_percent` and `markup_fixed`, both ≥ 0: selling = net × (1 + percent/100) + fixed, rounded to the cent), is_active, created_at.
+- **SearchRun**: route, trigger (manual), date_from, date_to, status (queued / running / done / failed), searches_made, fares_found, errors (list of short messages), started_by, created_at, finished_at.
+- **Fare**: every valid result of a run. run, route, integration, itinerary (segments in step 34's input shape), trip_type, ticket_class, airline (ticketing), `net_amount` and `net_currency` (original), `net_usd`, `rate` and `rate_date` (null with `no_rate` true when the currency has no rate yet), `selling_price` (USD, net_usd plus markup), baggage and fare-condition fields, fare_type, seats_left, provider_ref, fare_key (flight numbers and dates of every segment plus cabin), expires_at, `picked` (chosen by the route's pick rule), status (new / published / dismissed), offer (null until published), created_at. A fare without a rate cannot be picked or published.
+- **Offer** gains `source` (manual / gds), integration, route, provider_ref, fare_key, net_amount, net_currency, net_usd, rate, rate_date, fare_type and price_checked_at (all null for manual offers).
+- **Tenant** (public) gains `monthly_search_allowance` (default 1500), edited by the owner on the platform.
+
+Running a search
+- "Search now" on a route takes a departure date range (at most 60 days, not in the past). Searches needed = matching departure dates × integrations; if that exceeds what is left of the allowance this month (Nairobi calendar month, summed over runs), it is refused with 409 naming both numbers.
+- The run is a Celery task (`schema_name` first, as all tenant tasks): one search per date per integration, a provider error recorded and the run continuing. Each valid result is converted to USD at the run's date and stored as a Fare (status new). The pick rule then works in USD on the run's fares: filtered by the route's cabin, connections and airlines, de-duplicated by fare_key (the cheapest across integrations counts), per departure date; the chosen fares are marked picked.
+- Fares are kept for 30 days for comparison (price history per route and date), then deleted by a daily task, except published ones.
+
+Review and publish
+- Publishing a Fare opens a dialog showing the original amount, its USD equivalent and rate date, and prefilled with the selling price in USD (editable), valid_until (default today + 7 days, never after departure) and public on. It creates a GDS offer with the itinerary, baggage, conditions and source fields (including the original amount and conversion), price_checked_at = the run's time. If an active offer with the same fare_key exists, publishing updates its price, net and conversion fields and price_checked_at instead.
+- Dismissing hides the Fare.
+
+API (agency admin)
+- `admin/integrations` (list, create, PATCH name, mode, credentials and is_active), `admin/integrations/{id}/test`.
+- `admin/routes` (list, create, PATCH), `admin/routes/{id}/search {date_from, date_to}` → the run; `admin/routes/{id}/runs`; `admin/search-usage` (allowance, used this month).
+- `admin/fares?route=&run=&status=&picked=` grouped per departure date (latest run by default), with each fare's original amount, USD amount, rate date and selling price; `admin/fares/history?route=&departure_date=` the cheapest USD fare per run for that date; `admin/fares/{id}/publish {price, valid_until, is_public}`, `admin/fares/{id}/dismiss`.
+- Admin offers return the source fields; public offers return `source` and `price_checked_at` only (never net amounts, rates or fare type).
+- Platform: tenants return and accept `monthly_search_allowance` and return `searches_this_month`; `platform/exchange-rates` (list latest per currency, POST a manual rate).
+
+Frontend
+- Settings › Integrations: list (name, provider, mode, status, last test), "Add integration" dialog (provider, name, mode, access token), Test, Enable/Disable, replace credentials.
+- A Routes tab (after Offers), shown only when the agency has an integration: table (route, trip and stay, cabin, last run, new fares), drawer with the route's settings (edit), "Search now" dialog (date range; shows searches needed and the allowance left), and recent runs with their errors.
+- Fares screen for a route: Picked / All results switch and a run selector (latest by default); grouped by departure date, sorted by USD; each fare as a flight row (itinerary lines, airline badge, baggage summary) with the net amount in its original currency, its USD equivalent (rate date on hover), the selling price in USD, a "No rate" note where conversion failed, fare type, seats left, the integration, and Publish / Dismiss; published fares link to their offer. Per date, a small price history of the cheapest fare across recent runs.
+- Admin Dashboard: a "New fares to review" tile when there are any.
+- Customers see "Price checked <time ago>" on GDS offers in offer detail.
+- Platform agency drawer: search allowance (editable) and searches used this month.
+
+Tests
+- Duffel mapping from recorded responses (one-way, return, connections, codeshare, bags, conditions, a non-USD currency), and every skip reason.
+- Conversion: rounding, latest rate on or before a date, USD identity, no rate (fare stored, not pickable or publishable), stale rate, manual rate surviving the feed, the feed task from a mocked response; stored conversions unchanged when rates change.
+- Every valid result stored; picking and de-duplication in USD across currencies; 30-day clean-up keeping published fares.
+- Credentials encrypted at rest and never returned; test connection success and failure.
+- Allowance arithmetic (weekdays, integrations, month boundary) and refusal; run continuing past a provider error.
+- Filtering, de-duplication across integrations, pick rule, markup rounding; earlier new fares replaced.
+- Publish creating an offer and updating one with the same fare_key; dismiss; public API hiding net price and fare type.
+- Admin only; another agency's integrations, routes and fares invisible.
+- Browser check at 390 px and 1280 px: add a Duffel test integration, create a route, search, publish a fare, find the offer on Explore, book it.
+
+## 16. Step 36: Scheduled route searches and offer refresh
+
+- Route gains a schedule (manual / daily / weekly with a weekday) and a date window: fixed (from, to) or rolling (from N to M days ahead, M − N ≤ 60), and `auto_publish` (default false). "Search now" uses the window.
+- Beat, hourly, in every active agency: `run_due_route_searches` starts a run (trigger scheduled) for each active scheduled route not yet run today (daily) or this week on its weekday (weekly), after 02:00 Nairobi time. A run that would exceed the allowance is not started and is recorded as skipped with the reason.
+- Refresh after every run, for the route's active GDS offers: a fare with the same fare_key updates net amount, currency and conversion, price (net in USD at the run's rate + markup; in review mode only when the admin has not edited the price since publishing) and price_checked_at. An offer not found: auto-publish deactivates it; review mode marks it "Not found in the last search" (`missing_since`) for the admin.
+- Auto-publish routes publish picked fares at once with the defaults of step 35's dialog.
+- At 80% of the allowance the admin sees a warning on the Routes screen; the platform dashboard shows searches used per agency this month.
+- Tests: due-route selection with frozen time, rolling windows, skips over allowance, refresh updating, deactivating and flagging, edited prices left alone, auto-publish.
+
+## 17. Step 37: Re-check a booking's fare
+
+- Bookings copy `source`, integration and fare_key from their offer.
+- `POST admin/bookings/{id}/recheck-fare` (requested bookings with a GDS source): searches the booking's dates through its integration (counts against the allowance) and returns the same fare_key's current original amount, its USD equivalent, selling price and segments, or "not found" with the cheapest alternatives on the same dates.
+- The Confirm availability dialog gets "Re-check price", which fills the price and segments from the answer; the existing changes flow does the rest.
+- Tests: found, changed, not found, allowance, manual bookings refused.
+
+## 18. Step 38: Second provider
+
+- A second provider behind the same interface, chosen by the GDS the first agencies use (Travelport, Amadeus or Sabre): its credential fields, request and response mapping with the same skip rules, tests from recorded responses, and README notes on obtaining access. No other changes: routes, runs, fares and offers work across providers, and a route can search both at once.

@@ -1,10 +1,12 @@
 # Azaria Bookings
 
-A flight-offers and booking platform for travel agencies ([azariabookings.com](https://azariabookings.com)).
+A multitenant SaaS for small and medium-sized flight ticketing agencies ([azariabookings.com](https://azariabookings.com)).
 
 Each agency gets its own site and data. Its admin lists flight deals, which anyone can browse. Registered customers request options or book. The admin confirms availability, the customer pays outside the system, and the admin marks the booking paid, then uploads and sends the boarding passes (by email and in the app). Customers and guests can write to the agency through a built-in support chat.
 
 On the root host, the platform's owner manages agencies, plans and invoices, and answers platform support chats. Agencies pay outside the system; the owner marks invoices paid, and agencies with long-overdue invoices are suspended automatically.
+
+The system is in active development. Payment and GDS integrations are planned, so payments are recorded by hand for now. Each agency will be able to connect the GDSs of its choice, several at once, while the system keeps working fully without any.
 
 The full specification is in [SPEC.md](SPEC.md); choices made where it is silent are in [DECISIONS.md](DECISIONS.md).
 
