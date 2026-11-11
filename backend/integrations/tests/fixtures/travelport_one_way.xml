@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/">
+  <SOAP:Body>
+    <air:LowFareSearchRsp xmlns:air="http://www.travelport.com/schema/air_v52_0" xmlns:common_v52_0="http://www.travelport.com/schema/common_v52_0" TraceId="5d0f3c8e9a7b4f21b6d2e0a1c4f87a3e" TransactionId="9C1D7E2A0A0D6A4B2F6C3E0B1D9A8F77" ResponseTime="2214" DistanceUnits="MI" CurrencyType="EUR">
+      <air:FlightDetailsList>
+        <air:FlightDetails Key="FD1" Origin="NBO" Destination="LHR" DepartureTime="2026-12-01T23:55:00.000+03:00" ArrivalTime="2026-12-02T06:00:00.000+00:00" FlightTime="545" TravelTime="545" Distance="4248" Equipment="789" OriginTerminal="1A" DestinationTerminal="4"/>
+        <air:FlightDetails Key="FD2" Origin="NBO" Destination="MBA" DepartureTime="2026-12-01T10:15:00.000+03:00" ArrivalTime="2026-12-01T11:00:00.000+03:00" FlightTime="45" TravelTime="1015" Distance="274" Equipment="77W"/>
+        <air:FlightDetails Key="FD3" Origin="MBA" Destination="DXB" DepartureTime="2026-12-01T11:45:00.000+03:00" ArrivalTime="2026-12-01T16:20:00.000+04:00" FlightTime="215" TravelTime="1015" Distance="2186" Equipment="77W"/>
+        <air:FlightDetails Key="FD4" Origin="DXB" Destination="LHR" DepartureTime="2026-12-01T21:40:00.000+04:00" ArrivalTime="2026-12-02T01:55:00.000+00:00" FlightTime="495" TravelTime="1015" Distance="3414" Equipment="388" OriginTerminal="3" DestinationTerminal="3"/>
+      </air:FlightDetailsList>
+      <air:AirSegmentList>
+        <air:AirSegment Key="SEG1" Group="0" Carrier="KQ" FlightNumber="100" Origin="NBO" Destination="LHR" DepartureTime="2026-12-01T23:55:00.000+03:00" ArrivalTime="2026-12-02T06:00:00.000+00:00" FlightTime="545" Distance="4248" ETicketability="Yes" Equipment="789" ChangeOfPlane="false" ParticipantLevel="Secure Sell" LinkAvailability="true" PolledAvailabilityOption="Polled avail used" OptionalServicesIndicator="false" AvailabilitySource="S" AvailabilityDisplayType="Fare Shop/Optimal Shop">
+          <air:AirAvailInfo ProviderCode="1G">
+            <air:BookingCodeInfo BookingCounts="J4|C4|Y9|B9|M9|K4|L2"/>
+          </air:AirAvailInfo>
+          <air:FlightDetailsRef Key="FD1"/>
+        </air:AirSegment>
+        <air:AirSegment Key="SEG2" Group="0" Carrier="EK" FlightNumber="720" Origin="NBO" Destination="DXB" DepartureTime="2026-12-01T10:15:00.000+03:00" ArrivalTime="2026-12-01T16:20:00.000+04:00" FlightTime="300" Distance="2460" ETicketability="Yes" Equipment="77W" ChangeOfPlane="false" NumberOfStops="1" ParticipantLevel="Secure Sell" LinkAvailability="true" PolledAvailabilityOption="Polled avail used" OptionalServicesIndicator="false" AvailabilitySource="S" AvailabilityDisplayType="Fare Shop/Optimal Shop">
+          <air:AirAvailInfo ProviderCode="1G">
+            <air:BookingCodeInfo BookingCounts="Y9|B9|T9|L9|Q7"/>
+          </air:AirAvailInfo>
+          <air:FlightDetailsRef Key="FD2"/>
+          <air:FlightDetailsRef Key="FD3"/>
+        </air:AirSegment>
+        <air:AirSegment Key="SEG3" Group="0" Carrier="KQ" FlightNumber="3110" Origin="DXB" Destination="LHR" DepartureTime="2026-12-01T21:40:00.000+04:00" ArrivalTime="2026-12-02T01:55:00.000+00:00" FlightTime="495" Distance="3414" ETicketability="Yes" Equipment="388" ChangeOfPlane="false" ParticipantLevel="Secure Sell" LinkAvailability="true" PolledAvailabilityOption="Polled avail used" OptionalServicesIndicator="false" AvailabilitySource="S" AvailabilityDisplayType="Fare Shop/Optimal Shop">
+          <air:CodeshareInfo OperatingCarrier="EK" OperatingFlightNumber="1">Emirates</air:CodeshareInfo>
+          <air:AirAvailInfo ProviderCode="1G">
+            <air:BookingCodeInfo BookingCounts="Y9|B9|T9|L2|Q2"/>
+          </air:AirAvailInfo>
+          <air:FlightDetailsRef Key="FD4"/>
+        </air:AirSegment>
+      </air:AirSegmentList>
+      <air:FareInfoList>
+        <air:FareInfo Key="FARE1" FareBasis="KOWKE" PassengerTypeCode="ADT" Origin="NBO" Destination="LHR" EffectiveDate="2026-11-01T12:00:00.000+03:00" DepartureDate="2026-12-01" Amount="EUR430.00" NegotiatedFare="false" NotValidBefore="2026-12-01" NotValidAfter="2026-12-01">
+          <air:FareRuleKey FareInfoRef="FARE1" ProviderCode="1G">6UUVoSldxwhjJ8n2wO0RbQ==</air:FareRuleKey>
+          <air:BaggageAllowance>
+            <air:NumberOfPieces>2</air:NumberOfPieces>
+            <air:MaxWeight Value="23" Unit="Kilograms"/>
+          </air:BaggageAllowance>
+        </air:FareInfo>
+        <air:FareInfo Key="FARE2" FareBasis="LLOWAE1" PassengerTypeCode="ADT" Origin="NBO" Destination="LHR" EffectiveDate="2026-11-01T12:00:00.000+03:00" DepartureDate="2026-12-01" Amount="USD480.00" NegotiatedFare="false" PrivateFare="AirlinePrivateFare" NotValidBefore="2026-12-01" NotValidAfter="2026-12-01">
+          <air:FareRuleKey FareInfoRef="FARE2" ProviderCode="1G">9KbQ1x2y0uRZt3n8wO0RbQ==</air:FareRuleKey>
+          <air:BaggageAllowance>
+            <air:MaxWeight Value="30" Unit="Kilograms"/>
+          </air:BaggageAllowance>
+        </air:FareInfo>
+      </air:FareInfoList>
+      <air:RouteList>
+        <air:Route Key="RT1">
+          <air:Leg Key="LEG1" Group="0" Origin="NBO" Destination="LHR"/>
+        </air:Route>
+      </air:RouteList>
+      <air:AirPricingSolution Key="SOL1xKQ100" TotalPrice="EUR560.00" BasePrice="EUR430.00" ApproximateTotalPrice="EUR560.00" ApproximateBasePrice="EUR430.00" EquivalentBasePrice="EUR430.00" Taxes="EUR130.00" ApproximateTaxes="EUR130.00" CompleteItinerary="true">
+        <air:Journey TravelTime="P0DT9H5M0S">
+          <air:AirSegmentRef Key="SEG1"/>
+        </air:Journey>
+        <air:LegRef Key="LEG1"/>
+        <air:AirPricingInfo Key="API1" TotalPrice="EUR560.00" BasePrice="EUR430.00" ApproximateTotalPrice="EUR560.00" ApproximateBasePrice="EUR430.00" Taxes="EUR130.00" LatestTicketingTime="2026-11-03T23:59:00.000+03:00" PricingMethod="Auto" Refundable="true" Exchangeable="true" IncludesVAT="false" ETicketability="Yes" PlatingCarrier="KQ" ProviderCode="1G">
+          <air:FareInfoRef Key="FARE1"/>
+          <air:BookingInfo BookingCode="K" BookingCount="4" CabinClass="Economy" FareInfoRef="FARE1" SegmentRef="SEG1"/>
+          <air:TaxInfo Category="YQ" Amount="EUR95.00"/>
+          <air:TaxInfo Category="KE" Amount="EUR35.00"/>
+          <air:FareCalc>NBO KQ LON 465.20NUC465.20END ROE0.924400</air:FareCalc>
+          <air:PassengerType Code="ADT"/>
+          <air:ChangePenalty PenaltyApplies="Anytime">
+            <air:Amount>EUR0.00</air:Amount>
+          </air:ChangePenalty>
+          <air:CancelPenalty PenaltyApplies="Anytime">
+            <air:Amount>EUR100.00</air:Amount>
+          </air:CancelPenalty>
+          <air:BaggageAllowances>
+            <air:BaggageAllowanceInfo TravelerType="ADT" Origin="NBO" Destination="LHR" Carrier="KQ">
+              <air:TextInfo>
+                <air:Text>2P</air:Text>
+              </air:TextInfo>
+            </air:BaggageAllowanceInfo>
+            <air:CarryOnAllowanceInfo Origin="NBO" Destination="LHR" Carrier="KQ">
+              <air:TextInfo>
+                <air:Text>1P</air:Text>
+              </air:TextInfo>
+            </air:CarryOnAllowanceInfo>
+          </air:BaggageAllowances>
+        </air:AirPricingInfo>
+      </air:AirPricingSolution>
+      <air:AirPricingSolution Key="SOL2xEK720" TotalPrice="USD610.00" BasePrice="USD480.00" ApproximateTotalPrice="EUR561.20" ApproximateBasePrice="EUR441.60" EquivalentBasePrice="USD480.00" Taxes="USD130.00" ApproximateTaxes="EUR119.60" CompleteItinerary="true">
+        <air:Journey TravelTime="P0DT18H40M0S">
+          <air:AirSegmentRef Key="SEG2"/>
+          <air:AirSegmentRef Key="SEG3"/>
+        </air:Journey>
+        <air:LegRef Key="LEG1"/>
+        <air:AirPricingInfo Key="API2" TotalPrice="USD610.00" BasePrice="USD480.00" ApproximateTotalPrice="EUR561.20" ApproximateBasePrice="EUR441.60" Taxes="USD130.00" LatestTicketingTime="2026-11-02T23:59:00.000+04:00" PricingMethod="Auto" Exchangeable="true" IncludesVAT="false" ETicketability="Yes" PlatingCarrier="EK" ProviderCode="1G">
+          <air:FareInfoRef Key="FARE2"/>
+          <air:BookingInfo BookingCode="L" BookingCount="9" CabinClass="Economy" FareInfoRef="FARE2" SegmentRef="SEG2"/>
+          <air:BookingInfo BookingCode="L" BookingCount="2" CabinClass="Economy" FareInfoRef="FARE2" SegmentRef="SEG3"/>
+          <air:TaxInfo Category="YQ" Amount="USD98.00"/>
+          <air:TaxInfo Category="KE" Amount="USD32.00"/>
+          <air:FareCalc>NBO EK X/DXB KQ LON 480.00NUC480.00END ROE1.00</air:FareCalc>
+          <air:PassengerType Code="ADT"/>
+          <air:ChangePenalty PenaltyApplies="Anytime">
+            <air:Percentage>25.00</air:Percentage>
+          </air:ChangePenalty>
+          <air:BaggageAllowances>
+            <air:BaggageAllowanceInfo TravelerType="ADT" Origin="NBO" Destination="LHR" Carrier="EK">
+              <air:TextInfo>
+                <air:Text>30K</air:Text>
+              </air:TextInfo>
+            </air:BaggageAllowanceInfo>
+          </air:BaggageAllowances>
+        </air:AirPricingInfo>
+      </air:AirPricingSolution>
+    </air:LowFareSearchRsp>
+  </SOAP:Body>
+</SOAP:Envelope>

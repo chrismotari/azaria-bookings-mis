@@ -147,3 +147,8 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Not found returns the 3 cheapest other fares in the booking's cabin with a rate, one per fare_key; a found fare without a rate fills only the flights.
 - Choosing a re-check alternative changes only price and flights through confirm availability; the booking keeps its baggage and fare conditions.
 - Bookings made before re-checks existed took their offer's source, integration and fare_key in the migration.
+- Travelport: EMEA gateways (pre-production for test mode, production for live), Air schema v52 and the Galileo (1G) host; one adult (ADT), a leg per direction with the cabin as a permitted cabin and `MaxConnections` only when set, and `SolutionResult` true so each priced solution is one itinerary.
+- Travelport: test connection is a System service ping with the target branch (it searches nothing and counts against no allowance).
+- Travelport: journeys are the directions; checked bags are the fewest pieces of the solution's fare components (a weight allowance alone counts as one bag), with the weight only when every component states kilograms; cabin bag weight is not read (free text only).
+- Travelport: refund or change is not allowed unless the pricing says Refundable or Exchangeable; then a zero penalty is free and any other (or none stated) a fee. A private or negotiated fare component makes the fare private, otherwise public.
+- Travelport: seats left are the fewest booking counts given (null when none), the provider ref is the solution key, the expiry its latest ticketing time; any SOAP fault, including "no availability", is a provider error with its description.

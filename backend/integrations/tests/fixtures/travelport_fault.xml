@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/">
+  <SOAP:Body>
+    <SOAP:Fault>
+      <faultcode>Server.Security</faultcode>
+      <faultstring>Unable to process the request</faultstring>
+      <detail>
+        <common_v52_0:ErrorInfo xmlns:common_v52_0="http://www.travelport.com/schema/common_v52_0">
+          <common_v52_0:Code>1024</common_v52_0:Code>
+          <common_v52_0:Service>WEBSVC</common_v52_0:Service>
+          <common_v52_0:Type>Security</common_v52_0:Type>
+          <common_v52_0:Description>Target branch P7999999 is not authorised for this user.</common_v52_0:Description>
+          <common_v52_0:TransactionId>1A2B3C4D0A0D6A4B5E6F7A8B9C0D1E2F</common_v52_0:TransactionId>
+        </common_v52_0:ErrorInfo>
+      </detail>
+    </SOAP:Fault>
+  </SOAP:Body>
+</SOAP:Envelope>

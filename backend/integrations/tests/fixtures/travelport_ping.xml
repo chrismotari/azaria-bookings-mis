@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/">
+  <SOAP:Body>
+    <sys:PingRsp xmlns:sys="http://www.travelport.com/schema/system_v32_0" TraceId="7c4d2e1f0a9b8c7d6e5f4a3b2c1d0e9f" TransactionId="7F6E5D4C0A0D6A4B3C2B1A0F9E8D7C6B" ResponseTime="12">
+      <sys:Payload>Azaria Bookings connection test</sys:Payload>
+    </sys:PingRsp>
+  </SOAP:Body>
+</SOAP:Envelope>

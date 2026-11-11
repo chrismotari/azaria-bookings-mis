@@ -20,6 +20,7 @@ class Integration(models.Model):
 
     class Provider(models.TextChoices):
         DUFFEL = "duffel", "Duffel"
+        TRAVELPORT = "travelport", "Travelport"
 
     class Mode(models.TextChoices):
         TEST = "test", "Test"

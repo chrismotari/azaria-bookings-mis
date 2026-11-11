@@ -120,12 +120,44 @@ function IntegrationRow({ integration }: { integration: Integration }) {
   );
 }
 
-const createSchema = z.object({
-  provider: z.enum(['duffel']),
-  name: z.string().trim().min(1, 'Enter a name.').max(100),
-  mode: z.enum(['test', 'live']),
-  access_token: z.string().trim().min(1, 'Enter the access token.'),
-});
+type CredentialField = 'access_token' | 'username' | 'password' | 'target_branch';
+
+/** Each provider's credentials, as the API takes them. */
+const CREDENTIALS: Record<
+  Integration['provider'],
+  { fields: { name: CredentialField; label: string; placeholder?: string; secret?: boolean }[]; help: string }
+> = {
+  duffel: {
+    fields: [{ name: 'access_token', label: 'Access token', placeholder: 'duffel_test_…', secret: true }],
+    help: 'Create an access token in your Duffel dashboard (Developers › Access tokens). Test tokens start with duffel_test_.',
+  },
+  travelport: {
+    fields: [
+      { name: 'username', label: 'Username', placeholder: 'uAPI…' },
+      { name: 'password', label: 'Password', secret: true },
+      { name: 'target_branch', label: 'Target branch', placeholder: 'P7…' },
+    ],
+    help: "Use the Universal API username, password and target branch (WAB) Travelport sent you. Test mode searches Travelport's pre-production system, live mode production.",
+  },
+};
+
+const createSchema = z
+  .object({
+    provider: z.enum(['duffel', 'travelport']),
+    name: z.string().trim().min(1, 'Enter a name.').max(100),
+    mode: z.enum(['test', 'live']),
+    access_token: z.string(),
+    username: z.string(),
+    password: z.string(),
+    target_branch: z.string(),
+  })
+  .superRefine((values, ctx) => {
+    for (const field of CREDENTIALS[values.provider].fields) {
+      if (!values[field.name].trim()) {
+        ctx.addIssue({ code: 'custom', path: [field.name], message: `Enter the ${field.label.toLowerCase()}.` });
+      }
+    }
+  });
 
 type FormValues = z.infer<typeof createSchema>;
 
@@ -133,19 +165,25 @@ type FormValues = z.infer<typeof createSchema>;
 function IntegrationDialog({ integration, onClose }: { integration?: Integration; onClose: () => void }) {
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
-  const { control, handleSubmit, setError, formState } = useForm<FormValues>({
+  const { control, handleSubmit, setError, setValue, getValues, watch, formState } = useForm<FormValues>({
     resolver: zodResolver(createSchema),
     defaultValues: {
       provider: integration?.provider ?? 'duffel',
       name: integration?.name ?? 'Duffel',
       mode: integration?.mode ?? 'test',
       access_token: '',
+      username: '',
+      password: '',
+      target_branch: '',
     },
   });
+  const credentials = CREDENTIALS[watch('provider')];
 
   const onSave = handleSubmit(async (values) => {
     setFormError(null);
-    const credentials = { access_token: values.access_token.trim() };
+    const credentials = Object.fromEntries(
+      CREDENTIALS[values.provider].fields.map((field) => [field.name, values[field.name].trim()]),
+    );
     try {
       if (integration) {
         await api.patch(`/admin/integrations/${integration.id}`, { credentials });
@@ -185,7 +223,18 @@ function IntegrationDialog({ integration, onClose }: { integration?: Integration
             control={control}
             name="provider"
             render={({ field }) => (
-              <SelectField label="Provider" options={PROVIDERS} value={field.value} onChange={field.onChange} />
+              <SelectField
+                label="Provider"
+                options={PROVIDERS}
+                value={field.value}
+                onChange={(provider) => {
+                  // A name still set to the previous provider's follows the choice.
+                  if (getValues('name').trim() === providerLabel(field.value)) {
+                    setValue('name', providerLabel(provider));
+                  }
+                  field.onChange(provider);
+                }}
+              />
             )}
           />
           <Controller
@@ -212,27 +261,27 @@ function IntegrationDialog({ integration, onClose }: { integration?: Integration
           />
         </>
       )}
-      <Controller
-        control={control}
-        name="access_token"
-        render={({ field, fieldState }) => (
-          <TextField
-            label={integration ? 'New access token' : 'Access token'}
-            placeholder="duffel_test_…"
-            value={field.value}
-            onChangeText={field.onChange}
-            onBlur={field.onBlur}
-            error={fieldState.error?.message}
-            secureTextEntry
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-        )}
-      />
-      <Text style={styles.small}>
-        Create an access token in your Duffel dashboard (Developers › Access tokens). Test tokens start with
-        duffel_test_.
-      </Text>
+      {credentials.fields.map((credential) => (
+        <Controller
+          key={credential.name}
+          control={control}
+          name={credential.name}
+          render={({ field, fieldState }) => (
+            <TextField
+              label={integration ? `New ${credential.label.toLowerCase()}` : credential.label}
+              placeholder={credential.placeholder}
+              value={field.value}
+              onChangeText={field.onChange}
+              onBlur={field.onBlur}
+              error={fieldState.error?.message}
+              secureTextEntry={credential.secret}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          )}
+        />
+      ))}
+      <Text style={styles.small}>{credentials.help}</Text>
     </Dialog>
   );
 }

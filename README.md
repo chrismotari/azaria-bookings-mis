@@ -6,7 +6,7 @@ Each agency gets its own site and data. Its admin lists flight deals, which anyo
 
 On the root host, the platform's owner manages agencies, plans and invoices, and answers platform support chats. Agencies pay outside the system; the owner marks invoices paid, and agencies with long-overdue invoices are suspended automatically.
 
-The system is in active development. An agency can connect fare providers (Duffel first) to search its routes and publish the fares it chooses as offers; booking and ticketing stay manual, and the system works fully without any provider. Payment integrations are planned, so payments are recorded by hand for now.
+The system is in active development. An agency can connect fare providers (Duffel and Travelport) to search its routes and publish the fares it chooses as offers; booking and ticketing stay manual, and the system works fully without any provider. Payment integrations are planned, so payments are recorded by hand for now.
 
 The full specification is in [SPEC.md](SPEC.md); choices made where it is silent are in [DECISIONS.md](DECISIONS.md).
 
@@ -115,6 +115,15 @@ Then open:
 Chrome and Firefox resolve `*.localhost` without setup. To reach the app from another device, add a domain such as `azaria.192.168.1.37.nip.io` to the agency, allow `.nip.io` in `ALLOWED_HOSTS` and the CORS regexes, and run `runserver 0.0.0.0:8000`.
 
 Other management commands: `python manage.py tenant_command create_admin --schema=azaria --email … --password … --name …` adds another agency admin; `tenant_command createsuperuser --schema=azaria` creates a Django-admin user for one agency.
+
+## Fare providers
+
+Agencies add their own provider credentials under Settings › Integrations; nothing goes in `.env` beyond `INTEGRATIONS_KEY`.
+
+**Travelport (Universal API).**
+- **Trial:** sign up for the free 30-day Universal API trial on Travelport's developer site (developer.travelport.com). The welcome email gives a username (`uAPI…`), a password and a target branch (`P7…`) for the pre-production system. Add a Travelport integration in **Test** mode with those three values and press Test.
+- **Production:** needs a commercial agreement with Travelport (through your Travelport account manager or local Travelport office), which issues production credentials and a production target branch tied to your Galileo (1G) pseudo city. Switch the integration to **Live** and replace its credentials.
+- The app uses Travelport's EMEA gateways and the Galileo (1G) host for searches only; booking and ticketing stay in your own terminal.
 
 ## Files
 

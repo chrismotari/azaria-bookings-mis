@@ -24,7 +24,10 @@ export function useSearchUsage() {
   });
 }
 
-export const PROVIDERS: { value: Integration['provider']; label: string }[] = [{ value: 'duffel', label: 'Duffel' }];
+export const PROVIDERS: { value: Integration['provider']; label: string }[] = [
+  { value: 'duffel', label: 'Duffel' },
+  { value: 'travelport', label: 'Travelport' },
+];
 
 export function providerLabel(provider: string): string {
   return PROVIDERS.find((option) => option.value === provider)?.label ?? provider;

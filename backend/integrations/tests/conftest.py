@@ -1,8 +1,10 @@
 import copy
 import json
+import re
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
+from xml.etree import ElementTree
 
 import httpx
 import pytest
@@ -10,7 +12,7 @@ from freezegun import freeze_time
 
 from airlines.models import Airline
 from integrations.models import Integration, Route
-from integrations.providers import duffel
+from integrations.providers import duffel, travelport
 from rates.models import ExchangeRate
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -60,6 +62,49 @@ class FakeDuffel:
         return self.reply(request)
 
 
+def tp(root, tag):
+    """Every element of a uAPI answer with this local name (Air schema)."""
+    return list(root.iter(f"{{{travelport.AIR}}}{tag}"))
+
+
+def solutions_for(name, edit=None):
+    """A Travelport reply: the recorded solutions moved to the date searched; edit(root) may change them first."""
+
+    def reply(request):
+        searched = date.fromisoformat(re.search(rb'PreferredTime="([0-9-]+)"', request.content).group(1).decode())
+        days = (searched - RECORDED_ON).days
+        root = ElementTree.fromstring((FIXTURES / name).read_bytes())
+        for element in root.iter():
+            for key in ("DepartureTime", "ArrivalTime"):
+                if key in element.attrib:
+                    moved = datetime.fromisoformat(element.get(key)) + timedelta(days=days)
+                    element.set(key, moved.isoformat(timespec="milliseconds"))
+        if edit:
+            edit(root)
+        return httpx.Response(200, content=ElementTree.tostring(root), headers={"Content-Type": "text/xml"})
+
+    return reply
+
+
+def soap_fault(request):
+    return httpx.Response(
+        500, content=(FIXTURES / "travelport_fault.xml").read_bytes(), headers={"Content-Type": "text/xml"}
+    )
+
+
+class FakeTravelport:
+    """Answers uAPI from recorded responses: reply(request) for searches, ping(request) for pings, set per test."""
+
+    def __init__(self):
+        self.requests = []
+        self.reply = solutions_for("travelport_one_way.xml")
+        self.ping = lambda request: httpx.Response(200, content=(FIXTURES / "travelport_ping.xml").read_bytes())
+
+    def handle(self, request):
+        self.requests.append(request)
+        return (self.ping if request.url.path.endswith("/SystemService") else self.reply)(request)
+
+
 @pytest.fixture(autouse=True)
 def _frozen():
     # Noon in Nairobi; the clock runs so that later runs are later.
@@ -72,6 +117,26 @@ def duffel_api(monkeypatch):
     fake = FakeDuffel()
     monkeypatch.setattr(duffel, "transport", httpx.MockTransport(fake.handle))
     return fake
+
+
+@pytest.fixture
+def travelport_api(monkeypatch):
+    fake = FakeTravelport()
+    monkeypatch.setattr(travelport, "transport", httpx.MockTransport(fake.handle))
+    return fake
+
+
+@pytest.fixture
+def make_travelport(db):
+    def make(name="Travelport test", **fields):
+        integration = Integration(provider="travelport", name=name, mode="test", **fields)
+        integration.set_credentials(
+            {"username": "uAPI2514620686-0edbb8e4", "password": "Tp-secret", "target_branch": "P7141733"}
+        )
+        integration.save()
+        return integration
+
+    return make
 
 
 @pytest.fixture
