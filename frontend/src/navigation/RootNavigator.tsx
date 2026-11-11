@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Fragment, ReactNode, useCallback, useEffect, useRef } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
+import { GetAppScreen } from '../agency/GetAppScreen';
 import { useAuth } from '../auth/AuthContext';
 import { RequireAuth, toLogin } from '../auth/gate';
 import { useLoginAfterSignOut } from '../auth/useSignOut';
@@ -41,7 +42,7 @@ import { PlatformDashboardScreen } from '../screens/platform/PlatformDashboardSc
 import { PlatformHomeScreen } from '../screens/platform/PlatformHomeScreen';
 import { PlatformLoginScreen } from '../screens/platform/PlatformLoginScreen';
 import { PlatformPricingScreen } from '../screens/platform/PlatformPricingScreen';
-import { IS_PLATFORM } from '../config';
+import { IS_NATIVE, IS_PLATFORM } from '../config';
 import { ExploreScreen } from '../screens/explore/ExploreScreen';
 import { QueryNewScreen } from '../screens/requests/QueryNewScreen';
 import { RequestsScreen } from '../screens/requests/RequestsScreen';
@@ -87,6 +88,7 @@ function AdminStack() {
       <OverdueBanner />
       <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
         <Stack.Screen name="AdminTabs" component={AdminTabsNavigator} options={{ headerShown: false }} />
+        {GET_APP_SCREEN}
       </Stack.Navigator>
     </View>
   );
@@ -193,6 +195,11 @@ function tab(title: string, icon: IconName, focusedIcon: IconName) {
     ),
   };
 }
+
+// Web only: native links to /app open the app's home instead (agency/links.ts).
+const GET_APP_SCREEN = IS_NATIVE ? null : (
+  <Stack.Screen name="GetApp" component={GetAppScreen} options={{ title: 'Get the app', header: () => <AppBar /> }} />
+);
 
 const STACK_SCREEN_OPTIONS = {
   headerStyle: { backgroundColor: colors.primary },
@@ -449,6 +456,7 @@ export function RootNavigator() {
     <View style={styles.fill}>
       <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
         <Stack.Screen name="Main" component={MainTabsNavigator} options={{ headerShown: false }} />
+        {GET_APP_SCREEN}
         {/* Signed-in customers: these URLs match no screen and open Explore. */}
         {user ? null : (
           <Stack.Group screenOptions={{ header: () => <AppBar brandOnly /> }}>

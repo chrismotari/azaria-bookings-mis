@@ -33,3 +33,11 @@ function subscribe(listener: () => void) {
 export function useTenantProblem(): string | null {
   return useSyncExternalStore(subscribe, () => problem);
 }
+
+/** A newly chosen agency (native) starts without the previous one's problem. */
+export function resetTenantProblem() {
+  if (problem !== null) {
+    problem = null;
+    listeners.forEach((listener) => listener());
+  }
+}

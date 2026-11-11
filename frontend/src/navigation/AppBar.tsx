@@ -5,7 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../auth/AuthContext';
 import { useSignOut } from '../auth/useSignOut';
-import { IS_PLATFORM } from '../config';
+import { switchAgency } from '../agency/agency';
+import { IS_NATIVE, IS_PLATFORM } from '../config';
 import { Icon, IconName } from '../components/Icon';
 import { colors, font, radius, shadow, space, useIsWide, weight } from '../theme';
 import { PressState } from '../components/pressState';
@@ -146,6 +147,25 @@ function AccountMenu() {
                 />
               </>
             ) : null}
+            {IS_PLATFORM ? null : IS_NATIVE ? (
+              <MenuItem
+                label="Switch agency"
+                icon="swap-horizontal-outline"
+                onPress={() => {
+                  close();
+                  void switchAgency();
+                }}
+              />
+            ) : (
+              <MenuItem
+                label="Get the app"
+                icon="phone-portrait-outline"
+                onPress={() => {
+                  close();
+                  navigation.navigate('GetApp');
+                }}
+              />
+            )}
             <MenuItem
               label="Sign out"
               icon="log-out-outline"

@@ -103,7 +103,7 @@ def test_a_reset_link_from_one_agency_fails_at_another(api, other_api, customer)
     assert api.post("/api/auth/password-reset-confirm", body, format="json").status_code == 200
 
 
-def test_email_links_use_the_agencys_primary_domain(other_api, django_capture_on_commit_callbacks):
+def test_email_links_use_the_agencys_app_address(other_api, django_capture_on_commit_callbacks):
     with schema_context(OTHER_SCHEMA):
         User.objects.create_user(email="o@example.com", password=PASSWORD, full_name="O")
     with django_capture_on_commit_callbacks(execute=True):

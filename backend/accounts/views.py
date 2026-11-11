@@ -19,7 +19,7 @@ from .serializers import (
     UserSerializer,
     tokens_for,
 )
-from .tasks import send_account_created_email, send_password_reset_email
+from .tasks import send_account_created_email, send_password_reset_email, send_welcome_email
 
 
 class RegisterView(APIView):
@@ -31,6 +31,7 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        queue(send_welcome_email, user.pk)
         return Response(tokens_for(user), status=status.HTTP_201_CREATED)
 
 

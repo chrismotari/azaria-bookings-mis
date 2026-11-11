@@ -6,16 +6,28 @@ if (!apiUrl) {
   throw new Error('EXPO_PUBLIC_API_URL is not set. Copy frontend/.env.example to frontend/.env.');
 }
 
-/** Each agency has its own hostname with its API on it: {host} in the URL becomes the page's hostname. */
-function resolveHost(url: string): string {
-  if (!url.includes('{host}')) {
-    return url;
-  }
-  const host = Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-  return url.replace('{host}', host);
+/** The API on a given host: {host} in EXPO_PUBLIC_API_URL becomes that host. */
+export function apiUrlFor(host: string): string {
+  return apiUrl!.replace('{host}', host).replace(/\/+$/, '');
 }
 
-export const API_URL = resolveHost(apiUrl).replace(/\/+$/, '');
+/**
+ * Web: each agency has its own hostname with its API on it, so {host} is the page's hostname. Native apps use the
+ * stored agency's address instead (see agency/agency.ts).
+ */
+export const API_URL = apiUrlFor(Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.hostname : '');
+
+/** Native: the shared app serving every agency, which it learns from links or a typed code. */
+export const IS_NATIVE = Platform.OS !== 'web';
+
+/** Agencies' app addresses are <code>.<this>. */
+export const TENANT_BASE_DOMAIN = process.env.EXPO_PUBLIC_TENANT_BASE_DOMAIN ?? '';
+
+export const APP_STORE_URL = process.env.EXPO_PUBLIC_APP_STORE_URL ?? '';
+export const PLAY_STORE_URL = process.env.EXPO_PUBLIC_PLAY_STORE_URL ?? '';
+
+/** The app's own link scheme, for browsers that do not hand https links to the app. */
+export const APP_SCHEME = 'azaria';
 
 /** The root host serves the platform rather than an agency. Web only: native builds always talk to an agency. */
 export const PLATFORM_HOST = process.env.EXPO_PUBLIC_PLATFORM_HOST ?? '';

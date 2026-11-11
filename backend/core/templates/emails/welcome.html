@@ -1,0 +1,7 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hello {{ user.full_name }},</p>
+<p style="margin:0 0 16px 0;">Welcome to {{ agency_name }}. Your account is ready: you can browse our flight deals, request options and book.</p>
+{% include "emails/_button.html" with url=frontend_url label="Visit our site" %}
+{% include "emails/_get_app.html" %}
+{% endblock %}

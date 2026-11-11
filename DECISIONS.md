@@ -153,3 +153,10 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Travelport: refund or change is not allowed unless the pricing says Refundable or Exchangeable; then a zero penalty is free and any other (or none stated) a fee. A private or negotiated fare component makes the fare private, otherwise public.
 - Travelport: seats left are the fewest booking counts given (null when none), the provider ref is the solution key, the expiry its latest ticketing time; any SOAP fault, including "no availability", is a provider error with its description.
 - A booking keeps its own ticketing airline (copied from the offer, like its price); the Confirm availability dialog shows it read-only and changes it only with a re-checked fare, and `changes` records it as old and new airline names.
+- Mobile app: the agency code is the schema name with hyphens, the app address `<code>.<TENANT_BASE_DOMAIN>` is computed (every agency has it as a domain); the platform's own emails keep the root host.
+- Mobile app: the verification files are served on the root host too, since Android verifies a `*.<base>` intent filter there.
+- Mobile app: the bundle id and Android package are `com.azariabookings.app`, fixed in `app.config.ts`; the base domain comes from `EXPO_PUBLIC_TENANT_BASE_DOMAIN`, and without it the build declares no link domains.
+- Mobile app: guests switch agency from the sign-in screen ("Signing in to <agency> · Switch agency"), and the "Agency not available" page offers Switch agency, so a suspended or wrong agency never traps the app.
+- Mobile app: switching agency, or signing out to follow a password link, rebuilds the whole session (query cache, auth, navigation); a link to `/app` or `azaria://open` opens the app's home, and an admin link while signed out reopens after sign-in, as on the web.
+- Mobile app: link prompts are the platform's native alerts; Find your agency and link handling are native-only files, so the web bundle does not contain them.
+- The welcome email is sent only on self-registration; its subject is "Welcome to <agency>".

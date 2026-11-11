@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import connection, transaction
 from django_tenants.utils import get_public_schema_name, schema_context
 
-from tenants.models import Domain, Tenant
+from tenants.models import Tenant
 
 logger = logging.getLogger(__name__)
 
@@ -70,9 +70,25 @@ def for_each_tenant(job, name):
     return total
 
 
+def agency_code(schema_name):
+    """What customers type and the first label of the agency's app address: its schema name with hyphens."""
+    return schema_name.replace("_", "-")
+
+
+def app_address(schema_name=None):
+    """<code>.<TENANT_BASE_DOMAIN>: the address every agency has and the mobile app declares, so email links use it
+    even when the agency's primary domain is a custom one."""
+    return f"{agency_code(schema_name or connection.schema_name)}.{settings.TENANT_BASE_DOMAIN}"
+
+
 def frontend_url():
-    """The web app's base URL on the current tenant's primary domain."""
-    domain = Domain.objects.filter(tenant__schema_name=connection.schema_name, is_primary=True).first()
-    if domain is None:
-        raise RuntimeError(f"Tenant {connection.schema_name} has no primary domain.")
-    return settings.FRONTEND_URL.format(domain=domain.domain).rstrip("/")
+    """The web app's base URL: an agency's app address (it opens the mobile app when installed), or the root host
+    for the platform's own emails."""
+    if connection.schema_name == get_public_schema_name():
+        return settings.FRONTEND_URL.format(domain=settings.TENANT_BASE_DOMAIN).rstrip("/")
+    return settings.FRONTEND_URL.format(domain=app_address()).rstrip("/")
+
+
+def current_tenant():
+    """The current schema's Tenant row (shared table, readable from any agency schema)."""
+    return Tenant.objects.get(schema_name=connection.schema_name)

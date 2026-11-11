@@ -1,6 +1,9 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { switchAgency } from '../agency/agency';
+import { IS_NATIVE } from '../config';
 import { colors, font, space, weight } from '../theme';
+import { Button } from './Button';
 import { Card } from './Card';
 import { EmptyState } from './StatusViews';
 
@@ -15,6 +18,8 @@ export function TenantUnavailable({ message }: { message: string }) {
         <View style={styles.box}>
           <Card>
             <EmptyState icon="business-outline" title="Agency not available" message={message} />
+            {/* Native: the shared app can move on to another agency. */}
+            {IS_NATIVE ? <Button title="Switch agency" variant="secondary" onPress={() => void switchAgency()} /> : null}
           </Card>
         </View>
       </View>

@@ -22,6 +22,9 @@ def django_db_setup(django_db_setup, django_db_blocker):
             tenant = Tenant(schema_name=schema_name, name=name)
             tenant.save(verbosity=0)
             Domain.objects.create(domain=domain, tenant=tenant, is_primary=True)
+            # Every agency is also reachable at its app address; the test agency's primary domain is a custom one.
+            if domain != f"{schema_name}.localhost":
+                Domain.objects.create(domain=f"{schema_name}.localhost", tenant=tenant, is_primary=False)
 
 
 @pytest.fixture(autouse=True)

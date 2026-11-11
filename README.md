@@ -76,13 +76,14 @@ Exchange rates for fare searches arrive with the daily beat task; to load them a
 | `TENANT_BASE_DOMAIN` | The root host (the platform); agencies live at `<schema>.<this>`. `localhost` in development |
 | `ALLOWED_HOSTS` | The base domain and its subdomains, e.g. `localhost,.localhost` |
 | `CORS_ALLOWED_ORIGIN_REGEXES` | The web app's origins, e.g. `^http://([a-z0-9-]+\.)?localhost:8081$` |
-| `FRONTEND_URL` | Base URL for links in emails; `{domain}` is the agency's domain: `http://{domain}:8081` |
+| `FRONTEND_URL` | Base URL for links in emails; `{domain}` is the agency's app address `<code>.<TENANT_BASE_DOMAIN>` (even when its primary domain is a custom one): `http://{domain}:8081` |
 | `NUM_PROXIES` | Reverse proxies in front of the API (`0` locally), so throttling sees the real client IP |
 | `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS` | SMTP; leave `EMAIL_HOST` empty to print emails in the worker's console |
 | `DEFAULT_FROM_EMAIL` | Sender address |
 | `ADMIN_EMAIL` | Default notification email for a new agency |
 | `PLATFORM_CURRENCY` | Currency of the platform's plans and invoices |
 | `INTEGRATIONS_KEY` | Fernet key that encrypts fare providers' credentials; generate with `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` |
+| `IOS_APP_ID`, `ANDROID_PACKAGE`, `ANDROID_CERT_FINGERPRINTS` | Optional: the mobile app's link verification files (see Mobile app) |
 | `EXCHANGE_RATES_URL` | Daily USD exchange-rate feed (default: ExchangeRate-API's free `https://open.er-api.com/v6/latest/USD`) |
 
 ### 3. Web app
@@ -93,7 +94,7 @@ npm install
 cp .env.example .env
 ```
 
-`EXPO_PUBLIC_API_URL` (`http://{host}:8000/api`, where `{host}` becomes the page's hostname) and `EXPO_PUBLIC_PLATFORM_HOST` (`localhost`).
+`EXPO_PUBLIC_API_URL` (`http://{host}:8000/api`, where `{host}` becomes the page's hostname, or the stored agency's address in the mobile app), `EXPO_PUBLIC_PLATFORM_HOST` (`localhost`), `EXPO_PUBLIC_TENANT_BASE_DOMAIN` (`localhost`; the backend's `TENANT_BASE_DOMAIN`), and `EXPO_PUBLIC_APP_STORE_URL` / `EXPO_PUBLIC_PLAY_STORE_URL` (store buttons on the `/app` page, hidden while empty).
 
 ## Running
 
@@ -124,6 +125,15 @@ Agencies add their own provider credentials under Settings › Integrations; not
 - **Trial:** sign up for the free 30-day Universal API trial on Travelport's developer site (developer.travelport.com). The welcome email gives a username (`uAPI…`), a password and a target branch (`P7…`) for the pre-production system. Add a Travelport integration in **Test** mode with those three values and press Test.
 - **Production:** needs a commercial agreement with Travelport (through your Travelport account manager or local Travelport office), which issues production credentials and a production target branch tied to your Galileo (1G) pseudo city. Switch the integration to **Live** and replace its credentials.
 - The app uses Travelport's EMEA gateways and the Galileo (1G) host for searches only; booking and ticketing stay in your own terminal.
+
+## Mobile app
+
+One shared "Azaria Bookings" app serves every agency. It learns its agency from a link (`https://<code>.<base>/...`, or `azaria://open?agency=<code>` from the web app's `/app` page) or from the agency code typed on first launch, and keeps it with the sign-in tokens. "Switch agency" in the account menu (or on the sign-in screen) signs out and asks again. The web app is unchanged: there the address decides the agency.
+
+- **Ids:** bundle id and Android package `com.azariabookings.app` (`frontend/app.config.ts`). The build reads `EXPO_PUBLIC_TENANT_BASE_DOMAIN` to declare `applinks:*.<base>` (iOS) and an auto-verified intent filter for `*.<base>` (Android).
+- **Verification files:** set `IOS_APP_ID` (Apple Team ID plus bundle id, e.g. `ABCDE12345.com.azariabookings.app`), `ANDROID_PACKAGE` (`com.azariabookings.app`) and `ANDROID_CERT_FINGERPRINTS` (the SHA-256 fingerprints of the signing certificates, comma-separated; for Play App Signing take them from the Play Console). Django then serves `/.well-known/apple-app-site-association` and `/.well-known/assetlinks.json` on every agency host and on the root host; in production the reverse proxy must send `/.well-known/` to the API over HTTPS, without redirects.
+- **Builds:** `cd frontend && npx expo run:ios` / `npx expo run:android` locally, or EAS Build for store builds. Universal and app links need HTTPS on a real domain, so test them on a staging base domain rather than `localhost`.
+- **Custom domains:** links only open the app on `<code>.<base>`, which is why every email link uses that address.
 
 ## Files
 

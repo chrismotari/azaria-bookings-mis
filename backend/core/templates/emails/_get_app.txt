@@ -1,0 +1,3 @@
+Get the app
+Use {{ agency_name }} on your phone with the Azaria Bookings app: {{ app_url }}
+Then tap the links in our emails, or enter the agency code: {{ agency_code }}

@@ -630,3 +630,10 @@ export type ExchangeRate = {
   /** More than three days old. */
   stale: boolean;
 };
+
+/** GET /agency: the agency at an address; code is what customers type in the app. */
+export type AgencyInfo = {
+  code: string;
+  name: string;
+  app_address: string;
+};

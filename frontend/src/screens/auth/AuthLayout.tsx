@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { GetAppFooter } from '../../agency/GetAppFooter';
 import { Card } from '../../components/Card';
 import { Icon, IconName } from '../../components/Icon';
 import { Screen } from '../../components/Screen';
@@ -22,7 +23,12 @@ export function AuthLayout({ title, children }: { title: string; children: React
     </Card>
   );
   if (!isWide) {
-    return <Screen maxWidth={440}>{form}</Screen>;
+    return (
+      <Screen maxWidth={440}>
+        {form}
+        <GetAppFooter />
+      </Screen>
+    );
   }
   return (
     <Screen maxWidth={960}>
@@ -43,6 +49,7 @@ export function AuthLayout({ title, children }: { title: string; children: React
         </View>
         <View style={styles.formColumn}>{form}</View>
       </View>
+      <GetAppFooter />
     </Screen>
   );
 }

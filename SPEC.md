@@ -27,11 +27,11 @@ This document describes the system as it stands. Work is delivered in the number
 ## 2. Stack and configuration
 
 - Backend: Django, DRF, Simple JWT (access 30 min, refresh 7 days), django-filter, django-cors-headers, django-environ, django-tenants, Celery + Redis (broker and results, `task_acks_late`, JSON, beat schedule in settings), fpdf2 (invoice PDFs), nh3 (HTML sanitizing), Pillow, httpx (fare providers and the rate feed; Travelport's XML is read with the standard library's parser), cryptography (Fernet, provider credentials). Tests: pytest, pytest-django, freezegun; external APIs through httpx's mock transport, never the network.
-- Settings from `backend/.env`: `SECRET_KEY`, `DEBUG`, `DATABASE_URL`, `REDIS_URL`, `ALLOWED_HOSTS`, `TENANT_BASE_DOMAIN`, `CORS_ALLOWED_ORIGIN_REGEXES`, `FRONTEND_URL` (with `{domain}`), `NUM_PROXIES`, `EMAIL_*`, `DEFAULT_FROM_EMAIL`, `ADMIN_EMAIL`, `PLATFORM_CURRENCY`, `INTEGRATIONS_KEY` (Fernet key), `EXCHANGE_RATES_URL` (default the free ExchangeRate-API USD feed).
+- Settings from `backend/.env`: `SECRET_KEY`, `DEBUG`, `DATABASE_URL`, `REDIS_URL`, `ALLOWED_HOSTS`, `TENANT_BASE_DOMAIN`, `CORS_ALLOWED_ORIGIN_REGEXES`, `FRONTEND_URL` (with `{domain}`: the agency's app address), `NUM_PROXIES`, `EMAIL_*`, `DEFAULT_FROM_EMAIL`, `ADMIN_EMAIL`, `PLATFORM_CURRENCY`, `INTEGRATIONS_KEY` (Fernet key), `EXCHANGE_RATES_URL` (default the free ExchangeRate-API USD feed), and optionally `IOS_APP_ID`, `ANDROID_PACKAGE`, `ANDROID_CERT_FINGERPRINTS` (the mobile app's link verification files).
 - Email: console when `EMAIL_HOST` is empty, SMTP otherwise, locmem in tests.
 - DRF: page size 20, JSON (multipart only for uploads), register/login/password-reset throttled at 10/min per IP, Django password validators on registration and reset. Errors use DRF's format; invalid booking transitions return 409.
 - Private storage (`backend/private_media/`, never served by URL) for boarding passes, invoice PDFs and chat attachments; stored names are random UUIDs plus extension. Public storage (`backend/media/`, served at `/media/`) for airline logos only.
-- Frontend: Expo + TypeScript with react-native-web, React Navigation (every screen has a browser URL), TanStack Query, axios, react-hook-form + zod, expo-secure-store (native tokens), @expo/vector-icons (Ionicons), react-native-svg (+ transformer for native flags), TipTap (web rich text). `EXPO_PUBLIC_API_URL` may contain `{host}`, replaced by the page's hostname; `EXPO_PUBLIC_PLATFORM_HOST` names the root host.
+- Frontend: Expo + TypeScript with react-native-web, React Navigation (every screen has a browser URL), TanStack Query, axios, react-hook-form + zod, expo-secure-store (native tokens), @expo/vector-icons (Ionicons), react-native-svg (+ transformer for native flags), TipTap (web rich text). `EXPO_PUBLIC_API_URL` may contain `{host}`, replaced by the page's hostname (on native: the stored agency's address); `EXPO_PUBLIC_PLATFORM_HOST` names the root host; `EXPO_PUBLIC_TENANT_BASE_DOMAIN`, `EXPO_PUBLIC_APP_STORE_URL` and `EXPO_PUBLIC_PLAY_STORE_URL` serve the mobile app (§19).
 
 ## 3. Multitenancy
 
@@ -40,7 +40,7 @@ This document describes the system as it stands. Work is delivered in the number
 - Root host: the platform's API (`/api/platform/`) and `/django-admin/`. Any other `/api/` path there, or any unknown host, returns 404 `{"code": "no_tenant"}`.
 - Suspended agency (`is_active` false): every `/api/` call returns 403 `tenant_suspended` (non-payment message names the billing contact email); its scheduled jobs and emails are skipped. Agencies are never deleted.
 - Schema names: 3–30 lowercase letters, digits, hyphens, starting with a letter; reserved `public`, `www`, `api`, `admin`, `app-admin`. Hyphens become underscores in the schema, not in the domain.
-- JWTs carry a tenant claim; a token is refused (401) at any other tenant. Reset links use the agency's primary domain and are invalid elsewhere.
+- JWTs carry a tenant claim; a token is refused (401) at any other tenant. Email links (reset links included) use the agency's app address `<code>.<TENANT_BASE_DOMAIN>` (code: the schema name with hyphens); reset links are invalid at other agencies.
 - Celery tasks touching agency data take `schema_name` first, run in that schema, and skip missing or inactive agencies. Beat tasks run their job in every active agency in turn; one agency's error is logged and does not stop the rest.
 - `tenants.services.create_agency` (used by the platform app, `/django-admin/` and `manage.py create_agency`) validates the name, creates tenant, schema, primary domain and first admin, sets the notification email, and leaves nothing behind on failure.
 
@@ -108,7 +108,7 @@ Re-check (`integrations.services.recheck_fare`): for a requested booking with a 
 HTML (one themed base layout, table-based, inline CSS, no images) plus plain-text fallback, via `EmailMultiAlternatives`. Emails about a booking show its itinerary per direction (flight numbers, local times, connections), baggage and fare conditions. Tasks take ids only, retry with backoff (max 5), and reload and re-check state before sending.
 
 - Agency admin: new request, new booking, new support message.
-- Customer: request responded, availability confirmed (payment instructions, deadline, any changes), unavailable (with suggestions link if any), payment received, booking expired, payment reminder, boarding passes (all files attached), password reset, account created (set-password link), support reply.
+- Customer: request responded, availability confirmed (payment instructions, deadline, any changes), unavailable (with suggestions link if any), payment received, booking expired, payment reminder, boarding passes (all files attached), password reset, welcome on registration (site link, "Get the app" with the agency code), account created (set-password link and "Get the app"), support reply.
 - Platform: invoice (PDF attached, unpaid only), suspended for non-payment, new platform-desk message to `support_email`, reply to platform requester.
 
 ## 7. Scheduled tasks (Celery beat)
@@ -146,7 +146,7 @@ Agencies pay outside the system. `tenants/billing.py`:
 ## 10. API
 
 Agency host, `/api/`:
-- Public: `auth/register`, `auth/login`, `auth/refresh`, `auth/password-reset`, `auth/password-reset-confirm` (same response for unknown emails); `airports?search=` (exact code first, ≤ 20); `offers` (filters: origin/destination text, date range, trip_type, return date range, price range, class, max_stopovers counted in the busier direction; ordering) and `offers/{id}`; `POST support/chats`.
+- Public: `agency` (`{code, name, app_address}`), `auth/register`, `auth/login`, `auth/refresh`, `auth/password-reset`, `auth/password-reset-confirm` (same response for unknown emails); `airports?search=` (exact code first, ≤ 20); `offers` (filters: origin/destination text, date range, trip_type, return date range, price range, class, max_stopovers counted in the busier direction; ordering) and `offers/{id}`; `POST support/chats`.
 - Signed in: `auth/me`; `queries` (+ `close`); `bookings` (+ `cancel`, `accept-changes`, `decline-changes`); `boarding-passes/{id}/download` (admin, or customer once completed); `support/chats`, `support/chats/{id}` (+ `messages`), `support/unread`, `support/attachments/{id}`.
 - Offers (public, admin, nested in responses and bookings) return `source` and `price_checked_at` (never net amounts, rates or fare type outside the admin API), the trip fields and `itinerary`: `{outbound, return}`, each direction with its segments (nested airlines and airports), connections and stop_count; return is null for one-way. Admin create/edit and custom offers take `segments` as one ordered list; an edit with segments replaces them all. Bookings return their own trip fields and itinerary.
 - Offer visibility for customers: public and active, or attached to a response to one of their queries (detail and booking only).
@@ -220,9 +220,6 @@ All delivered; each was one commit.
 36. Scheduled route searches and offer refresh (see §16).
 37. Re-check a booking's fare (see §17).
 38. Second provider: Travelport (see §18).
-
-Pending (not yet built):
-
 39. Mobile app: one shared app, agency from links or code (see §19).
 
 ## 14. Step 34: Return trips and flight details

@@ -3,6 +3,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { GetAppFooter } from '../../agency/GetAppFooter';
 import { api } from '../../api/client';
 import { Offer, Paginated } from '../../api/types';
 import { useAuthGate } from '../../auth/gate';
@@ -199,6 +200,9 @@ export function ExploreScreen({ navigation, route }: BottomTabScreenProps<MainTa
               </Card>
             </View>
           </View>
+          <View style={styles.footer}>
+            <GetAppFooter />
+          </View>
         </ScrollView>
       }
     />
@@ -216,4 +220,5 @@ const styles = StyleSheet.create({
   count: { fontSize: font.small, color: colors.muted },
   panel: { padding: space.lg, borderRadius: radius.md, backgroundColor: colors.background },
   rows: { gap: space.md },
+  footer: { width: '100%', maxWidth: 1100 + 2 * space.lg, alignSelf: 'center', padding: space.lg, paddingTop: 0 },
 });

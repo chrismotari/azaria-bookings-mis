@@ -115,7 +115,7 @@ def test_an_agency_admin_writes_to_the_platform(platform, django_capture_on_comm
     with django_capture_on_commit_callbacks(execute=True):
         platform.post(f"/api/platform/chats/{chat_id}/messages", {"body": "Done from the next invoice."})
     [email] = mail.outbox
-    assert email.to == ["boss@test.test"] and f"http://testserver:8081/admin/support/{chat_id}" in email.body
+    assert email.to == ["boss@test.test"] and f"http://test.localhost:8081/admin/support/{chat_id}" in email.body
 
     assert client.get("/api/support/platform-chats/unread").data == {"count": 1}
     listed = client.get("/api/support/platform-chats").data["results"]

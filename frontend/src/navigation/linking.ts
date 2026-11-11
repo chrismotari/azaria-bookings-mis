@@ -1,12 +1,16 @@
 import { LinkingOptions } from '@react-navigation/native';
 
-import { IS_PLATFORM } from '../config';
+import { nativeLinking } from '../agency/agency';
+import { APP_SCHEME, IS_NATIVE, IS_PLATFORM } from '../config';
 import { RootStackParamList } from './types';
 
 const agencyLinking: LinkingOptions<RootStackParamList> = {
-  prefixes: [],
+  // Native: the agency's links arrive through agency/links.ts, which checks the agency first and hands on each
+  // link's screen as an azaria:// URL.
+  ...(IS_NATIVE ? { prefixes: [`${APP_SCHEME}://`], ...nativeLinking } : { prefixes: [] }),
   config: {
     screens: {
+      GetApp: 'app',
       Main: {
         screens: {
           // Explore is the offers list.

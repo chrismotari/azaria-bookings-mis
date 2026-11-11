@@ -22,7 +22,7 @@ def new_user(admin_api, capture, **overrides):
 
 
 def set_password_link(email):
-    match = re.search(r"http://testserver:8081/reset-password\?uid=(\S+)&token=(\S+)", email.body)
+    match = re.search(r"http://test.localhost:8081/reset-password\?uid=(\S+)&token=(\S+)", email.body)
     assert match, email.body
     return match.group(1), match.group(2)
 

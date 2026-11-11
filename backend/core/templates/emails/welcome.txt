@@ -1,0 +1,10 @@
+Hello {{ user.full_name }},
+
+Welcome to {{ agency_name }}. Your account is ready: you can browse our flight deals, request options and book.
+
+Visit our site:
+{{ frontend_url }}
+
+{% include "emails/_get_app.txt" %}
+
+Azaria Bookings

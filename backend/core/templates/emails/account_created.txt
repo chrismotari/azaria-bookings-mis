@@ -5,4 +5,6 @@ Azaria Bookings has created an account for you with this email address. With it 
 To choose your password and sign in, open this link:
 {{ set_password_url }}
 
+{% include "emails/_get_app.txt" %}
+
 Azaria Bookings

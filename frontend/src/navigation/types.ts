@@ -74,6 +74,8 @@ export type RootStackParamList = {
   ForgotPassword: undefined;
   ResetPassword: { uid?: string; token?: string } | undefined;
   AdminTabs: NavigatorScreenParams<AdminTabParamList> | undefined;
+  /** Web only: the agency's "Get the app" page. */
+  GetApp: undefined;
   PlatformHome: undefined;
   PlatformPricing: undefined;
   PlatformLogin: undefined;

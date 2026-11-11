@@ -3,17 +3,19 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { isAxiosError } from 'axios';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { z } from 'zod';
 
+import { currentAgency, switchAgency } from '../../agency/agency';
 import { errorMessage } from '../../api/errors';
 import { useAuth } from '../../auth/AuthContext';
 import { continueAfterSignIn } from '../../auth/gate';
 import { Button } from '../../components/Button';
 import { FormError } from '../../components/Field';
 import { TextField } from '../../components/TextField';
+import { IS_NATIVE } from '../../config';
 import { RootStackParamList } from '../../navigation/types';
-import { colors } from '../../theme';
+import { colors, font, space } from '../../theme';
 import { AuthLayout } from './AuthLayout';
 
 const schema = z.object({
@@ -83,10 +85,24 @@ export function LoginScreen({ navigation, route }: NativeStackScreenProps<RootSt
       <Button title="Sign in" onPress={onSubmit} loading={formState.isSubmitting} />
       <Button title="Forgot password?" variant="link" onPress={() => navigation.navigate('ForgotPassword')} />
       <Button title="New here? Create an account" variant="link" onPress={() => navigation.navigate('Register')} />
+      {IS_NATIVE ? <AgencyLine /> : null}
     </AuthLayout>
+  );
+}
+
+/** Native: which agency this sign-in is for, and the way to another one. */
+function AgencyLine() {
+  const agency = currentAgency();
+  return (
+    <View style={styles.agency}>
+      <Text style={styles.agencyText}>Signing in to {agency?.name}</Text>
+      <Button title="Switch agency" variant="link" onPress={() => void switchAgency()} />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   notice: { color: colors.success },
+  agency: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: space.md, alignItems: 'center' },
+  agencyText: { fontSize: font.small, color: colors.muted },
 });

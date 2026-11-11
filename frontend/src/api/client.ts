@@ -1,10 +1,11 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-import { API_URL, AUTH_PATH } from '../config';
+import { currentApiUrl } from '../agency/agency';
+import { AUTH_PATH } from '../config';
 import { tokenStorage } from './storage';
 import { reportTenantProblem } from './tenant';
 
-export const api = axios.create({ baseURL: API_URL });
+export const api = axios.create();
 
 // Requests that must never trigger a token refresh.
 const AUTH_PATHS = [`${AUTH_PATH}/login`, `${AUTH_PATH}/register`, `${AUTH_PATH}/refresh`];
@@ -16,6 +17,8 @@ export function setSessionExpiredHandler(handler: () => void) {
 }
 
 api.interceptors.request.use(async (config) => {
+  // Native: the stored agency's address, which can change while the app runs.
+  config.baseURL = currentApiUrl();
   const access = await tokenStorage.getAccess();
   if (access && !config.headers.Authorization) {
     config.headers.Authorization = `Bearer ${access}`;
@@ -32,7 +35,7 @@ async function refreshAccessToken(): Promise<string | null> {
     return null;
   }
   try {
-    const { data } = await axios.post<{ access: string }>(`${API_URL}${AUTH_PATH}/refresh`, { refresh });
+    const { data } = await axios.post<{ access: string }>(`${currentApiUrl()}${AUTH_PATH}/refresh`, { refresh });
     await tokenStorage.setAccess(data.access);
     return data.access;
   } catch {

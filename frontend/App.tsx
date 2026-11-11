@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { AgencyGate } from './src/agency/AgencyGate';
 import { useTenantProblem } from './src/api/tenant';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { ConfirmProvider } from './src/components/ConfirmDialog';
@@ -44,19 +45,26 @@ function Navigation() {
   );
 }
 
-export default function App() {
+/** Everything that belongs to one agency and one session: rebuilt from scratch when either changes. */
+function Session() {
   const [queryClient] = useState(
     () => new QueryClient({ defaultOptions: { queries: { retry: shouldRetry }, mutations: { retry: false } } }),
   );
   return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <ConfirmProvider>
+          <Navigation />
+        </ConfirmProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default function App() {
+  return (
     <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <ConfirmProvider>
-            <Navigation />
-          </ConfirmProvider>
-        </AuthProvider>
-      </QueryClientProvider>
+      <AgencyGate render={(session) => <Session key={session} />} />
       <StatusBar style="auto" />
     </SafeAreaProvider>
   );

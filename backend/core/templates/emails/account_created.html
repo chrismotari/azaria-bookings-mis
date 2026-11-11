@@ -4,4 +4,5 @@
 <p style="margin:0 0 16px 0;">Azaria Bookings has created an account for you with this email address. With it you can request flight options, book deals and download your boarding passes.</p>
 {% include "emails/_button.html" with url=set_password_url label="Choose your password" %}
 <p style="margin:0 0 16px 0; color:{{ brand.muted }}; font-size:13px; line-height:19px;">If the button does not work, copy this link into your browser:<br><a href="{{ set_password_url }}" style="color:{{ brand.primary }}; word-break:break-all;">{{ set_password_url }}</a></p>
+{% include "emails/_get_app.html" %}
 {% endblock %}
