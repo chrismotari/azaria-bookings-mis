@@ -31,6 +31,7 @@ const agencyLinking: LinkingOptions<RootStackParamList> = {
         screens: {
           AdminDashboard: '',
           AdminOffers: 'offers/:id?',
+          AdminRoutes: 'routes/:id?',
           AdminRequests: 'requests/:id?',
           AdminBookings: 'bookings/:id?',
           AdminUsers: 'users/:id?',
@@ -38,6 +39,7 @@ const agencyLinking: LinkingOptions<RootStackParamList> = {
           AdminSettings: 'settings',
           AdminOfferNew: 'offers/new',
           AdminQueryRespond: 'requests/:id/respond',
+          AdminFares: 'routes/:route/fares',
           AdminBilling: 'billing',
           AdminPlans: 'plans',
           AdminSupport: 'support/:id?',

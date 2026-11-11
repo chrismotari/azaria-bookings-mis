@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 
 from core.permissions import IsAdminRole
 from customer_requests.models import Query
+from integrations.models import Fare
 from customer_requests.serializers import SuggestedOptionsSerializer
 
 from .models import BoardingPass, Booking
@@ -203,5 +204,6 @@ class AdminDashboardView(APIView):
                 "bookings_requested": counts[Booking.Status.REQUESTED],
                 "bookings_awaiting_payment": counts[Booking.Status.AVAILABILITY_CONFIRMED],
                 "bookings_paid_awaiting_boarding_pass": counts[Booking.Status.PAID],
+                "new_fares": Fare.objects.filter(status=Fare.Status.NEW, picked=True).count(),
             }
         )

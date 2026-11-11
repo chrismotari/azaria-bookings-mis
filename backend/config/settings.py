@@ -38,6 +38,7 @@ SHARED_APPS = [
     "tenants",
     "airports",
     "airlines",
+    "rates",
     *DJANGO_APPS,
     "rest_framework",
     "django_filters",
@@ -56,6 +57,7 @@ TENANT_APPS = [
     "bookings",
     "core",
     "support",
+    "integrations",
 ]
 
 INSTALLED_APPS = [*SHARED_APPS, *[app for app in TENANT_APPS if app not in SHARED_APPS]]
@@ -129,6 +131,11 @@ MEDIA_URL = "/media/"
 CURRENCY = "USD"
 # What agencies pay the platform in: every plan and invoice.
 PLATFORM_CURRENCY = env("PLATFORM_CURRENCY", default="USD")
+
+# Encrypts fare providers' credentials at rest (a Fernet key).
+INTEGRATIONS_KEY = env("INTEGRATIONS_KEY")
+# The daily exchange-rate feed: USD-based rates in ExchangeRate-API's open-access format.
+EXCHANGE_RATES_URL = env("EXCHANGE_RATES_URL", default="https://open.er-api.com/v6/latest/USD")
 
 
 # Email: console in development unless EMAIL_HOST is set; tests use locmem.
@@ -216,6 +223,14 @@ CELERY_BEAT_SCHEDULE = {
     },
     "suspend-overdue-tenants": {
         "task": "tenants.tasks.suspend_overdue_tenants",
+        "schedule": timedelta(days=1),
+    },
+    "fetch-exchange-rates": {
+        "task": "rates.tasks.fetch_exchange_rates",
+        "schedule": timedelta(days=1),
+    },
+    "delete-old-fares": {
+        "task": "integrations.tasks.delete_old_fares",
         "schedule": timedelta(days=1),
     },
 }

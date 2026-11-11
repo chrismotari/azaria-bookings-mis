@@ -15,7 +15,7 @@ import { PriceTag } from '../../components/PriceTag';
 import { RouteLine } from '../../components/RouteLine';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { colors, font, space, weight } from '../../theme';
-import { formatDate, ticketClassLabel } from '../../utils/format';
+import { formatDate, ticketClassLabel, timeAgo } from '../../utils/format';
 
 /** Width from which the price summary sits beside the details instead of below them. */
 const TWO_COLUMNS = 640;
@@ -86,6 +86,9 @@ export function OfferDetailView({ id, query }: { id: string; query?: string }) {
             {data.trip_type === 'return' ? 'Return price per person' : 'Price per person'}
           </Text>
           <PriceTag amount={data.price} size="large" />
+          {data.price_checked_at ? (
+            <Text style={styles.muted}>Price checked {timeAgo(data.price_checked_at)}</Text>
+          ) : null}
           {data.is_bookable ? (
             <Button
               title="Book"

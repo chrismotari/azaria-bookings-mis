@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.core.validators import DomainNameValidator
+from django_tenants.utils import schema_context
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 
@@ -40,6 +41,7 @@ def slug_of(tenant):
 class TenantSerializer(serializers.ModelSerializer):
     slug = serializers.SerializerMethodField()
     primary_domain = serializers.SerializerMethodField()
+    searches_this_month = serializers.SerializerMethodField()
 
     class Meta:
         model = Tenant
@@ -52,9 +54,19 @@ class TenantSerializer(serializers.ModelSerializer):
             "suspension_reason",
             "suspended_at",
             "billing_email",
+            "monthly_search_allowance",
+            "searches_this_month",
             "created_at",
         ]
-        read_only_fields = ["id", "slug", "primary_domain", "suspension_reason", "suspended_at", "created_at"]
+        read_only_fields = [
+            "id",
+            "slug",
+            "primary_domain",
+            "suspension_reason",
+            "suspended_at",
+            "searches_this_month",
+            "created_at",
+        ]
 
     def get_slug(self, tenant):
         return slug_of(tenant)
@@ -62,6 +74,13 @@ class TenantSerializer(serializers.ModelSerializer):
     def get_primary_domain(self, tenant):
         # From the prefetched domains, so a page of tenants costs one query for all of them.
         return next((domain.domain for domain in tenant.domains.all() if domain.is_primary), None)
+
+    def get_searches_this_month(self, tenant):
+        from integrations.services import searches_this_month
+
+        # Runs live in the agency's own schema.
+        with schema_context(tenant.schema_name):
+            return searches_this_month()
 
     def validate_name(self, value):
         if not value.strip():

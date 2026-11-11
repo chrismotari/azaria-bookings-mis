@@ -135,8 +135,73 @@ function Agency({ tenant }: { tenant: TenantDetail }) {
 
       <AgencyBilling tenant={tenant} onSaved={refresh} />
 
+      <SearchAllowance tenant={tenant} />
+
       <Domains tenant={tenant} />
     </>
+  );
+}
+
+const allowanceSchema = z.object({
+  monthly_search_allowance: z.string().trim().regex(/^\d{1,9}$/, 'Enter a whole number of searches.'),
+});
+
+/** Fare searches per calendar month: what the agency used this month, and the allowance (editable). */
+function SearchAllowance({ tenant }: { tenant: TenantDetail }) {
+  const refresh = useRefresh(tenant);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const { control, handleSubmit, setError, reset, formState } = useForm<{ monthly_search_allowance: string }>({
+    resolver: zodResolver(allowanceSchema),
+    defaultValues: { monthly_search_allowance: String(tenant.monthly_search_allowance) },
+  });
+
+  const onSave = handleSubmit(async ({ monthly_search_allowance }) => {
+    setFormError(null);
+    setSaved(false);
+    try {
+      const { data } = await api.patch<TenantDetail>(`/platform/tenants/${tenant.id}`, {
+        monthly_search_allowance: Number(monthly_search_allowance),
+      });
+      reset({ monthly_search_allowance: String(data.monthly_search_allowance) });
+      setSaved(true);
+      await refresh(data);
+    } catch (error) {
+      setFormError(applyServerErrors(error, setError, ['monthly_search_allowance']));
+    }
+  });
+
+  return (
+    <Card>
+      <Text style={styles.section}>Fare searches</Text>
+      <Text style={styles.muted}>
+        Searches its routes make through its integrations, per calendar month (Nairobi time).
+      </Text>
+      <Detail
+        label="Used this month"
+        value={`${tenant.searches_this_month.toLocaleString('en-US')} of ${tenant.monthly_search_allowance.toLocaleString('en-US')}`}
+      />
+      <Controller
+        control={control}
+        name="monthly_search_allowance"
+        render={({ field, fieldState }) => (
+          <TextField
+            label="Monthly allowance"
+            value={field.value}
+            onChangeText={field.onChange}
+            onBlur={field.onBlur}
+            error={fieldState.error?.message}
+            keyboardType="number-pad"
+            onSubmitEditing={() => onSave()}
+          />
+        )}
+      />
+      <FormError message={formError} />
+      {saved && !formState.isDirty ? <Text style={styles.saved}>Allowance saved.</Text> : null}
+      <FormFooter>
+        <Button title="Save allowance" onPress={onSave} loading={formState.isSubmitting} disabled={!formState.isDirty} />
+      </FormFooter>
+    </Card>
   );
 }
 

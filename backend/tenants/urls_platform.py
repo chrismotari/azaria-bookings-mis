@@ -3,6 +3,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from accounts.tokens import TenantTokenRefreshSerializer
 
+from rates.views import PlatformExchangeRatesView
 from support import views as support
 
 from . import billing_views as billing
@@ -31,6 +32,7 @@ urlpatterns = [
         for action in ["mark-paid", "mark-unpaid", "void", "resend"]
     ],
     path("settings", billing.PlatformSettingsView.as_view()),
+    path("exchange-rates", PlatformExchangeRatesView.as_view()),
     path("dashboard", billing.PlatformDashboardView.as_view()),
     path("public-plans", billing.PublicPlansView.as_view()),
     # The platform's support desk.

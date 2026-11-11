@@ -15,6 +15,7 @@ import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
 import { colors, font, weight } from '../../theme';
+import { ExchangeRates } from './ExchangeRates';
 
 const DAYS = /^\d{1,3}$/;
 
@@ -182,6 +183,7 @@ function SettingsForm({ settings }: { settings: PlatformSettings }) {
           disabled={!formState.isDirty}
         />
       </FormFooter>
+      <ExchangeRates />
     </Screen>
   );
 }

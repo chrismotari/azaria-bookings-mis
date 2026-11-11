@@ -116,3 +116,19 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Exchange rates come from a daily feed (ExchangeRate-API by default) with manual override on the platform.
 - All valid search results are kept 30 days for comparison; published ones are kept.
 - Technical stops inside a flight are not recorded.
+- Pick rule: `pick_cheapest` picks the `max_per_date` cheapest fares of each date; `pick_cheapest_direct` adds the cheapest direct one on top of that limit; at least one of the two is on.
+- A route's airlines filter on the ticketing airline.
+- "Earlier new fares replaced": a run un-picks the earlier runs' new fares for the dates it searched; they stay stored for the price history.
+- A run's `searches_made` holds its planned count from the moment it is queued (the tenant row is locked while checking), so two quick starts cannot both fit in what is left; it ends as the searches actually made.
+- A result whose trip type differs from the route, or that does not start and end at the route's airports, is skipped like any other broken itinerary.
+- Provider errors and skipped results are recorded once per distinct message, with "(n×)" when repeated.
+- A fare's departure date is read from its itinerary's first segment; no extra column.
+- `admin/fares` needs `route`; dismissed fares are listed only with `status=dismissed`. Integrations are listed unpaginated.
+- Only new fares can be published or dismissed (409 otherwise; published ones cannot be dismissed). Publishing over an active offer with the same fare_key changes only its price, net and conversion fields and price_checked_at; price_checked_at is the run's end.
+- Changing an integration's credentials clears its last test result; a failed test is a 200 with `last_test_ok` false.
+- Net amounts are stored with 3 decimals (some currencies have 3).
+- Duffel: mode is a label (the token decides test or live; one URL). "Any" connections sends no `max_connections` (Duffel's default of one connection applies).
+- Duffel: checked bags are the fewest included on any flight (first passenger); carry-on bags have no count field here, and weights are null as Duffel's offer gives none.
+- Duffel: a missing refund or change condition is not allowed; allowed with a zero penalty is free; otherwise (including an unstated penalty) with a fee.
+- Duffel: a non-empty `private_fares` is a private fare, an empty one public, a missing one unknown; seats left are always null (Duffel does not give them).
+- Exchange rates: the feed's rates are stored under the Nairobi date of the fetch; a failed feed stores nothing and the task errors. The platform screen lists every currency with a stored rate.

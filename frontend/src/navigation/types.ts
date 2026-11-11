@@ -33,6 +33,8 @@ export type MainTabParamList = {
 export type AdminTabParamList = {
   AdminDashboard: undefined;
   AdminOffers: { id?: string } | undefined;
+  /** Shown only once the agency has an integration. */
+  AdminRoutes: { id?: string } | undefined;
   AdminRequests: { status?: QueryStatus | 'all'; id?: string } | undefined;
   AdminBookings: { status?: BookingStatus | 'all'; id?: string } | undefined;
   AdminUsers: { id?: string } | undefined;
@@ -42,6 +44,8 @@ export type AdminTabParamList = {
   /** Not in the bar: shown under Offers and Requests. */
   AdminOfferNew: undefined;
   AdminQueryRespond: { id: string };
+  /** Not in the bar: a route's fares, under Routes. run: a run other than the latest. */
+  AdminFares: { route: string; run?: string };
   /** Not in the bar: opened from Settings, shown under it. */
   AdminBilling: undefined;
   AdminPlans: undefined;

@@ -2,10 +2,11 @@
 
 A multitenant SaaS for small and medium-sized flight ticketing agencies. Each agency (tenant) gets its own site and data: its admin lists flight deals, anyone can browse them, and registered customers request options or book. The admin confirms availability, the customer pays outside the system, the admin marks the booking paid, uploads boarding passes and sends them by email; the customer can also open them in the app. The platform's system owner manages agencies, plans and invoices on the root host.
 
-Many integrations are still to come, so much of the work is done by hand for now: bookings and invoices are paid outside the system and marked paid manually, and offers are entered by the admin.
+Many integrations are still to come, so much of the work is done by hand for now: bookings and invoices are paid outside the system and marked paid manually, and booking and ticketing happen in the agent's own GDS. Offers are entered by the admin, or found by searching the agency's routes through its fare providers and published after review.
+
+An agency may connect any fare provider of its choosing (Duffel for now), several at the same time, or none: the system works fully without one.
 
 Planned (not yet specified or built):
-- GDS integrations per agency. An agency may connect any GDS or fare provider of its choosing, several at the same time, or none: the system works fully without one.
 - Payment integrations, replacing the manual "mark paid" steps.
 
 This document describes the system as it stands. Work is delivered in the numbered steps at the end; new steps are appended there.
@@ -14,8 +15,8 @@ This document describes the system as it stands. Work is delivered in the number
 
 - PostgreSQL only (development, tests, production). No Docker; PostgreSQL and Redis run locally.
 - No TODOs, stubs, placeholder code, mock data, or unused fields, endpoints, models or dependencies.
-- Out of scope until specified in a step: payment processing and GDS or airline APIs (see Planned above). Out of scope: passenger details, push notifications, email verification, re-sending passes after completion, multi-currency for bookings, multi-language, social login, reviews, packages, blog, per-agency branding.
-- Agency prices (offers, bookings) are USD, defined once as `CURRENCY`; no currency column on them. Platform prices use `PLATFORM_CURRENCY`. Fares from providers keep their original currency and are converted to USD for every calculation and comparison (step 35).
+- Out of scope until specified in a step: payment processing, and booking or ticketing through GDS or airline APIs (providers are used for fare searches only). Out of scope: passenger details, push notifications, email verification, re-sending passes after completion, multi-currency for bookings, multi-language, social login, reviews, packages, blog, per-agency branding.
+- Agency prices (offers, bookings) are USD, defined once as `CURRENCY`; no currency column on them. Platform prices use `PLATFORM_CURRENCY`. Fares from providers keep their original currency and are converted to USD for every calculation and comparison; customers only ever see USD.
 - Time zone Africa/Nairobi, `USE_TZ = True`; all user-facing times are Nairobi time, except flight times, which are the local times of the airport concerned (stored as date and time with no time zone).
 - "Admin" is the agency owner's in-app role (`User.role == "admin"`). Django's admin site is technical support only, mounted at `/django-admin/` for superusers. Never mix the two.
 - Every model's primary key is a UUID (`default=uuid.uuid4`), and so is every id in URLs and API bodies. Only Django's framework tables keep numeric keys. Airports are identified by IATA code in the API. A malformed id returns 404.
@@ -25,8 +26,8 @@ This document describes the system as it stands. Work is delivered in the number
 
 ## 2. Stack and configuration
 
-- Backend: Django, DRF, Simple JWT (access 30 min, refresh 7 days), django-filter, django-cors-headers, django-environ, django-tenants, Celery + Redis (broker and results, `task_acks_late`, JSON, beat schedule in settings), fpdf2 (invoice PDFs), nh3 (HTML sanitizing), Pillow. Tests: pytest, pytest-django, freezegun.
-- Settings from `backend/.env`: `SECRET_KEY`, `DEBUG`, `DATABASE_URL`, `REDIS_URL`, `ALLOWED_HOSTS`, `TENANT_BASE_DOMAIN`, `CORS_ALLOWED_ORIGIN_REGEXES`, `FRONTEND_URL` (with `{domain}`), `NUM_PROXIES`, `EMAIL_*`, `DEFAULT_FROM_EMAIL`, `ADMIN_EMAIL`, `PLATFORM_CURRENCY`.
+- Backend: Django, DRF, Simple JWT (access 30 min, refresh 7 days), django-filter, django-cors-headers, django-environ, django-tenants, Celery + Redis (broker and results, `task_acks_late`, JSON, beat schedule in settings), fpdf2 (invoice PDFs), nh3 (HTML sanitizing), Pillow, httpx (fare providers and the rate feed), cryptography (Fernet, provider credentials). Tests: pytest, pytest-django, freezegun; external APIs through httpx's mock transport, never the network.
+- Settings from `backend/.env`: `SECRET_KEY`, `DEBUG`, `DATABASE_URL`, `REDIS_URL`, `ALLOWED_HOSTS`, `TENANT_BASE_DOMAIN`, `CORS_ALLOWED_ORIGIN_REGEXES`, `FRONTEND_URL` (with `{domain}`), `NUM_PROXIES`, `EMAIL_*`, `DEFAULT_FROM_EMAIL`, `ADMIN_EMAIL`, `PLATFORM_CURRENCY`, `INTEGRATIONS_KEY` (Fernet key), `EXCHANGE_RATES_URL` (default the free ExchangeRate-API USD feed).
 - Email: console when `EMAIL_HOST` is empty, SMTP otherwise, locmem in tests.
 - DRF: page size 20, JSON (multipart only for uploads), register/login/password-reset throttled at 10/min per IP, Django password validators on registration and reset. Errors use DRF's format; invalid booking transitions return 409.
 - Private storage (`backend/private_media/`, never served by URL) for boarding passes, invoice PDFs and chat attachments; stored names are random UUIDs plus extension. Public storage (`backend/media/`, served at `/media/`) for airline logos only.
@@ -35,7 +36,7 @@ This document describes the system as it stands. Work is delivered in the number
 ## 3. Multitenancy
 
 - One PostgreSQL schema per agency (django-tenants), chosen by hostname. Agency: `<schema>.<TENANT_BASE_DOMAIN>` (its primary domain); extra domains can be added.
-- Public schema = the platform: apps `tenants`, `airports`, `airlines`, `accounts` (system owner accounts), `support` (platform desk). Agency schemas: `accounts`, `catalog`, `requests`, `bookings`, `core`, `support`. The same email may hold separate accounts at different agencies.
+- Public schema = the platform: apps `tenants`, `airports`, `airlines`, `rates`, `accounts` (system owner accounts), `support` (platform desk). Agency schemas: `accounts`, `catalog`, `requests`, `bookings`, `core`, `support`, `integrations`. The same email may hold separate accounts at different agencies.
 - Root host: the platform's API (`/api/platform/`) and `/django-admin/`. Any other `/api/` path there, or any unknown host, returns 404 `{"code": "no_tenant"}`.
 - Suspended agency (`is_active` false): every `/api/` call returns 403 `tenant_suspended` (non-payment message names the billing contact email); its scheduled jobs and emails are skipped. Agencies are never deleted.
 - Schema names: 3–30 lowercase letters, digits, hyphens, starting with a letter; reserved `public`, `www`, `api`, `admin`, `app-admin`. Hyphens become underscores in the schema, not in the domain.
@@ -46,9 +47,10 @@ This document describes the system as it stands. Work is delivered in the number
 ## 4. Data model
 
 Shared (public schema)
-- **Tenant**: name, schema_name, is_active, created_at, billing_email, suspension_reason (blank / manual / non_payment), suspended_at. **Domain**: domain, tenant, is_primary.
+- **Tenant**: name, schema_name, is_active, created_at, billing_email, suspension_reason (blank / manual / non_payment), suspended_at, monthly_search_allowance (1500; fare searches per Nairobi calendar month, edited by the owner). **Domain**: domain, tenant, is_primary.
 - **Airport**: code (IATA, unique), name, city, country, country_code (ISO alpha-2). `seed_airports` loads OurAirports data (IATA code, scheduled service, not closed), idempotent.
 - **Airline**: iata_code (unique, 2 chars), icao_code, name, country, is_active, logo (PNG/JPEG/WebP ≤ 200 KB, content-checked; old file deleted on replace/remove), updated_at. `seed_airlines` adds missing active airlines from OpenFlights data (one per IATA code, preferring one with ICAO) and never changes existing rows. Curated by the owner in `/django-admin/`; never deleted.
+- **ExchangeRate**: currency (ISO 4217), units_per_usd (8 decimals), date, source (feed / manual), fetched_at; one row per currency per date; USD is always 1 and has no rows. `rates.convert(amount, currency, on)` gives the USD amount (÷ rate, half-up to the cent), the rate and its date, from the latest rate on or before `on`; no rate raises, a rate more than 3 days older is used but reported stale. Stored conversions keep their rate and rate date.
 - **PlatformSettings** (single row): issuer_details, payment_instructions, invoice_due_days (14), invoice_lead_days (7), billing_contact_email, support_email.
 - **Plan**: name, kind (subscription / support), description (sanitized rich HTML ≤ 5,000 chars), tag (blank / recommended / basic / advanced; subscription plans only, each tag on at most one plan, cleared on deactivation), monthly_price, annual_price (at least one), is_active, created_at. Never deleted.
 - **Subscription**: tenant, plan, kind, billing_cycle (monthly / annual, plan must have that price), started_on, next_period_start, ended_on, created_at. At most one running per kind per agency. Plan/cycle changes apply from the next invoice.
@@ -57,11 +59,15 @@ Shared (public schema)
 Per agency
 - **User**: email login (unique), full_name, phone, role (customer / admin), is_active. Registration creates customers only; admins via `create_agency` or `create_admin`.
 - **AppSettings** (single row): payment_instructions, payment_hold_hours (24), reminder_hours_before (4), admin_notification_email.
-- **Offer**: trip_type (one_way / return), origin, destination (Airport), departure_date, return_date (null for one-way), ticket_class (economy / premium_economy / business / first), price (per person; for a return, the round trip), airline (the ticketing airline; active on create/change), baggage per passenger (checked_bags 0–3, checked_bag_kg and cabin_bag_kg, null = not stated), refund_policy and change_policy (not_allowed / with_fee / free), valid_until, is_public, is_active, created_at. Origin, destination, departure_date and return_date are derived from the segments. Validation: price > 0, valid_until ≤ departure_date and ≥ today on create. Bookable = active, valid_until ≥ today, departure ≥ today. Non-public offers exist only for one customer's request responses. Never deleted.
+- **Offer**: trip_type (one_way / return), origin, destination (Airport), departure_date, return_date (null for one-way), ticket_class (economy / premium_economy / business / first), price (per person; for a return, the round trip), airline (the ticketing airline; active on create/change), baggage per passenger (checked_bags 0–3, checked_bag_kg and cabin_bag_kg, null = not stated), refund_policy and change_policy (not_allowed / with_fee / free), valid_until, is_public, is_active, created_at; source (manual / gds) and, for GDS offers only (null otherwise), integration, route, provider_ref, fare_key, net_amount, net_currency, net_usd, rate, rate_date, fare_type, price_checked_at. Origin, destination, departure_date and return_date are derived from the segments. Validation: price > 0, valid_until ≤ departure_date and ≥ today on create. Bookable = active, valid_until ≥ today, departure ≥ today. Non-public offers exist only for one customer's request responses. Never deleted.
 - **OfferSegment / BookingSegment**: one flight each: direction (outbound / return), position (from 1 within a direction), airline (marketing carrier), flight_number (1–4 digits and an optional letter), operating_airline (codeshares only), origin, destination, departure and arrival date and time (local). Per direction 1–5 segments, chained airport to airport, each leaving after the previous one lands, arrival date one day before to two days after departure; the outbound flights end elsewhere than they start; one-way offers have no return segments; return segments go back from the destination to the origin and leave after the outbound ones land. Active airlines on create or change. Connections are derived between consecutive segments: airport, wait in minutes and kind (layover < 24 h ≤ stopover). Bookings copy the offer's segments, trip type, return date, baggage and fare conditions at creation.
 - **Query** (request for options): user, origin, destination (one required), date_from, date_to, trip_type (blank = any, one_way, return), return_date (return only), price_min, price_max, ticket_class, max_stopovers, message, status (open / responded / closed). **QueryResponse**: query, message, offers (M2M), created_at; creating one marks the query responded.
 - **Booking**: user, offer, query, passenger_count (1–9), notes, unit_price (copied), status, payment_deadline, reminder_sent_at, trip fields and segments copied from the offer, changes (JSON of old/new unit_price and segments, null when none), changes_accepted, alternatives (Query of suggested options), created_at. Total = unit_price × passengers. No second active (requested / confirmed / paid) booking per user per offer.
 - **BookingEvent**: booking, from_status, to_status, actor (null = system), created_at. Written on creation and every change.
+- **Integration** (fare provider): provider (duffel), name, mode (test / live), credentials (Fernet-encrypted JSON of the provider's fields, never returned), is_active, last_tested_at, last_test_ok, last_test_message, created_at. Several per agency; disabled, never deleted.
+- **Route**: origin, destination, trip_type, stay_nights (return only, 1–60), ticket_class, max_connections (0–4, null = any), airlines (M2M, ticketing airlines; empty = any), integrations (M2M; empty = every active one), weekdays (0 = Monday; empty = every day), pick_cheapest, pick_cheapest_direct, max_per_date (1–5), markup_percent and markup_fixed (≥ 0; selling = net USD × (1 + percent/100) + fixed, half-up to the cent), is_active, created_at.
+- **SearchRun**: route, trigger (manual), date_from, date_to, status (queued / running / done / failed), searches_made (the planned count while queued), fares_found, errors (short messages), started_by, created_at, finished_at.
+- **Fare**: every valid result of a run: run, route, integration, itinerary (segments in the offer input shape), trip_type, ticket_class, airline (ticketing), net_amount and net_currency (as priced), net_usd, rate, rate_date (null with no_rate when the currency has no rate), selling_price, baggage and fare conditions, fare_type (public / private / unknown), seats_left, provider_ref, fare_key (each segment's carrier, flight number and date, plus the cabin), expires_at, picked, status (new / published / dismissed), offer, created_at. Kept 30 days, published ones longer.
 - **BoardingPass**: booking, file (private, `boarding_passes/<schema>/<booking>/`), original_name, uploaded_at. PDF/PNG/JPEG ≤ 5 MB, content-checked, ≤ 10 per booking. Upload and delete only while paid; delete removes the file.
 - **Conversation / Message** (support): see §8.
 
@@ -81,6 +87,15 @@ All changes go through `bookings/services.py` (`create_booking`, `transition`): 
 
 Customers accept changes with `accept-changes` (409 unless awaiting). Admins can book for an active customer (no "new booking" email to the admin).
 
+## 5a. Fare searches
+
+`integrations/services.py`; providers in `integrations/providers/` behind one interface (`search(request) -> results`, `test()`), each result normalised to the offer itinerary shape plus net amount and currency, baggage, conditions, fare type, seats left, reference and expiry.
+- Duffel: offer requests (`POST /air/offer_requests?return_offers=true`, `Duffel-Version: v2`, one adult, cabin, max connections when set); slices → directions, segments with marketing and operating carriers and local times (technical stops ignored), checked bags included on every flight → `checked_bags`, refund and change conditions → policies (no condition: not allowed; a penalty of zero: free; otherwise with a fee), `private_fares` → fare type; seats left are not given. Test connection lists one airline.
+- Search now: a departure date range (≤ 60 days, not past); needed = matching weekdays × the route's active integrations; refused with 409 naming both numbers when more than what is left of the month's allowance (summed `searches_made`, Nairobi month). The run is a tenant Celery task: one search per date per integration, a provider error recorded and the run going on; failed when every search failed.
+- A result is skipped (and counted in the run's errors) when an airline or airport is not in the shared tables or it breaks the itinerary rules for the route; every other result is stored, converted at the run's date.
+- Picking, per run: the route's cabin, connections and airlines; one fare per fare_key (the cheapest in USD across integrations); per departure date the `max_per_date` cheapest and/or the cheapest direct. Earlier new fares for the same dates stop being picked (kept for price history). Fares without a rate are never picked or published.
+- Publish: a GDS offer from the fare (itinerary, baggage, conditions, source fields, price_checked_at = the run's end) with the admin's price, valid_until (≤ departure, ≥ today) and visibility; an active offer with the same fare_key gets the new price, net and conversion fields and price_checked_at instead. Only new fares are published; dismissing hides one (published ones cannot be).
+
 ## 6. Emails
 
 HTML (one themed base layout, table-based, inline CSS, no images) plus plain-text fallback, via `EmailMultiAlternatives`. Emails about a booking show its itinerary per direction (flight numbers, local times, connections), baggage and fare conditions. Tasks take ids only, retry with backoff (max 5), and reload and re-check state before sending.
@@ -99,6 +114,8 @@ HTML (one themed base layout, table-based, inline CSS, no images) plus plain-tex
 | `close_idle_chats` | hour | public + each agency: close chats 48 h after the last message |
 | `issue_due_invoices` | day | public: next invoice when `next_period_start - lead days ≤ today` (one per run, catches up) |
 | `suspend_overdue_tenants` | day | public: suspend for non-payment when an unpaid, unwaived invoice is > 1 month past due |
+| `fetch_exchange_rates` | day | public: today's rate per currency from `EXCHANGE_RATES_URL`; a manual rate for the day is kept |
+| `delete_old_fares` | day | each agency: fares older than 30 days, except published ones |
 
 ## 8. Support chat
 
@@ -123,11 +140,12 @@ Agencies pay outside the system. `tenants/billing.py`:
 Agency host, `/api/`:
 - Public: `auth/register`, `auth/login`, `auth/refresh`, `auth/password-reset`, `auth/password-reset-confirm` (same response for unknown emails); `airports?search=` (exact code first, ≤ 20); `offers` (filters: origin/destination text, date range, trip_type, return date range, price range, class, max_stopovers counted in the busier direction; ordering) and `offers/{id}`; `POST support/chats`.
 - Signed in: `auth/me`; `queries` (+ `close`); `bookings` (+ `cancel`, `accept-changes`, `decline-changes`); `boarding-passes/{id}/download` (admin, or customer once completed); `support/chats`, `support/chats/{id}` (+ `messages`), `support/unread`, `support/attachments/{id}`.
-- Offers (public, admin, nested in responses and bookings) return the trip fields and `itinerary`: `{outbound, return}`, each direction with its segments (nested airlines and airports), connections and stop_count; return is null for one-way. Admin create/edit and custom offers take `segments` as one ordered list; an edit with segments replaces them all. Bookings return their own trip fields and itinerary.
+- Offers (public, admin, nested in responses and bookings) return `source` and `price_checked_at` (never net amounts, rates or fare type outside the admin API), the trip fields and `itinerary`: `{outbound, return}`, each direction with its segments (nested airlines and airports), connections and stop_count; return is null for one-way. Admin create/edit and custom offers take `segments` as one ordered list; an edit with segments replaces them all. Bookings return their own trip fields and itinerary.
 - Offer visibility for customers: public and active, or attached to a response to one of their queries (detail and booking only).
-- Admin (`/api/admin/`, `IsAdminRole`): `dashboard`, `offers`, `queries` (+ `respond`), `bookings` (create for a customer, + `confirm-availability`, `mark-unavailable`, `mark-paid`, `complete`, `boarding-passes`), `boarding-passes/{id}` (delete), `settings`, `users` (customers only; deactivate instead of delete), `airlines?search=`, `chats` (+ `unread`, `{id}`, `messages`, `close`), `plans`, `billing`, `billing/invoices` (+ `pdf`); and `support/platform-chats` (+ `unread`, `{id}`, `messages`), `support/platform-attachments/{id}`.
+- Admin (`/api/admin/`, `IsAdminRole`): `dashboard`, `offers`, `queries` (+ `respond`), `bookings` (create for a customer, + `confirm-availability`, `mark-unavailable`, `mark-paid`, `complete`, `boarding-passes`), `boarding-passes/{id}` (delete), `settings`, `users` (customers only; deactivate instead of delete), `airlines?search=`, `chats` (+ `unread`, `{id}`, `messages`, `close`), `plans`, `billing`, `billing/invoices` (+ `pdf`); and `support/platform-chats` (+ `unread`, `{id}`, `messages`), `support/platform-attachments/{id}`. Admin offers also return the GDS source fields; the dashboard returns `new_fares` (picked, new).
+- Fare searches (admin): `integrations` (list, create with `credentials`, PATCH name, mode, credentials, is_active; never returns credentials) and `integrations/{id}/test`; `routes` (list, create, PATCH; each with its last run and new fares), `routes/{id}/search {date_from, date_to}` → the run, `routes/{id}/runs`; `search-usage` (allowance, used, left); `fares?route=&run=&status=&picked=` (`{run, dates: [{departure_date, fares}]}`, latest run by default, dismissed only when asked, sorted by USD; each fare with its itinerary as offers return it), `fares/history?route=&departure_date=` (cheapest USD fare per run), `fares/{id}/publish {price, valid_until, is_public}`, `fares/{id}/dismiss`.
 
-Root host, `/api/platform/`: `login`, `refresh`, `me` (active public-schema superusers only), `dashboard`, `public-plans` and `support/chats` (open), `support/attachments/{id}`, `chats` (+ `unread`, `{id}`, `messages`, `close`), `tenants` (+ `domains`, `make-primary`, `subscriptions`), `plans`, `subscriptions/{id}` (+ `end`, `issue-invoice`), `invoices` (filters tenant, status, overdue; + `mark-paid`, `mark-unpaid`, `void`, `resend`, `pdf`), `settings`.
+Root host, `/api/platform/`: `login`, `refresh`, `me` (active public-schema superusers only), `dashboard`, `public-plans` and `support/chats` (open), `support/attachments/{id}`, `chats` (+ `unread`, `{id}`, `messages`, `close`), `tenants` (+ `domains`, `make-primary`, `subscriptions`), `plans`, `subscriptions/{id}` (+ `end`, `issue-invoice`), `invoices` (filters tenant, status, overdue; + `mark-paid`, `mark-unpaid`, `void`, `resend`, `pdf`), `settings`, `exchange-rates` (latest per currency with `stale`; POST `{currency, units_per_usd}` sets today's manual rate). Tenants return and accept `monthly_search_allowance` and return `searches_this_month`.
 
 ## 11. Frontend
 
@@ -143,17 +161,18 @@ Look and layout
 Agency app
 - Guests: Explore (hero search bar with Any / Return / One way, swap, departure and return date ranges and class; filter sidebar or panel; sort tabs; flight result rows with one line of local times per direction and a baggage summary; empty state with "Request options") and offer detail (route header, an itinerary card per direction with connections, baggage and fare conditions, price card, Book with both directions, passenger stepper and live total).
 - Customers: Requests (criteria including trip type and return date, responses with offers), Bookings (trip cards; itinerary, baggage and conditions cards; progress tracker or terminal banner; payment box with countdown; changes box to accept or decline; suggested options; boarding passes), Account (+ Support).
-- Admins: Dashboard (count tiles), Offers (table, form with One way / Return, a segment editor per direction with live connections, baggage and fare conditions), Requests (Respond), Bookings (status tabs, action bar, confirm-with-changes (price and flights) and mark-unavailable dialogs, pass upload and send, New booking dialog), Users, Chats, Settings (app settings, Billing with Compare plans, Support).
+- Admins: Dashboard (count tiles; "New fares to review" when there are any), Offers (table, form with One way / Return, a segment editor per direction with live connections, baggage and fare conditions), Routes (only once the agency has an integration: table with trip and stay, cabin, last run and new fares; drawer with Search now (date range, searches needed against what is left), recent runs with their errors, and the route's settings; New route dialog), Fares for a route (Picked / All results, run selector, grouped by departure date with a price history per date; flight rows with the original amount, its USD equivalent and rate date, selling price, "No rate" note, fare type, seats left and integration; Publish dialog and Dismiss; published fares link to their offer), Requests (Respond), Bookings (status tabs, action bar, confirm-with-changes (price and flights) and mark-unavailable dialogs, pass upload and send, New booking dialog), Users, Chats, Settings (app settings, Integrations (add, test, enable/disable, replace credentials), Billing with Compare plans, Support).
+- Offer detail shows "Price checked <time ago>" on GDS offers.
 - `no_tenant` / `tenant_suspended` responses show a full-page message.
 
 Platform app (root host, web only)
 - Public: home (short introduction, See pricing) and `/pricing` with a slim public bar. `/login`, `/admin` and `admin.<root host>` lead to sign-in; nothing on the public pages links to it.
-- Owner: Dashboard (agency counts, revenue, monthly recurring, outstanding/overdue, 12-month bar chart in plain views, agencies per plan, needs attention), Agencies (table, drawer with agency, domains, plan & billing), Plans (kind tabs, tag column, rich-text dialog, link to pricing), Invoices (filters, drawer actions behind confirm dialogs), Chats, Settings.
+- Owner: Dashboard (agency counts, revenue, monthly recurring, outstanding/overdue, 12-month bar chart in plain views, agencies per plan, needs attention), Agencies (table, drawer with agency, plan & billing, fare searches (used this month, editable allowance), domains), Plans (kind tabs, tag column, rich-text dialog, link to pricing), Invoices (filters, drawer actions behind confirm dialogs), Chats, Settings (billing and support, and Exchange rates: latest rate per currency with date, source and stale warning, a manual rate for today, the feed's credit).
 - PlanShowcase (public pricing and agency Plans): Monthly/Annual switch with saving, featured Recommended/Basic/Advanced cards, Show all plans, support plans section, "Your plan" for running plans.
 
 ## 12. Tests
 
-- Backend (pytest, needs PostgreSQL): two test agencies per session; every rule above has tests, including every transition and actor, email per event and state re-checks, beat tasks with frozen time, visibility and isolation across agencies, uploads (type, size, count, deletion), billing periods, suspension and reactivation, sanitizing, platform permissions, and UUID primary keys on every model.
+- Backend (pytest, needs PostgreSQL): two test agencies per session; every rule above has tests, including every transition and actor, email per event and state re-checks, beat tasks with frozen time, visibility and isolation across agencies, uploads (type, size, count, deletion), billing periods, suspension and reactivation, sanitizing, platform permissions, fare searches (provider mapping from recorded responses, skips, conversion and the rate feed, allowance, picking, publishing, clean-up, encrypted credentials), and UUID primary keys on every model.
 - Frontend: `npx tsc --noEmit` and `npx expo export --platform web`. UI changes end with a browser check at 390 px and 1280 px.
 
 ## 13. Steps
@@ -189,10 +208,10 @@ All delivered; each was one commit.
 32. Support chat: platform desk and plan enquiries.
 33. UUIDs on agencies, domains and settings.
 34. Return trips and flight details (see §14).
+35. GDS search: integrations, routes, manual search and review (see §15).
 
 Pending (not yet built):
 
-35. GDS search: integrations, routes, manual search and review (see §15).
 36. Scheduled route searches and offer refresh (see §16).
 37. Re-check a booking's fare (see §17).
 38. Second provider (see §18).

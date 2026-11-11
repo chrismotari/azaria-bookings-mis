@@ -68,11 +68,11 @@ class AdminOfferListView(generics.ListCreateAPIView):
     permission_classes = [IsAdminRole]
     serializer_class = AdminOfferSerializer
     filterset_class = AdminOfferFilter
-    queryset = Offer.objects.select_related(*OFFER_RELATED).prefetch_related(*OFFER_SEGMENTS)
+    queryset = Offer.objects.select_related(*OFFER_RELATED, "integration").prefetch_related(*OFFER_SEGMENTS)
 
 
 class AdminOfferDetailView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAdminRole]
     serializer_class = AdminOfferSerializer
-    queryset = Offer.objects.select_related(*OFFER_RELATED).prefetch_related(*OFFER_SEGMENTS)
+    queryset = Offer.objects.select_related(*OFFER_RELATED, "integration").prefetch_related(*OFFER_SEGMENTS)
     http_method_names = ["get", "patch", "head", "options"]

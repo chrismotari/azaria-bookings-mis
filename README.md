@@ -6,7 +6,7 @@ Each agency gets its own site and data. Its admin lists flight deals, which anyo
 
 On the root host, the platform's owner manages agencies, plans and invoices, and answers platform support chats. Agencies pay outside the system; the owner marks invoices paid, and agencies with long-overdue invoices are suspended automatically.
 
-The system is in active development. Payment and GDS integrations are planned, so payments are recorded by hand for now. Each agency will be able to connect the GDSs of its choice, several at once, while the system keeps working fully without any.
+The system is in active development. An agency can connect fare providers (Duffel first) to search its routes and publish the fares it chooses as offers; booking and ticketing stay manual, and the system works fully without any provider. Payment integrations are planned, so payments are recorded by hand for now.
 
 The full specification is in [SPEC.md](SPEC.md); choices made where it is silent are in [DECISIONS.md](DECISIONS.md).
 
@@ -22,8 +22,8 @@ The full specification is in [SPEC.md](SPEC.md); choices made where it is silent
 | Tests | pytest, pytest-django, freezegun; `tsc` for the app |
 
 ```
-backend/      Django project "config": tenants, airports, airlines, accounts, catalog,
-              customer_requests, bookings, support, core
+backend/      Django project "config": tenants, airports, airlines, rates, accounts, catalog,
+              customer_requests, bookings, support, integrations, core
 frontend/     Expo app (src/api, auth, navigation, screens, components, support)
 ```
 
@@ -62,7 +62,9 @@ python manage.py create_agency --schema azaria --name "Azaria Bookings" \
 
 `create_agency` creates the agency's schema, its domain `<schema>.localhost`, its settings and its first admin. Add more agencies the same way.
 
-A database created before return trips were added must be dropped and set up again: the catalog, requests and bookings migrations were regenerated.
+A database created before return trips were added must be dropped and set up again: the catalog, requests and bookings migrations were regenerated. Otherwise, after pulling changes, `python manage.py migrate_schemas` applies new migrations to the platform and every agency.
+
+Exchange rates for fare searches arrive with the daily beat task; to load them at once, run `python manage.py shell -c "from rates.tasks import fetch_exchange_rates; fetch_exchange_rates()"`.
 
 `backend/.env`:
 
@@ -80,6 +82,8 @@ A database created before return trips were added must be dropped and set up aga
 | `DEFAULT_FROM_EMAIL` | Sender address |
 | `ADMIN_EMAIL` | Default notification email for a new agency |
 | `PLATFORM_CURRENCY` | Currency of the platform's plans and invoices |
+| `INTEGRATIONS_KEY` | Fernet key that encrypts fare providers' credentials; generate with `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` |
+| `EXCHANGE_RATES_URL` | Daily USD exchange-rate feed (default: ExchangeRate-API's free `https://open.er-api.com/v6/latest/USD`) |
 
 ### 3. Web app
 
@@ -130,3 +134,4 @@ cd frontend && npx expo export --platform web   # production web build
 - Airports: [OurAirports](https://ourairports.com/data/) (public domain).
 - Airlines: [OpenFlights](https://openflights.org/data) airline data, [Open Database License](https://opendatacommons.org/licenses/odbl/1-0/).
 - Country flags: [flag-icons](https://github.com/lipis/flag-icons), MIT licence (`frontend/public/flags/LICENSE`).
+- Exchange rates: [Rates By Exchange Rate API](https://www.exchangerate-api.com) (open access, attribution required; credited on the platform's Exchange rates screen).

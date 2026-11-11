@@ -66,6 +66,26 @@ class Trip(models.Model):
 
 class Offer(Trip):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    class Source(models.TextChoices):
+        MANUAL = "manual", "Entered by hand"
+        GDS = "gds", "Published from a fare search"
+
+    # Copied from integrations.Fare when published; null for manual offers.
+    GDS_FIELDS = [
+        "integration",
+        "route",
+        "provider_ref",
+        "fare_key",
+        "net_amount",
+        "net_currency",
+        "net_usd",
+        "rate",
+        "rate_date",
+        "fare_type",
+        "price_checked_at",
+    ]
+
     class TicketClass(models.TextChoices):
         ECONOMY = "economy", "Economy"
         PREMIUM_ECONOMY = "premium_economy", "Premium economy"
@@ -87,6 +107,23 @@ class Offer(Trip):
     is_public = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    source = models.CharField(max_length=10, choices=Source.choices, default=Source.MANUAL)
+    integration = models.ForeignKey(
+        "integrations.Integration", on_delete=models.PROTECT, null=True, blank=True, related_name="offers"
+    )
+    route = models.ForeignKey("integrations.Route", on_delete=models.PROTECT, null=True, blank=True, related_name="offers")
+    provider_ref = models.CharField(max_length=200, null=True, blank=True)
+    fare_key = models.CharField(max_length=500, null=True, blank=True)
+    # The provider's amount for one adult in its own currency, and its USD conversion when published.
+    net_amount = models.DecimalField(max_digits=14, decimal_places=3, null=True, blank=True)
+    net_currency = models.CharField(max_length=3, null=True, blank=True)
+    net_usd = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    rate = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
+    rate_date = models.DateField(null=True, blank=True)
+    fare_type = models.CharField(max_length=10, null=True, blank=True)
+    # When the provider last priced it.
+    price_checked_at = models.DateTimeField(null=True, blank=True)
 
     objects = OfferQuerySet.as_manager()
 

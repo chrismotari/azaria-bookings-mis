@@ -119,6 +119,9 @@ class OfferSerializer(serializers.ModelSerializer):
             "airline",
             "valid_until",
             "is_bookable",
+            # Never the net amount, rate or fare type.
+            "source",
+            "price_checked_at",
         ]
         read_only_fields = fields
 
@@ -153,14 +156,29 @@ class AdminOfferSerializer(serializers.ModelSerializer):
             "is_bookable",
             "created_at",
             "segments",
+            "source",
+            *Offer.GDS_FIELDS,
         ]
-        read_only_fields = ["id", "origin", "destination", "departure_date", "return_date", "is_bookable", "created_at"]
+        read_only_fields = [
+            "id",
+            "origin",
+            "destination",
+            "departure_date",
+            "return_date",
+            "is_bookable",
+            "created_at",
+            "source",
+            *Offer.GDS_FIELDS,
+        ]
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data["origin"] = AirportSerializer(instance.origin).data
         data["destination"] = AirportSerializer(instance.destination).data
         data["airline"] = AirlineSerializer(instance.airline, context=self.context).data
+        data["integration"] = (
+            {"id": str(instance.integration.pk), "name": instance.integration.name} if instance.integration else None
+        )
         return {**data, **itinerary_data(instance.segments.all(), self.context)}
 
     def validate_price(self, value):

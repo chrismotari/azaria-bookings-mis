@@ -1,0 +1,68 @@
+{
+  "data": {
+    "id": "orq_0000AgYrTxBc4YQm1Fk9PZ",
+    "live_mode": false,
+    "cabin_class": "economy",
+    "slices": [
+      {"origin": {"iata_code": "NBO"}, "destination": {"iata_code": "LHR"}, "departure_date": "2026-12-01"},
+      {"origin": {"iata_code": "LHR"}, "destination": {"iata_code": "NBO"}, "departure_date": "2026-12-08"}
+    ],
+    "passengers": [{"id": "pas_0000AgYrTxBc4YQm1Fk9Q0", "type": "adult"}],
+    "offers": [
+      {
+        "id": "off_0000AgYrTxBc4YQm1Fk9Q1",
+        "live_mode": false,
+        "expires_at": "2026-11-01T09:30:00.000000Z",
+        "total_amount": "1012.40",
+        "total_currency": "EUR",
+        "owner": {"iata_code": "KQ", "name": "Kenya Airways"},
+        "private_fares": [],
+        "conditions": {
+          "refund_before_departure": {"allowed": false, "penalty_amount": null, "penalty_currency": null},
+          "change_before_departure": {"allowed": true, "penalty_amount": "75.00", "penalty_currency": "EUR"}
+        },
+        "passengers": [{"id": "pas_0000AgYrTxBc4YQm1Fk9Q0", "type": "adult"}],
+        "slices": [
+          {
+            "id": "sli_0000AgYrTxBc4YQm1Fk9Q2",
+            "origin": {"iata_code": "NBO"},
+            "destination": {"iata_code": "LHR"},
+            "segments": [
+              {
+                "id": "seg_0000AgYrTxBc4YQm1Fk9Q3",
+                "origin": {"iata_code": "NBO"},
+                "destination": {"iata_code": "LHR"},
+                "departing_at": "2026-12-01T23:55:00",
+                "arriving_at": "2026-12-02T06:00:00",
+                "marketing_carrier": {"iata_code": "KQ"},
+                "marketing_carrier_flight_number": "100",
+                "operating_carrier": {"iata_code": "KQ"},
+                "stops": [],
+                "passengers": [{"passenger_id": "pas_0000AgYrTxBc4YQm1Fk9Q0", "cabin_class": "economy", "baggages": [{"type": "checked", "quantity": 1}]}]
+              }
+            ]
+          },
+          {
+            "id": "sli_0000AgYrTxBc4YQm1Fk9Q4",
+            "origin": {"iata_code": "LHR"},
+            "destination": {"iata_code": "NBO"},
+            "segments": [
+              {
+                "id": "seg_0000AgYrTxBc4YQm1Fk9Q5",
+                "origin": {"iata_code": "LHR"},
+                "destination": {"iata_code": "NBO"},
+                "departing_at": "2026-12-08T19:00:00",
+                "arriving_at": "2026-12-09T06:20:00",
+                "marketing_carrier": {"iata_code": "KQ"},
+                "marketing_carrier_flight_number": "101",
+                "operating_carrier": {"iata_code": "KQ"},
+                "stops": [],
+                "passengers": [{"passenger_id": "pas_0000AgYrTxBc4YQm1Fk9Q0", "cabin_class": "economy", "baggages": [{"type": "checked", "quantity": 1}]}]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

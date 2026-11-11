@@ -26,6 +26,8 @@ class Tenant(TenantMixin):
     # Set when suspended (is_active false), cleared on reactivation.
     suspension_reason = models.CharField(max_length=20, choices=SuspensionReason.choices, blank=True)
     suspended_at = models.DateTimeField(null=True, blank=True)
+    # Fare searches the agency may run per calendar month (Nairobi time), across all its routes and integrations.
+    monthly_search_allowance = models.PositiveIntegerField(default=1500)
 
     auto_create_schema = True
     auto_drop_schema = False

@@ -112,13 +112,38 @@ export type Offer = Trip & {
   airline: Airline;
   valid_until: string;
   is_bookable: boolean;
+  /** gds: published from a fare search. */
+  source: OfferSource;
+  /** When the provider last priced a GDS offer; null for manual offers. */
+  price_checked_at: string | null;
 };
 
-export type AdminOffer = Offer & {
-  is_public: boolean;
-  is_active: boolean;
-  created_at: string;
+export type OfferSource = 'manual' | 'gds';
+
+export type FareType = 'public' | 'private' | 'unknown';
+
+/** What a GDS offer was published from; all null for manual offers. */
+export type OfferGdsFields = {
+  integration: { id: string; name: string } | null;
+  route: string | null;
+  provider_ref: string | null;
+  fare_key: string | null;
+  /** The provider's amount for one adult, in net_currency. */
+  net_amount: string | null;
+  net_currency: string | null;
+  net_usd: string | null;
+  /** Units of net_currency per US dollar. */
+  rate: string | null;
+  rate_date: string | null;
+  fare_type: FareType | null;
 };
+
+export type AdminOffer = Offer &
+  OfferGdsFields & {
+    is_public: boolean;
+    is_active: boolean;
+    created_at: string;
+  };
 
 export type QueryStatus = 'open' | 'responded' | 'closed';
 
@@ -221,6 +246,8 @@ export type Dashboard = {
   bookings_requested: number;
   bookings_awaiting_payment: number;
   bookings_paid_awaiting_boarding_pass: number;
+  /** Fares picked by a search, waiting to be published or dismissed. */
+  new_fares: number;
 };
 
 export type AppSettings = {
@@ -257,6 +284,9 @@ export type Tenant = {
   suspended_at: string | null;
   /** Where invoices are sent. */
   billing_email: string;
+  /** Fare searches allowed per calendar month. */
+  monthly_search_allowance: number;
+  searches_this_month: number;
   created_at: string;
 };
 
@@ -419,3 +449,119 @@ export type DeskChat = Chat & {
 };
 
 export type DeskChatDetail = DeskChat & { messages: ChatMessage[] };
+
+/** A connection to a fare provider. Its credentials are written only, never returned. */
+export type Integration = {
+  id: string;
+  provider: 'duffel';
+  name: string;
+  mode: 'test' | 'live';
+  is_active: boolean;
+  last_tested_at: string | null;
+  /** Null until tested (again after new credentials). */
+  last_test_ok: boolean | null;
+  last_test_message: string;
+  created_at: string;
+};
+
+export type RunStatus = 'queued' | 'running' | 'done' | 'failed';
+
+export type SearchRun = {
+  id: string;
+  route: string;
+  trigger: 'manual';
+  date_from: string;
+  date_to: string;
+  status: RunStatus;
+  searches_made: number;
+  fares_found: number;
+  /** Provider errors and skipped results, as short messages. */
+  errors: string[];
+  started_by: string | null;
+  created_at: string;
+  finished_at: string | null;
+};
+
+/** A route the agency searches; 0 is Monday in weekdays. */
+export type Route = {
+  id: string;
+  origin: Airport;
+  destination: Airport;
+  trip_type: TripType;
+  /** Return trips: nights between departure and return. */
+  stay_nights: number | null;
+  ticket_class: TicketClass;
+  /** Per direction; null for any. */
+  max_connections: number | null;
+  /** Ticketing airlines to keep; empty for any. */
+  airlines: Airline[];
+  /** Empty for every active integration. */
+  integrations: { id: string; name: string; provider: string; is_active: boolean }[];
+  weekdays: number[];
+  pick_cheapest: boolean;
+  pick_cheapest_direct: boolean;
+  max_per_date: number;
+  markup_percent: string;
+  markup_fixed: string;
+  is_active: boolean;
+  created_at: string;
+  last_run: SearchRun | null;
+  /** Picked fares waiting for review. */
+  new_fares: number;
+};
+
+export type SearchUsage = { allowance: number; used: number; left: number };
+
+export type FareStatus = 'new' | 'published' | 'dismissed';
+
+/** A fare a search found. Amounts in USD are null (and no_rate true) when its currency had no rate. */
+export type Fare = Omit<Trip, 'return_date'> & {
+  id: string;
+  route: string;
+  run: string;
+  integration: { id: string; name: string; provider: string; is_active: boolean };
+  ticket_class: TicketClass;
+  airline: Airline;
+  departure_date: string;
+  return_date: string | null;
+  net_amount: string;
+  net_currency: string;
+  net_usd: string | null;
+  rate: string | null;
+  rate_date: string | null;
+  no_rate: boolean;
+  selling_price: string | null;
+  fare_type: FareType;
+  seats_left: number | null;
+  provider_ref: string;
+  fare_key: string;
+  expires_at: string | null;
+  picked: boolean;
+  status: FareStatus;
+  /** The offer it was published as. */
+  offer: string | null;
+  created_at: string;
+};
+
+export type FareList = { run: SearchRun | null; dates: { departure_date: string; fares: Fare[] }[] };
+
+/** The cheapest fare of one run for a departure date. */
+export type FareHistoryPoint = {
+  run: string;
+  searched_at: string;
+  net_usd: string;
+  net_amount: string;
+  net_currency: string;
+};
+
+/** Units of a currency per US dollar on a date. */
+export type ExchangeRate = {
+  id: string;
+  currency: string;
+  units_per_usd: string;
+  date: string;
+  source: 'feed' | 'manual';
+  fetched_at: string;
+  /** More than three days old. */
+  stale: boolean;
+};

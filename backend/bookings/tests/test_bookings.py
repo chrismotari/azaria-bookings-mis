@@ -430,6 +430,7 @@ def test_dashboard_counts(admin_api, make_booking, other_customer, airports):
         "bookings_requested": 2,
         "bookings_awaiting_payment": 1,
         "bookings_paid_awaiting_boarding_pass": 0,
+        "new_fares": 0,
     }
 
 

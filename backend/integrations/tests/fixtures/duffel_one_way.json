@@ -1,0 +1,118 @@
+{
+  "data": {
+    "id": "orq_0000AgYrSpY2Mvle6QzOtu",
+    "live_mode": false,
+    "created_at": "2026-11-01T09:00:00.000000Z",
+    "cabin_class": "economy",
+    "slices": [
+      {"origin": {"iata_code": "NBO", "type": "airport"}, "destination": {"iata_code": "LHR", "type": "airport"}, "departure_date": "2026-12-01"}
+    ],
+    "passengers": [{"id": "pas_0000AgYrSpWzaxaB5Ds1uL", "type": "adult", "age": null}],
+    "offers": [
+      {
+        "id": "off_0000AgYrSpqKZx0Q2Wmc9X",
+        "live_mode": false,
+        "created_at": "2026-11-01T09:00:01.120000Z",
+        "expires_at": "2026-11-01T09:30:01.120000Z",
+        "total_amount": "650.00",
+        "total_currency": "USD",
+        "base_amount": "540.00",
+        "base_currency": "USD",
+        "tax_amount": "110.00",
+        "tax_currency": "USD",
+        "total_emissions_kg": "812",
+        "owner": {"iata_code": "KQ", "name": "Kenya Airways", "id": "arl_00009VME7DAGiJjwomhv32"},
+        "private_fares": [],
+        "passenger_identity_documents_required": false,
+        "conditions": {
+          "refund_before_departure": {"allowed": true, "penalty_amount": "100.00", "penalty_currency": "USD"},
+          "change_before_departure": {"allowed": true, "penalty_amount": "0.00", "penalty_currency": "USD"}
+        },
+        "passengers": [{"id": "pas_0000AgYrSpWzaxaB5Ds1uL", "type": "adult", "fare_type": null}],
+        "slices": [
+          {
+            "id": "sli_0000AgYrSpqKZx0Q2Wmc9Y",
+            "origin": {"iata_code": "NBO", "name": "Jomo Kenyatta International Airport", "time_zone": "Africa/Nairobi"},
+            "destination": {"iata_code": "LHR", "name": "Heathrow Airport", "time_zone": "Europe/London"},
+            "duration": "PT9H5M",
+            "fare_brand_name": "Economy Classic",
+            "conditions": {"change_before_departure": null},
+            "segments": [
+              {
+                "id": "seg_0000AgYrSpqKZx0Q2Wmc9Z",
+                "origin": {"iata_code": "NBO", "time_zone": "Africa/Nairobi"},
+                "destination": {"iata_code": "LHR", "time_zone": "Europe/London"},
+                "origin_terminal": "1A",
+                "destination_terminal": "4",
+                "departing_at": "2026-12-01T23:55:00",
+                "arriving_at": "2026-12-02T06:00:00",
+                "duration": "PT9H5M",
+                "marketing_carrier": {"iata_code": "KQ", "name": "Kenya Airways"},
+                "marketing_carrier_flight_number": "100",
+                "operating_carrier": {"iata_code": "KQ", "name": "Kenya Airways"},
+                "operating_carrier_flight_number": "100",
+                "aircraft": {"iata_code": "789", "name": "Boeing 787-9"},
+                "stops": [],
+                "passengers": [
+                  {
+                    "passenger_id": "pas_0000AgYrSpWzaxaB5Ds1uL",
+                    "cabin_class": "economy",
+                    "cabin_class_marketing_name": "Economy",
+                    "fare_basis_code": "TKE01",
+                    "baggages": [{"type": "checked", "quantity": 2}, {"type": "carry_on", "quantity": 1}]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "off_0000AgYrSpqKZx0Q2Wmd1A",
+        "live_mode": false,
+        "created_at": "2026-11-01T09:00:01.120000Z",
+        "expires_at": "2026-11-01T09:30:01.120000Z",
+        "total_amount": "455.50",
+        "total_currency": "GBP",
+        "owner": {"iata_code": "EK", "name": "Emirates"},
+        "private_fares": [{"type": "corporate", "corporate_code": "AZR1", "tracking_reference": "AZR", "tour_code": null}],
+        "conditions": {"refund_before_departure": null, "change_before_departure": {"allowed": true, "penalty_amount": null, "penalty_currency": null}},
+        "passengers": [{"id": "pas_0000AgYrSpWzaxaB5Ds1uL", "type": "adult"}],
+        "slices": [
+          {
+            "id": "sli_0000AgYrSpqKZx0Q2Wmd1B",
+            "origin": {"iata_code": "NBO"},
+            "destination": {"iata_code": "LHR"},
+            "segments": [
+              {
+                "id": "seg_0000AgYrSpqKZx0Q2Wmd1C",
+                "origin": {"iata_code": "NBO"},
+                "destination": {"iata_code": "DXB"},
+                "departing_at": "2026-12-01T10:15:00",
+                "arriving_at": "2026-12-01T16:20:00",
+                "marketing_carrier": {"iata_code": "EK", "name": "Emirates"},
+                "marketing_carrier_flight_number": "720",
+                "operating_carrier": {"iata_code": "EK", "name": "Emirates"},
+                "stops": [{"id": "sto_0000AgYrSpqKZx0Q2Wmd1D", "airport": {"iata_code": "MBA"}, "arriving_at": "2026-12-01T11:00:00", "departing_at": "2026-12-01T11:45:00", "duration": "PT45M"}],
+                "passengers": [{"passenger_id": "pas_0000AgYrSpWzaxaB5Ds1uL", "cabin_class": "economy", "baggages": [{"type": "checked", "quantity": 1}]}]
+              },
+              {
+                "id": "seg_0000AgYrSpqKZx0Q2Wmd1E",
+                "origin": {"iata_code": "DXB"},
+                "destination": {"iata_code": "LHR"},
+                "departing_at": "2026-12-01T21:40:00",
+                "arriving_at": "2026-12-02T01:55:00",
+                "marketing_carrier": {"iata_code": "KQ", "name": "Kenya Airways"},
+                "marketing_carrier_flight_number": "3110",
+                "operating_carrier": {"iata_code": "EK", "name": "Emirates"},
+                "operating_carrier_flight_number": "1",
+                "stops": [],
+                "passengers": [{"passenger_id": "pas_0000AgYrSpWzaxaB5Ds1uL", "cabin_class": "economy", "baggages": [{"type": "checked", "quantity": 1}, {"type": "carry_on", "quantity": 1}]}]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -16,6 +16,7 @@ import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
 import { colors, font, weight } from '../../theme';
+import { IntegrationsSection } from './IntegrationsSection';
 
 const HOURS = /^[1-9]\d{0,4}$/;
 
@@ -181,6 +182,7 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
         {saved ? <Text style={styles.saved}>Settings saved.</Text> : null}
         <Button title="Save settings" onPress={onSubmit} loading={formState.isSubmitting} />
       </FormFooter>
+      <IntegrationsSection />
       <FormSection title="Billing" description="Your agency's plans with Azaria Bookings and their invoices.">
         <View style={styles.billing}>
           <Button

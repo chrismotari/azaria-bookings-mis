@@ -81,6 +81,18 @@ export function AdminDashboardScreen({ navigation }: BottomTabScreenProps<AdminT
       needsAction: true,
       onPress: () => navigation.navigate('AdminBookings', { status: 'paid' }),
     },
+    ...(data.new_fares > 0
+      ? [
+          {
+            label: 'New fares to review',
+            count: data.new_fares,
+            icon: 'airplane-outline' as const,
+            tone: 'info' as const,
+            needsAction: true,
+            onPress: () => navigation.navigate('AdminRoutes'),
+          },
+        ]
+      : []),
   ];
   const firstName = user?.full_name.trim().split(/\s+/)[0];
 

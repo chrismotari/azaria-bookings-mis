@@ -14,7 +14,10 @@ import { AdminDashboardScreen } from '../screens/admin/AdminDashboardScreen';
 import { AdminOfferNewScreen } from '../screens/admin/AdminOfferFormScreen';
 import { AdminOffersScreen } from '../screens/admin/AdminOffersScreen';
 import { AdminQueryRespondScreen } from '../screens/admin/AdminQueryRespondScreen';
+import { AdminFaresScreen } from '../screens/admin/AdminFaresScreen';
 import { AdminRequestsScreen } from '../screens/admin/AdminRequestsScreen';
+import { AdminRoutesScreen } from '../screens/admin/AdminRoutesScreen';
+import { useIntegrations } from '../screens/admin/gds';
 import { AdminSettingsScreen } from '../screens/admin/AdminSettingsScreen';
 import { AdminUsersScreen } from '../screens/admin/AdminUsersScreen';
 import { BookingNewScreen } from '../screens/bookings/BookingNewScreen';
@@ -239,6 +242,7 @@ function MainTabsNavigator() {
 const ADMIN_SETTINGS_PAGES: (keyof AdminTabParamList)[] = [
   'AdminOfferNew',
   'AdminQueryRespond',
+  'AdminFares',
   'AdminBilling',
   'AdminPlans',
   'AdminSupport',
@@ -246,6 +250,7 @@ const ADMIN_SETTINGS_PAGES: (keyof AdminTabParamList)[] = [
 const ADMIN_PARENT_ROUTES: Record<string, string> = {
   AdminOfferNew: 'AdminOffers',
   AdminQueryRespond: 'AdminRequests',
+  AdminFares: 'AdminRoutes',
   AdminBilling: 'AdminSettings',
   AdminPlans: 'AdminSettings',
   AdminSupport: 'AdminSettings',
@@ -254,11 +259,12 @@ const ADMIN_PARENT_ROUTES: Record<string, string> = {
 function AdminTabsNavigator() {
   const isWide = useIsWide();
   const unreadChats = useDeskUnread(AGENCY_DESK);
+  // Routes only matter once the agency has connected a fare provider.
+  const integrations = useIntegrations();
+  const hiddenRoutes = integrations.data?.length ? ADMIN_SETTINGS_PAGES : [...ADMIN_SETTINGS_PAGES, 'AdminRoutes'];
   return (
     <AdminTabs.Navigator
-      tabBar={(props) => (
-        <ResponsiveTabBar {...props} hiddenRoutes={ADMIN_SETTINGS_PAGES} parentRoutes={ADMIN_PARENT_ROUTES} />
-      )}
+      tabBar={(props) => <ResponsiveTabBar {...props} hiddenRoutes={hiddenRoutes} parentRoutes={ADMIN_PARENT_ROUTES} />}
       screenOptions={tabScreenOptions(isWide)}
     >
       <AdminTabs.Screen
@@ -270,6 +276,11 @@ function AdminTabsNavigator() {
         name="AdminOffers"
         component={AdminOffersScreen}
         options={tab('Offers', 'pricetags-outline', 'pricetags')}
+      />
+      <AdminTabs.Screen
+        name="AdminRoutes"
+        component={AdminRoutesScreen}
+        options={tab('Routes', 'git-branch-outline', 'git-branch')}
       />
       <AdminTabs.Screen
         name="AdminRequests"
@@ -305,6 +316,7 @@ function AdminTabsNavigator() {
         component={FreshQueryRespond}
         options={{ title: 'Respond to request' }}
       />
+      <AdminTabs.Screen name="AdminFares" component={AdminFaresScreen} options={{ title: 'Fares' }} />
       <AdminTabs.Screen name="AdminBilling" component={AdminBillingScreen} options={{ title: 'Billing' }} />
       <AdminTabs.Screen name="AdminPlans" component={AdminPlansScreen} options={{ title: 'Plans' }} />
       <AdminTabs.Screen name="AdminSupport" component={AdminSupportScreen} options={{ title: 'Support' }} />

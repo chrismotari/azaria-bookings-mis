@@ -61,6 +61,14 @@ export function formatDateTime(isoDateTime: string): string {
   return `${dateTimeFormat.format(new Date(isoDateTime))} (Nairobi)`;
 }
 
+/** How long ago a moment was, roughly: "just now", "5 minutes ago", "3 hours ago", "2 days ago". */
+export function timeAgo(isoDateTime: string, now: number = Date.now()): string {
+  const minutes = Math.max(0, Math.floor((now - Date.parse(isoDateTime)) / 60_000));
+  const [count, unit] =
+    minutes < 1 ? [0, ''] : minutes < 60 ? [minutes, 'minute'] : minutes < 1440 ? [Math.floor(minutes / 60), 'hour'] : [Math.floor(minutes / 1440), 'day'];
+  return count === 0 ? 'just now' : `${count} ${unit}${count === 1 ? '' : 's'} ago`;
+}
+
 /** "+1" when a flight lands the day after it leaves ("-1", "+2" likewise); empty on the same day. */
 export function dayOffset(departureDate: string, arrivalDate: string): string {
   const days = Math.round((Date.parse(arrivalDate) - Date.parse(departureDate)) / 86_400_000);

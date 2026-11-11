@@ -1,0 +1,12 @@
+{
+  "meta": {"status": 401, "request_id": "FmbTXd9I8IpLmRoAAEYB"},
+  "errors": [
+    {
+      "type": "authentication_error",
+      "title": "Invalid access token",
+      "message": "The access token used is not recognised by our system",
+      "documentation_url": "https://duffel.com/docs/api/overview/response-handling",
+      "code": "invalid_authorization"
+    }
+  ]
+}
