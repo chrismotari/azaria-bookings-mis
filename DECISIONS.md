@@ -82,6 +82,7 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Plan enquiries open the floating panel on the pricing page and a dialog in the agency app, after which the admin lands on the chat in Settings > Support.
 
 ## App layout and navigation
+- On phones the admin bar keeps Dashboard, Offers, Requests and Bookings, and the platform bar Dashboard, Agencies, Invoices and Chats; the rest are under More, which shows their unread counts added up and stays highlighted on any of them.
 - React Navigation, not Expo Router.
 - The selected item is a route parameter of its list (e.g. `/bookings/<id>`), so the list stays mounted; Explore's URL is `/offers` (`/` also opens it). Opening a detail replaces the history entry.
 - Offer detail opens in Explore's drawer, including from a request's response; its price summary is sticky on the right when the detail is ≥ 640 px wide.

@@ -256,6 +256,9 @@ const ADMIN_PARENT_ROUTES: Record<string, string> = {
   AdminSupport: 'AdminSettings',
 };
 
+const ADMIN_NARROW_TABS = ['AdminDashboard', 'AdminOffers', 'AdminRequests', 'AdminBookings'];
+const PLATFORM_NARROW_TABS = ['PlatformDashboard', 'PlatformAgencies', 'PlatformInvoices', 'PlatformChats'];
+
 function AdminTabsNavigator() {
   const isWide = useIsWide();
   const unreadChats = useDeskUnread(AGENCY_DESK);
@@ -264,7 +267,14 @@ function AdminTabsNavigator() {
   const hiddenRoutes = integrations.data?.length ? ADMIN_SETTINGS_PAGES : [...ADMIN_SETTINGS_PAGES, 'AdminRoutes'];
   return (
     <AdminTabs.Navigator
-      tabBar={(props) => <ResponsiveTabBar {...props} hiddenRoutes={hiddenRoutes} parentRoutes={ADMIN_PARENT_ROUTES} />}
+      tabBar={(props) => (
+        <ResponsiveTabBar
+          {...props}
+          hiddenRoutes={hiddenRoutes}
+          parentRoutes={ADMIN_PARENT_ROUTES}
+          narrowTabs={ADMIN_NARROW_TABS}
+        />
+      )}
       screenOptions={tabScreenOptions(isWide)}
     >
       <AdminTabs.Screen
@@ -352,7 +362,7 @@ function PlatformTabsNavigator() {
   const unreadChats = useDeskUnread(PLATFORM_DESK);
   return (
     <PlatformTabs.Navigator
-      tabBar={(props) => <ResponsiveTabBar {...props} />}
+      tabBar={(props) => <ResponsiveTabBar {...props} narrowTabs={PLATFORM_NARROW_TABS} />}
       screenOptions={tabScreenOptions(isWide)}
     >
       <PlatformTabs.Screen

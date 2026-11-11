@@ -155,7 +155,7 @@ Root host, `/api/platform/`: `login`, `refresh`, `me` (active public-schema supe
 
 Look and layout
 - Colours only as tokens in `src/theme.ts`: primary indigo #1800d2, amber #ffb400 (prices and main calls to action, dark text), slate green #4a6660, neutrals (#252525, #2d3434, #6c7171, #a8b1b5, background #f2f4f7, surface #fff), status (success #51d77a, warning #faba2f, danger #fe455f, info #2275ff) with AA-contrast chip tints. Typography scale 28/22/18/15/13/12, system font.
-- Wide (≥ 900 px): indigo top bar with brand, nav items with icons, account menu (initials). Narrow: slim top bar plus bottom tabs. No horizontal scrolling at 390 or 1280 px.
+- Wide (≥ 900 px): indigo top bar with brand, nav items with icons, account menu (initials). Narrow: slim top bar plus bottom tabs; with more than five tabs, four stay in the bar and the rest go under a "More" tab (a menu carrying their badges). No horizontal scrolling at 390 or 1280 px.
 - List → detail opens a right-hand drawer (~480 px) on wide screens with its own URL (no history entries; Escape closes); full screen on narrow. Forms that start new work (Book, Request options, New offer, Respond) are full pages; short tasks use a shared Dialog (small/large, focus-managed, full screen on phones).
 - Every list has loading, empty and error states; zod mirrors server validation; dates via a web date input; uploads and file opening are web only.
 - Airline badge: logo or initials in the same fixed square frame. Country flags (bundled flag-icons SVGs) only in airport pickers, offer detail header and connection rows, decorative.
