@@ -71,8 +71,8 @@ function UserFields({ control }: { control: Control<Values> }) {
   );
 }
 
-/** A customer in the drawer: editable details, and Deactivate or Reactivate in the action bar. */
-export function AdminUserDetailView({ id }: { id: string }) {
+/** A customer in the drawer: editable details; Make admin, and Deactivate or Reactivate, in the action bar. */
+export function AdminUserDetailView({ id, onPromoted }: { id: string; onPromoted: (message: string) => void }) {
   const user = useQuery({
     queryKey: detailKey(id),
     queryFn: async () => (await api.get<AdminCustomer>(`/admin/users/${id}`)).data,
@@ -83,10 +83,10 @@ export function AdminUserDetailView({ id }: { id: string }) {
   if (user.isError) {
     return <ErrorState error={user.error} onRetry={() => user.refetch()} />;
   }
-  return <UserForm user={user.data} />;
+  return <UserForm user={user.data} onPromoted={onPromoted} />;
 }
 
-function UserForm({ user }: { user: AdminCustomer }) {
+function UserForm({ user, onPromoted }: { user: AdminCustomer; onPromoted: (message: string) => void }) {
   const queryClient = useQueryClient();
   const confirm = useConfirm();
   const [formError, setFormError] = useState<string | null>(null);
@@ -106,6 +106,29 @@ function UserForm({ user }: { user: AdminCustomer }) {
       (await api.patch<AdminCustomer>(`/admin/users/${user.id}`, { is_active })).data,
     onSuccess: updated,
   });
+
+  // An admin is no longer a customer: the drawer closes and the list drops them.
+  const makeAdmin = useMutation({
+    mutationFn: async () => (await api.post<{ detail: string }>(`/admin/users/${user.id}/make-admin`)).data,
+    onSuccess: async ({ detail }) => {
+      queryClient.removeQueries({ queryKey: detailKey(user.id) });
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'users'], exact: false });
+      onPromoted(detail);
+    },
+  });
+
+  const promote = async () => {
+    if (
+      await confirm({
+        title: 'Make this customer an admin?',
+        message: `${user.full_name} gets full access to the admin app: offers, requests, bookings, users, settings and billing. They keep their own requests and bookings, and leave this list of customers. Only the platform can suspend an admin.`,
+        confirmLabel: 'Make admin',
+        tone: 'danger',
+      })
+    ) {
+      makeAdmin.mutate();
+    }
+  };
 
   const onSave = handleSubmit(async (values) => {
     setFormError(null);
@@ -147,6 +170,15 @@ function UserForm({ user }: { user: AdminCustomer }) {
   return (
     <>
       <ActionBar>
+        {user.is_active ? (
+          <Button
+            title="Make admin"
+            variant="secondary"
+            onPress={promote}
+            loading={makeAdmin.isPending}
+            disabled={setActive.isPending}
+          />
+        ) : null}
         <Button
           title={user.is_active ? 'Deactivate' : 'Reactivate'}
           variant={user.is_active ? 'danger' : 'primary'}
@@ -154,7 +186,7 @@ function UserForm({ user }: { user: AdminCustomer }) {
           loading={setActive.isPending}
         />
       </ActionBar>
-      <FormError message={setActive.isError ? errorMessage(setActive.error) : null} />
+      <FormError message={setActive.isError || makeAdmin.isError ? errorMessage(setActive.error ?? makeAdmin.error) : null} />
 
       <Card>
         <View style={styles.header}>

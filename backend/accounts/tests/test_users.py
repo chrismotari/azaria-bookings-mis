@@ -180,3 +180,36 @@ def test_users_are_managed_per_agency(admin_api, customer):
         elsewhere = User.objects.create_user(email="elsewhere@example.com", password=PASSWORD, full_name="E")
     assert admin_api.get(f"/api/admin/users/{elsewhere.id}").status_code == 404
     assert [u["email"] for u in admin_api.get("/api/admin/users").data["results"]] == [customer.email]
+
+
+def test_making_a_customer_an_admin(admin_api, api, customer, make_offer):
+    offer = make_offer()
+    booking = Booking.objects.create(user=customer, offer=offer, passenger_count=1, unit_price=offer.price)
+    response = admin_api.post(f"/api/admin/users/{customer.id}/make-admin")
+    assert response.status_code == 200
+    assert response.data["detail"] == "Cara Customer is now an admin."
+    customer.refresh_from_db()
+    assert customer.role == User.Role.ADMIN
+    # No longer a customer to manage here; their bookings stay theirs.
+    assert admin_api.get(f"/api/admin/users/{customer.id}").status_code == 404
+    assert admin_api.post(f"/api/admin/users/{customer.id}/make-admin").status_code == 404
+    assert Booking.objects.filter(pk=booking.pk, user=customer).exists()
+    # Their next sign-in is an admin's.
+    tokens = login(api, customer.email).data
+    assert tokens["user"]["role"] == "admin"
+    api.credentials(HTTP_AUTHORIZATION=f"Bearer {tokens['access']}")
+    assert api.get("/api/admin/users").status_code == 200
+
+
+def test_a_deactivated_customer_is_not_made_an_admin(admin_api, customer):
+    User.objects.filter(pk=customer.pk).update(is_active=False)
+    assert admin_api.post(f"/api/admin/users/{customer.id}/make-admin").status_code == 409
+    customer.refresh_from_db()
+    assert customer.role == User.Role.CUSTOMER
+
+
+def test_only_admins_make_admins(api, customer_api, customer, other_customer):
+    assert api.post(f"/api/admin/users/{customer.id}/make-admin").status_code == 401
+    assert customer_api.post(f"/api/admin/users/{other_customer.id}/make-admin").status_code == 403
+    other_customer.refresh_from_db()
+    assert other_customer.role == User.Role.CUSTOMER

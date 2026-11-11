@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -93,3 +94,20 @@ class AdminCustomerDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = AdminCustomerSerializer
     queryset = User.objects.filter(role=User.Role.CUSTOMER)
     http_method_names = ["get", "patch", "head", "options"]
+
+
+class AdminCustomerMakeAdminView(APIView):
+    """Promotes a customer to admin; they then leave the customer list, and keep their requests and bookings."""
+
+    permission_classes = [IsAdminRole]
+
+    def post(self, request, pk):
+        user = get_object_or_404(User, pk=pk, role=User.Role.CUSTOMER)
+        if not user.is_active:
+            return Response(
+                {"detail": "This customer is deactivated: reactivate them before making them an admin."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        user.role = User.Role.ADMIN
+        user.save(update_fields=["role"])
+        return Response({"detail": f"{user.full_name} is now an admin."})

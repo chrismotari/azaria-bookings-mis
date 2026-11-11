@@ -35,6 +35,7 @@ export function AdminUsersScreen({ navigation, route }: BottomTabScreenProps<Adm
   const search = useDebounced(text.trim(), 300);
   const [page, setPage] = useState(1);
   const [creating, setCreating] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const users = useQuery({
     queryKey: ['admin', 'users', search, page],
     queryFn: async () => {
@@ -50,13 +51,21 @@ export function AdminUsersScreen({ navigation, route }: BottomTabScreenProps<Adm
       title="Customer"
       backLabel="All users"
       onClose={close}
-      detail={selected ? <AdminUserDetailView key={selected} id={selected} /> : null}
+      detail={selected ? <AdminUserDetailView
+            key={selected}
+            id={selected}
+            onPromoted={(message) => {
+              setNotice(message);
+              close();
+            }}
+          /> : null}
       list={
         <Screen card>
           <View style={styles.header}>
             <Text style={styles.title}>Users</Text>
             <Button title="New user" icon="person-add-outline" onPress={() => setCreating(true)} />
           </View>
+          {notice ? <Text style={styles.notice}>{notice}</Text> : null}
           <TextField
             label="Search"
             value={text}
@@ -161,6 +170,7 @@ function UserCard({ user, selected, onPress }: { user: AdminCustomer; selected: 
 }
 
 const styles = StyleSheet.create({
+  notice: { color: colors.successText, fontWeight: weight.semibold },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   cards: { gap: space.md },
