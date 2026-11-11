@@ -311,6 +311,7 @@ export type AdminCustomer = {
   full_name: string;
   phone: string;
   is_active: boolean;
+  role: 'customer' | 'admin';
 };
 
 /** A domain (hostname) that reaches an agency; the primary one is used in email links. */

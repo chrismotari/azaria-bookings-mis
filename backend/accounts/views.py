@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from core.exceptions import Conflict
 from core.permissions import IsAdminRole
 from core.tenancy import queue
 from core.throttling import IPScopedRateThrottle
@@ -75,12 +76,16 @@ class PasswordResetConfirmView(APIView):
 
 
 class AdminCustomerListView(generics.ListCreateAPIView):
-    """The agency's customers (only role customer); creating one emails them a link to choose a password."""
+    """The agency's customers, or with ?role=admin its admins; creating one (always a customer) emails them a
+    link to choose a password."""
 
     permission_classes = [IsAdminRole]
     serializer_class = AdminCustomerSerializer
     filterset_class = AdminCustomerFilter
-    queryset = User.objects.filter(role=User.Role.CUSTOMER).order_by("full_name", "email")
+
+    def get_queryset(self):
+        role = User.Role.ADMIN if self.request.query_params.get("role") == "admin" else User.Role.CUSTOMER
+        return User.objects.filter(role=role).order_by("full_name", "email")
 
     def perform_create(self, serializer):
         user = serializer.save()
@@ -88,12 +93,31 @@ class AdminCustomerListView(generics.ListCreateAPIView):
 
 
 class AdminCustomerDetailView(generics.RetrieveUpdateAPIView):
-    """Deactivating (is_active false) stands in for deleting: requests and bookings stay."""
+    """A customer or admin. Deactivating (is_active false) stands in for deleting: requests and bookings stay.
+    Admins cannot deactivate themselves."""
 
     permission_classes = [IsAdminRole]
     serializer_class = AdminCustomerSerializer
-    queryset = User.objects.filter(role=User.Role.CUSTOMER)
+    queryset = User.objects.all()
     http_method_names = ["get", "patch", "head", "options"]
+
+    def perform_update(self, serializer):
+        if serializer.instance == self.request.user and serializer.validated_data.get("is_active") is False:
+            raise Conflict("You cannot deactivate your own account.")
+        serializer.save()
+
+
+class AdminUserPasswordResetView(APIView):
+    """Emails an active customer or admin the reset link (it also sets a first password)."""
+
+    permission_classes = [IsAdminRole]
+
+    def post(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+        if not user.is_active:
+            raise Conflict("This user is deactivated: reactivate them before sending a reset link.")
+        queue(send_password_reset_email, user.pk)
+        return Response({"detail": f"A reset link has been sent to {user.email}."})
 
 
 class AdminCustomerMakeAdminView(APIView):
@@ -104,10 +128,7 @@ class AdminCustomerMakeAdminView(APIView):
     def post(self, request, pk):
         user = get_object_or_404(User, pk=pk, role=User.Role.CUSTOMER)
         if not user.is_active:
-            return Response(
-                {"detail": "This customer is deactivated: reactivate them before making them an admin."},
-                status=status.HTTP_409_CONFLICT,
-            )
+            raise Conflict("This customer is deactivated: reactivate them before making them an admin.")
         user.role = User.Role.ADMIN
         user.save(update_fields=["role"])
         return Response({"detail": f"{user.full_name} is now an admin."})

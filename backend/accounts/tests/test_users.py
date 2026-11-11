@@ -39,7 +39,7 @@ def test_only_admins_reach_user_management(api, customer_api, customer):
         assert client.patch(f"/api/admin/users/{customer.id}", {}, format="json").status_code == code
 
 
-def test_lists_only_customers(admin_api, admin_user, customer, other_customer):
+def test_lists_customers_or_admins(admin_api, admin_user, customer, other_customer):
     response = admin_api.get("/api/admin/users")
     assert response.status_code == 200
     assert [u["email"] for u in response.data["results"]] == [customer.email, other_customer.email]
@@ -49,8 +49,14 @@ def test_lists_only_customers(admin_api, admin_user, customer, other_customer):
         "full_name": "Cara Customer",
         "phone": "+254700000001",
         "is_active": True,
+        "role": "customer",
     }
-    assert admin_api.get(f"/api/admin/users/{admin_user.id}").status_code == 404
+    second = User.objects.create_user(email="second@example.com", full_name="Second", role=User.Role.ADMIN)
+    admins = admin_api.get("/api/admin/users", {"role": "admin"}).data["results"]
+    assert [(u["email"], u["role"]) for u in admins] == [("owner@example.com", "admin"), (second.email, "admin")]
+    assert admin_api.get("/api/admin/users", {"role": "admin", "search": "second"}).data["count"] == 1
+    # An admin opens like a customer.
+    assert admin_api.get(f"/api/admin/users/{second.id}").data["role"] == "admin"
 
 
 @pytest.mark.parametrize(
@@ -190,8 +196,9 @@ def test_making_a_customer_an_admin(admin_api, api, customer, make_offer):
     assert response.data["detail"] == "Cara Customer is now an admin."
     customer.refresh_from_db()
     assert customer.role == User.Role.ADMIN
-    # No longer a customer to manage here; their bookings stay theirs.
-    assert admin_api.get(f"/api/admin/users/{customer.id}").status_code == 404
+    # Listed with the admins now; their bookings stay theirs.
+    assert customer.email not in [u["email"] for u in admin_api.get("/api/admin/users").data["results"]]
+    assert customer.email in [u["email"] for u in admin_api.get("/api/admin/users?role=admin").data["results"]]
     assert admin_api.post(f"/api/admin/users/{customer.id}/make-admin").status_code == 404
     assert Booking.objects.filter(pk=booking.pk, user=customer).exists()
     # Their next sign-in is an admin's.
@@ -213,3 +220,44 @@ def test_only_admins_make_admins(api, customer_api, customer, other_customer):
     assert customer_api.post(f"/api/admin/users/{other_customer.id}/make-admin").status_code == 403
     other_customer.refresh_from_db()
     assert other_customer.role == User.Role.CUSTOMER
+
+
+def test_admins_deactivate_other_admins_but_not_themselves(admin_api, admin_user, api):
+    second = User.objects.create_user(
+        email="second@example.com", password=PASSWORD, full_name="Second", role=User.Role.ADMIN
+    )
+    response = admin_api.patch(f"/api/admin/users/{admin_user.id}", {"is_active": False}, format="json")
+    assert response.status_code == 409
+    assert response.data["detail"] == "You cannot deactivate your own account."
+    admin_user.refresh_from_db()
+    assert admin_user.is_active
+    # Their own details can still be edited.
+    assert admin_api.patch(f"/api/admin/users/{admin_user.id}", {"phone": "+254700000099"}, format="json").status_code == 200
+
+    assert admin_api.patch(f"/api/admin/users/{second.id}", {"is_active": False, "role": "customer"}, format="json").status_code == 200
+    second.refresh_from_db()
+    assert (second.is_active, second.role) == (False, User.Role.ADMIN)
+    assert login(api, second.email).status_code == 401
+
+
+@pytest.mark.parametrize("role", [User.Role.CUSTOMER, User.Role.ADMIN])
+def test_sending_a_reset_link(admin_api, role, django_capture_on_commit_callbacks):
+    user = User.objects.create_user(email="someone@example.com", password=PASSWORD, full_name="Someone", role=role)
+    with django_capture_on_commit_callbacks(execute=True):
+        response = admin_api.post(f"/api/admin/users/{user.id}/password-reset")
+    assert response.status_code == 200
+    assert response.data["detail"] == "A reset link has been sent to someone@example.com."
+    assert len(mail.outbox) == 1 and mail.outbox[0].to == ["someone@example.com"]
+    assert set_password_link(mail.outbox[0])
+
+
+def test_no_reset_link_for_a_deactivated_user(admin_api, customer, django_capture_on_commit_callbacks):
+    User.objects.filter(pk=customer.pk).update(is_active=False)
+    with django_capture_on_commit_callbacks(execute=True):
+        assert admin_api.post(f"/api/admin/users/{customer.id}/password-reset").status_code == 409
+    assert mail.outbox == []
+
+
+def test_only_admins_send_reset_links(api, customer_api, other_customer):
+    assert api.post(f"/api/admin/users/{other_customer.id}/password-reset").status_code == 401
+    assert customer_api.post(f"/api/admin/users/{other_customer.id}/password-reset").status_code == 403

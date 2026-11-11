@@ -18,6 +18,7 @@ import { FormFooter } from '../../components/FormSection';
 import { StatusChip, Tone } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
+import { useAuth } from '../../auth/AuthContext';
 import { colors, font, space, weight } from '../../theme';
 
 /** Keyed by String(is_active). */
@@ -71,7 +72,8 @@ function UserFields({ control }: { control: Control<Values> }) {
   );
 }
 
-/** A customer in the drawer: editable details; Make admin, and Deactivate or Reactivate, in the action bar. */
+/** A customer or admin in the drawer: editable details; Make admin (customers), Send reset link, and Deactivate or
+ * Reactivate (not on your own account) in the action bar. */
 export function AdminUserDetailView({ id, onPromoted }: { id: string; onPromoted: (message: string) => void }) {
   const user = useQuery({
     queryKey: detailKey(id),
@@ -89,6 +91,10 @@ export function AdminUserDetailView({ id, onPromoted }: { id: string; onPromoted
 function UserForm({ user, onPromoted }: { user: AdminCustomer; onPromoted: (message: string) => void }) {
   const queryClient = useQueryClient();
   const confirm = useConfirm();
+  const { user: me } = useAuth();
+  const isAdmin = user.role === 'admin';
+  const isMe = me?.id === user.id;
+  const kind = isAdmin ? 'admin' : 'customer';
   const [formError, setFormError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const { control, handleSubmit, setError, reset, formState } = useForm<Values>({
@@ -107,6 +113,23 @@ function UserForm({ user, onPromoted }: { user: AdminCustomer; onPromoted: (mess
     onSuccess: updated,
   });
 
+  const sendReset = useMutation({
+    mutationFn: async () => (await api.post<{ detail: string }>(`/admin/users/${user.id}/password-reset`)).data,
+  });
+
+  const onReset = async () => {
+    if (
+      await confirm({
+        title: 'Send a password reset link?',
+        message: `${user.email} gets an email with a link to choose a new password. Their current password keeps working until then.`,
+        confirmLabel: 'Send link',
+        tone: 'primary',
+      })
+    ) {
+      sendReset.mutate();
+    }
+  };
+
   // An admin is no longer a customer: the drawer closes and the list drops them.
   const makeAdmin = useMutation({
     mutationFn: async () => (await api.post<{ detail: string }>(`/admin/users/${user.id}/make-admin`)).data,
@@ -121,7 +144,7 @@ function UserForm({ user, onPromoted }: { user: AdminCustomer; onPromoted: (mess
     if (
       await confirm({
         title: 'Make this customer an admin?',
-        message: `${user.full_name} gets full access to the admin app: offers, requests, bookings, users, settings and billing. They keep their own requests and bookings, and leave this list of customers. Only the platform can suspend an admin.`,
+        message: `${user.full_name} gets full access to the admin app: offers, requests, bookings, users, settings and billing. They keep their own requests and bookings, and move to System admins.`,
         confirmLabel: 'Make admin',
         tone: 'danger',
       })
@@ -149,13 +172,13 @@ function UserForm({ user, onPromoted }: { user: AdminCustomer; onPromoted: (mess
       await confirm(
         deactivating
           ? {
-              title: 'Deactivate this customer?',
-              message: `${user.full_name} will not be able to sign in. Their requests and bookings stay, and you can reactivate them at any time.`,
+              title: `Deactivate this ${kind}?`,
+              message: `${user.full_name} will not be able to sign in, and is signed out everywhere. ${isAdmin ? 'Nothing is deleted' : 'Their requests and bookings stay'}, and you can reactivate them at any time.`,
               confirmLabel: 'Deactivate',
               tone: 'danger',
             }
           : {
-              title: 'Reactivate this customer?',
+              title: `Reactivate this ${kind}?`,
               message: `${user.full_name} will be able to sign in again.`,
               confirmLabel: 'Reactivate',
               tone: 'primary',
@@ -172,6 +195,14 @@ function UserForm({ user, onPromoted }: { user: AdminCustomer; onPromoted: (mess
       <ActionBar>
         {user.is_active ? (
           <Button
+            title="Send reset link"
+            variant="secondary"
+            onPress={onReset}
+            loading={sendReset.isPending}
+          />
+        ) : null}
+        {user.is_active && !isAdmin ? (
+          <Button
             title="Make admin"
             variant="secondary"
             onPress={promote}
@@ -179,14 +210,23 @@ function UserForm({ user, onPromoted }: { user: AdminCustomer; onPromoted: (mess
             disabled={setActive.isPending}
           />
         ) : null}
-        <Button
-          title={user.is_active ? 'Deactivate' : 'Reactivate'}
-          variant={user.is_active ? 'danger' : 'primary'}
-          onPress={toggle}
-          loading={setActive.isPending}
-        />
+        {isMe ? null : (
+          <Button
+            title={user.is_active ? 'Deactivate' : 'Reactivate'}
+            variant={user.is_active ? 'danger' : 'primary'}
+            onPress={toggle}
+            loading={setActive.isPending}
+          />
+        )}
       </ActionBar>
-      <FormError message={setActive.isError || makeAdmin.isError ? errorMessage(setActive.error ?? makeAdmin.error) : null} />
+      <FormError
+        message={
+          setActive.error || makeAdmin.error || sendReset.error
+            ? errorMessage(setActive.error ?? makeAdmin.error ?? sendReset.error)
+            : null
+        }
+      />
+      {sendReset.isSuccess ? <Text style={styles.saved}>{sendReset.data.detail}</Text> : null}
 
       <Card>
         <View style={styles.header}>
@@ -195,7 +235,9 @@ function UserForm({ user, onPromoted }: { user: AdminCustomer; onPromoted: (mess
         </View>
         {!user.is_active ? (
           <Text style={styles.muted}>
-            Deactivated: this customer cannot sign in. Their requests and bookings are kept.
+            {isAdmin
+              ? 'Deactivated: this admin cannot sign in.'
+              : 'Deactivated: this customer cannot sign in. Their requests and bookings are kept.'}
           </Text>
         ) : null}
         <UserFields control={control} />

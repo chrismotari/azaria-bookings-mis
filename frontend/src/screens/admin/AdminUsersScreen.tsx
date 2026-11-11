@@ -28,18 +28,25 @@ const COLUMNS: Column[] = [
 
 export function AdminUsersScreen({ navigation, route }: BottomTabScreenProps<AdminTabParamList, 'AdminUsers'>) {
   const selected = route.params?.id;
+  // In the URL, so a reload or a shared link keeps the System admins list.
+  const admins = route.params?.role === 'admin';
   const close = useCallback(() => navigation.setParams({ id: undefined }), [navigation]);
   // With a customer open the list is too narrow for the table.
   const asTable = useIsWide() && selected === undefined;
   const [text, setText] = useState('');
   const search = useDebounced(text.trim(), 300);
   const [page, setPage] = useState(1);
+  const showAdmins = (value: boolean) => {
+    setPage(1);
+    setNotice(null);
+    navigation.setParams({ role: value ? 'admin' : undefined, id: undefined });
+  };
   const [creating, setCreating] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const users = useQuery({
-    queryKey: ['admin', 'users', search, page],
+    queryKey: ['admin', 'users', admins ? 'admins' : 'customers', search, page],
     queryFn: async () => {
-      const params = { page, ...(search ? { search } : {}) };
+      const params = { page, ...(search ? { search } : {}), ...(admins ? { role: 'admin' } : {}) };
       return (await api.get<Paginated<AdminCustomer>>('/admin/users', { params })).data;
     },
     placeholderData: keepPreviousData,
@@ -48,8 +55,8 @@ export function AdminUsersScreen({ navigation, route }: BottomTabScreenProps<Adm
 
   return (
     <DetailLayout
-      title="Customer"
-      backLabel="All users"
+      title={admins ? 'Admin' : 'Customer'}
+      backLabel={admins ? 'All system admins' : 'All users'}
       onClose={close}
       detail={selected ? <AdminUserDetailView
             key={selected}
@@ -62,8 +69,16 @@ export function AdminUsersScreen({ navigation, route }: BottomTabScreenProps<Adm
       list={
         <Screen card>
           <View style={styles.header}>
-            <Text style={styles.title}>Users</Text>
-            <Button title="New user" icon="person-add-outline" onPress={() => setCreating(true)} />
+            <Text style={styles.title}>{admins ? 'System admins' : 'Users'}</Text>
+            <View style={styles.buttons}>
+              <Button
+                title={admins ? 'Customers' : 'System admins'}
+                variant="secondary"
+                icon={admins ? 'people-outline' : 'shield-checkmark-outline'}
+                onPress={() => showAdmins(!admins)}
+              />
+              <Button title="New user" icon="person-add-outline" onPress={() => setCreating(true)} />
+            </View>
           </View>
           {notice ? <Text style={styles.notice}>{notice}</Text> : null}
           <TextField
@@ -84,7 +99,7 @@ export function AdminUsersScreen({ navigation, route }: BottomTabScreenProps<Adm
           ) : users.data.results.length === 0 ? (
             <EmptyState
               icon="people-outline"
-              title={search ? 'No matching customers' : 'No customers yet'}
+              title={search ? (admins ? 'No matching admins' : 'No matching customers') : 'No customers yet'}
               message={
                 search
                   ? 'Nobody matches that name, email or phone.'
@@ -114,7 +129,8 @@ export function AdminUsersScreen({ navigation, route }: BottomTabScreenProps<Adm
             onClose={() => setCreating(false)}
             onCreated={(user) => {
               setCreating(false);
-              open(user);
+              // New users are customers: show them in that list.
+              navigation.setParams({ role: undefined, id: user.id });
             }}
           />
         </Screen>
@@ -171,6 +187,7 @@ function UserCard({ user, selected, onPress }: { user: AdminCustomer; selected: 
 
 const styles = StyleSheet.create({
   notice: { color: colors.successText, fontWeight: weight.semibold },
+  buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   cards: { gap: space.md },

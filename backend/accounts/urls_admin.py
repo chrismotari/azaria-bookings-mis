@@ -5,5 +5,6 @@ from . import views
 urlpatterns = [
     path("admin/users", views.AdminCustomerListView.as_view()),
     path("admin/users/<uuid:pk>", views.AdminCustomerDetailView.as_view()),
+    path("admin/users/<uuid:pk>/password-reset", views.AdminUserPasswordResetView.as_view()),
     path("admin/users/<uuid:pk>/make-admin", views.AdminCustomerMakeAdminView.as_view()),
 ]

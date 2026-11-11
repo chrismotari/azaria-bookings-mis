@@ -37,7 +37,8 @@ export type AdminTabParamList = {
   AdminRoutes: { id?: string } | undefined;
   AdminRequests: { status?: QueryStatus | 'all'; id?: string } | undefined;
   AdminBookings: { status?: BookingStatus | 'all'; id?: string } | undefined;
-  AdminUsers: { id?: string } | undefined;
+  /** role admin: the System admins list instead of the customers. */
+  AdminUsers: { id?: string; role?: 'admin' } | undefined;
   /** The desk: chats from the site's visitors and customers. */
   AdminChats: { id?: string } | undefined;
   AdminSettings: undefined;

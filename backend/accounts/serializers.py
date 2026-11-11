@@ -88,12 +88,12 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
 
 class AdminCustomerSerializer(serializers.ModelSerializer):
-    """A customer as the admin manages them; the role is never changed here."""
+    """A customer or admin as the admin manages them; the role is never changed here."""
 
     class Meta:
         model = User
-        fields = ["id", "email", "full_name", "phone", "is_active"]
-        read_only_fields = ["id"]
+        fields = ["id", "email", "full_name", "phone", "is_active", "role"]
+        read_only_fields = ["id", "role"]
         extra_kwargs = {"email": {"validators": []}}
 
     def validate_email(self, value):

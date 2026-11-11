@@ -162,4 +162,4 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Migrations are flattened to one initial migration per app (catalog needs two: it and integrations reference each other), plus the two seed-data migrations; there is no upgrade path from older databases.
 - An agency's "super users" on the platform are its admins (role admin); the owner suspends/restores them (is_active) and sends the usual reset link. Suspending the last admin is allowed.
 - The platform's agency detail is a full page at the same URL `/agencies/<id>` instead of a drawer; the list stays mounted underneath so its search and page are kept.
-- An agency admin can make an active customer an admin (one way: the admin then leaves the customer list and keeps their requests and bookings); suspending an admin stays with the platform owner.
+- An agency admin can make an active customer an admin (one way; they keep their requests and bookings). Users › System admins lists the admins with the same drawer: admins can edit, deactivate and send reset links to each other, but never deactivate themselves (409). New users are always customers.
