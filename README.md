@@ -19,7 +19,7 @@ The full specification is in [SPEC.md](SPEC.md); choices made where it is silent
 | Background jobs | Celery with Redis; Celery beat for scheduled tasks |
 | Email | HTML + plain text; printed to the console unless `EMAIL_HOST` is set |
 | App | Expo (React Native, web first) with TypeScript, React Navigation, TanStack Query, react-hook-form + zod |
-| Tests | pytest, pytest-django, freezegun; ruff for lint and format; `tsc` for the app |
+| Tests | pytest, pytest-django, freezegun; ruff for lint and format; `tsc` and ESLint (eslint-config-expo) for the app |
 
 ```
 backend/      Django project "config": tenants, airports, airlines, rates, accounts, catalog,
@@ -146,6 +146,7 @@ One shared "Azaria Bookings" app serves every agency. It learns its agency from 
 cd backend && pytest                            # needs PostgreSQL, not Redis or the worker
 cd backend && ruff check . && ruff format --check .
 cd frontend && npx tsc --noEmit
+cd frontend && npm run lint
 cd frontend && npx expo export --platform web   # production web build
 ```
 

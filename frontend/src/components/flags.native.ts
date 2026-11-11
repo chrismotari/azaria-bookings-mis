@@ -2,7 +2,6 @@
 import { FC } from 'react';
 import { SvgProps } from 'react-native-svg';
 
-/* eslint-disable @typescript-eslint/no-require-imports */
 export const FLAGS: Record<string, FC<SvgProps>> = {
   ad: require('../../public/flags/ad.svg').default,
   ae: require('../../public/flags/ae.svg').default,
