@@ -1,5 +1,4 @@
-// SVG files are imported as components on native (react-native-svg-transformer), for the country flags in
-// public/flags/. On web the flags are plain images served from public/, so nothing imports SVGs there.
+// Native imports the flag SVGs in public/flags/ as components; web serves them as plain images.
 const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);

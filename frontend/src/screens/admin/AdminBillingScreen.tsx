@@ -17,7 +17,7 @@ import { colors, font, space, weight } from '../../theme';
 import { formatDate, formatMoney } from '../../utils/format';
 import { InvoiceCard, openInvoice } from '../platform/InvoicesScreen';
 
-export const BILLING_KEY = ['admin', 'billing'];
+const BILLING_KEY = ['admin', 'billing'];
 
 /** The agency's plans and invoices with the platform, read-only (payment happens outside the app). */
 export function AdminBillingScreen() {
@@ -123,7 +123,7 @@ function OpenButton({ invoice }: { invoice: AgencyInvoice }) {
   );
 }
 
-export function useBilling() {
+function useBilling() {
   return useQuery({
     queryKey: BILLING_KEY,
     queryFn: async () => (await api.get<AgencyBilling>('/admin/billing')).data,

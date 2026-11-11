@@ -22,10 +22,6 @@ export function closeChat() {
   set({ open: false, prefill: null });
 }
 
-export function toggleChat() {
-  set({ open: !state.open, prefill: null });
-}
-
 function subscribe(listener: () => void) {
   listeners.add(listener);
   return () => {

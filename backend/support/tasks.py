@@ -1,4 +1,4 @@
-"""Support chat emails 13 and 14 and the hourly auto-close: each agency's desk (step 31) and the platform's (32)."""
+"""Support chat emails and the hourly auto-close, for each agency's desk and the platform's."""
 
 import logging
 import mimetypes
@@ -45,7 +45,7 @@ def _is_first(conversation, message):
 
 @tenant_task(**EMAIL_TASK_OPTIONS)
 def notify_desk_new_message(conversation_id, message_id):
-    """13. A new chat or message, to the agency's notification email."""
+    """A new chat or message, to the agency's notification email."""
     conversation, message = _load(conversation_id, message_id)
     if conversation is None:
         return
@@ -61,7 +61,7 @@ def notify_desk_new_message(conversation_id, message_id):
 
 @tenant_task(**EMAIL_TASK_OPTIONS)
 def notify_requester_reply(conversation_id, message_id):
-    """14. The desk's reply, to whoever wrote in. Only while the chat is open."""
+    """The desk's reply, to whoever wrote in. Only while the chat is open."""
     conversation, message = _load(conversation_id, message_id)
     if conversation is None or conversation.status != Conversation.Status.OPEN:
         return
@@ -79,7 +79,7 @@ def notify_requester_reply(conversation_id, message_id):
 
 @shared_task(**EMAIL_TASK_OPTIONS)
 def notify_platform_desk(conversation_id, message_id):
-    """13 for the platform: a new chat or message, to PlatformSettings.support_email (skipped while it is blank)."""
+    """A new chat or message on the platform's desk, to PlatformSettings.support_email (skipped while it is blank)."""
     from tenants.models import PlatformSettings
 
     with schema_context(get_public_schema_name()):
@@ -99,7 +99,7 @@ def notify_platform_desk(conversation_id, message_id):
 
 @shared_task(**EMAIL_TASK_OPTIONS)
 def notify_platform_requester(conversation_id, message_id):
-    """14 for the platform: the owner's reply, to whoever wrote in. An agency admin's link opens their own Support
+    """The system owner's reply, to whoever wrote in. An agency admin's link opens their own Support
     page on the agency's site. Only while the chat is open."""
     with schema_context(get_public_schema_name()):
         conversation, message = _load(conversation_id, message_id)

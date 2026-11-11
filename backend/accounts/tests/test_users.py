@@ -1,4 +1,4 @@
-"""The admin's customer management (step 23)."""
+"""The admin's customer management."""
 
 import re
 

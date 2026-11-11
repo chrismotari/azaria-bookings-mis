@@ -9,7 +9,7 @@ import { AUTH_PATH, IS_PLATFORM } from '../config';
 import { requestLoginAfterSignOut } from './loginRedirect';
 import { clearPendingAction } from './pendingAction';
 
-export type RegisterData = {
+type RegisterData = {
   email: string;
   password: string;
   full_name: string;

@@ -3,7 +3,6 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { colors, font, radius, weight } from '../theme';
 
-/** Label, control and validation message. */
 export function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
   return (
     <View style={styles.field}>
@@ -14,10 +13,7 @@ export function Field({ label, error, children }: { label: string; error?: strin
   );
 }
 
-/**
- * Lays fields out side by side, wrapping onto new rows when space runs out.
- * `columns={2}`: at most two per row, one per row on a phone.
- */
+/** Fields side by side, wrapping onto new rows; `columns={2}` caps it at two per row (one on a phone). */
 export function FieldGrid({ children, columns }: { children: ReactNode; columns?: 2 }) {
   return (
     <View style={styles.grid}>

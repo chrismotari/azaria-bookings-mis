@@ -1,4 +1,4 @@
-"""Support chat, agency desk (step 31)."""
+"""Support chat, agency desk."""
 
 from datetime import timedelta
 
@@ -43,7 +43,6 @@ def test_a_guest_starts_a_chat_and_cannot_read_it(api, django_capture_on_commit_
     assert chat.is_guest and chat.status == "open" and chat.staff_unread
     [message] = chat.messages.all()
     assert message.attachment_name == "details.pdf" and message.attachment.name.startswith("support/test/")
-    # Email 13 to the desk, with the attachment and a link to the chat.
     [email] = mail.outbox
     assert email.to == ["desk@agency.test"] and email.subject == "New chat: Baggage"
     assert "replies reach them by email only" in email.body and f"/admin/chats/{chat.pk}" in email.body
@@ -105,7 +104,6 @@ def test_a_customer_follows_their_chat(customer_api, customer, admin_api, django
             f"/api/admin/chats/{chat_id}/messages", {"body": "20 kg", "attachment": pdf("rules.pdf")}, format="multipart"
         )
     assert reply.status_code == 201
-    # Email 14 to the chat's email, with a link to the chat in Support.
     [email] = mail.outbox
     assert email.to == ["cara.other@example.com"] and email.subject == "Re: Baggage"
     assert "20 kg" in email.body and f"/account/support/{chat_id}" in email.body
@@ -156,7 +154,7 @@ def test_attachments_open_for_the_desk_and_the_requester_only(customer_api, othe
 
 def test_the_desk_lists_reads_and_closes(customer_api, admin_api, admin_user):
     older = start(customer_api, subject="Older").data["id"]
-    newer = start(APIClient(), subject="Newer")
+    start(APIClient(), subject="Newer")
     Conversation.objects.filter(pk=older).update(staff_unread=False)
     rows = admin_api.get("/api/admin/chats").data["results"]
     # Unread first.

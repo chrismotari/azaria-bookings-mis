@@ -11,7 +11,6 @@ const KIND = {
   stopover: { label: 'Stopover', tone: TONES.warning },
 } as const;
 
-/** Each stop in flight order: airport code and city, how long it lasts, and a Layover or Stopover tag. */
 export function StopList({ stops }: { stops: Stop[] }) {
   return (
     <View style={styles.list}>

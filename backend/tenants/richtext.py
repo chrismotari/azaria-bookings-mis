@@ -1,4 +1,4 @@
-"""Plan descriptions are rich text: sanitized HTML with a small set of tags (step 30)."""
+"""Plan descriptions are rich text: sanitized HTML with a small set of tags."""
 
 import nh3
 

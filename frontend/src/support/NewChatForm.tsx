@@ -27,7 +27,6 @@ type Props = {
 
 type Errors = Partial<Record<'email' | 'subject' | 'body' | 'attachment', string>>;
 
-/** Email, subject, message and an optional attachment. */
 export function NewChatForm({
   email: initialEmail,
   subject: initialSubject = '',

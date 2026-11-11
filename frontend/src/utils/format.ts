@@ -57,7 +57,6 @@ const dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'Africa/Nairobi',
 });
 
-/** Formats a timestamp in Nairobi time. */
 export function formatDateTime(isoDateTime: string): string {
   return `${dateTimeFormat.format(new Date(isoDateTime))} (Nairobi)`;
 }

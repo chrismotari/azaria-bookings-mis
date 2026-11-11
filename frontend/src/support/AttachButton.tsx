@@ -5,9 +5,9 @@ import { Icon } from '../components/Icon';
 import { PressState } from '../components/pressState';
 import { colors, font, radius, space, weight } from '../theme';
 
-export const ATTACH_ACCEPT = '.pdf,.png,.jpg,.jpeg';
+const ATTACH_ACCEPT = '.pdf,.png,.jpg,.jpeg';
 
-/** One optional attachment (PDF, PNG or JPEG, up to 5 MB): a small button, then the chosen file with Remove. */
+/** One optional attachment: PDF, PNG or JPEG, up to 5 MB. */
 export function AttachButton({ file, onChange }: { file: File | null; onChange: (file: File | null) => void }) {
   const input = useRef<HTMLInputElement | null>(null);
   if (Platform.OS !== 'web') {

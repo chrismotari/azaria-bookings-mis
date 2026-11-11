@@ -1,4 +1,4 @@
-"""Support chats (steps 31 and 32): someone writes to a desk, the desk replies and closes the chat."""
+"""Support chats: someone writes to a desk, the desk replies and closes the chat."""
 
 import uuid
 

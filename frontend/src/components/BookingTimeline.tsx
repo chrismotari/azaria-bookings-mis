@@ -5,7 +5,6 @@ import { colors, font, weight } from '../theme';
 import { BOOKING_EVENT_LABELS } from '../utils/bookings';
 import { formatDateTime } from '../utils/format';
 
-/** The booking's status changes, oldest first. */
 export function BookingTimeline({ events }: { events: BookingEvent[] }) {
   return (
     <View style={styles.list}>

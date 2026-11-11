@@ -1,4 +1,4 @@
-"""The system owner's dashboard (step 29)."""
+"""The system owner's dashboard."""
 
 from datetime import date
 from decimal import Decimal

@@ -1,4 +1,4 @@
-"""Marking a booking unavailable with suggested options (step 21)."""
+"""Marking a booking unavailable with suggested options."""
 
 from datetime import timedelta
 
@@ -91,7 +91,7 @@ def test_with_existing_offers_creates_a_responded_request(
     assert query_response.message == "These are close."
     assert list(query_response.offers.all()) == [other]
 
-    # Only email 5: no "new request" email to the admin and no "responded" email to the customer.
+    # Only the customer's "could not be confirmed" email: no "new request" or "responded" email.
     assert len(callbacks) == 1
     [email] = mail.outbox
     assert email.to == ["customer@example.com"]

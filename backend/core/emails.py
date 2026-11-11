@@ -17,7 +17,6 @@ BRAND = {
     "highlight": "#ebe8fd",
 }
 
-# Options shared by every email task.
 EMAIL_TASK_OPTIONS = {
     "autoretry_for": (Exception,),
     "retry_backoff": True,

@@ -43,7 +43,7 @@ SHARED_APPS = [
     "django_filters",
     "corsheaders",
     "accounts",
-    # The platform's support desk (step 32); each agency's desk is in TENANT_APPS.
+    # The platform's support desk; each agency's desk is in TENANT_APPS.
     "support",
 ]
 
@@ -55,7 +55,6 @@ TENANT_APPS = [
     "customer_requests.apps.RequestsConfig",
     "bookings",
     "core",
-    # Each agency's support desk (step 31).
     "support",
 ]
 
@@ -128,7 +127,7 @@ PUBLIC_MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
 
 CURRENCY = "USD"
-# What agencies pay the platform in: every plan and invoice (step 27).
+# What agencies pay the platform in: every plan and invoice.
 PLATFORM_CURRENCY = env("PLATFORM_CURRENCY", default="USD")
 
 

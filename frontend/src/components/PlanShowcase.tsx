@@ -42,13 +42,9 @@ type Props = {
 export const enquirySubject = (plan: PublicPlan, cycle: BillingCycle) =>
   `Plan enquiry: ${plan.name} (${cycle === 'monthly' ? 'monthly' : 'annual'})`;
 
-/** "monthly" or "annually", as in "billed annually". */
 export const billed = (cycle: BillingCycle) => (cycle === 'monthly' ? 'monthly' : 'annually');
 
-/**
- * Plans as a pricing page: a Monthly / Annual switch, the Recommended, Basic and Advanced plans as featured cards
- * (in that order), every other subscription plan behind "Show all plans", and support plans in their own section.
- */
+/** Tagged plans as featured cards, other subscriptions behind "Show all plans", support plans apart. */
 export function PlanShowcase({ plans, currentPlanIds = [], actionLabel, onEnquire }: Props) {
   const isWide = useIsWide();
   const [cycle, setCycle] = useState<BillingCycle>('monthly');

@@ -1,4 +1,4 @@
-"""Plan tags, rich descriptions and the plans pages (step 30)."""
+"""Plan tags, rich descriptions and the plans pages."""
 
 from datetime import date
 

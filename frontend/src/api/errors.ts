@@ -46,10 +46,7 @@ export function errorMessage(error: unknown): string {
   return 'Something went wrong. Please try again.';
 }
 
-/**
- * Puts DRF field errors on the matching form fields. Returns a message for
- * anything that does not belong to a field, or null when everything was placed.
- */
+/** Puts DRF field errors on their form fields; returns a message for anything left over, else null. */
 export function applyServerErrors<T extends FieldValues>(
   error: unknown,
   setError: UseFormSetError<T>,

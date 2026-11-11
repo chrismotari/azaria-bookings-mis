@@ -28,7 +28,7 @@ import { colors, font, space, useIsWide, weight } from '../../theme';
 import { formatMoney } from '../../utils/format';
 import { PLANS_KEY } from './keys';
 
-export const KINDS: { value: PlanKind; label: string }[] = [
+const KINDS: { value: PlanKind; label: string }[] = [
   { value: 'subscription', label: 'Subscription' },
   { value: 'support', label: 'Support' },
 ];

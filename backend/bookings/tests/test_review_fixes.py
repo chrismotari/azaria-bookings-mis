@@ -1,4 +1,4 @@
-"""Regression tests for issues found in the system review."""
+"""Regression tests."""
 
 from datetime import timedelta
 

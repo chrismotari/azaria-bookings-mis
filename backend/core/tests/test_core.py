@@ -45,7 +45,7 @@ def test_django_admin_mounted_for_superusers_only(client, customer, admin_user):
 
 
 def test_every_model_has_a_uuid_primary_key():
-    """Identifiers are always UUIDs (HARD RULES); only Django's own framework models keep numeric keys."""
+    """Identifiers are always UUIDs; only Django's own framework models keep numeric keys."""
     from django.apps import apps
     from django.db import models
 

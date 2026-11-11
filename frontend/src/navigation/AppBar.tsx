@@ -12,11 +12,7 @@ import { PressState } from '../components/pressState';
 
 export const APP_BAR_HEIGHT = 56;
 
-/**
- * The brand bar: brand, optional navigation items, and the guest or account
- * controls. Full navigation on wide screens; brand and account only on narrow ones.
- * brandOnly drops the controls (the auth screens, where they would repeat the form's own).
- */
+/** brandOnly drops the account controls, for the auth screens where they would repeat the form. */
 export function AppBar({ children, brandOnly }: { children?: ReactNode; brandOnly?: boolean }) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -56,7 +52,6 @@ export function AppBar({ children, brandOnly }: { children?: ReactNode; brandOnl
 
 type ItemProps = { label: string; icon: ReactNode; focused: boolean; onPress: () => void; badge?: string | number };
 
-/** A navigation item in the bar; the focused one is underlined in amber. */
 export function AppBarItem({ label, icon, focused, onPress, badge }: ItemProps) {
   return (
     <Pressable
@@ -166,7 +161,6 @@ function AccountMenu() {
   );
 }
 
-/** Up to two initials, from the first and last words of the name. */
 function initials(name: string) {
   const words = name.trim().split(/\s+/).filter(Boolean);
   if (words.length === 0) {

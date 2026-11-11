@@ -8,7 +8,7 @@ import { PressState } from './pressState';
 /** A column's heading and its share of the row width. */
 export type Column = { label: string; flex: number };
 
-/** A table with a tinted header row; rows are TableRow. */
+/** Rows are TableRow. */
 export function Table({ columns, children }: { columns: Column[]; children: ReactNode }) {
   return (
     <View style={styles.table}>

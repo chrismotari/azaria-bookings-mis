@@ -111,6 +111,6 @@ class AdminCustomerSerializer(serializers.ModelSerializer):
         return value.strip()
 
     def create(self, validated_data):
-        # No password: the customer chooses one from the welcome email (email 11).
+        # No password: the customer chooses one from the welcome email.
         validated_data.pop("is_active", None)
         return User.objects.create_user(role=User.Role.CUSTOMER, password=None, **validated_data)

@@ -124,7 +124,6 @@ export type BookingEvent = {
   created_at: string;
 };
 
-/** A stop as recorded in booking changes. */
 export type StopChange = { code: string; city: string; duration_minutes: number };
 
 /** Only the keys that changed are present. */
@@ -186,7 +185,6 @@ export type AppSettings = {
   admin_notification_email: string;
 };
 
-/** A customer as the admin manages them. */
 export type AdminCustomer = {
   id: string;
   email: string;
@@ -222,9 +220,9 @@ export type TenantDetail = Tenant & { domains: TenantDomain[] };
 export type PlanKind = 'subscription' | 'support';
 export type BillingCycle = 'monthly' | 'annual';
 
-/** What agencies pay the platform for. Prices are decimals as strings, in the platform's currency. */
 export type PlanTag = '' | 'recommended' | 'basic' | 'advanced';
 
+/** What agencies pay the platform for. Prices are decimals as strings, in the platform's currency. */
 export type Plan = {
   id: string;
   name: string;
@@ -328,7 +326,6 @@ export type PlatformDashboard = {
   }[];
 };
 
-/** A plan as the plans pages show it. */
 export type PublicPlan = Pick<
   Plan,
   'id' | 'name' | 'kind' | 'tag' | 'description' | 'monthly_price' | 'annual_price' | 'currency'

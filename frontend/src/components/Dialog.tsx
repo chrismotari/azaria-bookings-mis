@@ -20,10 +20,7 @@ type Props = {
   children: ReactNode;
 };
 
-/**
- * A modal card over a dimmed page; full screen on narrow screens. On web the modal
- * keeps keyboard focus inside and returns it to where it was when it closes.
- */
+/** Full screen on narrow screens. On web, focus stays inside and returns to where it was on close. */
 export function Dialog({ open, title, onClose, size = 'small', busy, footer, error, children }: Props) {
   const isWide = useIsWide();
   const close = () => {
@@ -35,7 +32,6 @@ export function Dialog({ open, title, onClose, size = 'small', busy, footer, err
   return (
     <Modal visible={open} transparent animationType="fade" onRequestClose={close}>
       <View style={[styles.backdrop, !isWide && styles.backdropNarrow]}>
-        {/* The dimmed page: clicking it closes the dialog. */}
         <Pressable style={StyleSheet.absoluteFill} onPress={close} accessible={false} />
         <View
           style={[styles.card, size === 'wide' ? styles.wide : size === 'large' ? styles.large : styles.small, !isWide && styles.cardNarrow]}
@@ -56,7 +52,6 @@ export function Dialog({ open, title, onClose, size = 'small', busy, footer, err
           <ScrollView style={[styles.scroll, !isWide && styles.scrollNarrow]} contentContainerStyle={styles.body}>
             {children}
           </ScrollView>
-          {/* A dialog whose form carries its own buttons (footer null) has no footer bar. */}
           {footer || error ? (
             <View style={styles.footer}>
               {error ? (

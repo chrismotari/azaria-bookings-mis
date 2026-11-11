@@ -1,4 +1,4 @@
-"""Confirming availability with changes, and the customer accepting or declining them (step 20)."""
+"""Confirming availability with changes, and the customer accepting or declining them."""
 
 from datetime import timedelta
 from decimal import Decimal
@@ -62,7 +62,6 @@ def test_confirm_with_a_new_price(admin_api, booking):
     booking.refresh_from_db()
     assert booking.unit_price == Decimal("700.00")
     assert booking.changes_awaiting_acceptance
-    # The offer is untouched.
     assert booking.offer.price == Decimal("650.00")
 
 

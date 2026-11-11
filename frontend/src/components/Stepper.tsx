@@ -17,7 +17,6 @@ type Props = {
   error?: string;
 };
 
-/** A whole number changed with − and + buttons, kept within min and max. */
 export function Stepper({ label, value, min, max, onChange, decreaseLabel, increaseLabel, error }: Props) {
   return (
     <Field label={label} error={error}>

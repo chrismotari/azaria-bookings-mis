@@ -1,4 +1,4 @@
-"""The platform API on the root host: the system owner signs in and manages agencies (step 26)."""
+"""The platform API on the root host: the system owner signs in and manages agencies."""
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction

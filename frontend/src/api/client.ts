@@ -45,7 +45,7 @@ type RetriableConfig = InternalAxiosRequestConfig & { _retried?: boolean };
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    // No agency at this address, or it is suspended: the app shows a full-page message instead.
+    // No agency here, or it is suspended: the app shows a full-page message instead.
     if (reportTenantProblem(error.response?.data)) {
       throw error;
     }

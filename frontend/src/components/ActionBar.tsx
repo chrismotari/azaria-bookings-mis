@@ -3,7 +3,6 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { colors, font, radius, shadow, space, weight } from '../theme';
 
-/** The actions available for an item's current status, together at the top of its detail. */
 export function ActionBar({ label = 'Actions', children }: { label?: string; children: ReactNode }) {
   return (
     <View style={styles.bar} accessibilityRole="toolbar" aria-label={label}>

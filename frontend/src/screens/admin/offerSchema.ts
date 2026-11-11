@@ -49,7 +49,7 @@ export type OfferFormValues = {
 
 const airport = z.custom<Airport | null>().refine((value) => value !== null, 'Choose an airport.');
 
-export const stopSchema = z
+const stopSchema = z
   .object({
     airport,
     hours: z.string().trim().regex(/^\d{0,3}$/, 'Whole hours.'),

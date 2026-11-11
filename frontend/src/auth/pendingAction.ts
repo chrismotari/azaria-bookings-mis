@@ -1,6 +1,6 @@
 import { NavigationTarget } from '../navigation/types';
 
-// The login-required action a guest tried to open. Kept in memory only.
+// The login-required action a guest tried to open; memory only.
 let pending: NavigationTarget | null = null;
 
 export function setPendingAction(target: NavigationTarget) {
@@ -13,7 +13,7 @@ export function takePendingAction(): NavigationTarget | null {
   return target;
 }
 
-// An admin URL (e.g. from an email) opened while signed out, reopened after the admin signs in.
+// A signed-in-only URL (e.g. from an email) opened while signed out, reopened after sign-in.
 let pendingPath: string | null = null;
 
 export function setPendingPath(path: string) {

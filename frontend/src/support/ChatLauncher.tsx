@@ -21,11 +21,7 @@ type View_ = { name: 'list' } | { name: 'new' } | { name: 'thread'; id: string }
 // Clears the bottom tab bar on phones.
 const NARROW_OFFSET = 72;
 
-/**
- * The floating message button on every page for people who write to this host's desk (guests and customers on an
- * agency's site, visitors on the root host). It opens a panel: a signed-in person's open chats and threads, or a
- * guest's new chat form. Other screens open it through openChat (e.g. a plan enquiry).
- */
+/** Floating message button for people writing to this host's desk; other screens open it through openChat. */
 export function ChatLauncher({ endpoints }: { endpoints: ChatEndpoints }) {
   const { user } = useAuth();
   const isWide = useIsWide();

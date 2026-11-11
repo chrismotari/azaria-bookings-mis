@@ -20,10 +20,7 @@ const TERMINAL: Partial<Record<BookingStatus, IconName>> = {
   declined: 'arrow-undo',
 };
 
-/**
- * Where the booking is on the normal path (Requested → Confirmed → Paid → Completed),
- * or a single banner for a status that ends it (unavailable, cancelled, expired, declined).
- */
+/** A tracker along the normal path, or a single banner for a status that ends the booking. */
 export function BookingProgress({ status, message }: { status: BookingStatus; message?: string }) {
   const terminalIcon = TERMINAL[status];
   if (terminalIcon) {

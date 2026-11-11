@@ -4,17 +4,13 @@ import { Image, StyleSheet, Text, View } from 'react-native';
 import { Airline } from '../api/types';
 import { colors, font, radius, weight } from '../theme';
 
-/** First letters of the first two words, or the first two letters of a one-word name. */
 function initials(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
   const letters = words.length > 1 ? words[0][0] + words[1][0] : (words[0] ?? '').slice(0, 2);
   return letters.toUpperCase();
 }
 
-/**
- * The airline's logo, or its initials when it has none (or the image fails to load). Both share one frame,
- * so a list mixing logos and initials looks even.
- */
+/** Logo, or initials when there is none or it fails to load; both share one frame so mixed lists line up. */
 export function AirlineBadge({ airline, size = 40 }: { airline: Airline; size?: number }) {
   const [failed, setFailed] = useState(false);
   const frame = [styles.frame, { width: size, height: size }];

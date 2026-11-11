@@ -10,11 +10,10 @@ import { AppBar, AppBarItem } from './AppBar';
 type Props = BottomTabBarProps & {
   /** Routes not offered in the bar (still reachable by URL). */
   hiddenRoutes?: string[];
-  /** Hidden routes shown as part of a tab, e.g. Billing under Settings: that tab stays highlighted on them. */
+  /** Hidden route -> the tab that stays highlighted on it, e.g. Billing -> Settings. */
   parentRoutes?: Record<string, string>;
 };
 
-/** The brand bar with navigation on wide viewports, bottom tabs on narrow ones. */
 export function ResponsiveTabBar({ state, descriptors, navigation, hiddenRoutes = [], parentRoutes = {} }: Props) {
   const isWide = useIsWide();
   const insets = useSafeAreaInsets();
@@ -88,8 +87,7 @@ export function ResponsiveTabBar({ state, descriptors, navigation, hiddenRoutes 
   );
 }
 
-/** An unread count on a tab (e.g. Chats). */
-export function TabBadge({ value }: { value: string | number }) {
+function TabBadge({ value }: { value: string | number }) {
   return (
     <View style={styles.badge} accessibilityLabel={`${value} unread`}>
       <Text style={styles.badgeText}>{value}</Text>

@@ -40,7 +40,6 @@ export function BookingDetailView({ id }: { id: string }) {
     queryKey: ['bookings', 'detail', id],
     queryFn: async () => (await api.get<BookingDetail>(`/bookings/${id}`)).data,
   });
-  // cancel, accept-changes or decline-changes.
   const act = useMutation({
     mutationFn: async (action: 'cancel' | 'accept-changes' | 'decline-changes') =>
       (await api.post<BookingDetail>(`/bookings/${id}/${action}`)).data,

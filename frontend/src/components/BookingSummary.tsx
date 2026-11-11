@@ -9,7 +9,6 @@ import { PriceTag } from './PriceTag';
 import { RouteLine } from './RouteLine';
 import { StopList } from './StopList';
 
-/** The flight, passengers and price of a booking. */
 export function BookingSummary({ booking }: { booking: Booking }) {
   const { offer } = booking;
   return (

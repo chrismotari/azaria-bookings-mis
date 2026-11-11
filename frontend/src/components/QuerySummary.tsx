@@ -6,7 +6,6 @@ import { describeQuery } from '../utils/queries';
 import { Icon, IconName } from './Icon';
 import { RouteLine } from './RouteLine';
 
-/** The criteria of a request for options, compact with an icon each. */
 export function QuerySummary({ query }: { query: Query }) {
   const details = describeQuery(query);
   return (

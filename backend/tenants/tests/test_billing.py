@@ -1,4 +1,4 @@
-"""Plans, subscriptions, invoices and suspension for non-payment (step 27)."""
+"""Plans, subscriptions, invoices and suspension for non-payment."""
 
 from datetime import date
 from decimal import Decimal
@@ -137,7 +137,7 @@ def test_starting_issues_the_first_invoice_at_once(agency, django_capture_on_com
     subscription.refresh_from_db()
     assert subscription.next_period_start == date(2026, 2, 1)
 
-    # Email 11, with the PDF, to the billing email; links on the agency's own domain.
+    # Links point at the agency's own domain.
     [email] = mail.outbox
     assert email.to == ["accounts@other.test"]
     assert email.subject == "Invoice INV-2026-0001 from Azaria Bookings"
@@ -278,7 +278,6 @@ def test_suspension_only_a_month_past_the_due_date(agency, django_capture_on_com
     assert (agency.is_active, agency.suspension_reason) == (False, Tenant.SuspensionReason.NON_PAYMENT)
     assert agency.suspended_at is not None
 
-    # Email 12.
     [email] = mail.outbox
     assert email.to == ["accounts@other.test"]
     assert "suspended for non-payment" in email.subject

@@ -33,7 +33,7 @@ urlpatterns = [
     path("settings", billing.PlatformSettingsView.as_view()),
     path("dashboard", billing.PlatformDashboardView.as_view()),
     path("public-plans", billing.PublicPlansView.as_view()),
-    # The platform's support desk (step 32).
+    # The platform's support desk.
     path("support/chats", support.PlatformChatsView.as_view()),
     path("support/attachments/<uuid:pk>", support.PlatformAttachmentView.as_view()),
     path("chats", support.PlatformDeskChatListView.as_view()),

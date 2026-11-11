@@ -12,7 +12,6 @@ function place(airport: Airport | null): string {
   return airport ? `${airport.city} (${airport.code})` : 'Anywhere';
 }
 
-/** Human-readable lines for what the customer asked for. */
 export function describeQuery(query: Query) {
   const { price_min: min, price_max: max } = query;
   return {

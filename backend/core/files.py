@@ -13,7 +13,6 @@ FILE_SIGNATURES = {
     "image/png": b"\x89PNG\r\n\x1a\n",
     "image/jpeg": b"\xff\xd8\xff",
 }
-ACCEPT = ",".join(CONTENT_TYPES)
 
 
 def check_upload(file):

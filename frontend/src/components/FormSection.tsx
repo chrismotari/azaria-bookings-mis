@@ -12,7 +12,6 @@ type SectionProps = {
   children: ReactNode;
 };
 
-/** A titled group of form fields, in its own card. */
 export function FormSection({ title, description, plain, children }: SectionProps) {
   const content = (
     <>
@@ -26,7 +25,7 @@ export function FormSection({ title, description, plain, children }: SectionProp
   return plain ? <View style={styles.plain}>{content}</View> : <Card>{content}</Card>;
 }
 
-/** The form's save (and cancel) buttons, in a bar that stays at the bottom of the view while scrolling (web). */
+/** Stays at the bottom of the view while scrolling (web). */
 export function FormFooter({ children }: { children: ReactNode }) {
   return <View style={styles.footer}>{children}</View>;
 }

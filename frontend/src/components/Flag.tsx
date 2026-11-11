@@ -8,10 +8,7 @@ type Props = {
   code: string | null | undefined;
 };
 
-/**
- * Web: the country's flag (flag-icons) as an image served from public/flags/, so only the flags on screen are
- * downloaded. Decoration only: the country or city stays as text. Native: Flag.native.tsx.
- */
+/** Web: an image from public/flags/, so only the flags on screen are downloaded. Native: Flag.native.tsx. */
 export function Flag({ code }: Props) {
   const key = code?.toLowerCase();
   if (!key || !FLAG_CODES.has(key)) {

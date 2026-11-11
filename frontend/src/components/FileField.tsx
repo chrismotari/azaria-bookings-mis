@@ -17,10 +17,7 @@ type Props = {
   error?: string;
 };
 
-/**
- * A dashed upload area that opens the browser's file picker when clicked (web);
- * on native, a notice that uploads need the web app.
- */
+/** Web: a dashed area that opens the file picker. Native: a notice that uploads need the web app. */
 export function FileField({ label, hint, accept, onSelect, disabled, error }: Props) {
   const input = useRef<HTMLInputElement | null>(null);
 

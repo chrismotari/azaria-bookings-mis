@@ -8,7 +8,6 @@ import { toLogin } from './gate';
 import { requestLoginAfterSignOut, takeLoginAfterSignOut } from './loginRedirect';
 import { takePendingPath } from './pendingAction';
 
-/** Logs out; every area then shows its own sign-in page (/login on the agency's or the platform's host). */
 export function useSignOut() {
   const { user, logout } = useAuth();
   return useCallback(() => {
@@ -21,19 +20,16 @@ export function useSignOut() {
   }, [user, logout]);
 }
 
-/**
- * In the root navigator: once signed out, opens the sign-in page. It runs after the navigators of the signed-out
- * app have mounted (an admin's or the owner's sign-out swaps the whole navigator), so the reset lands in them.
- */
+// Used in the root navigator so it runs after the signed-out navigators have mounted (an admin's or the owner's
+// sign-out swaps the whole navigator) and the reset lands in them.
 export function useLoginAfterSignOut(signedIn: boolean) {
   useEffect(() => {
     if (signedIn || !navigationRef.isReady() || !takeLoginAfterSignOut()) {
       return;
     }
-    // The page signed out from may have asked to be reopened after sign-in (signed-in-only pages do when they see
-    // a signed-out visitor); after a sign-out the next sign-in starts at the area's home instead.
+    // A signed-in-only page may have asked to be reopened after sign-in; after a sign-out, start at home instead.
     takePendingPath();
-    // Sign-in alone on the platform, so signing in again opens the dashboard (not the page underneath).
+    // Sign-in alone on the platform, so signing in again opens the dashboard rather than the page underneath.
     navigationRef.dispatch(
       IS_PLATFORM ? CommonActions.reset({ index: 0, routes: [{ name: 'PlatformLogin' }] }) : toLogin,
     );

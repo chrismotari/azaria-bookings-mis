@@ -47,10 +47,10 @@ export type AdminTabParamList = {
   AdminSupport: { id?: string } | undefined;
 };
 
-/** The platform's screens (root host only). */
 export type AgencyStatusFilter = 'all' | 'active' | 'suspended';
 export type InvoiceStatusFilter = 'all' | 'unpaid' | 'overdue' | 'paid' | 'void';
 
+/** Root host only. */
 export type PlatformTabParamList = {
   PlatformDashboard: undefined;
   PlatformAgencies: { status?: AgencyStatusFilter; id?: string } | undefined;

@@ -15,7 +15,6 @@ type Props<T extends string> = {
   wrap?: boolean;
 };
 
-/** Single choice as equal segments in one row. */
 export function SegmentedControl<T extends string>({ label, options, value, onChange, wrap }: Props<T>) {
   return (
     <View style={[styles.track, wrap && styles.wrap]} accessibilityRole="radiogroup" aria-label={label}>

@@ -19,7 +19,7 @@ import { formatDate, formatMoney } from '../../utils/format';
 
 type Props = BottomTabScreenProps<PlatformTabParamList, 'PlatformDashboard'>;
 
-export const DASHBOARD_KEY = ['platform', 'dashboard'];
+const DASHBOARD_KEY = ['platform', 'dashboard'];
 
 export function PlatformDashboardScreen({ navigation }: Props) {
   const dashboard = useQuery({
@@ -236,7 +236,7 @@ const monthLabel = (month: string, long = false) =>
 
 const CHART_HEIGHT = 160;
 
-/** Paid revenue per month as plain bars; the chosen bar (hovered or pressed, the current month at first) is named above. */
+/** Paid revenue per month; the hovered or pressed bar (initially the current month) is labelled above. */
 function RevenueChart({
   months,
   money,

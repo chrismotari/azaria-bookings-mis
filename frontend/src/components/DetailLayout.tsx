@@ -11,7 +11,7 @@ const PANEL_SHARE = '62%';
 type Props = {
   /** The list screen; it stays mounted (filters, page, scroll) while a detail is open. */
   list: ReactNode;
-  /** The selected item's detail, or null when nothing is selected. */
+  /** Null when nothing is selected. */
   detail: ReactNode | null;
   /** Panel heading on wide screens, e.g. "Booking". */
   title: string;
@@ -20,10 +20,7 @@ type Props = {
   onClose: () => void;
 };
 
-/**
- * List with its selected item's detail. Wide: the detail is a panel on the right
- * taking most of the width, and the list narrows beside it. Narrow: the detail takes the whole screen.
- */
+/** Wide: the detail is a panel on the right and the list narrows beside it. Narrow: the detail is full screen. */
 export function DetailLayout({ list, detail, title, backLabel, onClose }: Props) {
   const isWide = useIsWide();
   const open = detail !== null;

@@ -1,4 +1,4 @@
-"""The system owner's dashboard: agencies, revenue, recurring value, what is owed and what needs attention (step 29)."""
+"""The system owner's dashboard: agencies, revenue, recurring value, what is owed and what needs attention."""
 
 from decimal import Decimal
 

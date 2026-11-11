@@ -59,7 +59,7 @@ export const shadowDialog = { boxShadow: '0 12px 32px rgba(37, 37, 37, 0.24)' } 
 /** Lifted look for a hovered tile. */
 export const shadowRaised = { boxShadow: '0 4px 12px rgba(37, 37, 37, 0.12)' } as const;
 
-export const WIDE_BREAKPOINT = 900;
+const WIDE_BREAKPOINT = 900;
 
 export function useIsWide(): boolean {
   return useWindowDimensions().width >= WIDE_BREAKPOINT;

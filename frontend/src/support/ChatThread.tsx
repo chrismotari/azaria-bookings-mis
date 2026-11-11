@@ -38,7 +38,6 @@ type Props = {
   attachments: string;
 };
 
-/** A chat's messages, oldest first, and a reply box with an optional attachment. */
 export function ChatThread({ messages, side, onSend, closedNote, scroll, attachments }: Props) {
   const list = useRef<ScrollViewInstance | null>(null);
   useEffect(() => {

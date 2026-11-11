@@ -29,7 +29,7 @@ import { formatDate, formatMoney, todayInNairobi } from '../../utils/format';
 import { AGENCIES_KEY, INVOICES_KEY } from './keys';
 
 /** Unpaid invoices past their due date show as Overdue. */
-export function invoiceStatus(invoice: AgencyInvoice): {
+function invoiceStatus(invoice: AgencyInvoice): {
   label: string;
   tone: Tone;
 } {
@@ -42,7 +42,7 @@ export function invoiceStatus(invoice: AgencyInvoice): {
   return invoice.overdue ? { label: 'Overdue', tone: 'danger' } : { label: 'Unpaid', tone: 'warning' };
 }
 
-export const period = (invoice: AgencyInvoice) =>
+const period = (invoice: AgencyInvoice) =>
   `${formatDate(invoice.period_start)} – ${formatDate(invoice.period_end)}`;
 
 /** Web only: opens the invoice's PDF in a new tab (preview first). */
@@ -175,10 +175,7 @@ export function InvoicesScreen({ navigation, route }: BottomTabScreenProps<Platf
   );
 }
 
-/**
- * An invoice in a card list; also used in the agency drawer and the agency's own Billing screen. With onPress it
- * opens the invoice; without, it is a static card that can hold an action (e.g. Open PDF).
- */
+/** With onPress the card opens the invoice; without, it is static and can hold an action (e.g. Open PDF). */
 export function InvoiceCard({
   invoice,
   agency,
@@ -231,7 +228,7 @@ export function InvoiceCard({
 
 const detailKey = (id: string) => [...INVOICES_KEY, 'detail', id];
 
-export function InvoiceDetailView({ id }: { id: string }) {
+function InvoiceDetailView({ id }: { id: string }) {
   const invoice = useQuery({
     queryKey: detailKey(id),
     queryFn: async () => (await api.get<Invoice>(`/platform/invoices/${id}`)).data,

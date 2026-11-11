@@ -25,7 +25,7 @@ import { AgencyBilling } from './AgencyBilling';
 import { AGENCIES_KEY } from './keys';
 
 /** Keyed by String(is_active). */
-export const TENANT_STATUS: Record<string, { label: string; tone: Tone }> = {
+const TENANT_STATUS: Record<string, { label: string; tone: Tone }> = {
   true: { label: 'Active', tone: 'success' },
   false: { label: 'Suspended', tone: 'danger' },
 };
@@ -45,7 +45,6 @@ const detailKey = (id: string) => [...AGENCIES_KEY, 'detail', id];
 /** The date part of a timestamp, for formatDate. */
 export const createdOn = (tenant: Tenant) => formatDate(tenant.created_at.slice(0, 10));
 
-/** An agency in the drawer, in sections (Agency, Domains) that later steps add to. */
 export function AgencyDetailView({ id }: { id: string }) {
   const tenant = useQuery({
     queryKey: detailKey(id),

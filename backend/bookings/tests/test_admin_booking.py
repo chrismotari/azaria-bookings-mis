@@ -1,4 +1,4 @@
-"""The admin books for a customer (step 24)."""
+"""The admin books for a customer."""
 
 from datetime import timedelta
 from decimal import Decimal
@@ -47,7 +47,7 @@ def test_admin_books_for_a_customer(
     )
     [event] = BookingEvent.objects.filter(booking=booking)
     assert (event.from_status, event.to_status, event.actor) == ("", Status.REQUESTED, admin_user)
-    # No email 3: the admin made the booking.
+    # No emails: the admin made the booking.
     assert callbacks == []
     assert mail.outbox == []
     # The customer sees it as their own.

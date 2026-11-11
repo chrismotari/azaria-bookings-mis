@@ -1,4 +1,4 @@
-"""Plans, subscriptions, invoices and suspension for non-payment (step 27). Public schema only.
+"""Plans, subscriptions, invoices and suspension for non-payment. Public schema only.
 
 Payment happens outside the system: the platform issues invoices, the system owner marks them paid, and an
 agency whose invoice stays unpaid for a month past its due date is suspended.
@@ -137,7 +137,7 @@ def next_number(year):
 
 
 def issue_invoice(subscription):
-    """Invoices the subscription's next period, advances it, stores the PDF and queues email 11 on commit."""
+    """Invoices the subscription's next period, advances it, stores the PDF and queues the invoice email on commit."""
     from .tasks import send_invoice
 
     with transaction.atomic():
@@ -276,7 +276,7 @@ def set_active(tenant, active, reason=Tenant.SuspensionReason.MANUAL):
 
 
 def suspend_overdue_tenants():
-    """Suspends every active agency with an invoice past the limit and queues email 12. Returns how many."""
+    """Suspends every active agency with an invoice past the limit and queues the suspension email. Returns how many."""
     from .tasks import notify_tenant_suspended_non_payment
 
     suspended = 0

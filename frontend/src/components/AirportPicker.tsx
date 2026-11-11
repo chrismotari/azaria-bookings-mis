@@ -14,7 +14,6 @@ function airportLabel(airport: Airport): string {
   return `${airport.code} · ${airport.city}, ${airport.country}`;
 }
 
-
 /** Matches from /airports for what the user has typed (at least two characters). */
 function AirportSuggestions({ text, onSelect }: { text: string; onSelect: (airport: Airport) => void }) {
   const search = useDebounced(text.trim(), 250);

@@ -1,4 +1,4 @@
-"""The platform API on the root host: the system owner's sign-in and agency management (step 26)."""
+"""The platform API on the root host: the system owner's sign-in and agency management."""
 
 import uuid
 

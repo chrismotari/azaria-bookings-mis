@@ -14,7 +14,6 @@ type Props = {
   children: ReactNode;
 };
 
-/** A booking or request in a customer's list; pressing it opens its detail. */
 export function TripCard({ tone, selected, onPress, accessibilityLabel, children }: Props) {
   return (
     <Pressable

@@ -33,10 +33,7 @@ function previewType(filename: string): string | undefined {
 // Long enough for the new tab to load the file; the tab keeps what it has loaded after that.
 const KEEP_PREVIEW_URL_MS = 60_000;
 
-/**
- * Web only: fetches an API file with the auth header and shows it. Preview first: a file the browser can display
- * (PDF, images) opens in a new tab; anything else, or everything if the browser blocks the tab, is downloaded.
- */
+/** Web only. Preview first: PDFs and images open in a new tab; anything else, or a blocked tab, downloads. */
 export async function openFile(path: string, filename: string) {
   const type = previewType(filename);
   // Opened now, while the click still counts as the user's, so the browser does not block it as a pop-up.
@@ -69,7 +66,6 @@ function save(data: Blob, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-/** A boarding pass, under its original name. */
 export function openBoardingPass(id: string, filename: string) {
   return openFile(`/boarding-passes/${id}/download`, filename);
 }

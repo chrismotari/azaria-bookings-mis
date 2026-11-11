@@ -3,9 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../api/client';
 import { Chat, ChatDetail, DeskChat, DeskChatDetail, Paginated } from '../api/types';
 
-/** Polling, until websockets replace it: an open thread, and the unread badges. */
-export const THREAD_POLL_MS = 10_000;
-export const BADGE_POLL_MS = 30_000;
+const THREAD_POLL_MS = 10_000;
+const BADGE_POLL_MS = 30_000;
 
 export const CHATS_KEY = ['support', 'chats'];
 export const DESK_KEY = ['support', 'desk'];

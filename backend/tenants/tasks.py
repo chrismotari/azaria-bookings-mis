@@ -1,4 +1,4 @@
-"""The platform's billing tasks (public schema): emails 11 and 12 and the two daily jobs (step 27)."""
+"""The platform's billing tasks (public schema): invoice and suspension emails and the two daily jobs."""
 
 import logging
 
@@ -21,7 +21,7 @@ def _send_to_agency(tenant, template, subject, context, attachments=()):
 
 @shared_task(**EMAIL_TASK_OPTIONS)
 def send_invoice(invoice_id):
-    """11. The invoice with its PDF, to the agency's billing email. Only while it is unpaid."""
+    """The invoice with its PDF, to the agency's billing email. Only while it is unpaid."""
     with schema_context(get_public_schema_name()):
         invoice = Invoice.objects.select_related("tenant").filter(pk=invoice_id).first()
         if invoice is None or invoice.status != Invoice.Status.UNPAID or not invoice.tenant.billing_email:
@@ -50,7 +50,7 @@ def send_invoice(invoice_id):
 
 @shared_task(**EMAIL_TASK_OPTIONS)
 def notify_tenant_suspended_non_payment(tenant_id):
-    """12. The agency was suspended for non-payment. Only while it still is."""
+    """Tells the agency it was suspended for non-payment. Only while it still is."""
     with schema_context(get_public_schema_name()):
         tenant = Tenant.objects.filter(pk=tenant_id).first()
         if (

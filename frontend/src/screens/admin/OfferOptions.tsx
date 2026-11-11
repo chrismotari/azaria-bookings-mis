@@ -38,10 +38,7 @@ function itemErrors(errors: unknown): string | null {
   return messages.length ? messages.join(' · ') : null;
 }
 
-/**
- * Offers chosen for a customer: existing ones found with a search, and custom ones (always private) added
- * with an offer form. Shared by the Respond screen and the Mark unavailable dialog.
- */
+/** Existing offers found by search plus custom (always private) ones; shared by Respond and Mark unavailable. */
 export function useOfferOptions(initialFilters: OfferFilterValues, customDefaults: OfferFormValues) {
   const [draft, setDraft] = useState(initialFilters);
   const [filters, setFilters] = useState(initialFilters);
@@ -110,7 +107,6 @@ export function useOfferOptions(initialFilters: OfferFilterValues, customDefault
     customForm,
     addCustom,
     removeCustom,
-    /** How many offers have been chosen, existing and custom. */
     count: selected.size + custom.length,
     /** offer_ids and new_offers, as the respond and mark-unavailable endpoints take them. */
     body: () => ({
@@ -129,7 +125,7 @@ export function useOfferOptions(initialFilters: OfferFilterValues, customDefault
   };
 }
 
-export type OfferOptions = ReturnType<typeof useOfferOptions>;
+type OfferOptions = ReturnType<typeof useOfferOptions>;
 
 type SectionsProps = {
   options: OfferOptions;
@@ -192,7 +188,6 @@ export function OfferOptionsSections({ options, existingDescription, plain }: Se
   );
 }
 
-/** The offers chosen so far, each with a Remove button. */
 export function ChosenOffers({ options }: { options: OfferOptions }) {
   return (
     <>
@@ -220,7 +215,6 @@ export function ChosenOffers({ options }: { options: OfferOptions }) {
   );
 }
 
-/** The optional message sent with the offers. */
 export function MessageField({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
     <Field label="Message to the customer (optional)">

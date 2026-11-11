@@ -7,7 +7,7 @@ import { PressState } from '../components/pressState';
 import { colors, font, radius, space, useIsWide, weight } from '../theme';
 import { APP_BAR_HEIGHT } from './AppBar';
 
-/** The root host's public pages (home, pricing, sign-in): the brand, Pricing, and Open admin for the signed-in owner. */
+/** Header for the root host's public pages. */
 export function PlatformPublicBar() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -29,7 +29,7 @@ export function PlatformPublicBar() {
         >
           <Text style={[styles.linkText, !isWide && styles.linkTextNarrow]}>Pricing</Text>
         </Pressable>
-        {/* No sign-in link: the owner goes to /login directly. Signed in, the way back to the admin. */}
+        {/* Deliberately no sign-in link: the owner goes to /login directly. */}
         {user ? (
           <Pressable
             accessibilityRole="link"

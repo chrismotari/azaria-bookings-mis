@@ -16,7 +16,6 @@ export const BOOKING_STATUS: Record<BookingStatus, { label: string; tone: Tone }
 /** Statuses that end a booking; they show as a banner instead of the progress tracker. */
 export const TERMINAL_STATUSES: BookingStatus[] = ['unavailable', 'cancelled', 'expired', 'declined'];
 
-/** What each status means for the timeline. */
 export const BOOKING_EVENT_LABELS: Record<BookingStatus, string> = {
   requested: 'Booking requested',
   availability_confirmed: 'Availability confirmed',
@@ -55,7 +54,7 @@ export function timeLeft(deadline: string, now: number): string {
 const STOPOVER_MINUTES = 24 * 60;
 
 /** e.g. "DXB Dubai, 2 h 15 min layover; MBA Mombasa, 26 h stopover", or "Direct". */
-export function stopChangesLabel(stops: StopChange[]): string {
+function stopChangesLabel(stops: StopChange[]): string {
   if (stops.length === 0) {
     return 'Direct';
   }
@@ -67,7 +66,6 @@ export function stopChangesLabel(stops: StopChange[]): string {
     .join('; ');
 }
 
-/** Each change as label, old and new text. */
 export function describeChanges(changes: BookingChanges): { label: string; old: string; new: string }[] {
   const rows = [];
   if (changes.unit_price) {

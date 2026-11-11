@@ -49,7 +49,7 @@ def describe_booking(booking):
 
 
 def describe_changes(booking):
-    """Each change made on confirming as {label, old, new}, for email 4; empty when there are none."""
+    """Each change made on confirming as {label, old, new}, for the confirmation email; empty when there are none."""
     changes = booking.changes or {}
     described = []
     if "unit_price" in changes:
@@ -161,8 +161,7 @@ def notify_customer_payment_reminder(booking_id):
     )
 
 
-# Scheduled tasks (CELERY_BEAT_SCHEDULE). bookings.services imports this module for the email
-# tasks, so these import it when they run.
+# Scheduled tasks. bookings.services imports this module, so these import it lazily.
 
 
 def _expire(booking_ids, from_status):

@@ -38,7 +38,6 @@ const FILTERS: { value: Status; label: string }[] = [
   { value: 'closed', label: 'Closed' },
 ];
 
-/** An agency's desk: chats from its site's guests and customers. */
 export function DeskChatsScreen({ navigation, route }: BottomTabScreenProps<AdminTabParamList, 'AdminChats'>) {
   return (
     <DeskChats
@@ -50,7 +49,6 @@ export function DeskChatsScreen({ navigation, route }: BottomTabScreenProps<Admi
   );
 }
 
-/** The platform's desk: chats from root-host visitors and from agencies' admins (with their agency). */
 export function PlatformChatsScreen({
   navigation,
   route,
@@ -72,7 +70,7 @@ type DeskChatsProps = {
   intro: string;
 };
 
-/** A desk: chats, unread first; reply and close. */
+/** Chats, unread first; reply and close. */
 function DeskChats({ endpoints, selected, select, intro }: DeskChatsProps) {
   const close = useCallback(() => select(undefined), [select]);
   const [status, setStatus] = useState<Status>('open');
@@ -133,7 +131,7 @@ function DeskChats({ endpoints, selected, select, intro }: DeskChatsProps) {
 }
 
 /** "Guest · email" or "Name · email", with the agency on the platform's desk. */
-export const requesterLabel = (chat: DeskChat) =>
+const requesterLabel = (chat: DeskChat) =>
   `${chat.is_guest ? 'Guest' : chat.name}${chat.agency ? ` (${chat.agency.name})` : ''} · ${chat.email}`;
 
 function DeskChatCard({ chat, selected, onPress }: { chat: DeskChat; selected: boolean; onPress: () => void }) {

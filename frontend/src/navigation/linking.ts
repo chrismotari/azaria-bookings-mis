@@ -9,7 +9,7 @@ const agencyLinking: LinkingOptions<RootStackParamList> = {
     screens: {
       Main: {
         screens: {
-          // Explore is the offers list; '/' opens it too.
+          // Explore is the offers list.
           Explore: { path: 'offers/:id?', alias: [''] },
           Requests: 'requests/:id?',
           Bookings: 'bookings/:id?',
@@ -47,12 +47,10 @@ const agencyLinking: LinkingOptions<RootStackParamList> = {
   },
 };
 
-/** The root host: the system owner's screens only. */
 const platformLinking: LinkingOptions<RootStackParamList> = {
   prefixes: [],
   config: {
     screens: {
-      // '/' is the public introduction; the owner's screens have their own paths.
       PlatformHome: '',
       PlatformPricing: 'pricing',
       PlatformLogin: 'login',

@@ -10,11 +10,7 @@ import { setPendingAction, takePendingAction } from './pendingAction';
 // Login on top of a fresh Main, so going back lands on Explore rather than the gated screen.
 export const toLogin = CommonActions.reset({ index: 1, routes: [{ name: 'Main' }, { name: 'Login' }] });
 
-/**
- * The auth gate for login-required actions (e.g. "Request options"): opens the target
- * for a signed-in user; otherwise remembers it and sends the guest to Login, from where
- * they return to it after signing in.
- */
+/** For login-required actions: a guest is sent to Login and continues to the target after signing in. */
 export function useAuthGate() {
   const { user } = useAuth();
   return useCallback(
@@ -30,10 +26,7 @@ export function useAuthGate() {
   );
 }
 
-/**
- * The same gate for login-required screens. Wraps a login-required screen: a guest who opens it has the target
- * remembered and is sent to Login, and returns to it after signing in.
- */
+/** The same gate, for a login-required screen. */
 export function RequireAuth({ target, children }: { target: NavigationTarget; children: ReactNode }) {
   const { user } = useAuth();
   const navigation = useNavigation();

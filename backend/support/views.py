@@ -1,4 +1,4 @@
-"""Support chat API. The agency desk's views (step 31); the platform desk reuses them with its own permission."""
+"""Support chat API. Written for an agency's desk; the platform desk reuses the views with its own permission."""
 
 import mimetypes
 
@@ -237,7 +237,7 @@ class PlatformAttachmentView(AttachmentView):
     desk_permission = IsPlatformOwner
 
 
-# An agency's admins writing to the platform's desk, from their own host (step 32). Their chats live in the
+# An agency's admins writing to the platform's desk, from their own host. Their chats live in the
 # public schema with agency set to their agency.
 
 

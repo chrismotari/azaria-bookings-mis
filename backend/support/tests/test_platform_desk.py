@@ -1,4 +1,4 @@
-"""Support chat, the platform's desk (step 32): root-host visitors and agency admins write in, the owner answers."""
+"""Support chat, the platform's desk: root-host visitors and agency admins write in, the owner answers."""
 
 from datetime import timedelta
 

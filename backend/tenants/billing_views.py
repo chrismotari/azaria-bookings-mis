@@ -1,5 +1,5 @@
 """Plans, subscriptions, invoices and platform settings: the system owner's API on the root host, and the
-read-only billing API for an agency's admins on its own host (step 27)."""
+read-only billing API for an agency's admins on its own host."""
 
 import uuid
 

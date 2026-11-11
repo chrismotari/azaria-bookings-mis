@@ -23,7 +23,7 @@ ${richTextCss('.az-editor .ProseMirror')}
 .az-editor .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: ${colors.muted}; float: left; height: 0; pointer-events: none; }
 `;
 
-/** Web: a rich text editor (TipTap) with a toolbar for the formatting plan descriptions allow. */
+/** Web: TipTap, with a toolbar for the formatting descriptions allow. */
 export function RichTextEditor({ label, value, onChange, error }: Props) {
   useEffect(() => injectCss('az-editor', EDITOR_CSS), []);
   const editor = useEditor({
@@ -84,10 +84,7 @@ const TOOLBAR_CSS = `
 .az-tool-small { font-weight: 700; font-size: ${font.small}px; }
 `;
 
-/**
- * Plain buttons that never take focus from the text (mousedown is cancelled), so the selection stays where it
- * was and typing carries on after a click, as in any word processor.
- */
+/** Buttons cancel mousedown so the editor keeps focus and its selection, as in any word processor. */
 function Toolbar({ editor }: { editor: Editor }) {
   useEffect(() => injectCss('az-toolbar', TOOLBAR_CSS), []);
   const chain = () => editor.chain().focus();

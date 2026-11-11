@@ -67,7 +67,7 @@ def create_booking(user, data, admin=None):
     """data: offer (id), passenger_count, notes and optionally query, already validated by the serializer.
 
     admin: set when the admin books on the customer's behalf. Then any bookable offer may be booked (public or
-    private), the admin is the creation event's actor, and email 3 is not sent.
+    private), the admin is the creation event's actor, and the admin is not notified.
     """
     with transaction.atomic():
         offers = Offer.objects.bookable() if admin is not None else Offer.objects.visible_to(user).bookable()
@@ -204,7 +204,7 @@ def mark_unavailable(booking_id, actor, message="", offers=(), new_offers=()):
 
     The suggestions go into a new request for the booking's customer (route, date and class from the booked
     offer), answered with one response holding the message and offers, and linked as booking.alternatives.
-    The request's own emails (1 and 2) are not sent; email 5 tells the customer instead.
+    The request's own emails are not sent; the unavailable email tells the customer instead.
     """
 
     def apply(booking):

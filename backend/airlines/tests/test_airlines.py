@@ -1,4 +1,4 @@
-"""The shared airline list, its seeder, logos and the airline picker API (step 25)."""
+"""The shared airline list, its seeder, logos and the airline picker API."""
 
 import struct
 from datetime import timedelta

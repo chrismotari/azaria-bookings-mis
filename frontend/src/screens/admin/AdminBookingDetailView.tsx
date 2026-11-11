@@ -88,7 +88,6 @@ export function AdminBookingDetailView({ id }: { id: string }) {
   const queryClient = useQueryClient();
   const uploading = useIsMutating({ mutationKey: uploadKey(id) }) > 0;
   const confirm = useConfirm();
-  // Confirming and marking unavailable each have a dialog of their own.
   const [dialog, setDialog] = useState<'confirm' | 'unavailable' | null>(null);
   const booking = useQuery({
     queryKey: ['admin', 'bookings', 'detail', id],

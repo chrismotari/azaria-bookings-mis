@@ -1,4 +1,4 @@
-"""Schema-per-tenant isolation, the platform host, suspension, scheduled jobs and creating agencies (step 22)."""
+"""Schema-per-tenant isolation, the platform host, suspension, scheduled jobs and creating agencies."""
 
 from datetime import timedelta
 

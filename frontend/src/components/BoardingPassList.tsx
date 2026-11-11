@@ -17,7 +17,7 @@ type Props = {
   deletingId?: string | null;
 };
 
-/** Boarding passes with an Open button each (web only; preview first), and optionally Delete. */
+/** Opening a pass works on web only. */
 export function BoardingPassList({ passes, onDelete, deletingId }: Props) {
   const [openingId, setOpeningId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

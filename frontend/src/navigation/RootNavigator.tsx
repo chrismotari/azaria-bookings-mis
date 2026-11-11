@@ -1,6 +1,6 @@
 import { BottomTabScreenProps, createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StackActions, useFocusEffect, useIsFocused, useLinkTo, useNavigation } from '@react-navigation/native';
-import { createNativeStackNavigator, NativeStackScreenProps } from '@react-navigation/native-stack';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Fragment, ReactNode, useCallback, useEffect, useRef } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
@@ -53,10 +53,7 @@ const MainTabs = createBottomTabNavigator<MainTabParamList>();
 const AdminTabs = createBottomTabNavigator<AdminTabParamList>();
 const PlatformTabs = createBottomTabNavigator<PlatformTabParamList>();
 
-/**
- * An admin URL (e.g. the link in a new-booking email) opened while signed out: remember the path and sign in
- * first; AdminStack reopens it once the admin is signed in.
- */
+/** An admin URL opened while signed out (e.g. from an email): sign in first; AdminStack reopens it. */
 function AdminSignInFirst() {
   const navigation = useNavigation();
   // Read on the first render, before the redirect changes the address.
@@ -72,7 +69,6 @@ function AdminSignInFirst() {
   return null;
 }
 
-/** The admin's screens; on sign-in it opens the admin page the admin was sent to before, if any. */
 function AdminStack() {
   const linkTo = useLinkTo();
   useEffect(() => {
@@ -85,7 +81,6 @@ function AdminStack() {
   }, [linkTo]);
   return (
     <View style={styles.fill}>
-      {/* While an invoice to the platform is overdue, on every admin screen. */}
       <OverdueBanner />
       <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
         <Stack.Screen name="AdminTabs" component={AdminTabsNavigator} options={{ headerShown: false }} />
@@ -166,7 +161,7 @@ function GatedBookingNew(props: BottomTabScreenProps<MainTabParamList, 'BookingN
 // Login-required tabs, left out of the bar for guests.
 const GATED_TABS: (keyof MainTabParamList)[] = ['Requests', 'Bookings', 'Account'];
 
-// Pages under a tab (forms, Support): never in the bar; the tab they belong to stays highlighted on them.
+// Never in the bar; the tab they belong to stays highlighted on them.
 const MAIN_FORM_PAGES: (keyof MainTabParamList)[] = ['QueryNew', 'BookingNew', 'Support'];
 const MAIN_PARENT_ROUTES: Record<string, string> = { QueryNew: 'Requests', BookingNew: 'Explore', Support: 'Account' };
 
@@ -187,7 +182,6 @@ function tabScreenOptions(isWide: boolean) {
   };
 }
 
-/** Tab options with an icon: filled when focused, outline otherwise. */
 function tab(title: string, icon: IconName, focusedIcon: IconName) {
   return {
     title,
@@ -197,7 +191,6 @@ function tab(title: string, icon: IconName, focusedIcon: IconName) {
   };
 }
 
-/** The few stack headers left (e.g. the platform's sign-in redirect), in the brand colours. */
 const STACK_SCREEN_OPTIONS = {
   headerStyle: { backgroundColor: colors.primary },
   headerTintColor: colors.primaryText,
@@ -242,7 +235,7 @@ function MainTabsNavigator() {
   );
 }
 
-// Pages under a tab (forms, Billing and Plans): not in the bar, which keeps their tab highlighted on them.
+// Never in the bar; the tab they belong to stays highlighted on them.
 const ADMIN_SETTINGS_PAGES: (keyof AdminTabParamList)[] = [
   'AdminOfferNew',
   'AdminQueryRespond',
@@ -319,7 +312,7 @@ function AdminTabsNavigator() {
   );
 }
 
-/** A platform page opened while signed out: remember it, sign in first, and PlatformTabsNavigator reopens it. */
+/** A platform page opened while signed out: sign in first; PlatformTabsNavigator reopens it. */
 function PlatformSignInFirst() {
   const navigation = useNavigation();
   // Read on the first render, before the redirect changes the address.
@@ -383,10 +376,7 @@ function PlatformTabsNavigator() {
   );
 }
 
-/**
- * The root host: a public home page, the system owner's sign-in, and once signed in the owner's screens (the
- * dashboard first). Agency screens are not reachable here.
- */
+/** The root host: public pages, the owner's sign-in and, once signed in, the owner's screens. */
 function PlatformStack() {
   const { user } = useAuth();
   const publicPage = { header: () => <PlatformPublicBar /> };
@@ -412,12 +402,10 @@ function PlatformStack() {
               options={{ title: 'Pricing', ...publicPage }}
             />
             <Stack.Screen name="PlatformLogin" component={PlatformLoginScreen} options={{ title: 'Sign in', ...publicPage }} />
-            {/* The owner's pages opened while signed out go to sign-in first. */}
             <Stack.Screen name="PlatformTabs" component={PlatformSignInFirst} options={{ title: 'Sign in', ...publicPage }} />
           </>
         )}
       </Stack.Navigator>
-      {/* Visitors write to the platform from its public pages (plan enquiries too); the owner answers in Chats. */}
       {user ? null : <ChatLauncher endpoints={PLATFORM_VISITOR} />}
     </View>
   );
@@ -439,19 +427,17 @@ export function RootNavigator() {
     <View style={styles.fill}>
       <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
         <Stack.Screen name="Main" component={MainTabsNavigator} options={{ headerShown: false }} />
-        {/* Guests only: for a signed-in customer these URLs match no screen and open Explore. */}
+        {/* Signed-in customers: these URLs match no screen and open Explore. */}
         {user ? null : (
           <Stack.Group screenOptions={{ header: () => <AppBar brandOnly /> }}>
             <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Sign in' }} />
             <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Create account' }} />
             <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ title: 'Forgot password' }} />
             <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ title: 'Reset password' }} />
-            {/* Admin links opened while signed out go to Login first. */}
             <Stack.Screen name="AdminTabs" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
           </Stack.Group>
         )}
       </Stack.Navigator>
-      {/* Guests and customers write to the agency from every page; its admins answer in Chats. */}
       <ChatLauncher endpoints={AGENCY_REQUESTER} />
     </View>
   );

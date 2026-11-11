@@ -9,7 +9,7 @@ from .models import User
 
 
 def set_password_url(user):
-    """The reset screen's link for this user (email 10 format), also used to set a first password (email 11)."""
+    """The password reset screen's link for this user, also used to choose a first password."""
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
     return f"{frontend_url()}/reset-password?uid={uid}&token={token}"
@@ -30,7 +30,7 @@ def send_password_reset_email(user_id):
 
 @tenant_task(**EMAIL_TASK_OPTIONS)
 def send_account_created_email(user_id):
-    """Email 11: a welcome for a customer the admin created, with a link to choose their password."""
+    """Welcomes a customer the admin created, with a link to choose their password."""
     user = User.objects.filter(pk=user_id, is_active=True).first()
     if user is None:
         return

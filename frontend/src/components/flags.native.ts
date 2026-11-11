@@ -1,5 +1,4 @@
-// Native only: each flag in public/flags/ as a component (react-native-svg-transformer, see metro.config.js).
-// One entry per file; regenerate if the flags change. Web uses the files as images instead (Flag.tsx).
+// Native only (see metro.config.js); web loads public/flags/ as images. Regenerate if the flags change.
 import { FC } from 'react';
 import { SvgProps } from 'react-native-svg';
 

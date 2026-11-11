@@ -1,4 +1,4 @@
-"""Support chat rules, shared by every desk: starting a chat, writing to it, reading, closing (steps 31 and 32)."""
+"""Support chat rules, shared by every desk: starting a chat, writing to it, reading, closing."""
 
 from datetime import timedelta
 
@@ -25,7 +25,7 @@ def _add(conversation, *, body, attachment, from_staff, author_name):
 
 
 def _notify(conversation, message):
-    """Queues email 13 (to the desk) or 14 (to the requester) on commit, for the desk the chat belongs to."""
+    """Queues the email to the desk or to the requester on commit, for the desk the chat belongs to."""
     from . import tasks
 
     to_desk = not message.from_staff

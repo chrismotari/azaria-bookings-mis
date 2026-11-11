@@ -16,7 +16,6 @@ type Props = {
   onPress: () => void;
 };
 
-/** One offer as a flight result row; pressing it opens the offer's detail. */
 export function FlightRow({ offer, selected, compact, onPress }: Props) {
   const airline = (
     <View style={styles.airline}>
