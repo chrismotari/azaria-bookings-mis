@@ -218,7 +218,8 @@ All delivered; each was one commit.
 Pending (not yet built):
 
 37. Re-check a booking's fare (see §17).
-38. Second provider (see §18).
+38. Second provider: Travelport (see §18).
+39. Mobile app: one shared app, agency from links or code (see §19).
 
 ## 14. Step 34: Return trips and flight details
 
@@ -341,6 +342,45 @@ Tests
 - The Confirm availability dialog gets "Re-check price", which fills the price and segments from the answer; the existing changes flow does the rest.
 - Tests: found, changed, not found, allowance, manual bookings refused.
 
-## 18. Step 38: Second provider
+## 18. Step 38: Second provider: Travelport
 
-- A second provider behind the same interface, chosen by the GDS the first agencies use (Travelport, Amadeus or Sabre): its credential fields, request and response mapping with the same skip rules, tests from recorded responses, and README notes on obtaining access. No other changes: routes, runs, fares and offers work across providers, and a route can search both at once.
+- Travelport's Universal API (the API its free 30-day trial covers) behind the same interface: low-fare search over its XML/SOAP endpoint with `httpx` and the standard library's XML parser, credentials (username, password, target branch) and test or live endpoint, request and response mapping into step 34's itinerary shape with the same skip rules, tests from recorded responses, and README notes on obtaining trial and production access. No other changes: routes, runs, fares and offers work across providers, and a route can search both at once.
+
+## 19. Step 39: Mobile app: one shared app, agency from links or code
+
+Goal: one "Azaria Bookings" app in the App Store and Google Play serves every agency's customers and admins. The app learns its agency from the link the customer is sent (or from a code typed in), stores it, and sends every API request to that agency. Branding stays shared, as everywhere else. The web app is unchanged: there the address still decides the agency. The platform app stays web only.
+
+Industry conventions followed
+- Links in emails are ordinary https links on the agency's address. They open the app when it is installed (iOS universal links, Android app links) and the web app otherwise. This needs the app to declare its domains at build time and each domain to serve a small verification file.
+- No deferred deep linking (it needs a third-party service): a customer who installs the app after tapping a link taps it again, or types the agency code.
+- One agency at a time on a device; switching agency signs out.
+
+Agency address for apps
+- Every agency is reachable at `<code>.<TENANT_BASE_DOMAIN>` (its code is its schema name with hyphens, as typed). App links only work on addresses the app declares, and it can declare `*.<TENANT_BASE_DOMAIN>` but not agencies' own custom domains, so **every link in agency emails uses that address**, even when the agency's primary domain is a custom one.
+
+Backend
+- `GET /api/agency` (public, agency hosts): `{code, name, app_address}`; the existing `no_tenant` and `tenant_suspended` answers apply.
+- Verification files on every agency host, served by Django: `/.well-known/apple-app-site-association` (from `IOS_APP_ID`, Team ID plus bundle id) and `/.well-known/assetlinks.json` (from `ANDROID_PACKAGE` and `ANDROID_CERT_FINGERPRINTS`). New `.env` settings, all optional; with them unset the files answer 404. In production the reverse proxy sends `/.well-known/` to the API.
+- A welcome email on registration, `send_welcome_email(user_id)`, HTML plus text like the others, active users only: welcome to <agency>, a link to the agency's site, and "Get the app" (the agency's `/app` link) with the agency code. The admin-created customers' set-password email gains the same "Get the app" lines.
+- `FRONTEND_URL`'s `{domain}` becomes the agency's app address (above) for every email link.
+
+App (native only, the web build is unchanged)
+- New settings: `EXPO_PUBLIC_TENANT_BASE_DOMAIN` (e.g. `azariabookings.com`), `EXPO_PUBLIC_APP_STORE_URL` and `EXPO_PUBLIC_PLAY_STORE_URL`. In `EXPO_PUBLIC_API_URL`, `{host}` is replaced by the stored agency's address on native.
+- The agency (code and name) is stored in secure storage with the sign-in tokens.
+- **First launch, no agency:** a "Find your agency" screen: the agency code, checked with `GET /api/agency` on that address, then a confirmation card with the agency's name and Continue. Clear messages for an unknown code and for a suspended agency. Below: "Got an email from your agency? Tap its link."
+- **Opening a link** to `https://<code>.<base>/...` (or the app scheme, below):
+  - no agency stored: check and store it, then open the link's screen;
+  - same agency: open the link's screen; for a password reset or set-password link while signed in, first ask "Sign out and continue?" (Sign out / Cancel);
+  - another agency: ask "This link is for <B>. You're using <A>. Switch to <B>? You'll be signed out." (Switch / Cancel). Switch signs out, clears the stored tokens, stores B and opens the link's screen; Cancel stays where the user was.
+  - a link to the root host or an unknown agency is ignored with a short message.
+- "Switch agency" in the account menu (customers and admins): signs out and returns to Find your agency.
+- `app.json` / `app.config.ts`: the app scheme `azaria`, iOS `associatedDomains` `applinks:*.<base>`, Android intent filters with `autoVerify` for `*.<base>`, bundle id and package from config. Check against the Expo SDK 58 docs before writing them.
+
+Web
+- `/app` on an agency's site: a page with the agency's name and code, App Store and Google Play buttons, "Already installed? Open in the app" (the `azaria://open?agency=<code>` scheme link, for browsers that do not hand https links to the app), and "After installing, tap the link in your email again."
+- Every agency site shows a "Get the app" link (account menu and footer of the public pages) to `/app`.
+
+Tests
+- `GET /api/agency` (active, suspended, root host); the verification files with and without settings; email links using the app address for an agency with a custom primary domain; the welcome email on registration (and none for admin-created users, who get the set-password email with the app lines).
+- Frontend: type-check and web export; the web build never shows Find your agency.
+- Device check, done by the user (cannot run here): iOS and Android builds; first launch with a code; a link before and after install; a link to another agency (Switch and Cancel); a reset link while signed in; Switch agency from the menu; API calls going to the right agency.
