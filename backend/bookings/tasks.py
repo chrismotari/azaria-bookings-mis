@@ -11,11 +11,15 @@ from core.emails import (
     EMAIL_TASK_OPTIONS,
     format_date,
     format_datetime,
+    format_baggage,
+    format_conditions,
+    format_direction,
     format_price,
-    format_stop_list,
-    format_stops,
+    format_segment_changes,
     send_email,
 )
+from catalog.itinerary import by_direction
+from catalog.models import Trip
 from core.models import AppSettings
 from core.tenancy import for_each_tenant, queue, tenant_task
 
@@ -28,7 +32,7 @@ def _booking_in(booking_id, status):
     """The booking, or None when it is gone or no longer in the status the email describes."""
     return (
         Booking.objects.select_related("user", "offer__origin", "offer__destination", "offer__airline")
-        .prefetch_related("stops__airport")
+        .prefetch_related(*(f"segments__{field}" for field in ("airline", "operating_airline", "origin", "destination")))
         .filter(pk=booking_id, status=status)
         .first()
     )
@@ -36,13 +40,18 @@ def _booking_in(booking_id, status):
 
 def describe_booking(booking):
     offer = booking.offer
+    flights = by_direction([segment.as_data() for segment in booking.segments.all()])
+    arrow = "⇄" if booking.trip_type == Trip.TripType.RETURN else "→"
     return {
         "booking": booking,
         "route": (
-            f"{offer.origin.city} ({offer.origin.code}) → {offer.destination.city} ({offer.destination.code})"
+            f"{offer.origin.city} ({offer.origin.code}) {arrow} {offer.destination.city} ({offer.destination.code})"
         ),
         "departure": format_date(offer.departure_date),
-        "stops": format_stops(booking.stops.all()),
+        "outbound_flights": format_direction(flights["outbound"]),
+        "return_flights": format_direction(flights["return"]),
+        "baggage": format_baggage(booking),
+        "conditions": format_conditions(booking),
         "ticket_class": offer.get_ticket_class_display(),
         "total": format_price(booking.total_price),
     }
@@ -55,9 +64,9 @@ def describe_changes(booking):
     if "unit_price" in changes:
         old, new = (format_price(Decimal(changes["unit_price"][key])) for key in ("old", "new"))
         described.append({"label": "Price per person", "old": old, "new": new})
-    if "stops" in changes:
-        old, new = (format_stop_list(changes["stops"][key]) for key in ("old", "new"))
-        described.append({"label": "Stops", "old": old, "new": new})
+    if "segments" in changes:
+        old, new = (format_segment_changes(changes["segments"][key]) for key in ("old", "new"))
+        described.append({"label": "Flights", "old": old, "new": new})
     return described
 
 

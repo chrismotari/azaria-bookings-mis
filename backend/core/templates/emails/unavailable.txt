@@ -2,7 +2,14 @@ Hello {{ booking.user.full_name }},
 
 We are sorry: the seats you booked for {{ route }} on {{ departure }} are no longer available, so we could not confirm your booking.
 
-Stops: {{ stops }}
+Outbound:
+{{ outbound_flights }}
+{% if return_flights %}
+Return:
+{{ return_flights }}
+{% endif %}
+Baggage: {{ baggage }}
+Fare conditions: {{ conditions }}
 {% if alternatives %}
 We have found {{ option_count }} other option{{ option_count|pluralize }} for you.{% if message %}
 

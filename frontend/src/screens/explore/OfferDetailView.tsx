@@ -10,12 +10,12 @@ import { AirlineBadge } from '../../components/AirlineBadge';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Icon, IconName } from '../../components/Icon';
+import { ItineraryCards, TripConditions } from '../../components/Itinerary';
 import { PriceTag } from '../../components/PriceTag';
 import { RouteLine } from '../../components/RouteLine';
-import { StopList } from '../../components/StopList';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { colors, font, space, weight } from '../../theme';
-import { formatDate, stopsLabel, ticketClassLabel } from '../../utils/format';
+import { formatDate, ticketClassLabel } from '../../utils/format';
 
 /** Width from which the price summary sits beside the details instead of below them. */
 const TWO_COLUMNS = 640;
@@ -55,28 +55,36 @@ export function OfferDetailView({ id, query }: { id: string; query?: string }) {
               <Text style={styles.muted}>{ticketClassLabel(data.ticket_class)}</Text>
             </View>
           </View>
-          <RouteLine origin={data.origin} destination={data.destination} stopCount={data.stop_count} size="large" />
+          <RouteLine
+            origin={data.origin}
+            destination={data.destination}
+            stopCount={data.itinerary.outbound.stop_count}
+            returnTrip={data.trip_type === 'return'}
+            size="large"
+          />
         </Card>
         <Card>
           <Text style={styles.heading}>Flight details</Text>
           <View style={styles.grid}>
             <Detail icon="calendar-outline" label="Departure date" value={formatDate(data.departure_date)} />
-            <Detail icon="airplane-outline" label="Airline" value={data.airline.name} />
+            {data.return_date ? (
+              <Detail icon="return-down-back-outline" label="Return date" value={formatDate(data.return_date)} />
+            ) : null}
+            <Detail icon="airplane-outline" label="Ticketing airline" value={data.airline.name} />
             <Detail icon="ribbon-outline" label="Class" value={ticketClassLabel(data.ticket_class)} />
-            <Detail icon="git-commit-outline" label="Stops" value={stopsLabel(data.stop_count)} />
             <Detail icon="time-outline" label="Offer valid until" value={formatDate(data.valid_until)} />
           </View>
         </Card>
-        {data.stop_count > 0 ? (
-          <Card>
-            <Text style={styles.heading}>Stops</Text>
-            <StopList stops={data.stops} />
-          </Card>
-        ) : null}
+        <ItineraryCards itinerary={data.itinerary} />
+        <Card>
+          <TripConditions trip={data} />
+        </Card>
       </View>
       <View style={twoColumns && styles.summaryColumn}>
         <Card>
-          <Text style={styles.muted}>Price per person</Text>
+          <Text style={styles.muted}>
+            {data.trip_type === 'return' ? 'Return price per person' : 'Price per person'}
+          </Text>
           <PriceTag amount={data.price} size="large" />
           {data.is_bookable ? (
             <Button

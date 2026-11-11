@@ -10,8 +10,9 @@ export function QuerySummary({ query }: { query: Query }) {
   const details = describeQuery(query);
   return (
     <View style={styles.box}>
-      <RouteLine origin={query.origin} destination={query.destination} />
+      <RouteLine origin={query.origin} destination={query.destination} returnTrip={query.trip_type === 'return'} />
       <View style={styles.grid}>
+        <Criterion icon="swap-horizontal" label="Trip" value={details.trip} />
         <Criterion icon="calendar-outline" label="Dates" value={details.dates} />
         <Criterion icon="cash-outline" label="Price per person" value={details.prices} />
         <Criterion icon="ribbon-outline" label="Class" value={details.ticketClass} />

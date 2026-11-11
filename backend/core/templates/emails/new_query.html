@@ -7,6 +7,7 @@
     <td valign="top" style="padding:8px 0; border-bottom:1px solid {{ brand.border }}; color:{{ brand.text }}; font-size:14px;">{{ query.user.full_name }}<br><a href="mailto:{{ query.user.email }}" style="color:{{ brand.primary }};">{{ query.user.email }}</a></td>
   </tr>
   {% include "emails/_row.html" with label="Route" value=route %}
+  {% include "emails/_row.html" with label="Trip" value=trip %}
   {% include "emails/_row.html" with label="Dates" value=dates %}
   {% include "emails/_row.html" with label="Price per person" value=prices price=True %}
   {% include "emails/_row.html" with label="Class" value=ticket_class %}

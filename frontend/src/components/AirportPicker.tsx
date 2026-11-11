@@ -57,10 +57,12 @@ type PickerProps = {
   value: Airport | null;
   onChange: (airport: Airport | null) => void;
   error?: string;
+  /** Read by screen readers instead of the label, e.g. to tell repeated fields apart. */
+  accessibilityLabel?: string;
 };
 
 /** Autocomplete over /airports; the value must be a chosen airport. */
-export function AirportPicker({ label, value, onChange, error }: PickerProps) {
+export function AirportPicker({ label, value, onChange, error, accessibilityLabel = label }: PickerProps) {
   const [text, setText] = useState('');
 
   if (value) {
@@ -88,7 +90,7 @@ export function AirportPicker({ label, value, onChange, error }: PickerProps) {
         value={text}
         onChangeText={setText}
         placeholder="City, airport or code"
-        accessibilityLabel={label}
+        accessibilityLabel={accessibilityLabel}
         placeholderTextColor={colors.placeholder}
         autoCorrect={false}
       />

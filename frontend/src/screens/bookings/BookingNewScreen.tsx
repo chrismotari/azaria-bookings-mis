@@ -16,14 +16,14 @@ import { Card } from '../../components/Card';
 import { FormError } from '../../components/Field';
 import { Icon } from '../../components/Icon';
 import { PriceTag } from '../../components/PriceTag';
-import { RouteLine } from '../../components/RouteLine';
+import { DirectionLine, directionsOf } from '../../components/Itinerary';
 import { Screen } from '../../components/Screen';
 import { Stepper } from '../../components/Stepper';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
 import { MainTabParamList } from '../../navigation/types';
 import { colors, font, space, weight } from '../../theme';
-import { formatDate, formatPrice, ticketClassLabel } from '../../utils/format';
+import { baggageSummary, formatDate, formatPrice, ticketClassLabel } from '../../utils/format';
 
 // Mirrors the server's rules: 1 to 9 passengers.
 const MIN_PASSENGERS = 1;
@@ -81,11 +81,21 @@ export function BookingNewScreen({ navigation, route }: BottomTabScreenProps<Mai
       <BackLink label="Offer" onPress={() => navigation.navigate('Explore', { id: offerId, ...(query ? { query } : {}) })} />
       <Text style={styles.title}>Book this flight</Text>
       <Card>
-        <RouteLine origin={data.origin} destination={data.destination} stopCount={data.stop_count} />
+        {directionsOf(data.itinerary).map(({ key, label, direction }) => (
+          <View key={key} style={styles.direction}>
+            <View style={styles.summaryItem}>
+              <Icon name="calendar-outline" size={18} color={colors.primary} />
+              <Text style={styles.text}>
+                <Text style={styles.airline}>{label}</Text> · {formatDate(direction.segments[0].departure_date)}
+              </Text>
+            </View>
+            <DirectionLine direction={direction} />
+          </View>
+        ))}
         <View style={styles.summary}>
           <View style={styles.summaryItem}>
-            <Icon name="calendar-outline" size={18} color={colors.primary} />
-            <Text style={styles.text}>{formatDate(data.departure_date)}</Text>
+            <Icon name="briefcase-outline" size={18} color={colors.primary} />
+            <Text style={styles.text}>{baggageSummary(data)}</Text>
           </View>
           <View style={styles.summaryItem}>
             <AirlineBadge airline={data.airline} />
@@ -152,6 +162,7 @@ const styles = StyleSheet.create({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   summary: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: space.md },
   summaryItem: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  direction: { gap: space.sm },
   airline: { fontSize: font.body, fontWeight: weight.bold, color: colors.text },
   text: { fontSize: font.body, color: colors.text },
   total: {

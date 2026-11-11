@@ -1,7 +1,7 @@
 import django_filters
 from django.db.models import Count, Q
 
-from .models import Offer
+from .models import Offer, OfferSegment, Trip
 
 
 def _airport_matches(prefix, value):
@@ -21,8 +21,11 @@ class OfferFilter(django_filters.FilterSet):
     date_to = django_filters.DateFilter(field_name="departure_date", lookup_expr="lte")
     price_min = django_filters.NumberFilter(field_name="price", lookup_expr="gte")
     price_max = django_filters.NumberFilter(field_name="price", lookup_expr="lte")
+    return_from = django_filters.DateFilter(field_name="return_date", lookup_expr="gte")
+    return_to = django_filters.DateFilter(field_name="return_date", lookup_expr="lte")
+    trip_type = django_filters.ChoiceFilter(choices=Trip.TripType.choices)
     ticket_class = django_filters.ChoiceFilter(choices=Offer.TicketClass.choices)
-    # Counts every stop, layovers and stopovers alike.
+    # Counts every connection, layovers and stopovers alike, in the direction with the most.
     max_stopovers = django_filters.NumberFilter(method="filter_max_stops")
     ordering = django_filters.OrderingFilter(fields=["price", "departure_date"])
 
@@ -38,8 +41,13 @@ class OfferFilter(django_filters.FilterSet):
 
     def filter_max_stops(self, queryset, name, value):
         # A subquery rather than annotating the queryset, which would group it and drop the default ordering.
-        too_many = Offer.objects.annotate(number_of_stops=Count("stops")).filter(number_of_stops__gt=value)
-        return queryset.exclude(pk__in=too_many.values("pk"))
+        too_many = (
+            OfferSegment.objects.values("offer", "direction")
+            .annotate(flights=Count("pk"))
+            .filter(flights__gt=value + 1)
+            .values("offer")
+        )
+        return queryset.exclude(pk__in=too_many)
 
 
 class AdminOfferFilter(OfferFilter):

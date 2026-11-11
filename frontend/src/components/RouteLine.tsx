@@ -12,21 +12,33 @@ type Props = {
   destination: Airport | null;
   /** Number of stops. Leave out for a route without a known flight (a request); the line then shows a plane. */
   stopCount?: number;
+  /** A return trip: the line shows ⇄ and "Return" instead of the stops. */
+  returnTrip?: boolean;
   /** Large also shows the airport names (offer detail header). */
   size?: 'regular' | 'large';
 };
 
-/** Origin and destination codes and cities joined by a line with one dot per stop. */
-export function RouteLine({ origin, destination, stopCount, size = 'regular' }: Props) {
+/** Origin and destination codes and cities joined by a line with one dot per stop, or ⇄ for a return trip. */
+export function RouteLine({ origin, destination, stopCount, returnTrip, size = 'regular' }: Props) {
   const large = size === 'large';
   return (
     <View style={styles.row}>
       <End airport={origin} large={large} />
       <View style={styles.middle}>
-        {stopCount === undefined ? null : (
+        {returnTrip ? (
+          <Text style={styles.stops}>Return</Text>
+        ) : stopCount === undefined ? null : (
           <Text style={[styles.stops, stopCount === 0 && styles.direct]}>{stopsLabel(stopCount)}</Text>
         )}
-        {stopCount === undefined ? (
+        {returnTrip ? (
+          <View style={styles.track}>
+            <View style={styles.half} />
+            <Text style={styles.both} aria-label="there and back">
+              ⇄
+            </Text>
+            <View style={styles.half} />
+          </View>
+        ) : stopCount === undefined ? (
           <View style={styles.track}>
             <View style={styles.half} />
             <Icon name="airplane" size={14} color={colors.primary} />
@@ -116,6 +128,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     backgroundColor: colors.light,
   },
+  both: { fontSize: font.body, fontWeight: weight.bold, color: colors.primary },
   half: { flex: 1, height: 2, marginHorizontal: space.xs, borderRadius: radius.pill, backgroundColor: colors.light },
   dot: {
     width: DOT,

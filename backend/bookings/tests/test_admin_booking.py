@@ -29,14 +29,13 @@ def test_admin_books_for_a_customer(
     admin_api, admin_user, customer, make_offer, airports, django_capture_on_commit_callbacks
 ):
     offer = make_offer(price=Decimal("400.00"))
-    offer.set_stops([{"airport": airports["DXB"], "duration_minutes": 90}])
     response, callbacks = book(admin_api, customer, offer, django_capture_on_commit_callbacks)
     assert response.status_code == 201, response.data
     assert response.data["status"] == "requested"
     assert response.data["user"]["email"] == customer.email
     assert response.data["total_price"] == "1200.00"
     assert response.data["notes"] == "By phone"
-    assert response.data["stop_count"] == 1
+    assert response.data["itinerary"]["outbound"]["segments"][0]["flight_number"] == "100"
 
     booking = Booking.objects.get(pk=response.data["id"])
     assert (booking.user, booking.offer, booking.passenger_count, booking.unit_price) == (

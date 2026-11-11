@@ -15,10 +15,12 @@ type Props = {
   value: Airline | null;
   onChange: (airline: Airline | null) => void;
   error?: string;
+  /** Read by screen readers instead of the label, e.g. to tell repeated fields apart. */
+  accessibilityLabel?: string;
 };
 
 /** Search of the shared airline list (admin only); the value must be a chosen airline. */
-export function AirlinePicker({ label, value, onChange, error }: Props) {
+export function AirlinePicker({ label, value, onChange, error, accessibilityLabel = label }: Props) {
   const [text, setText] = useState('');
 
   if (value) {
@@ -44,7 +46,7 @@ export function AirlinePicker({ label, value, onChange, error }: Props) {
         value={text}
         onChangeText={setText}
         placeholder="Airline name or code"
-        accessibilityLabel={label}
+        accessibilityLabel={accessibilityLabel}
         placeholderTextColor={colors.placeholder}
         autoCorrect={false}
       />

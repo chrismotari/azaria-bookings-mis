@@ -65,15 +65,18 @@ export function TableRow({ columns, cells, selected, onPress, accessibilityLabel
   );
 }
 
-/** Airport codes with their cities underneath; null is "Any" (a request without that airport). */
-export function RouteCell({ origin, destination }: { origin: Airport | null; destination: Airport | null }) {
+type RouteCellProps = { origin: Airport | null; destination: Airport | null; returnTrip?: boolean };
+
+/** Airport codes with their cities underneath, joined by ⇄ for a return trip; null is "Any" (a request without that airport). */
+export function RouteCell({ origin, destination, returnTrip }: RouteCellProps) {
+  const arrow = returnTrip ? '⇄' : '→';
   return (
     <View>
       <Text style={styles.strong}>
-        {origin?.code ?? 'Any'} → {destination?.code ?? 'Any'}
+        {origin?.code ?? 'Any'} {arrow} {destination?.code ?? 'Any'}
       </Text>
       <Text style={styles.muted} numberOfLines={1}>
-        {origin?.city ?? 'Anywhere'} → {destination?.city ?? 'Anywhere'}
+        {origin?.city ?? 'Anywhere'} {arrow} {destination?.city ?? 'Anywhere'}
       </Text>
     </View>
   );

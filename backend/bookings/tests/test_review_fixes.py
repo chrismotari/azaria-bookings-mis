@@ -11,7 +11,7 @@ from rest_framework.test import APIClient
 from bookings.admin import BookingAdmin
 from bookings.models import Booking
 from tenants import services
-from core.tests.helpers import airline_named
+from core.tests.helpers import airline_named, direct
 
 pytestmark = pytest.mark.django_db
 
@@ -61,20 +61,18 @@ def test_a_refused_move_is_409_even_with_an_invalid_body(admin_api, customer, ma
     assert admin_api.post(f"{url}/mark-unavailable", body, format="json").status_code == 409
 
 
-def test_stop_airport_codes_are_accepted_in_any_case(admin_api, airports):
+def test_segment_airport_codes_are_accepted_in_any_case(admin_api, airports):
+    segments = direct(" nbo ", "dxb", timezone.localdate() + timedelta(days=30))
     body = {
-        "origin": str(airports["NBO"].id),
-        "destination": str(airports["LHR"].id),
-        "departure_date": (timezone.localdate() + timedelta(days=30)).isoformat(),
         "ticket_class": "economy",
         "price": "500",
         "airline": str(airline_named("Emirates").id),
         "valid_until": (timezone.localdate() + timedelta(days=5)).isoformat(),
-        "stops": [{"airport": " dxb ", "duration_minutes": 60}],
+        "segments": segments,
     }
     response = admin_api.post("/api/admin/offers", body, format="json")
     assert response.status_code == 201, response.data
-    assert response.data["stops"][0]["airport"]["code"] == "DXB"
+    assert response.data["itinerary"]["outbound"]["segments"][0]["destination"]["code"] == "DXB"
 
 
 def test_a_customer_can_open_a_private_offer_the_admin_booked_for_them(

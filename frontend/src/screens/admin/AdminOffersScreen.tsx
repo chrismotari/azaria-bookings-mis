@@ -12,6 +12,7 @@ import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { DetailLayout } from '../../components/DetailLayout';
 import { Field, FieldGrid, FormError } from '../../components/Field';
+import { tripSummary } from '../../components/Itinerary';
 import {
   EMPTY_OFFER_FILTERS,
   OfferFilterErrors,
@@ -30,7 +31,7 @@ import { Column, RouteCell, Table, TableRow, TwoLineCell } from '../../component
 import { Toggle } from '../../components/Toggle';
 import { AdminTabParamList } from '../../navigation/types';
 import { colors, font, space, useIsWide, weight } from '../../theme';
-import { formatDate, stopsLabel, ticketClassLabel } from '../../utils/format';
+import { formatDate, ticketClassLabel, tripDates } from '../../utils/format';
 import { AdminOfferEditView } from './AdminOfferFormScreen';
 
 type AdminFilters = OfferFilterValues & { is_active: '' | 'true' | 'false'; is_public: '' | 'true' | 'false' };
@@ -201,7 +202,7 @@ type RowProps = {
 };
 
 function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: RowProps) {
-  const flight = `${ticketClassLabel(offer.ticket_class)} · ${stopsLabel(offer.stop_count)}`;
+  const flight = `${ticketClassLabel(offer.ticket_class)} · ${tripSummary(offer)}`;
   const chips = (
     <View style={styles.chips}>
       <StatusChip label={offer.is_public ? 'Public' : 'Private'} tone={offer.is_public ? 'info' : 'neutral'} />
@@ -226,10 +227,15 @@ function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: R
         columns={COLUMNS}
         selected={selected}
         cells={[
-          <RouteCell key="route" origin={offer.origin} destination={offer.destination} />,
+          <RouteCell
+            key="route"
+            origin={offer.origin}
+            destination={offer.destination}
+            returnTrip={offer.trip_type === 'return'}
+          />,
           <TwoLineCell
             key="dates"
-            primary={formatDate(offer.departure_date)}
+            primary={tripDates(offer)}
             secondary={`until ${formatDate(offer.valid_until)}`}
           />,
           <View key="flight" style={styles.airlineCell}>
@@ -252,11 +258,11 @@ function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: R
   return (
     <Card selected={selected}>
       <View style={styles.cardTop}>
-        <RouteCell origin={offer.origin} destination={offer.destination} />
+        <RouteCell origin={offer.origin} destination={offer.destination} returnTrip={offer.trip_type === 'return'} />
         <PriceTag amount={offer.price} />
       </View>
       <Text style={styles.cell}>
-        {formatDate(offer.departure_date)} · valid until {formatDate(offer.valid_until)}
+        {tripDates(offer)} · valid until {formatDate(offer.valid_until)}
       </Text>
       <View style={styles.airlineCell}>
         <AirlineBadge airline={offer.airline} size={32} />

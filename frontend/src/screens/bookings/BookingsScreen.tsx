@@ -17,8 +17,8 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/StatusVie
 import { TripCard } from '../../components/TripCard';
 import { MainTabParamList } from '../../navigation/types';
 import { colors, font, space, weight } from '../../theme';
-import { BOOKING_STATUS, bookingRoute, passengersLabel } from '../../utils/bookings';
-import { formatDate } from '../../utils/format';
+import { BOOKING_STATUS, bookingDates, bookingRoute, passengersLabel } from '../../utils/bookings';
+import { tripDates } from '../../utils/format';
 import { BookingDetailView } from './BookingDetailView';
 
 export function BookingsScreen({ navigation, route }: BottomTabScreenProps<MainTabParamList, 'Bookings'>) {
@@ -79,7 +79,7 @@ function BookingRow({ booking, selected, onPress }: { booking: Booking; selected
       tone={status.tone}
       selected={selected}
       onPress={onPress}
-      accessibilityLabel={`${bookingRoute(booking)}, ${formatDate(offer.departure_date)}, ${status.label}`}
+      accessibilityLabel={`${bookingRoute(booking)}, ${tripDates(bookingDates(booking))}, ${status.label}`}
     >
       <View style={styles.between}>
         <View style={styles.airline}>
@@ -90,10 +90,15 @@ function BookingRow({ booking, selected, onPress }: { booking: Booking; selected
         </View>
         <StatusChip label={status.label} tone={status.tone} />
       </View>
-      <RouteLine origin={offer.origin} destination={offer.destination} stopCount={booking.stop_count} />
+      <RouteLine
+        origin={offer.origin}
+        destination={offer.destination}
+        stopCount={booking.itinerary.outbound.stop_count}
+        returnTrip={booking.trip_type === 'return'}
+      />
       <View style={styles.between}>
         <View style={styles.facts}>
-          <Fact icon="calendar-outline" text={formatDate(offer.departure_date)} />
+          <Fact icon="calendar-outline" text={tripDates(bookingDates(booking))} />
           <Fact icon="people-outline" text={passengersLabel(booking.passenger_count)} />
         </View>
         <PriceTag amount={booking.total_price} />

@@ -19,8 +19,8 @@ import { Column, RouteCell, Table, TableRow, TwoLineCell } from '../../component
 import { TripCard } from '../../components/TripCard';
 import { AdminTabParamList } from '../../navigation/types';
 import { colors, font, space, useIsWide, weight } from '../../theme';
-import { BOOKING_STATUS, bookingRoute, passengersLabel } from '../../utils/bookings';
-import { formatDate, formatDateTime } from '../../utils/format';
+import { BOOKING_STATUS, bookingDates, bookingRoute, passengersLabel } from '../../utils/bookings';
+import { formatDateTime, tripDates } from '../../utils/format';
 import { AdminBookingDetailView } from './AdminBookingDetailView';
 import { NewBookingDialog } from './NewBookingDialog';
 import { useListPage, useMissingPageReset } from '../../utils/listPage';
@@ -40,7 +40,7 @@ const STATUS_OPTIONS: { value: BookingStatus | 'all'; label: string }[] = [
 const COLUMNS: Column[] = [
   { label: 'Customer', flex: 2 },
   { label: 'Route', flex: 2 },
-  { label: 'Departure', flex: 1.6 },
+  { label: 'Dates', flex: 1.6 },
   { label: 'Passengers', flex: 1.2 },
   { label: 'Total', flex: 1.4 },
   { label: 'Status', flex: 1.6 },
@@ -142,8 +142,13 @@ function BookingTableRow({ booking, onPress }: { booking: AdminBooking; onPress:
       accessibilityLabel={`${booking.user.full_name}, ${bookingRoute(booking)}, ${status.label}`}
       cells={[
         <TwoLineCell key="customer" primary={booking.user.full_name} secondary={booking.user.email} />,
-        <RouteCell key="route" origin={booking.offer.origin} destination={booking.offer.destination} />,
-        formatDate(booking.offer.departure_date),
+        <RouteCell
+          key="route"
+          origin={booking.offer.origin}
+          destination={booking.offer.destination}
+          returnTrip={booking.trip_type === 'return'}
+        />,
+        tripDates(bookingDates(booking)),
         passengersLabel(booking.passenger_count),
         <PriceTag key="total" amount={booking.total_price} />,
         <StatusChip key="status" label={status.label} tone={status.tone} />,
@@ -179,12 +184,17 @@ function AdminBookingCard({
         </Text>
         <StatusChip label={status.label} tone={status.tone} />
       </View>
-      <RouteLine origin={offer.origin} destination={offer.destination} stopCount={booking.stop_count} />
+      <RouteLine
+        origin={offer.origin}
+        destination={offer.destination}
+        stopCount={booking.itinerary.outbound.stop_count}
+        returnTrip={booking.trip_type === 'return'}
+      />
       <View style={styles.between}>
         <View style={styles.facts}>
           <View style={styles.fact}>
             <Icon name="calendar-outline" size={16} color={colors.muted} />
-            <Text style={styles.text}>{formatDate(offer.departure_date)}</Text>
+            <Text style={styles.text}>{tripDates(bookingDates(booking))}</Text>
           </View>
           <View style={styles.fact}>
             <Icon name="people-outline" size={16} color={colors.muted} />

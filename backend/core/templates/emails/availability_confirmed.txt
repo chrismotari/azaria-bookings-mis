@@ -10,7 +10,15 @@ Please accept or decline these changes in the app before you pay:
 {% endif %}
 Route: {{ route }}
 Departure: {{ departure }}
-Stops: {{ stops }}
+
+Outbound:
+{{ outbound_flights }}
+{% if return_flights %}
+Return:
+{{ return_flights }}
+{% endif %}
+Baggage: {{ baggage }}
+Fare conditions: {{ conditions }}
 Passengers: {{ booking.passenger_count }}
 Total price: {{ total }}
 

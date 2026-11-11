@@ -2,6 +2,7 @@ A customer has asked for flight options.
 
 Customer: {{ query.user.full_name }} <{{ query.user.email }}>
 Route: {{ route }}
+Trip: {{ trip }}
 Dates: {{ dates }}
 Price per person: {{ prices }}
 Class: {{ ticket_class }}

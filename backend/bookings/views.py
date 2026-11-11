@@ -33,7 +33,10 @@ from .services import (
 )
 
 BOOKING_RELATED = ["offer__origin", "offer__destination", "offer__airline"]
-BOOKING_STOPS = ["stops__airport", "offer__stops__airport"]
+BOOKING_SEGMENTS = [
+    *(f"segments__{field}" for field in ("airline", "operating_airline", "origin", "destination")),
+    *(f"offer__segments__{field}" for field in ("airline", "operating_airline", "origin", "destination")),
+]
 
 
 class BookingListCreateView(generics.ListAPIView):
@@ -43,7 +46,7 @@ class BookingListCreateView(generics.ListAPIView):
         return (
             Booking.objects.filter(user=self.request.user)
             .select_related(*BOOKING_RELATED)
-            .prefetch_related(*BOOKING_STOPS)
+            .prefetch_related(*BOOKING_SEGMENTS)
         )
 
     def post(self, request):
@@ -63,7 +66,7 @@ class BookingDetailView(generics.RetrieveAPIView):
         return (
             Booking.objects.filter(user=self.request.user)
             .select_related(*BOOKING_RELATED)
-            .prefetch_related("events", *BOOKING_STOPS)
+            .prefetch_related("events", *BOOKING_SEGMENTS)
         )
 
 
@@ -93,7 +96,7 @@ class AdminBookingListView(generics.ListAPIView):
 
     permission_classes = [IsAdminRole]
     serializer_class = AdminBookingSerializer
-    queryset = Booking.objects.select_related("user", *BOOKING_RELATED).prefetch_related(*BOOKING_STOPS)
+    queryset = Booking.objects.select_related("user", *BOOKING_RELATED).prefetch_related(*BOOKING_SEGMENTS)
     filterset_fields = ["status"]
 
     def post(self, request):
@@ -108,7 +111,7 @@ class AdminBookingDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAdminRole]
     serializer_class = AdminBookingDetailSerializer
     queryset = Booking.objects.select_related("user", *BOOKING_RELATED).prefetch_related(
-        "events", "boarding_passes", *BOOKING_STOPS
+        "events", "boarding_passes", *BOOKING_SEGMENTS
     )
 
 
@@ -125,7 +128,7 @@ class AdminBookingTransitionView(APIView):
 
 
 class AdminConfirmAvailabilityView(APIView):
-    """Body (optional): unit_price and stops; values that differ from the booking's are applied."""
+    """Body (optional): unit_price and segments; values that differ from the booking's are applied."""
 
     permission_classes = [IsAdminRole]
 

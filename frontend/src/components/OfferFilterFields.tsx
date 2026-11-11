@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { TICKET_CLASSES, TicketClass } from '../api/types';
+import { TICKET_CLASSES, TicketClass, TripType } from '../api/types';
 import { AirportQuery, AirportSearchField } from './AirportPicker';
 import { DateField } from './DateField';
 import { FieldGrid } from './Field';
@@ -12,6 +12,11 @@ export type OfferFilterValues = {
   destination: AirportQuery;
   date_from: string;
   date_to: string;
+  /** Empty for any. */
+  trip_type: '' | TripType;
+  /** The return date range; used only for return trips. */
+  return_from: string;
+  return_to: string;
   price_min: string;
   price_max: string;
   ticket_class: '' | TicketClass;
@@ -23,6 +28,9 @@ export const EMPTY_OFFER_FILTERS: OfferFilterValues = {
   destination: { text: '', airport: null },
   date_from: '',
   date_to: '',
+  trip_type: '',
+  return_from: '',
+  return_to: '',
   price_min: '',
   price_max: '',
   ticket_class: '',
@@ -40,6 +48,8 @@ const filterSchema = z
   .object({
     date_from: z.string(),
     date_to: z.string(),
+    return_from: z.string(),
+    return_to: z.string(),
     price_min: optionalAmount,
     price_max: optionalAmount,
     max_stopovers: z
@@ -50,6 +60,9 @@ const filterSchema = z
   .superRefine((values, ctx) => {
     if (values.date_from && values.date_to && values.date_from > values.date_to) {
       ctx.addIssue({ code: 'custom', path: ['date_to'], message: 'Must be on or after the start date.' });
+    }
+    if (values.return_from && values.return_to && values.return_from > values.return_to) {
+      ctx.addIssue({ code: 'custom', path: ['return_to'], message: 'Must be on or after the start date.' });
     }
     if (values.price_min && values.price_max && Number(values.price_min) > Number(values.price_max)) {
       ctx.addIssue({ code: 'custom', path: ['price_max'], message: 'Must be at least the minimum price.' });
@@ -75,6 +88,10 @@ export function offerFilterParams(values: OfferFilterValues): Record<string, str
     destination: airport(values.destination),
     date_from: values.date_from,
     date_to: values.date_to,
+    trip_type: values.trip_type,
+    // Return dates only narrow a search for return trips.
+    return_from: values.trip_type === 'return' ? values.return_from : '',
+    return_to: values.trip_type === 'return' ? values.return_to : '',
     price_min: values.price_min.trim(),
     price_max: values.price_max.trim(),
     ticket_class: values.ticket_class,
@@ -84,6 +101,12 @@ export function offerFilterParams(values: OfferFilterValues): Record<string, str
 }
 
 const CLASS_OPTIONS: { value: '' | TicketClass; label: string }[] = [{ value: '', label: 'Any' }, ...TICKET_CLASSES];
+
+export const TRIP_TYPE_OPTIONS: { value: '' | TripType; label: string }[] = [
+  { value: '', label: 'Any' },
+  { value: 'return', label: 'Return' },
+  { value: 'one_way', label: 'One way' },
+];
 
 const AMOUNT_LABELS = { price_min: 'Min price (USD)', price_max: 'Max price (USD)', max_stopovers: 'Max stopovers' };
 
@@ -143,6 +166,28 @@ export function OfferFilterFields({ value, onChange, errors, onSubmit, showDetai
               />
             ))}
           </FieldGrid>
+          <OptionChips
+            label="Trip"
+            options={TRIP_TYPE_OPTIONS}
+            value={value.trip_type}
+            onChange={(tripType) => set('trip_type', tripType)}
+          />
+          {value.trip_type === 'return' ? (
+            <FieldGrid>
+              <DateField
+                label="Returning from"
+                value={value.return_from}
+                onChange={(date) => set('return_from', date)}
+                error={errors.return_from}
+              />
+              <DateField
+                label="Returning until"
+                value={value.return_to}
+                onChange={(date) => set('return_to', date)}
+                error={errors.return_to}
+              />
+            </FieldGrid>
+          ) : null}
           <OptionChips
             label="Class"
             options={CLASS_OPTIONS}

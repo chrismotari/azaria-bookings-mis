@@ -7,11 +7,12 @@ import { AdminQueryDetail } from '../../api/types';
 import { ActionBar } from '../../components/ActionBar';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
+import { tripSummary } from '../../components/Itinerary';
 import { QuerySummary } from '../../components/QuerySummary';
 import { StatusChip } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { colors, font, weight } from '../../theme';
-import { formatDate, formatDateTime, formatPrice, stopsLabel, ticketClassLabel } from '../../utils/format';
+import { formatDateTime, formatPrice, ticketClassLabel, tripDates } from '../../utils/format';
 import { QUERY_STATUS } from '../../utils/queries';
 
 export function useAdminQuery(id: string) {
@@ -72,8 +73,8 @@ export function AdminQueryDetailView({ id }: { id: string }) {
             {response.message ? <Text style={styles.text}>{response.message}</Text> : null}
             {response.offers.map((offer) => (
               <Text key={offer.id} style={styles.text}>
-                • {offer.origin.code} → {offer.destination.code}, {formatDate(offer.departure_date)}, {offer.airline.name},{' '}
-                {ticketClassLabel(offer.ticket_class)}, {stopsLabel(offer.stop_count)}, {formatPrice(offer.price)}
+                • {offer.origin.code} {offer.trip_type === 'return' ? '⇄' : '→'} {offer.destination.code}, {tripDates(offer)},{' '}
+                {offer.airline.name}, {ticketClassLabel(offer.ticket_class)}, {tripSummary(offer)}, {formatPrice(offer.price)}
               </Text>
             ))}
           </Card>

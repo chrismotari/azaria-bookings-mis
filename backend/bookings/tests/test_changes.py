@@ -8,9 +8,10 @@ from django.core import mail
 from django.utils import timezone
 
 from bookings import tasks
-from bookings.models import Booking, BookingEvent, BookingStop
+from bookings.models import Booking, BookingEvent
+from bookings.services import create_booking
 from core.models import AppSettings
-from core.tests.helpers import html_part
+from core.tests.helpers import airline_named, flight, html_part
 
 pytestmark = pytest.mark.django_db
 
@@ -22,21 +23,43 @@ def payment_instructions(db):
     AppSettings.objects.update(payment_instructions="M-Pesa paybill 123456.")
 
 
+def day(offset):
+    return timezone.localdate() + timedelta(days=offset)
+
+
+def via_dubai(wait_until="07:55"):
+    """NBO → DXB → LHR, both flights on day 30."""
+    kq = airline_named("Kenya Airways")
+    return [
+        flight("outbound", kq, "310", "NBO", "DXB", (day(30), "00:50"), (day(30), "05:40")),
+        flight("outbound", kq, "312", "DXB", "LHR", (day(30), wait_until), (day(30), "12:30")),
+    ]
+
+
+def direct():
+    kq = airline_named("Kenya Airways")
+    return [flight("outbound", kq, "100", "NBO", "LHR", (day(31), "10:00"), (day(31), "18:00"))]
+
+
 @pytest.fixture
-def booking(customer, make_offer, airports):
-    offer = make_offer()
-    offer.set_stops([{"airport": airports["DXB"], "duration_minutes": 135}])
-    booking = Booking.objects.create(user=customer, offer=offer, passenger_count=2, unit_price=offer.price)
-    BookingStop.objects.create(booking=booking, position=1, airport=airports["DXB"], duration_minutes=135)
-    return booking
+def booking(customer, admin_api, airports):
+    response = admin_api.post(
+        "/api/admin/offers",
+        {
+            "ticket_class": "economy",
+            "price": "650.00",
+            "airline": str(airline_named("Kenya Airways").id),
+            "valid_until": day(7).isoformat(),
+            "segments": via_dubai(),
+        },
+        format="json",
+    )
+    assert response.status_code == 201, response.data
+    return create_booking(customer, {"offer": response.data["id"], "passenger_count": 2})
 
 
 def confirm(admin_api, booking, body=None):
     return admin_api.post(f"/api/admin/bookings/{booking.id}/confirm-availability", body or {}, format="json")
-
-
-def stop(code, minutes):
-    return {"airport": code, "duration_minutes": minutes}
 
 
 def test_confirm_without_body_records_no_changes(admin_api, booking):
@@ -48,7 +71,7 @@ def test_confirm_without_body_records_no_changes(admin_api, booking):
 
 
 def test_confirm_with_the_same_values_records_no_changes(admin_api, booking):
-    response = confirm(admin_api, booking, {"unit_price": "650.00", "stops": [stop("DXB", 135)]})
+    response = confirm(admin_api, booking, {"unit_price": "650.00", "segments": via_dubai()})
     assert response.status_code == 200, response.data
     assert response.data["changes"] is None
 
@@ -65,45 +88,62 @@ def test_confirm_with_a_new_price(admin_api, booking):
     assert booking.offer.price == Decimal("650.00")
 
 
-def test_confirm_with_new_stops(admin_api, booking):
-    response = confirm(admin_api, booking, {"stops": [stop("MBA", 1500), stop("DXB", 60)]})
+def test_confirm_with_new_segments(admin_api, booking):
+    code = airline_named().iata_code
+    response = confirm(admin_api, booking, {"segments": via_dubai(wait_until="09:00")})
     assert response.status_code == 200, response.data
+    date = f"{day(30):%a}, {day(30).day} {day(30):%b %Y}"
     assert response.data["changes"] == {
-        "stops": {
-            "old": [{"code": "DXB", "city": "Dubai", "duration_minutes": 135}],
+        "segments": {
+            "old": [
+                {"direction": "outbound", "flight": f"{code} 310", "route": "NBO → DXB", "departure": f"{date} 00:50", "arrival": "05:40"},
+                {"direction": "outbound", "flight": f"{code} 312", "route": "DXB → LHR", "departure": f"{date} 07:55", "arrival": "12:30"},
+            ],
             "new": [
-                {"code": "MBA", "city": "Mombasa", "duration_minutes": 1500},
-                {"code": "DXB", "city": "Dubai", "duration_minutes": 60},
+                {"direction": "outbound", "flight": f"{code} 310", "route": "NBO → DXB", "departure": f"{date} 00:50", "arrival": "05:40"},
+                {"direction": "outbound", "flight": f"{code} 312", "route": "DXB → LHR", "departure": f"{date} 09:00", "arrival": "12:30"},
             ],
         }
     }
-    assert [(s["airport"]["code"], s["kind"]) for s in response.data["stops"]] == [
-        ("MBA", "stopover"),
-        ("DXB", "layover"),
-    ]
-    assert [(s.position, s.airport.code) for s in booking.stops.all()] == [(1, "MBA"), (2, "DXB")]
-    assert booking.offer.stops.count() == 1
+    connection = response.data["itinerary"]["outbound"]["connections"][0]
+    assert (connection["airport"]["code"], connection["wait_minutes"]) == ("DXB", 200)
+    assert [s.departure_time.strftime("%H:%M") for s in booking.segments.all()] == ["00:50", "09:00"]
+    # The offer keeps its flights.
+    assert [s.departure_time.strftime("%H:%M") for s in booking.offer.segments.all()] == ["00:50", "07:55"]
 
 
-def test_confirm_can_remove_all_stops(admin_api, booking):
-    response = confirm(admin_api, booking, {"stops": []})
-    assert response.data["changes"]["stops"]["new"] == []
-    assert response.data["stop_count"] == 0
+def test_confirm_can_make_the_flight_direct(admin_api, booking):
+    response = confirm(admin_api, booking, {"segments": direct()})
+    assert response.status_code == 200, response.data
+    assert [line["route"] for line in response.data["changes"]["segments"]["new"]] == ["NBO → LHR"]
+    assert response.data["itinerary"]["outbound"]["stop_count"] == 0
+
+
+def test_changes_are_accepted_like_any_other(admin_api, customer_api, booking):
+    confirm(admin_api, booking, {"segments": direct()})
+    response = customer_api.post(f"/api/bookings/{booking.id}/accept-changes")
+    assert response.status_code == 200
+    assert response.data["itinerary"]["outbound"]["segments"][0]["flight_number"] == "100"
+    assert admin_api.post(f"/api/admin/bookings/{booking.id}/mark-paid").status_code == 200
 
 
 @pytest.mark.parametrize(
     ("body", "field"),
     [
-        ({"unit_price": "0"}, "unit_price"),
-        ({"unit_price": "abc"}, "unit_price"),
-        ({"stops": [stop("NBO", 60)]}, "stops"),
-        ({"stops": [stop("DXB", 60), stop("DXB", 60)]}, "stops"),
-        ({"stops": [stop("XXX", 60)]}, "stops"),
-        ({"stops": [stop("DXB", 0)]}, "stops"),
+        (lambda: {"unit_price": "0"}, "unit_price"),
+        (lambda: {"unit_price": "abc"}, "unit_price"),
+        (lambda: {"segments": via_dubai(wait_until="05:00")}, "segments"),
+        (lambda: {"segments": via_dubai()[:1]}, "segments"),
+        (lambda: {"segments": [{**direct()[0], "origin": "MBA"}]}, "segments"),
+        (lambda: {"segments": [{**direct()[0], "origin": "XXX"}]}, "segments"),
+        (
+            lambda: {"segments": [*direct(), {**direct()[0], "direction": "return", "origin": "LHR", "destination": "NBO"}]},
+            "segments",
+        ),
     ],
 )
 def test_confirm_validates_changes(admin_api, booking, body, field):
-    response = confirm(admin_api, booking, body)
+    response = confirm(admin_api, booking, body())
     assert response.status_code == 400
     assert field in response.data
     booking.refresh_from_db()
@@ -177,11 +217,15 @@ def test_bookings_with_changes_awaiting_acceptance_still_expire(admin_api, booki
 
 def test_email_lists_the_changes(admin_api, booking, django_capture_on_commit_callbacks):
     with django_capture_on_commit_callbacks(execute=True):
-        confirm(admin_api, booking, {"unit_price": "700", "stops": []})
+        confirm(admin_api, booking, {"unit_price": "700", "segments": direct()})
     [email] = mail.outbox
+    code = airline_named().iata_code
+    date = f"{day(30):%a}, {day(30).day} {day(30):%b %Y}"
+    later = f"{day(31):%a}, {day(31).day} {day(31):%b %Y}"
     for text in (
         "Price per person: USD 650.00 → USD 700.00",
-        "Stops: Dubai (DXB), 2 h 15 min layover → Direct",
+        f"Flights: Outbound {code} 310 NBO → DXB, {date} 00:50 – 05:40; Outbound {code} 312 DXB → LHR, {date} 07:55 – 12:30"
+        f" → Outbound {code} 100 NBO → LHR, {later} 10:00 – 18:00",
         "accept or decline these changes in the app before you pay",
         f"/bookings/{booking.id}",
     ):
@@ -195,7 +239,7 @@ def test_email_without_changes_does_not_mention_them(admin_api, booking, django_
     with django_capture_on_commit_callbacks(execute=True):
         confirm(admin_api, booking)
     [email] = mail.outbox
-    assert "changes" not in email.body
+    assert "accept or decline these changes" not in email.body
     assert "Review the changes" not in html_part(email)
 
 

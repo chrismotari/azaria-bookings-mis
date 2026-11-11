@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from catalog.models import Offer
 from core.models import AppSettings
-from core.tests.helpers import airline_named, html_part
+from core.tests.helpers import TEST_SCHEMA, airline_named, direct, html_part
 from customer_requests.models import Query, QueryResponse
 from customer_requests.tasks import notify_admin_new_query, notify_customer_query_responded
 
@@ -41,12 +41,9 @@ def query(customer, airports):
 
 def new_offer_payload(airports, **overrides):
     return {
-        "origin": airports["NBO"].id,
-        "destination": airports["DXB"].id,
-        "departure_date": in_days(25),
+        "segments": direct("NBO", "DXB", in_days(25)),
         "ticket_class": "business",
         "price": "880.00",
-        "stops": [],
         "airline": str(airline_named("Emirates").id),
         "valid_until": in_days(5),
         **overrides,
@@ -253,14 +250,14 @@ def test_respond_is_all_or_nothing_when_a_new_offer_is_invalid(admin_api, query,
         "offer_ids": [existing.id],
         "new_offers": [
             new_offer_payload(airports),
-            new_offer_payload(airports, destination=airports["NBO"].id),
+            new_offer_payload(airports, segments=direct("NBO", "NBO", in_days(25))),
         ],
     }
     response = admin_api.post(f"/api/admin/queries/{query.id}/respond", payload, format="json")
     assert response.status_code == 400
     errors = response.data["new_offers"]
     assert errors[0] == {}
-    assert "destination" in errors[1]
+    assert "segments" in errors[1]
     assert Offer.objects.count() == 1
     assert QueryResponse.objects.count() == 0
 
@@ -340,3 +337,46 @@ def test_unknown_or_malformed_query_id_returns_404(customer_api, admin_api, quer
     assert customer_api.post(f"/api/queries/{query_id}/close").status_code == 404
     assert admin_api.get(f"/api/admin/queries/{query_id}").status_code == 404
     assert admin_api.post(f"/api/admin/queries/{query_id}/respond", {"message": "x"}, format="json").status_code == 404
+
+
+def test_a_request_can_ask_for_a_return_trip(customer_api, query_payload):
+    response = customer_api.post(
+        "/api/queries", {**query_payload, "trip_type": "return", "return_date": in_days(50)}, format="json"
+    )
+    assert response.status_code == 201, response.data
+    assert (response.data["trip_type"], response.data["return_date"]) == ("return", in_days(50))
+    assert Query.objects.get().return_date.isoformat() == in_days(50)
+
+
+def test_trip_type_defaults_to_any(customer_api, query_payload):
+    response = customer_api.post("/api/queries", query_payload, format="json")
+    assert (response.data["trip_type"], response.data["return_date"]) == ("", None)
+
+
+@pytest.mark.parametrize(
+    ("fields", "error"),
+    [
+        ({"trip_type": "one_way", "return_date": in_days(50)}, "return_date"),
+        ({"trip_type": "", "return_date": in_days(50)}, "return_date"),
+        ({"trip_type": "return", "return_date": in_days(10)}, "return_date"),
+        ({"trip_type": "multi_city"}, "trip_type"),
+    ],
+)
+def test_return_date_rules(customer_api, query_payload, fields, error):
+    response = customer_api.post("/api/queries", {**query_payload, **fields}, format="json")
+    assert response.status_code == 400
+    assert error in response.data
+
+
+def test_new_request_email_shows_the_trip(customer, airports, django_capture_on_commit_callbacks):
+    query = Query.objects.create(
+        user=customer,
+        origin=airports["NBO"],
+        date_from=timezone.localdate(),
+        trip_type="return",
+        return_date=timezone.localdate() + timedelta(days=7),
+    )
+    AppSettings.objects.update(admin_notification_email="admin@example.com")
+    notify_admin_new_query(TEST_SCHEMA, query.pk)
+    back = timezone.localdate() + timedelta(days=7)
+    assert f"Trip: Return, back {back:%a}, {back.day} {back:%b %Y}" in mail.outbox[0].body

@@ -16,7 +16,7 @@ from airlines.management.commands import seed_airlines
 from airlines.models import MAX_LOGO_SIZE, Airline, validate_logo
 from airlines.serializers import AirlineSerializer
 from core.storage import public_storage
-from core.tests.helpers import TEST_SCHEMA
+from core.tests.helpers import TEST_SCHEMA, direct
 
 pytestmark = pytest.mark.django_db
 
@@ -139,9 +139,7 @@ def test_offers_return_the_airline_with_an_absolute_logo_url(api, make_offer):
 
 def offer_body(airports, airline, **overrides):
     return {
-        "origin": str(airports["NBO"].id),
-        "destination": str(airports["LHR"].id),
-        "departure_date": (timezone.localdate() + timedelta(days=30)).isoformat(),
+        "segments": direct("NBO", "LHR", timezone.localdate() + timedelta(days=30)),
         "ticket_class": "economy",
         "price": "500",
         "airline": str(airline.id),

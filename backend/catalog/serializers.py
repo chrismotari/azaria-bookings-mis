@@ -2,24 +2,18 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
+from airlines.models import Airline
 from airlines.serializers import AirlineSerializer
 from airports.models import Airport
 
-from .models import Offer, Stop
+from .itinerary import airlines_in, by_direction, connections, derived_fields, itinerary_errors
+from .models import Offer, Segment, Trip
 
 
 class AirportSerializer(serializers.ModelSerializer):
     class Meta:
         model = Airport
         fields = ["id", "code", "name", "city", "country", "country_code"]
-
-
-class StopSerializer(serializers.Serializer):
-    """Read-only representation of an OfferStop or BookingStop."""
-
-    airport = AirportSerializer(read_only=True)
-    duration_minutes = serializers.IntegerField(read_only=True)
-    kind = serializers.CharField(read_only=True)
 
 
 class AirportCodeField(serializers.SlugRelatedField):
@@ -29,31 +23,79 @@ class AirportCodeField(serializers.SlugRelatedField):
         return super().to_internal_value(data.strip().upper() if isinstance(data, str) else data)
 
 
-class StopInputSerializer(serializers.Serializer):
-    airport = AirportCodeField(slug_field="code", queryset=Airport.objects.all())
-    duration_minutes = serializers.IntegerField(min_value=1)
+class SegmentSerializer(serializers.Serializer):
+    """Read-only representation of an OfferSegment or BookingSegment."""
+
+    airline = AirlineSerializer(read_only=True)
+    flight_number = serializers.CharField(read_only=True)
+    operating_airline = AirlineSerializer(read_only=True)
+    origin = AirportSerializer(read_only=True)
+    destination = AirportSerializer(read_only=True)
+    departure_date = serializers.DateField(read_only=True)
+    departure_time = serializers.TimeField(format="%H:%M", read_only=True)
+    arrival_date = serializers.DateField(read_only=True)
+    arrival_time = serializers.TimeField(format="%H:%M", read_only=True)
 
 
-def stops_data(stops):
-    """stops and stop_count for an API representation; stops: the instance's ordered stop list."""
-    stops = list(stops)
-    return {"stops": StopSerializer(stops, many=True).data, "stop_count": len(stops)}
+class SegmentInputSerializer(serializers.Serializer):
+    direction = serializers.ChoiceField(choices=Segment.Direction.choices)
+    airline = serializers.PrimaryKeyRelatedField(queryset=Airline.objects.all())
+    flight_number = serializers.RegexField(
+        r"^\d{1,4}[A-Za-z]?$", error_messages={"invalid": "1 to 4 digits and an optional letter, e.g. 100 or 2A."}
+    )
+    operating_airline = serializers.PrimaryKeyRelatedField(
+        queryset=Airline.objects.all(), required=False, allow_null=True, default=None
+    )
+    origin = AirportCodeField(slug_field="code", queryset=Airport.objects.all())
+    destination = AirportCodeField(slug_field="code", queryset=Airport.objects.all())
+    departure_date = serializers.DateField()
+    departure_time = serializers.TimeField()
+    arrival_date = serializers.DateField()
+    arrival_time = serializers.TimeField()
+
+    def validate_flight_number(self, value):
+        return value.upper()
+
+    def validate(self, attrs):
+        # The marketing carrier operating its own flight is not a codeshare.
+        if attrs["operating_airline"] == attrs["airline"]:
+            attrs["operating_airline"] = None
+        return attrs
 
 
-def stop_errors(origin, destination, stops):
-    """Messages for a stop list that breaks the rules; stops: ordered dicts with an airport."""
-    if len(stops) > Stop.MAX_PER_FLIGHT:
-        return [f"A flight can have at most {Stop.MAX_PER_FLIGHT} stops."]
-    errors = []
-    for number, stop in enumerate(stops, start=1):
-        airport = stop["airport"]
-        if airport == origin:
-            errors.append(f"Stop {number}: the airport must differ from the origin.")
-        elif airport == destination:
-            errors.append(f"Stop {number}: the airport must differ from the destination.")
-        elif number > 1 and airport == stops[number - 2]["airport"]:
-            errors.append(f"Stop {number}: the airport must differ from the stop before it.")
-    return errors
+def itinerary_data(segments, context=None):
+    """{"itinerary": {outbound, return}} for an offer or booking; segments: the instance's ordered segment rows.
+
+    Each direction holds its segments, connections and stop_count; return is null without return flights.
+    """
+    segments = list(segments)
+    flights = by_direction([s.as_data() for s in segments])
+    data = {}
+    for direction in Segment.Direction.values:
+        rows = [s for s in segments if s.direction == direction]
+        if direction == Segment.Direction.RETURN and not rows:
+            data[direction] = None
+            continue
+        data[direction] = {
+            "segments": SegmentSerializer(rows, many=True, context=context).data,
+            "connections": [
+                {**connection, "airport": AirportSerializer(connection["airport"]).data}
+                for connection in connections(flights[direction])
+            ],
+            "stop_count": max(len(rows) - 1, 0),
+        }
+    return {"itinerary": data}
+
+
+def baggage_errors(attrs, instance=None):
+    """A checked bag weight needs at least one checked bag."""
+
+    def current(field):
+        return attrs.get(field, getattr(instance, field, None))
+
+    if not current("checked_bags") and current("checked_bag_kg") is not None:
+        return {"checked_bag_kg": "Leave the weight empty when no checked bag is included."}
+    return {}
 
 
 class OfferSerializer(serializers.ModelSerializer):
@@ -71,6 +113,7 @@ class OfferSerializer(serializers.ModelSerializer):
             "origin",
             "destination",
             "departure_date",
+            *Trip.FIELDS,
             "ticket_class",
             "price",
             "airline",
@@ -80,17 +123,18 @@ class OfferSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def to_representation(self, instance):
-        return {**super().to_representation(instance), **stops_data(instance.stops.all())}
+        return {**super().to_representation(instance), **itinerary_data(instance.segments.all(), self.context)}
 
 
 class AdminOfferSerializer(serializers.ModelSerializer):
-    """Airports and the airline are written by id and read as nested objects.
+    """The ticketing airline is written by id and read as a nested object.
 
-    Stops are written by IATA code, in flight order; an edit that includes stops replaces them all.
+    segments: one ordered list for both directions; an edit that includes them replaces them all. origin,
+    destination, departure_date and return_date are derived from them.
     """
 
     is_bookable = serializers.BooleanField(read_only=True)
-    stops = StopInputSerializer(many=True, required=False, write_only=True)
+    segments = SegmentInputSerializer(many=True, required=False, write_only=True)
 
     class Meta:
         model = Offer
@@ -99,6 +143,7 @@ class AdminOfferSerializer(serializers.ModelSerializer):
             "origin",
             "destination",
             "departure_date",
+            *Trip.FIELDS,
             "ticket_class",
             "price",
             "airline",
@@ -107,16 +152,16 @@ class AdminOfferSerializer(serializers.ModelSerializer):
             "is_active",
             "is_bookable",
             "created_at",
-            "stops",
+            "segments",
         ]
-        read_only_fields = ["id", "is_bookable", "created_at"]
+        read_only_fields = ["id", "origin", "destination", "departure_date", "return_date", "is_bookable", "created_at"]
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
         data["origin"] = AirportSerializer(instance.origin).data
         data["destination"] = AirportSerializer(instance.destination).data
         data["airline"] = AirlineSerializer(instance.airline, context=self.context).data
-        return {**data, **stops_data(instance.stops.all())}
+        return {**data, **itinerary_data(instance.segments.all(), self.context)}
 
     def validate_price(self, value):
         if value <= 0:
@@ -134,36 +179,35 @@ class AdminOfferSerializer(serializers.ModelSerializer):
         def current(field):
             return attrs.get(field, getattr(self.instance, field, None))
 
-        errors = {}
-        if current("origin") == current("destination"):
-            errors["destination"] = "Destination must differ from origin."
-        if current("valid_until") > current("departure_date"):
+        existing = [s.as_data() for s in self.instance.segments.all()] if self.instance is not None else []
+        segments = attrs.get("segments", existing)
+        trip_type = current("trip_type") or Trip.TripType.ONE_WAY
+
+        errors = baggage_errors(attrs, self.instance)
+        # Inactive airlines the offer already flies may stay.
+        if messages := itinerary_errors(trip_type, segments, airlines_in(existing)):
+            errors["segments"] = messages
+            raise serializers.ValidationError(errors)
+        attrs.update(derived_fields(segments))
+        if current("valid_until") > attrs["departure_date"]:
             errors["valid_until"] = "Valid until must be on or before the departure date."
         if self.instance is None and attrs["valid_until"] < timezone.localdate():
             errors["valid_until"] = "Valid until cannot be in the past."
-        if "stops" in attrs:
-            stops = attrs["stops"]
-        elif self.instance is not None:
-            stops = [{"airport": stop.airport} for stop in self.instance.stops.select_related("airport")]
-        else:
-            stops = []
-        if messages := stop_errors(current("origin"), current("destination"), stops):
-            errors["stops"] = messages
         if errors:
             raise serializers.ValidationError(errors)
         return attrs
 
     @transaction.atomic
     def create(self, validated_data):
-        stops = validated_data.pop("stops", [])
+        segments = validated_data.pop("segments")
         offer = super().create(validated_data)
-        offer.set_stops(stops)
+        offer.set_segments(segments)
         return offer
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        stops = validated_data.pop("stops", None)
+        segments = validated_data.pop("segments", None)
         offer = super().update(instance, validated_data)
-        if stops is not None:
-            offer.set_stops(stops)
+        if segments is not None:
+            offer.set_segments(segments)
         return offer

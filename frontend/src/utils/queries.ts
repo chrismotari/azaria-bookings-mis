@@ -12,10 +12,18 @@ function place(airport: Airport | null): string {
   return airport ? `${airport.city} (${airport.code})` : 'Anywhere';
 }
 
+function tripLabel(query: Query): string {
+  if (query.trip_type === 'return') {
+    return query.return_date ? `Return, back ${formatDate(query.return_date)}` : 'Return';
+  }
+  return query.trip_type === 'one_way' ? 'One way' : 'Any';
+}
+
 export function describeQuery(query: Query) {
   const { price_min: min, price_max: max } = query;
   return {
-    route: `${place(query.origin)} → ${place(query.destination)}`,
+    route: `${place(query.origin)} ${query.trip_type === 'return' ? '⇄' : '→'} ${place(query.destination)}`,
+    trip: tripLabel(query),
     dates: query.date_to
       ? `${formatDate(query.date_from)} – ${formatDate(query.date_to)}`
       : `From ${formatDate(query.date_from)}`,

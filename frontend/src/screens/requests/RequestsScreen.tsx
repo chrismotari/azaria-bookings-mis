@@ -79,6 +79,7 @@ function QueryRow({ query, selected, onPress }: { query: Query; selected: boolea
   const details = describeQuery(query);
   const status = QUERY_STATUS[query.status];
   const criteria = [
+    details.trip === 'Any' ? 'Any trip' : details.trip,
     details.ticketClass === 'Any' ? 'Any class' : details.ticketClass,
     details.prices === 'Any' ? 'Any price' : details.prices,
     query.max_stopovers === null
@@ -98,7 +99,7 @@ function QueryRow({ query, selected, onPress }: { query: Query; selected: boolea
         <Text style={styles.muted}>Sent {formatDateTime(query.created_at)}</Text>
         <StatusChip label={status.label} tone={status.tone} />
       </View>
-      <RouteLine origin={query.origin} destination={query.destination} />
+      <RouteLine origin={query.origin} destination={query.destination} returnTrip={query.trip_type === 'return'} />
       <View style={styles.fact}>
         <Icon name="calendar-outline" size={16} color={colors.muted} />
         <Text style={styles.text}>{details.dates}</Text>

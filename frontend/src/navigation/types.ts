@@ -1,6 +1,6 @@
 import { NavigatorScreenParams } from '@react-navigation/native';
 
-import { BookingStatus, QueryStatus, TicketClass } from '../api/types';
+import { BookingStatus, QueryStatus, TicketClass, TripType } from '../api/types';
 
 /** Prefilled request-for-options criteria (airports as IATA codes), e.g. from Explore's filters. */
 export type QueryPrefill = {
@@ -8,6 +8,8 @@ export type QueryPrefill = {
   destination?: string;
   date_from?: string;
   date_to?: string;
+  trip_type?: TripType;
+  return_date?: string;
   price_min?: string;
   price_max?: string;
   ticket_class?: TicketClass;

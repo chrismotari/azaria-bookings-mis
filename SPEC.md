@@ -16,7 +16,7 @@ This document describes the system as it stands. Work is delivered in the number
 - No TODOs, stubs, placeholder code, mock data, or unused fields, endpoints, models or dependencies.
 - Out of scope until specified in a step: payment processing and GDS or airline APIs (see Planned above). Out of scope: passenger details, push notifications, email verification, re-sending passes after completion, multi-currency for bookings, multi-language, social login, reviews, packages, blog, per-agency branding.
 - Agency prices (offers, bookings) are USD, defined once as `CURRENCY`; no currency column on them. Platform prices use `PLATFORM_CURRENCY`. Fares from providers keep their original currency and are converted to USD for every calculation and comparison (step 35).
-- Time zone Africa/Nairobi, `USE_TZ = True`; all user-facing times are Nairobi time.
+- Time zone Africa/Nairobi, `USE_TZ = True`; all user-facing times are Nairobi time, except flight times, which are the local times of the airport concerned (stored as date and time with no time zone).
 - "Admin" is the agency owner's in-app role (`User.role == "admin"`). Django's admin site is technical support only, mounted at `/django-admin/` for superusers. Never mix the two.
 - Every model's primary key is a UUID (`default=uuid.uuid4`), and so is every id in URLs and API bodies. Only Django's framework tables keep numeric keys. Airports are identified by IATA code in the API. A malformed id returns 404.
 - Web first: when web and native conflict, choose web. The app must compile for native but is verified in the browser.
@@ -57,10 +57,10 @@ Shared (public schema)
 Per agency
 - **User**: email login (unique), full_name, phone, role (customer / admin), is_active. Registration creates customers only; admins via `create_agency` or `create_admin`.
 - **AppSettings** (single row): payment_instructions, payment_hold_hours (24), reminder_hours_before (4), admin_notification_email.
-- **Offer**: origin, destination (Airport), departure_date, ticket_class (economy / premium_economy / business / first), price (per person), airline (active Airline on create/change), valid_until, is_public, is_active, created_at. Validation: origin ≠ destination, price > 0, valid_until ≤ departure_date and ≥ today on create. Bookable = active, valid_until ≥ today, departure ≥ today. Non-public offers exist only for one customer's request responses. Never deleted.
-- **OfferStop / BookingStop**: ordered position, airport, duration_minutes > 0. At most 4; airport differs from origin, destination and the previous stop. Kind derived: layover < 24 h ≤ stopover. Bookings copy the offer's stops at creation.
-- **Query** (request for options): user, origin, destination (one required), date_from, date_to, price_min, price_max, ticket_class, max_stopovers, message, status (open / responded / closed). **QueryResponse**: query, message, offers (M2M), created_at; creating one marks the query responded.
-- **Booking**: user, offer, query, passenger_count (1–9), notes, unit_price (copied), status, payment_deadline, reminder_sent_at, changes (JSON of old/new unit_price and stops, null when none), changes_accepted, alternatives (Query of suggested options), created_at. Total = unit_price × passengers. No second active (requested / confirmed / paid) booking per user per offer.
+- **Offer**: trip_type (one_way / return), origin, destination (Airport), departure_date, return_date (null for one-way), ticket_class (economy / premium_economy / business / first), price (per person; for a return, the round trip), airline (the ticketing airline; active on create/change), baggage per passenger (checked_bags 0–3, checked_bag_kg and cabin_bag_kg, null = not stated), refund_policy and change_policy (not_allowed / with_fee / free), valid_until, is_public, is_active, created_at. Origin, destination, departure_date and return_date are derived from the segments. Validation: price > 0, valid_until ≤ departure_date and ≥ today on create. Bookable = active, valid_until ≥ today, departure ≥ today. Non-public offers exist only for one customer's request responses. Never deleted.
+- **OfferSegment / BookingSegment**: one flight each: direction (outbound / return), position (from 1 within a direction), airline (marketing carrier), flight_number (1–4 digits and an optional letter), operating_airline (codeshares only), origin, destination, departure and arrival date and time (local). Per direction 1–5 segments, chained airport to airport, each leaving after the previous one lands, arrival date one day before to two days after departure; the outbound flights end elsewhere than they start; one-way offers have no return segments; return segments go back from the destination to the origin and leave after the outbound ones land. Active airlines on create or change. Connections are derived between consecutive segments: airport, wait in minutes and kind (layover < 24 h ≤ stopover). Bookings copy the offer's segments, trip type, return date, baggage and fare conditions at creation.
+- **Query** (request for options): user, origin, destination (one required), date_from, date_to, trip_type (blank = any, one_way, return), return_date (return only), price_min, price_max, ticket_class, max_stopovers, message, status (open / responded / closed). **QueryResponse**: query, message, offers (M2M), created_at; creating one marks the query responded.
+- **Booking**: user, offer, query, passenger_count (1–9), notes, unit_price (copied), status, payment_deadline, reminder_sent_at, trip fields and segments copied from the offer, changes (JSON of old/new unit_price and segments, null when none), changes_accepted, alternatives (Query of suggested options), created_at. Total = unit_price × passengers. No second active (requested / confirmed / paid) booking per user per offer.
 - **BookingEvent**: booking, from_status, to_status, actor (null = system), created_at. Written on creation and every change.
 - **BoardingPass**: booking, file (private, `boarding_passes/<schema>/<booking>/`), original_name, uploaded_at. PDF/PNG/JPEG ≤ 5 MB, content-checked, ≤ 10 per booking. Upload and delete only while paid; delete removes the file.
 - **Conversation / Message** (support): see §8.
@@ -71,8 +71,8 @@ All changes go through `bookings/services.py` (`create_booking`, `transition`): 
 
 | From | To | Who | Notes |
 | --- | --- | --- | --- |
-| requested | availability_confirmed | admin | Needs payment instructions. Sets deadline = now + hold hours. Optional new unit_price/stops recorded in `changes`. |
-| requested / confirmed | unavailable | admin | Optional suggested offers: creates a responded Query linked as `alternatives`. |
+| requested | availability_confirmed | admin | Needs payment instructions. Sets deadline = now + hold hours. Optional new unit_price/segments (same trip type and route) recorded in `changes`. |
+| requested / confirmed | unavailable | admin | Optional suggested offers: creates a responded Query (the booking's route, dates and trip type) linked as `alternatives`. |
 | requested / confirmed | cancelled | customer | No email. |
 | requested / confirmed | expired | system | Stale request or deadline passed. |
 | availability_confirmed | paid | admin | Refused after the deadline or while changes await acceptance. |
@@ -83,7 +83,7 @@ Customers accept changes with `accept-changes` (409 unless awaiting). Admins can
 
 ## 6. Emails
 
-HTML (one themed base layout, table-based, inline CSS, no images) plus plain-text fallback, via `EmailMultiAlternatives`. Tasks take ids only, retry with backoff (max 5), and reload and re-check state before sending.
+HTML (one themed base layout, table-based, inline CSS, no images) plus plain-text fallback, via `EmailMultiAlternatives`. Emails about a booking show its itinerary per direction (flight numbers, local times, connections), baggage and fare conditions. Tasks take ids only, retry with backoff (max 5), and reload and re-check state before sending.
 
 - Agency admin: new request, new booking, new support message.
 - Customer: request responded, availability confirmed (payment instructions, deadline, any changes), unavailable (with suggestions link if any), payment received, booking expired, payment reminder, boarding passes (all files attached), password reset, account created (set-password link), support reply.
@@ -121,8 +121,9 @@ Agencies pay outside the system. `tenants/billing.py`:
 ## 10. API
 
 Agency host, `/api/`:
-- Public: `auth/register`, `auth/login`, `auth/refresh`, `auth/password-reset`, `auth/password-reset-confirm` (same response for unknown emails); `airports?search=` (exact code first, ≤ 20); `offers` (filters: origin/destination text, date range, price range, class, max_stopovers; ordering) and `offers/{id}`; `POST support/chats`.
+- Public: `auth/register`, `auth/login`, `auth/refresh`, `auth/password-reset`, `auth/password-reset-confirm` (same response for unknown emails); `airports?search=` (exact code first, ≤ 20); `offers` (filters: origin/destination text, date range, trip_type, return date range, price range, class, max_stopovers counted in the busier direction; ordering) and `offers/{id}`; `POST support/chats`.
 - Signed in: `auth/me`; `queries` (+ `close`); `bookings` (+ `cancel`, `accept-changes`, `decline-changes`); `boarding-passes/{id}/download` (admin, or customer once completed); `support/chats`, `support/chats/{id}` (+ `messages`), `support/unread`, `support/attachments/{id}`.
+- Offers (public, admin, nested in responses and bookings) return the trip fields and `itinerary`: `{outbound, return}`, each direction with its segments (nested airlines and airports), connections and stop_count; return is null for one-way. Admin create/edit and custom offers take `segments` as one ordered list; an edit with segments replaces them all. Bookings return their own trip fields and itinerary.
 - Offer visibility for customers: public and active, or attached to a response to one of their queries (detail and booking only).
 - Admin (`/api/admin/`, `IsAdminRole`): `dashboard`, `offers`, `queries` (+ `respond`), `bookings` (create for a customer, + `confirm-availability`, `mark-unavailable`, `mark-paid`, `complete`, `boarding-passes`), `boarding-passes/{id}` (delete), `settings`, `users` (customers only; deactivate instead of delete), `airlines?search=`, `chats` (+ `unread`, `{id}`, `messages`, `close`), `plans`, `billing`, `billing/invoices` (+ `pdf`); and `support/platform-chats` (+ `unread`, `{id}`, `messages`), `support/platform-attachments/{id}`.
 
@@ -135,13 +136,14 @@ Look and layout
 - Wide (≥ 900 px): indigo top bar with brand, nav items with icons, account menu (initials). Narrow: slim top bar plus bottom tabs. No horizontal scrolling at 390 or 1280 px.
 - List → detail opens a right-hand drawer (~480 px) on wide screens with its own URL (no history entries; Escape closes); full screen on narrow. Forms that start new work (Book, Request options, New offer, Respond) are full pages; short tasks use a shared Dialog (small/large, focus-managed, full screen on phones).
 - Every list has loading, empty and error states; zod mirrors server validation; dates via a web date input; uploads and file opening are web only.
-- Airline badge: logo or initials in the same fixed square frame. Country flags (bundled flag-icons SVGs) only in airport pickers, offer detail header and stop lists, decorative.
+- Airline badge: logo or initials in the same fixed square frame. Country flags (bundled flag-icons SVGs) only in airport pickers, offer detail header and connection rows, decorative.
+- Compact route lines show "NBO → LHR" for one-way and "NBO ⇄ LHR" for return trips, with both dates.
 - Auth gate: login-required actions store the intended action in memory, send the guest to Login/Register, then resume it.
 
 Agency app
-- Guests: Explore (hero search bar with swap, date range and class; filter sidebar or panel; sort tabs; flight result rows; empty state with "Request options") and offer detail (route header, stops, price card, Book with passenger stepper and live total).
-- Customers: Requests (criteria, responses with offers), Bookings (trip cards; progress tracker or terminal banner; payment box with countdown; changes box to accept or decline; suggested options; boarding passes), Account (+ Support).
-- Admins: Dashboard (count tiles), Offers (table, form with airline and airport pickers and stop editor), Requests (Respond), Bookings (status tabs, action bar, confirm-with-changes and mark-unavailable dialogs, pass upload and send, New booking dialog), Users, Chats, Settings (app settings, Billing with Compare plans, Support).
+- Guests: Explore (hero search bar with Any / Return / One way, swap, departure and return date ranges and class; filter sidebar or panel; sort tabs; flight result rows with one line of local times per direction and a baggage summary; empty state with "Request options") and offer detail (route header, an itinerary card per direction with connections, baggage and fare conditions, price card, Book with both directions, passenger stepper and live total).
+- Customers: Requests (criteria including trip type and return date, responses with offers), Bookings (trip cards; itinerary, baggage and conditions cards; progress tracker or terminal banner; payment box with countdown; changes box to accept or decline; suggested options; boarding passes), Account (+ Support).
+- Admins: Dashboard (count tiles), Offers (table, form with One way / Return, a segment editor per direction with live connections, baggage and fare conditions), Requests (Respond), Bookings (status tabs, action bar, confirm-with-changes (price and flights) and mark-unavailable dialogs, pass upload and send, New booking dialog), Users, Chats, Settings (app settings, Billing with Compare plans, Support).
 - `no_tenant` / `tenant_suspended` responses show a full-page message.
 
 Platform app (root host, web only)
@@ -186,10 +188,10 @@ All delivered; each was one commit.
 31. Support chat: agency desk.
 32. Support chat: platform desk and plan enquiries.
 33. UUIDs on agencies, domains and settings.
+34. Return trips and flight details (see §14).
 
 Pending (not yet built):
 
-34. Return trips and flight details (see §14).
 35. GDS search: integrations, routes, manual search and review (see §15).
 36. Scheduled route searches and offer refresh (see §16).
 37. Re-check a booking's fare (see §17).

@@ -8,7 +8,10 @@
   </tr>
   {% include "emails/_row.html" with label="Route" value=route %}
   {% include "emails/_row.html" with label="Departure" value=departure %}
-  {% include "emails/_row.html" with label="Stops" value=stops %}
+  {% include "emails/_row.html" with label="Outbound" value=outbound_flights %}
+  {% if return_flights %}{% include "emails/_row.html" with label="Return" value=return_flights %}{% endif %}
+  {% include "emails/_row.html" with label="Baggage" value=baggage %}
+  {% include "emails/_row.html" with label="Fare conditions" value=conditions %}
   {% include "emails/_row.html" with label="Class" value=ticket_class %}
   {% include "emails/_row.html" with label="Airline" value=booking.offer.airline %}
   {% include "emails/_row.html" with label="Passengers" value=booking.passenger_count %}

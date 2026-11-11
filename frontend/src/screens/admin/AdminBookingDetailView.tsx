@@ -16,6 +16,7 @@ import { ChangeList } from '../../components/ChangeList';
 import { useConfirm } from '../../components/ConfirmDialog';
 import { FileField } from '../../components/FileField';
 import { FormError } from '../../components/Field';
+import { ItineraryCards, TripConditions } from '../../components/Itinerary';
 import { StatusChip } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { colors, font, weight } from '../../theme';
@@ -210,6 +211,10 @@ export function AdminBookingDetailView({ id }: { id: string }) {
         {data.status === 'availability_confirmed' && data.payment_deadline ? (
           <Text style={styles.deadline}>Payment due by {formatDateTime(data.payment_deadline)}</Text>
         ) : null}
+      </Card>
+      <ItineraryCards itinerary={data.itinerary} />
+      <Card>
+        <TripConditions trip={data} />
       </Card>
 
       <Card>

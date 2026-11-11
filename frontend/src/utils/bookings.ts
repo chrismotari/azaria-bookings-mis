@@ -1,6 +1,6 @@
-import { Booking, BookingChanges, BookingStatus, StopChange } from '../api/types';
+import { Booking, BookingChanges, BookingStatus, SegmentChange } from '../api/types';
 import { Tone } from '../components/StatusChip';
-import { formatDuration, formatPrice } from './format';
+import { formatPrice } from './format';
 
 export const BOOKING_STATUS: Record<BookingStatus, { label: string; tone: Tone }> = {
   requested: { label: 'Requested', tone: 'warning' },
@@ -34,7 +34,16 @@ export function changesAwaitingAcceptance(booking: Booking): boolean {
 
 export function bookingRoute(booking: Booking): string {
   const { origin, destination } = booking.offer;
-  return `${origin.city} (${origin.code}) → ${destination.city} (${destination.code})`;
+  const arrow = booking.trip_type === 'return' ? '⇄' : '→';
+  return `${origin.city} (${origin.code}) ${arrow} ${destination.city} (${destination.code})`;
+}
+
+/** The booking's own travel dates (its outbound flights and return date). */
+export function bookingDates(booking: Booking): { departure_date: string; return_date: string | null } {
+  return {
+    departure_date: booking.itinerary.outbound.segments[0]?.departure_date ?? booking.offer.departure_date,
+    return_date: booking.return_date,
+  };
 }
 
 export function passengersLabel(count: number): string {
@@ -51,19 +60,14 @@ export function timeLeft(deadline: string, now: number): string {
   return hours > 0 ? `${hours} h ${minutes % 60} min left` : `${minutes} min left`;
 }
 
-const STOPOVER_MINUTES = 24 * 60;
-
-/** e.g. "DXB Dubai, 2 h 15 min layover; MBA Mombasa, 26 h stopover", or "Direct". */
-function stopChangesLabel(stops: StopChange[]): string {
-  if (stops.length === 0) {
-    return 'Direct';
-  }
-  return stops
-    .map((stop) => {
-      const kind = stop.duration_minutes >= STOPOVER_MINUTES ? 'stopover' : 'layover';
-      return `${stop.code} ${stop.city}, ${formatDuration(stop.duration_minutes)} ${kind}`;
+/** One line per flight, e.g. "Outbound KQ 310 NBO → DXB, Fri, 10 Apr 2026 23:50 – 05:40". */
+function segmentChangesLabel(segments: SegmentChange[]): string {
+  return segments
+    .map((line) => {
+      const direction = line.direction === 'return' ? 'Return' : 'Outbound';
+      return `${direction} ${line.flight} ${line.route}, ${line.departure} – ${line.arrival}`;
     })
-    .join('; ');
+    .join('\n');
 }
 
 export function describeChanges(changes: BookingChanges): { label: string; old: string; new: string }[] {
@@ -75,8 +79,12 @@ export function describeChanges(changes: BookingChanges): { label: string; old: 
       new: formatPrice(changes.unit_price.new),
     });
   }
-  if (changes.stops) {
-    rows.push({ label: 'Stops', old: stopChangesLabel(changes.stops.old), new: stopChangesLabel(changes.stops.new) });
+  if (changes.segments) {
+    rows.push({
+      label: 'Flights',
+      old: segmentChangesLabel(changes.segments.old),
+      new: segmentChangesLabel(changes.segments.new),
+    });
   }
   return rows;
 }

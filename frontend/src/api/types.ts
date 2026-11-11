@@ -49,26 +49,69 @@ export const TICKET_CLASSES: { value: TicketClass; label: string }[] = [
   { value: 'first', label: 'First' },
 ];
 
-/** A stop between origin and destination: a layover under 24 hours, a stopover from 24 hours. */
-export type Stop = {
+export type TripType = 'one_way' | 'return';
+
+/** A fare condition for refunds or changes. */
+export type Policy = 'not_allowed' | 'with_fee' | 'free';
+
+export type Direction = 'outbound' | 'return';
+
+/** One flight. Dates and times ("HH:MM") are local to the airport concerned. */
+export type Segment = {
+  airline: Airline;
+  flight_number: string;
+  /** Set only for a codeshare. */
+  operating_airline: Airline | null;
+  origin: Airport;
+  destination: Airport;
+  departure_date: string;
+  departure_time: string;
+  arrival_date: string;
+  arrival_time: string;
+};
+
+/** The wait between two flights of one direction: a layover under 24 hours, a stopover from 24 hours. */
+export type Connection = {
   airport: Airport;
-  duration_minutes: number;
+  wait_minutes: number;
   kind: 'layover' | 'stopover';
 };
 
-export type Offer = {
+export type ItineraryDirection = {
+  /** In flight order. */
+  segments: Segment[];
+  connections: Connection[];
+  stop_count: number;
+};
+
+export type Itinerary = { outbound: ItineraryDirection; return: ItineraryDirection | null };
+
+/** Trip type, baggage per passenger and fare conditions: an offer's, or a booking's own copy. */
+export type Trip = {
+  trip_type: TripType;
+  /** The first return flight's date; null for one way. */
+  return_date: string | null;
+  checked_bags: number;
+  /** Null when not stated. */
+  checked_bag_kg: number | null;
+  cabin_bag_kg: number | null;
+  refund_policy: Policy;
+  change_policy: Policy;
+  itinerary: Itinerary;
+};
+
+export type Offer = Trip & {
   id: string;
   origin: Airport;
   destination: Airport;
   departure_date: string;
   ticket_class: TicketClass;
+  /** Per person; for a return trip, the round trip. */
   price: string;
+  /** The ticketing airline. */
   airline: Airline;
   valid_until: string;
   is_bookable: boolean;
-  /** In flight order. */
-  stops: Stop[];
-  stop_count: number;
 };
 
 export type AdminOffer = Offer & {
@@ -92,6 +135,9 @@ export type Query = {
   destination: Airport | null;
   date_from: string;
   date_to: string | null;
+  /** Empty for any. */
+  trip_type: TripType | '';
+  return_date: string | null;
   price_min: string | null;
   price_max: string | null;
   ticket_class: TicketClass | '';
@@ -124,15 +170,17 @@ export type BookingEvent = {
   created_at: string;
 };
 
-export type StopChange = { code: string; city: string; duration_minutes: number };
+/** A segment as recorded in a booking's changes, already readable. */
+export type SegmentChange = { direction: Direction; flight: string; route: string; departure: string; arrival: string };
 
 /** Only the keys that changed are present. */
 export type BookingChanges = {
   unit_price?: { old: string; new: string };
-  stops?: { old: StopChange[]; new: StopChange[] };
+  segments?: { old: SegmentChange[]; new: SegmentChange[] };
 };
 
-export type Booking = {
+/** The trip fields and itinerary are the booking's own, copied from the offer when it was booked. */
+export type Booking = Trip & {
   id: string;
   offer: Offer;
   query: string | null;
@@ -148,9 +196,6 @@ export type Booking = {
   /** The request holding options suggested when the booking was marked unavailable. */
   alternatives: string | null;
   created_at: string;
-  /** The booking's own stops, copied from the offer when it was booked. */
-  stops: Stop[];
-  stop_count: number;
 };
 
 export type BoardingPass = {

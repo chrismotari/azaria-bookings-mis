@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db import models
 
 from airports.models import Airport
-from catalog.models import Offer
+from catalog.models import Offer, Trip
 
 
 class Query(models.Model):
@@ -21,6 +21,10 @@ class Query(models.Model):
     destination = models.ForeignKey(Airport, on_delete=models.PROTECT, null=True, blank=True, related_name="+")
     date_from = models.DateField()
     date_to = models.DateField(null=True, blank=True)
+    # Blank means any trip type.
+    trip_type = models.CharField(max_length=10, choices=Trip.TripType.choices, blank=True)
+    # Only for return trips.
+    return_date = models.DateField(null=True, blank=True)
     price_min = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     price_max = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     # Blank means any class.

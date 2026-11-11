@@ -14,12 +14,15 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 
 ## Offers, airports and airlines
 - `GET /api/airports` with an empty search returns an empty list. Airport text filters match the code exactly (any case) and city, country and name by "contains".
-- Airports are written by id (stops by IATA code, any case) and returned as nested objects `{id, code, name, city, country, country_code}`.
+- Segment airports are written by IATA code (any case) and airlines by id; airports are returned as nested objects `{id, code, name, city, country, country_code}`. Flight times are sent and returned as `HH:MM`.
 - `valid_until >= today` is enforced on create only; edits re-check the other rules.
 - Offer detail returns any active public offer with an `is_bookable` flag; only browse is limited to bookable offers. A customer can also open any offer they have booked.
 - The admin offer list includes private, deactivated and lapsed offers, filterable by `is_active` and `is_public`.
-- Stop positions start at 1 in list order; an edit without a `stops` key keeps the stops, and they are rechecked against a changed origin or destination.
-- Durations read "2 h 15 min", "45 min" or "26 h" (no days); emails show a Stops line ("Direct" when none).
+- Segment positions start at 1 within each direction in list order; an edit without a `segments` key keeps them, and they are rechecked against a changed trip type.
+- An operating airline equal to the marketing one is stored as none (not a codeshare).
+- Baggage weights are whole kilograms of at least 1; a checked bag weight without checked bags is refused.
+- `itinerary.outbound` is always present; `itinerary.return` is null without return flights.
+- Durations read "2 h 15 min", "45 min" or "26 h" (no days); emails list each direction's flights one per line, with the connection between them and "+1" for a later arrival day.
 - `seed_airlines` drops rows with an empty name; an ICAO code that isn't three letters is left blank.
 - The airline search lives on agency hosts for the admin's picker; the list itself is edited only in the platform's Django admin.
 
@@ -27,6 +30,7 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - The `requests` app lives in the `customer_requests` package (label `requests`) so it doesn't shadow the PyPI `requests` library.
 - Closing an already closed query, or responding to a closed one, returns 409; open and responded queries can be closed.
 - A response's `offer_ids` must be currently bookable.
+- A request's return date needs trip type return and is on or after `date_from`.
 
 ## Bookings
 - An offer that isn't bookable or visible returns 400 on `offer`; a second active booking of it returns 409.
@@ -37,9 +41,9 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - The timeline shows statuses and times, not the actor.
 - Stale requests get the same "booking expired" email as lapsed payment holds. The reminder is skipped if the booking is no longer awaiting payment or the deadline has passed.
 - Payment hold and reminder hours must be at least 1; settings accept GET and PATCH only.
-- Confirm availability always sends the dialog's price and stops; the server records only values that differ. Accepting changes is not a status change and adds no timeline event. The payment deadline runs from confirmation, including while changes await acceptance.
-- Mark unavailable sends the message only together with suggested options. Its offer search starts from the booking's route and departure date, any class.
-- Bookings return their own stops and `stop_count` next to the nested offer.
+- Confirm availability always sends the dialog's price and segments; the server records only values that differ. New segments keep the booking's trip type and route (its origin and destination), and the booking's return date follows them. Accepting changes is not a status change and adds no timeline event. The payment deadline runs from confirmation, including while changes await acceptance.
+- Mark unavailable sends the message only together with suggested options. Its offer search starts from the booking's route, dates and trip type, any class.
+- Bookings return their own trip type, return date, baggage, fare conditions and itinerary next to the nested offer.
 - In the support Django admin, booking status, deadline, reminder and changes are read-only.
 
 ## Boarding passes and files
@@ -83,6 +87,7 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Offer detail opens in Explore's drawer, including from a request's response; its price summary is sticky on the right when the detail is ≥ 640 px wide.
 - Lists show tables only on wide screens with no detail open; otherwise cards. Explore switches to its narrow layout while a detail is open.
 - Explore's From/To send the airport code when picked, otherwise the typed text. Filter chips apply at once, prices on Enter or blur, the search bar on Search; "Clear all" clears the sidebar only.
+- The trip type and return dates sit in the search bar; return dates are sent only with Return. Request options takes "Returning from" as the request's return date.
 - Every page has the top bar: form pages (New offer, Respond, Request options, Book) and Billing/Plans are hidden tabs with their parent tab highlighted, a back link, and a fresh form on each visit.
 - Auth screens show the brand bar without Sign in / Create account.
 - Ended bookings show the status banner only, no chip. Booking status filters wrap to a second row.

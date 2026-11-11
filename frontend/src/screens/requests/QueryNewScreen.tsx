@@ -9,13 +9,14 @@ import { z } from 'zod';
 
 import { api } from '../../api/client';
 import { applyServerErrors } from '../../api/errors';
-import { Airport, Query, TICKET_CLASSES, TicketClass } from '../../api/types';
+import { Airport, Query, TICKET_CLASSES, TicketClass, TripType } from '../../api/types';
 import { AirportPicker } from '../../components/AirportPicker';
 import { BackLink } from '../../components/BackLink';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { DateField } from '../../components/DateField';
 import { FieldGrid, FormError } from '../../components/Field';
+import { TRIP_TYPE_OPTIONS } from '../../components/OfferFilterFields';
 import { OptionChips } from '../../components/OptionChips';
 import { Screen } from '../../components/Screen';
 import { LoadingState } from '../../components/StatusViews';
@@ -29,6 +30,8 @@ type FormValues = {
   destination: Airport | null;
   date_from: string;
   date_to: string;
+  trip_type: '' | TripType;
+  return_date: string;
   price_min: string;
   price_max: string;
   ticket_class: '' | TicketClass;
@@ -46,6 +49,8 @@ const schema = z
     destination: z.custom<Airport | null>(),
     date_from: z.string().regex(DATE, 'Enter the earliest departure date.'),
     date_to: z.string().refine((value) => value === '' || DATE.test(value), 'Enter a valid date.'),
+    trip_type: z.enum(['', 'one_way', 'return']),
+    return_date: z.string().refine((value) => value === '' || DATE.test(value), 'Enter a valid date.'),
     price_min: z.string().trim().regex(AMOUNT, 'Enter an amount, e.g. 500.'),
     price_max: z.string().trim().regex(AMOUNT, 'Enter an amount, e.g. 900.'),
     ticket_class: z.enum(['', 'economy', 'premium_economy', 'business', 'first']),
@@ -62,6 +67,9 @@ const schema = z
     if (values.date_to && values.date_to < values.date_from) {
       ctx.addIssue({ code: 'custom', path: ['date_to'], message: 'Must be on or after the earliest date.' });
     }
+    if (values.trip_type === 'return' && values.return_date && values.return_date < values.date_from) {
+      ctx.addIssue({ code: 'custom', path: ['return_date'], message: 'Must be on or after the earliest departure.' });
+    }
     if (values.price_min && values.price_max && Number(values.price_min) > Number(values.price_max)) {
       ctx.addIssue({ code: 'custom', path: ['price_max'], message: 'Must be at least the minimum price.' });
     }
@@ -72,6 +80,8 @@ const FIELDS = [
   'destination',
   'date_from',
   'date_to',
+  'trip_type',
+  'return_date',
   'price_min',
   'price_max',
   'ticket_class',
@@ -113,13 +123,15 @@ function QueryForm({ prefill, origin, destination }: FormProps) {
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
   const isClass = TICKET_CLASSES.some((option) => option.value === prefill.ticket_class);
-  const { control, handleSubmit, setError, formState } = useForm<FormValues>({
+  const { control, handleSubmit, setError, formState, watch } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       origin,
       destination,
       date_from: prefill.date_from || todayInNairobi(),
       date_to: prefill.date_to ?? '',
+      trip_type: prefill.trip_type === 'return' || prefill.trip_type === 'one_way' ? prefill.trip_type : '',
+      return_date: prefill.return_date ?? '',
       price_min: prefill.price_min ?? '',
       price_max: prefill.price_max ?? '',
       ticket_class: isClass ? (prefill.ticket_class as TicketClass) : '',
@@ -137,6 +149,9 @@ function QueryForm({ prefill, origin, destination }: FormProps) {
         destination: values.destination?.id ?? null,
         date_from: values.date_from,
         date_to: optional(values.date_to),
+        trip_type: values.trip_type,
+        // A return date only goes with a return trip.
+        return_date: values.trip_type === 'return' ? optional(values.return_date) : null,
         price_min: optional(values.price_min),
         price_max: optional(values.price_max),
         ticket_class: values.ticket_class,
@@ -173,6 +188,13 @@ function QueryForm({ prefill, origin, destination }: FormProps) {
             />
           ))}
         </FieldGrid>
+        <Controller
+          control={control}
+          name="trip_type"
+          render={({ field }) => (
+            <OptionChips label="Trip" options={TRIP_TYPE_OPTIONS} value={field.value} onChange={field.onChange} />
+          )}
+        />
         <FieldGrid>
           {(['date_from', 'date_to'] as const).map((name) => (
             <Controller
@@ -190,6 +212,20 @@ function QueryForm({ prefill, origin, destination }: FormProps) {
             />
           ))}
         </FieldGrid>
+        {watch('trip_type') === 'return' ? (
+          <Controller
+            control={control}
+            name="return_date"
+            render={({ field, fieldState }) => (
+              <DateField
+                label="Return date (optional)"
+                value={field.value}
+                onChange={field.onChange}
+                error={fieldState.error?.message}
+              />
+            )}
+          />
+        ) : null}
         <FieldGrid>
           {(['price_min', 'price_max', 'max_stopovers'] as const).map((name) => (
             <Controller

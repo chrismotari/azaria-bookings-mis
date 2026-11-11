@@ -11,9 +11,9 @@ import { OfferFilterValues } from '../../components/OfferFilterFields';
 import { colors, font } from '../../theme';
 import { todayInNairobi } from '../../utils/format';
 import { ChosenOffers, MessageField, OfferOptionsSections, useOfferOptions } from './OfferOptions';
-import { OfferFormValues } from './offerSchema';
+import { OfferFormValues, itineraryDefaults, offerDefaults } from './offerSchema';
 
-/** The existing-offer search starts from the booking's route and date. */
+/** The existing-offer search starts from the booking's route, dates and trip type. */
 function initialFilters(booking: AdminBookingDetail): OfferFilterValues {
   const { origin, destination, departure_date } = booking.offer;
   return {
@@ -21,6 +21,9 @@ function initialFilters(booking: AdminBookingDetail): OfferFilterValues {
     destination: { text: destination.code, airport: destination },
     date_from: departure_date,
     date_to: departure_date,
+    trip_type: booking.trip_type,
+    return_from: booking.return_date ?? '',
+    return_to: booking.return_date ?? '',
     price_min: '',
     price_max: '',
     ticket_class: '',
@@ -30,17 +33,19 @@ function initialFilters(booking: AdminBookingDetail): OfferFilterValues {
 
 function customOfferDefaults(booking: AdminBookingDetail): OfferFormValues {
   const { offer } = booking;
-  return {
-    origin: offer.origin,
-    destination: offer.destination,
-    departure_date: offer.departure_date,
+  return offerDefaults({
+    trip_type: booking.trip_type,
+    segments: itineraryDefaults(
+      booking.trip_type,
+      offer.origin,
+      offer.destination,
+      offer.departure_date,
+      booking.return_date ?? '',
+    ),
     ticket_class: offer.ticket_class,
-    price: '',
-    stops: [],
-    airline: null,
     valid_until: todayInNairobi(),
     is_public: false,
-  };
+  });
 }
 
 type Props = {

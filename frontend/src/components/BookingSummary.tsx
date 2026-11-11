@@ -2,12 +2,11 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Booking } from '../api/types';
 import { colors, font, space, weight } from '../theme';
-import { passengersLabel } from '../utils/bookings';
-import { formatDate, formatPrice, ticketClassLabel } from '../utils/format';
+import { bookingDates, passengersLabel } from '../utils/bookings';
+import { formatPrice, ticketClassLabel, tripDates } from '../utils/format';
 import { AirlineBadge } from './AirlineBadge';
 import { PriceTag } from './PriceTag';
 import { RouteLine } from './RouteLine';
-import { StopList } from './StopList';
 
 export function BookingSummary({ booking }: { booking: Booking }) {
   const { offer } = booking;
@@ -20,9 +19,13 @@ export function BookingSummary({ booking }: { booking: Booking }) {
           <Text style={styles.muted}>{ticketClassLabel(offer.ticket_class)}</Text>
         </View>
       </View>
-      <RouteLine origin={offer.origin} destination={offer.destination} stopCount={booking.stop_count} />
-      {booking.stop_count > 0 ? <StopList stops={booking.stops} /> : null}
-      <Row label="Departure" value={formatDate(offer.departure_date)} />
+      <RouteLine
+        origin={offer.origin}
+        destination={offer.destination}
+        stopCount={booking.itinerary.outbound.stop_count}
+        returnTrip={booking.trip_type === 'return'}
+      />
+      <Row label={booking.trip_type === 'return' ? 'Dates' : 'Departure'} value={tripDates(bookingDates(booking))} />
       <Row
         label="Passengers"
         value={`${passengersLabel(booking.passenger_count)} × ${formatPrice(booking.unit_price)}`}

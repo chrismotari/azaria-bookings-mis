@@ -6,7 +6,8 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from catalog.models import Offer
+from catalog.itinerary import change_lines, derived_fields, same_itinerary
+from catalog.models import Offer, Trip
 from core.exceptions import Conflict
 from core.models import AppSettings
 from core.tenancy import queue
@@ -14,7 +15,7 @@ from customer_requests.models import Query
 from customer_requests.services import add_response
 
 from . import tasks
-from .models import BoardingPass, Booking, BookingEvent, BookingStop
+from .models import BoardingPass, Booking, BookingEvent, BookingSegment
 
 Status = Booking.Status
 
@@ -43,6 +44,9 @@ EMAILS = {
     Status.EXPIRED: tasks.notify_customer_booking_expired,
     Status.COMPLETED: tasks.notify_customer_boarding_passes,
 }
+
+
+SEGMENT_RELATED = ["airline", "operating_airline", "origin", "destination"]
 
 
 class InvalidTransition(Conflict):
@@ -88,15 +92,12 @@ def create_booking(user, data, admin=None):
             passenger_count=data["passenger_count"],
             notes=data.get("notes", ""),
             unit_price=offer.price,
+            **{field: getattr(offer, field) for field in Trip.FIELDS},
         )
-        BookingStop.objects.bulk_create(
-            BookingStop(
-                booking=booking,
-                position=stop.position,
-                airport_id=stop.airport_id,
-                duration_minutes=stop.duration_minutes,
+        BookingSegment.objects.bulk_create(
+            BookingSegment.build(
+                [segment.as_data() for segment in offer.segments.select_related(*SEGMENT_RELATED)], booking=booking
             )
-            for stop in offer.stops.all()
         )
         BookingEvent.objects.create(booking=booking, to_status=Status.REQUESTED, actor=admin or user)
         if admin is None:
@@ -161,15 +162,11 @@ def check_transition(booking, to_status):
         )
 
 
-def _stop_change(airport, duration_minutes):
-    return {"code": airport.code, "city": airport.city, "duration_minutes": duration_minutes}
+def confirm_availability(booking_id, actor, unit_price=None, segments=None):
+    """Confirms availability, applying a new unit price and segments where they differ from the booking's.
 
-
-def confirm_availability(booking_id, actor, unit_price=None, stops=None):
-    """Confirms availability, applying a new unit price and stop list where they differ from the booking's.
-
-    stops: ordered dicts of airport and duration_minutes, already validated. What changed is recorded in
-    booking.changes for the customer to accept or decline.
+    segments: validated segment dicts in flight order. What changed is recorded in booking.changes for the
+    customer to accept or decline.
     """
 
     def apply(booking):
@@ -177,22 +174,13 @@ def confirm_availability(booking_id, actor, unit_price=None, stops=None):
         if unit_price is not None and unit_price != booking.unit_price:
             changes["unit_price"] = {"old": str(booking.unit_price), "new": str(unit_price)}
             booking.unit_price = unit_price
-        if stops is not None:
-            current = list(booking.stops.select_related("airport"))
-            if [(s.airport_id, s.duration_minutes) for s in current] != [
-                (s["airport"].pk, s["duration_minutes"]) for s in stops
-            ]:
-                changes["stops"] = {
-                    "old": [_stop_change(s.airport, s.duration_minutes) for s in current],
-                    "new": [_stop_change(s["airport"], s["duration_minutes"]) for s in stops],
-                }
-                booking.stops.all().delete()
-                BookingStop.objects.bulk_create(
-                    BookingStop(
-                        booking=booking, position=position, airport=s["airport"], duration_minutes=s["duration_minutes"]
-                    )
-                    for position, s in enumerate(stops, start=1)
-                )
+        if segments is not None:
+            current = [s.as_data() for s in booking.segments.select_related(*SEGMENT_RELATED)]
+            if not same_itinerary(current, segments):
+                changes["segments"] = {"old": change_lines(current), "new": change_lines(segments)}
+                booking.segments.all().delete()
+                BookingSegment.objects.bulk_create(BookingSegment.build(segments, booking=booking))
+                booking.return_date = derived_fields(segments)["return_date"]
         booking.changes = changes or None
         booking.changes_accepted = False
 
@@ -203,7 +191,7 @@ def mark_unavailable(booking_id, actor, message="", offers=(), new_offers=()):
     """Marks the booking unavailable. With at least one offer, also suggests them to the customer.
 
     The suggestions go into a new request for the booking's customer (route, date and class from the booked
-    offer), answered with one response holding the message and offers, and linked as booking.alternatives.
+    offer, trip type and return date from the booking), answered with one response holding the message and offers, and linked as booking.alternatives.
     The request's own emails are not sent; the unavailable email tells the customer instead.
     """
 
@@ -216,6 +204,8 @@ def mark_unavailable(booking_id, actor, message="", offers=(), new_offers=()):
             origin=booked.origin,
             destination=booked.destination,
             date_from=booked.departure_date,
+            trip_type=booking.trip_type,
+            return_date=booking.return_date,
             ticket_class=booked.ticket_class,
             status=Query.Status.RESPONDED,
         )

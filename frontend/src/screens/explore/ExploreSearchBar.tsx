@@ -6,8 +6,9 @@ import { Button } from '../../components/Button';
 import { DateField } from '../../components/DateField';
 import { FieldGrid } from '../../components/Field';
 import { Icon } from '../../components/Icon';
-import { OfferFilterErrors, OfferFilterValues } from '../../components/OfferFilterFields';
+import { OfferFilterErrors, OfferFilterValues, TRIP_TYPE_OPTIONS } from '../../components/OfferFilterFields';
 import { PressState } from '../../components/pressState';
+import { SegmentedControl } from '../../components/SegmentedControl';
 import { SelectField } from '../../components/SelectField';
 import { colors, font, radius, shadow, space, weight } from '../../theme';
 
@@ -22,7 +23,7 @@ type Props = {
   compact: boolean;
 };
 
-/** Indigo band with the headline and the white search bar (route, dates, class). */
+/** Indigo band with the headline and the white search bar (trip type, route, dates, class). */
 export function ExploreSearchBar({ value, onChange, errors, onSearch, compact }: Props) {
   const set = <K extends keyof OfferFilterValues>(key: K, fieldValue: OfferFilterValues[K]) =>
     onChange({ ...value, [key]: fieldValue });
@@ -49,6 +50,23 @@ export function ExploreSearchBar({ value, onChange, errors, onSearch, compact }:
     <SelectField label="Class" options={CLASS_OPTIONS} value={value.ticket_class} onChange={(c) => set('ticket_class', c)} />
   );
   const search = <Button title="Search" variant="accent" icon="search" onPress={onSearch} />;
+  const tripType = (
+    <View style={styles.tripType}>
+      <SegmentedControl label="Trip type" options={TRIP_TYPE_OPTIONS} value={value.trip_type} onChange={(t) => set('trip_type', t)} />
+    </View>
+  );
+  const returning = value.trip_type === 'return';
+  const returnFrom = (
+    <DateField
+      label="Returning from"
+      value={value.return_from}
+      onChange={(d) => set('return_from', d)}
+      error={errors.return_from}
+    />
+  );
+  const returnTo = (
+    <DateField label="Returning until" value={value.return_to} onChange={(d) => set('return_to', d)} error={errors.return_to} />
+  );
 
   return (
     <View style={[styles.band, compact && styles.bandCompact]}>
@@ -56,6 +74,7 @@ export function ExploreSearchBar({ value, onChange, errors, onSearch, compact }:
         <Text style={[styles.headline, compact && styles.headlineCompact]}>Find your next flight deal</Text>
         {compact ? (
           <View style={styles.bar}>
+            {tripType}
             {from}
             <View style={styles.swapRow}>
               <SwapButton onPress={swap} vertical />
@@ -65,18 +84,33 @@ export function ExploreSearchBar({ value, onChange, errors, onSearch, compact }:
               {dateFrom}
               {dateTo}
             </FieldGrid>
+            {returning ? (
+              <FieldGrid>
+                {returnFrom}
+                {returnTo}
+              </FieldGrid>
+            ) : null}
             {ticketClass}
             {search}
           </View>
         ) : (
-          <View style={[styles.bar, styles.barRow]}>
-            <View style={styles.airport}>{from}</View>
-            <SwapButton onPress={swap} />
-            <View style={styles.airport}>{to}</View>
-            <View style={styles.date}>{dateFrom}</View>
-            <View style={styles.date}>{dateTo}</View>
-            <View style={styles.ticketClass}>{ticketClass}</View>
-            {search}
+          <View style={styles.bar}>
+            {tripType}
+            <View style={styles.barRow}>
+              <View style={styles.airport}>{from}</View>
+              <SwapButton onPress={swap} />
+              <View style={styles.airport}>{to}</View>
+              <View style={styles.date}>{dateFrom}</View>
+              <View style={styles.date}>{dateTo}</View>
+              <View style={styles.ticketClass}>{ticketClass}</View>
+              {search}
+            </View>
+            {returning ? (
+              <View style={styles.barRow}>
+                <View style={styles.returnDate}>{returnFrom}</View>
+                <View style={styles.returnDate}>{returnTo}</View>
+              </View>
+            ) : null}
           </View>
         )}
       </View>
@@ -121,6 +155,8 @@ const styles = StyleSheet.create({
   airport: { flex: 1.4, minWidth: 0 },
   date: { flex: 1, minWidth: 0 },
   ticketClass: { flex: 1, minWidth: 0 },
+  tripType: { maxWidth: 320 },
+  returnDate: { width: 200 },
   swapRow: { alignItems: 'flex-end', marginVertical: -space.sm },
   swap: {
     width: SWAP,

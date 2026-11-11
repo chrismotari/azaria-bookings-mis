@@ -16,9 +16,9 @@ def add_response(query, message, offers, new_offers):
     created = []
     for data in new_offers:
         data = {**data, "is_public": False}
-        stops = data.pop("stops", [])
+        segments = data.pop("segments")
         offer = Offer.objects.create(**data)
-        offer.set_stops(stops)
+        offer.set_segments(segments)
         created.append(offer)
     response = QueryResponse.objects.create(query=query, message=message)
     response.offers.set([*offers, *created])

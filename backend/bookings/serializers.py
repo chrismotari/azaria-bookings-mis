@@ -2,12 +2,15 @@ from rest_framework import serializers
 
 from accounts.models import User
 from accounts.serializers import UserSerializer
-from catalog.serializers import OfferSerializer, StopInputSerializer, stop_errors, stops_data
+from catalog.itinerary import airlines_in, itinerary_errors
+from catalog.models import Trip
+from catalog.serializers import OfferSerializer, SegmentInputSerializer, itinerary_data
 from core.files import check_upload
 from core.models import AppSettings
 from customer_requests.models import Query
 
 from .models import BoardingPass, Booking, BookingEvent
+
 
 class BookingEventSerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,7 +50,7 @@ class BookingCreateSerializer(serializers.ModelSerializer):
 
 
 class BookingSerializer(serializers.ModelSerializer):
-    """stops are the booking's own, copied from the offer when it was booked."""
+    """The trip fields and itinerary are the booking's own, copied from the offer when it was booked."""
 
     offer = OfferSerializer(read_only=True)
     total_price = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
@@ -62,6 +65,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "notes",
             "unit_price",
             "total_price",
+            *Trip.FIELDS,
             "status",
             "payment_deadline",
             "changes",
@@ -73,7 +77,7 @@ class BookingSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def to_representation(self, booking):
-        return {**super().to_representation(booking), **stops_data(booking.stops.all())}
+        return {**super().to_representation(booking), **itinerary_data(booking.segments.all(), self.context)}
 
 
 class BookingDetailSerializer(BookingSerializer):
@@ -119,18 +123,21 @@ class ConfirmAvailabilitySerializer(serializers.Serializer):
     """Optional changes made on confirming; context["booking"] is the booking being confirmed."""
 
     unit_price = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
-    stops = StopInputSerializer(many=True, required=False)
+    segments = SegmentInputSerializer(many=True, required=False)
 
     def validate_unit_price(self, value):
         if value <= 0:
             raise serializers.ValidationError("Price must be greater than 0.")
         return value
 
-    def validate_stops(self, stops):
-        offer = self.context["booking"].offer
-        if messages := stop_errors(offer.origin, offer.destination, stops):
+    def validate_segments(self, segments):
+        """The booking keeps its trip type and route; its flights and dates may change."""
+        booking = self.context["booking"]
+        existing = [s.as_data() for s in booking.segments.all()]
+        route = (booking.offer.origin, booking.offer.destination)
+        if messages := itinerary_errors(booking.trip_type, segments, airlines_in(existing), route):
             raise serializers.ValidationError(messages)
-        return stops
+        return segments
 
 
 class AdminBookingCreateSerializer(serializers.ModelSerializer):

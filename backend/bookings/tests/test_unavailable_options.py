@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from bookings.models import Booking
 from catalog.models import Offer
-from core.tests.helpers import airline_named, html_part
+from core.tests.helpers import airline_named, direct, flight, html_part
 from customer_requests.models import Query
 
 pytestmark = pytest.mark.django_db
@@ -26,16 +26,22 @@ def in_days(days):
     return (timezone.localdate() + timedelta(days=days)).isoformat()
 
 
+def via_dubai():
+    qr = airline_named("Qatar Airways")
+    when = timezone.localdate() + timedelta(days=31)
+    return [
+        flight("outbound", qr, "1340", "NBO", "DXB", (when, "08:00"), (when, "14:00")),
+        flight("outbound", qr, "1", "DXB", "LHR", (when, "16:00"), (when, "20:30")),
+    ]
+
+
 def new_offer(airports, **overrides):
     return {
-        "origin": airports["NBO"].id,
-        "destination": airports["LHR"].id,
-        "departure_date": in_days(31),
         "ticket_class": "business",
         "price": "900.00",
         "airline": str(airline_named("Qatar Airways").id),
         "valid_until": in_days(5),
-        "stops": [{"airport": "DXB", "duration_minutes": 120}],
+        "segments": via_dubai(),
         **overrides,
     }
 
@@ -106,14 +112,14 @@ def test_with_custom_offers(admin_api, booking, airports, django_capture_on_comm
     response, _ = mark_unavailable(
         admin_api,
         booking,
-        {"new_offers": [new_offer(airports), new_offer(airports, airline=str(airline_named("Kenya Airways").id), stops=[])]},
+        {"new_offers": [new_offer(airports), new_offer(airports, airline=str(airline_named("Kenya Airways").id), segments=direct("NBO", "LHR", in_days(31)))]},
         django_capture_on_commit_callbacks,
     )
     assert response.status_code == 200, response.data
     offers = list(Query.objects.get().responses.get().offers.order_by("airline__name"))
-    assert [(o.airline.name, o.is_public, o.stops.count()) for o in offers] == [
-        ("Kenya Airways", False, 0),
-        ("Qatar Airways", False, 1),
+    assert [(o.airline.name, o.is_public, o.segments.count()) for o in offers] == [
+        ("Kenya Airways", False, 1),
+        ("Qatar Airways", False, 2),
     ]
     assert "found 2 other options for you" in mail.outbox[0].body
 
@@ -153,7 +159,7 @@ def test_from_each_allowed_status(admin_api, booking, make_offer, from_status):
         lambda airports, offer: {"offer_ids": [str(offer.id)]},
         lambda airports, offer: {"new_offers": [new_offer(airports, price="0")]},
         lambda airports, offer: {
-            "new_offers": [new_offer(airports, stops=[{"airport": "LHR", "duration_minutes": 60}])]
+            "new_offers": [new_offer(airports, segments=via_dubai()[::-1])]
         },
     ],
 )
@@ -178,3 +184,21 @@ def test_refused_transition_creates_no_request(admin_api, booking, make_offer):
 def test_customers_cannot_mark_unavailable(customer_api, booking):
     response = customer_api.post(f"/api/admin/bookings/{booking.id}/mark-unavailable", {}, format="json")
     assert response.status_code == 403
+
+
+def test_the_suggestions_request_carries_the_trip_type_and_return_date(admin_api, customer, make_offer):
+    back = timezone.localdate() + timedelta(days=40)
+    offer = make_offer(trip_type="return", return_date=back)
+    booking = Booking.objects.create(
+        user=customer, offer=offer, passenger_count=1, unit_price=offer.price, trip_type="return", return_date=back
+    )
+    response = mark_unavailable(admin_api, booking, {"offer_ids": [str(make_offer().id)]})
+    assert response.status_code == 200, response.data
+    query = Query.objects.get(pk=response.data["alternatives"])
+    assert (query.trip_type, query.return_date, query.date_from) == ("return", back, offer.departure_date)
+
+
+def test_one_way_bookings_suggest_one_way_requests(admin_api, booking, make_offer):
+    response = mark_unavailable(admin_api, booking, {"offer_ids": [str(make_offer().id)]})
+    query = Query.objects.get(pk=response.data["alternatives"])
+    assert (query.trip_type, query.return_date) == ("one_way", None)

@@ -5,7 +5,7 @@ from rest_framework.test import APIClient
 
 from accounts.models import User
 from config.celery import app as celery_app
-from core.tests.helpers import OTHER_DOMAIN, OTHER_SCHEMA, TEST_DOMAIN, TEST_SCHEMA, airline_named
+from core.tests.helpers import OTHER_DOMAIN, OTHER_SCHEMA, TEST_DOMAIN, TEST_SCHEMA, airline_named, direct_flight
 
 
 @pytest.fixture(scope="session")
@@ -145,7 +145,7 @@ def airports(db):
 
 @pytest.fixture
 def make_offer(airports):
-    """Creates a bookable public NBO → LHR offer unless told otherwise."""
+    """Creates a bookable public NBO → LHR offer, one direct flight, unless told otherwise."""
     from datetime import timedelta
     from decimal import Decimal
 
@@ -165,7 +165,9 @@ def make_offer(airports):
         }
         if isinstance(fields["airline"], str):
             fields["airline"] = airline_named(fields["airline"])
-        return Offer.objects.create(origin=airports[origin], destination=airports[destination], **fields)
+        offer = Offer.objects.create(origin=airports[origin], destination=airports[destination], **fields)
+        offer.set_segments([direct_flight(offer)])
+        return offer
 
     return make
 

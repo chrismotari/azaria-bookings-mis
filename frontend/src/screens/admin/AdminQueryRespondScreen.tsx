@@ -19,7 +19,7 @@ import { colors, font, weight } from '../../theme';
 import { todayInNairobi } from '../../utils/format';
 import { useAdminQuery } from './AdminQueryDetailView';
 import { ChosenOffers, MessageField, OfferOptionsSections, useOfferOptions } from './OfferOptions';
-import { OfferFormValues } from './offerSchema';
+import { OfferFormValues, itineraryDefaults, offerDefaults } from './offerSchema';
 
 type Props = BottomTabScreenProps<AdminTabParamList, 'AdminQueryRespond'>;
 
@@ -48,6 +48,9 @@ function initialFilters(query: AdminQueryDetail): OfferFilterValues {
     destination: airport(query.destination),
     date_from: query.date_from,
     date_to: query.date_to ?? '',
+    trip_type: query.trip_type,
+    return_from: query.return_date ?? '',
+    return_to: query.return_date ?? '',
     price_min: '',
     price_max: '',
     ticket_class: query.ticket_class,
@@ -56,17 +59,14 @@ function initialFilters(query: AdminQueryDetail): OfferFilterValues {
 }
 
 function customOfferDefaults(query: AdminQueryDetail): OfferFormValues {
-  return {
-    origin: query.origin,
-    destination: query.destination,
-    departure_date: query.date_from,
+  const tripType = query.trip_type || 'one_way';
+  return offerDefaults({
+    trip_type: tripType,
+    segments: itineraryDefaults(tripType, query.origin, query.destination, query.date_from, query.return_date ?? ''),
     ticket_class: query.ticket_class || 'economy',
-    price: '',
-    stops: [],
-    airline: null,
     valid_until: todayInNairobi(),
     is_public: false,
-  };
+  });
 }
 
 function RespondForm({ query, onSent, onBack }: { query: AdminQueryDetail; onSent: () => void; onBack: () => void }) {

@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from catalog.models import Offer
+from catalog.views import OFFER_SEGMENTS
 from core.permissions import IsAdminRole
 from core.tenancy import queue
 
@@ -20,7 +21,7 @@ from .tasks import notify_admin_new_query
 
 
 def with_responses(queryset):
-    offers = Offer.objects.select_related("origin", "destination", "airline").prefetch_related("stops__airport")
+    offers = Offer.objects.select_related("origin", "destination", "airline").prefetch_related(*OFFER_SEGMENTS)
     responses = QueryResponse.objects.prefetch_related(Prefetch("offers", queryset=offers))
     return queryset.prefetch_related(Prefetch("responses", queryset=responses))
 

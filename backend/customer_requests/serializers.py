@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from accounts.serializers import UserSerializer
-from catalog.models import Offer
+from catalog.models import Offer, Trip
 from catalog.serializers import AdminOfferSerializer, AirportSerializer, OfferSerializer
 
 from .models import Query, QueryResponse
@@ -30,6 +30,8 @@ class QuerySerializer(serializers.ModelSerializer):
             "destination",
             "date_from",
             "date_to",
+            "trip_type",
+            "return_date",
             "price_min",
             "price_max",
             "ticket_class",
@@ -53,6 +55,11 @@ class QuerySerializer(serializers.ModelSerializer):
             errors["destination"] = "Choose an origin, a destination or both."
         if attrs.get("date_to") and attrs["date_to"] < attrs["date_from"]:
             errors["date_to"] = "The end date must be on or after the start date."
+        if attrs.get("return_date"):
+            if attrs.get("trip_type") != Trip.TripType.RETURN:
+                errors["return_date"] = "A return date is only for return trips."
+            elif attrs["return_date"] < attrs["date_from"]:
+                errors["return_date"] = "The return date must be on or after the earliest departure."
         price_min, price_max = attrs.get("price_min"), attrs.get("price_max")
         if price_min is not None and price_max is not None and price_min > price_max:
             errors["price_max"] = "The maximum price must be at least the minimum price."

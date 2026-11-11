@@ -62,6 +62,8 @@ python manage.py create_agency --schema azaria --name "Azaria Bookings" \
 
 `create_agency` creates the agency's schema, its domain `<schema>.localhost`, its settings and its first admin. Add more agencies the same way.
 
+A database created before return trips were added must be dropped and set up again: the catalog, requests and bookings migrations were regenerated.
+
 `backend/.env`:
 
 | Variable | Purpose |

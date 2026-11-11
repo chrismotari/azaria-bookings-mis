@@ -2,11 +2,11 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Offer } from '../api/types';
 import { colors, font, radius, shadow, space, weight } from '../theme';
-import { formatDate, ticketClassLabel } from '../utils/format';
+import { baggageSummary, formatDate, ticketClassLabel } from '../utils/format';
 import { AirlineBadge } from './AirlineBadge';
 import { PressState } from './pressState';
 import { PriceTag } from './PriceTag';
-import { RouteLine } from './RouteLine';
+import { DirectionLine, directionsOf } from './Itinerary';
 
 type Props = {
   offer: Offer;
@@ -25,11 +25,28 @@ export function FlightRow({ offer, selected, compact, onPress }: Props) {
           {offer.airline.name}
         </Text>
         <Text style={styles.muted}>{ticketClassLabel(offer.ticket_class)}</Text>
+        <Text style={styles.muted}>{baggageSummary(offer)}</Text>
       </View>
     </View>
   );
+  // One line per direction; a return trip shows both.
   const route = (
-    <RouteLine origin={offer.origin} destination={offer.destination} stopCount={offer.stop_count} />
+    <View style={styles.lines}>
+      {directionsOf(offer.itinerary).map(({ key, label, direction }) => (
+        <View key={key} style={styles.lineRow}>
+          {offer.trip_type === 'return' ? <Text style={styles.lineLabel}>{label}</Text> : null}
+          <View style={styles.lineBody}>
+            <DirectionLine direction={direction} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+  const dates = (
+    <View style={styles.dates}>
+      <Text style={styles.date}>{formatDate(offer.departure_date)}</Text>
+      {offer.return_date ? <Text style={styles.date}>{formatDate(offer.return_date)}</Text> : null}
+    </View>
   );
   const validUntil = <Text style={styles.caption}>Offer valid until {formatDate(offer.valid_until)}</Text>;
   const price = (
@@ -48,7 +65,7 @@ export function FlightRow({ offer, selected, compact, onPress }: Props) {
   return (
     <Pressable
       accessibilityRole="link"
-      accessibilityLabel={`${offer.origin.city} to ${offer.destination.city}, ${formatDate(offer.departure_date)}`}
+      accessibilityLabel={`${offer.origin.city} to ${offer.destination.city}${offer.return_date ? ' and back' : ''}, ${formatDate(offer.departure_date)}`}
       aria-current={selected}
       onPress={onPress}
       style={({ pressed, hovered }: PressState) => [
@@ -62,7 +79,7 @@ export function FlightRow({ offer, selected, compact, onPress }: Props) {
         <>
           <View style={styles.between}>
             {airline}
-            <Text style={styles.date}>{formatDate(offer.departure_date)}</Text>
+            {dates}
           </View>
           {route}
           <View style={[styles.between, styles.bottom]}>
@@ -78,7 +95,7 @@ export function FlightRow({ offer, selected, compact, onPress }: Props) {
           <View style={styles.airlineColumn}>{airline}</View>
           <View style={styles.routeColumn}>{route}</View>
           <View style={styles.dateColumn}>
-            <Text style={styles.date}>{formatDate(offer.departure_date)}</Text>
+            {dates}
             {validUntil}
           </View>
           <View style={styles.priceColumn}>
@@ -116,6 +133,11 @@ const styles = StyleSheet.create({
   priceColumn: { alignItems: 'flex-end', gap: space.sm },
   airlineName: { fontSize: font.body, fontWeight: weight.bold, color: colors.text },
   date: { fontSize: font.body, fontWeight: weight.semibold, color: colors.text },
+  dates: { gap: 2, alignItems: 'flex-start' },
+  lines: { gap: space.md },
+  lineRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  lineLabel: { width: 60, fontSize: font.caption, fontWeight: weight.bold, color: colors.muted },
+  lineBody: { flex: 1, minWidth: 0 },
   priceBox: { alignItems: 'flex-end', gap: 2 },
   priceBoxCompact: { alignItems: 'flex-start' },
   muted: { fontSize: font.small, color: colors.muted },

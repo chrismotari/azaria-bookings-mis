@@ -1,12 +1,12 @@
 import uuid
-from datetime import date, timedelta
+from datetime import date, time, timedelta
 from decimal import Decimal
 
 import pytest
 from freezegun import freeze_time
 
 from catalog.models import Offer
-from core.tests.helpers import airline_named
+from core.tests.helpers import airline_named, direct, direct_flight
 
 pytestmark = pytest.mark.django_db
 
@@ -31,7 +31,9 @@ def make_offer(airports, origin="NBO", destination="LHR", **kwargs):
     }
     if isinstance(fields["airline"], str):
         fields["airline"] = airline_named(fields["airline"])
-    return Offer.objects.create(origin=airports[origin], destination=airports[destination], **fields)
+    offer = Offer.objects.create(origin=airports[origin], destination=airports[destination], **fields)
+    offer.set_segments([direct_flight(offer)])
+    return offer
 
 
 def ids(response):
@@ -145,8 +147,26 @@ def test_date_price_class_and_stopover_filters(api, airports):
     )
     late_stops = make_offer(airports, departure_date=TODAY + timedelta(days=60), price=Decimal("800"))
     # One layover and one stopover: the filter counts both.
-    late_stops.set_stops(
-        [{"airport": airports["DXB"], "duration_minutes": 90}, {"airport": airports["MBA"], "duration_minutes": 1500}]
+    when = late_stops.departure_date
+    late_stops.set_segments(
+        [
+            {**direct_flight(late_stops), "destination": airports["DXB"], "arrival_time": time(12, 0)},
+            {
+                **direct_flight(late_stops),
+                "origin": airports["DXB"],
+                "destination": airports["MBA"],
+                "departure_time": time(13, 30),
+                "arrival_time": time(16, 0),
+            },
+            {
+                **direct_flight(late_stops),
+                "origin": airports["MBA"],
+                "departure_date": when + timedelta(days=1),
+                "departure_time": time(17, 0),
+                "arrival_date": when + timedelta(days=1),
+                "arrival_time": time(19, 0),
+            },
+        ]
     )
 
     def get(**params):
@@ -192,16 +212,13 @@ def test_list_is_paginated_by_20(api, airports):
 # Admin endpoints
 
 
-def payload(airports, **overrides):
+def payload(airports, origin="NBO", destination="LHR", departure_date=TODAY + timedelta(days=30), **overrides):
     return {
-        "origin": airports["NBO"].id,
-        "destination": airports["LHR"].id,
-        "departure_date": (TODAY + timedelta(days=30)).isoformat(),
         "ticket_class": "business",
         "price": "1999.50",
-        "stops": [],
         "airline": str(airline_named("Qatar Airways").id),
         "valid_until": (TODAY + timedelta(days=7)).isoformat(),
+        "segments": direct(origin, destination, departure_date),
         **overrides,
     }
 
@@ -245,7 +262,7 @@ def test_admin_can_create_non_public_offer(admin_api, api, airports):
         ({"valid_until": (TODAY + timedelta(days=31)).isoformat()}, "valid_until"),
         ({"valid_until": (TODAY - timedelta(days=1)).isoformat()}, "valid_until"),
         ({"ticket_class": "cargo"}, "ticket_class"),
-        ({"stops": [{"airport": "DXB", "duration_minutes": 0}]}, "stops"),
+        ({"segments": []}, "segments"),
         ({"airline": ""}, "airline"),
     ],
 )
@@ -257,16 +274,16 @@ def test_admin_create_validation(admin_api, airports, overrides, field):
 
 def test_admin_create_rejects_same_origin_and_destination(admin_api, airports):
     response = admin_api.post(
-        "/api/admin/offers", payload(airports, destination=airports["NBO"].id), format="json"
+        "/api/admin/offers", payload(airports, destination="NBO"), format="json"
     )
     assert response.status_code == 400
-    assert "destination" in response.data
+    assert "segments" in response.data
 
 
 def test_admin_create_valid_until_today_and_on_departure_day(admin_api, airports):
     today = TODAY.isoformat()
     response = admin_api.post(
-        "/api/admin/offers", payload(airports, valid_until=today, departure_date=today), format="json"
+        "/api/admin/offers", payload(airports, valid_until=today, departure_date=TODAY), format="json"
     )
     assert response.status_code == 201, response.data
 
@@ -316,12 +333,6 @@ def test_admin_patch_validates_against_existing_values(admin_api, airports):
     response = admin_api.patch(f"/api/admin/offers/{offer.id}", {"valid_until": late}, format="json")
     assert response.status_code == 400
     assert "valid_until" in response.data
-
-    response = admin_api.patch(
-        f"/api/admin/offers/{offer.id}", {"origin": airports["LHR"].id}, format="json"
-    )
-    assert response.status_code == 400
-    assert "destination" in response.data
 
 
 def test_admin_patch_of_lapsed_offer_allowed(admin_api, airports):

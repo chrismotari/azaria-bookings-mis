@@ -4,14 +4,18 @@ from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import connection, models
 
-from catalog.models import Offer, Stop
+from catalog.models import Offer, Segment, Trip
 from core import files
 from core.storage import private_storage
 from customer_requests.models import Query
 
 
-class Booking(models.Model):
-    """Status changes go through bookings.services only."""
+class Booking(Trip):
+    """Status changes go through bookings.services only.
+
+    Its trip type, return date, baggage, fare conditions and segments are copied from the offer at creation, so
+    later offer edits leave it unchanged.
+    """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     class Status(models.TextChoices):
@@ -38,7 +42,7 @@ class Booking(models.Model):
     status = models.CharField(max_length=30, choices=Status.choices, default=Status.REQUESTED)
     payment_deadline = models.DateTimeField(null=True, blank=True)
     reminder_sent_at = models.DateTimeField(null=True, blank=True)
-    # What the admin changed when confirming availability: {"unit_price": {"old", "new"}, "stops": {"old", "new"}}
+    # What the admin changed when confirming availability: {"unit_price": {"old", "new"}, "segments": {"old", "new"}}
     # with only the changed keys; null when nothing changed.
     changes = models.JSONField(null=True, blank=True)
     changes_accepted = models.BooleanField(default=False)
@@ -61,17 +65,14 @@ class Booking(models.Model):
         return self.unit_price * self.passenger_count
 
 
-class BookingStop(Stop):
-    """Copied from the offer's stops when the booking is created, so later offer edits leave it unchanged."""
-
+class BookingSegment(Segment):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name="stops")
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name="segments")
 
-    class Meta(Stop.Meta):
+    class Meta(Segment.Meta):
         constraints = [
-            models.UniqueConstraint(fields=["booking", "position"], name="unique_booking_stop_position"),
-            models.CheckConstraint(
-                condition=models.Q(duration_minutes__gt=0), name="booking_stop_duration_positive"
+            models.UniqueConstraint(
+                fields=["booking", "direction", "position"], name="unique_booking_segment_position"
             ),
         ]
 

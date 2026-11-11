@@ -4,7 +4,15 @@ This is a reminder that payment for your booking is due by {{ deadline }}.
 
 Route: {{ route }}
 Departure: {{ departure }}
-Stops: {{ stops }}
+
+Outbound:
+{{ outbound_flights }}
+{% if return_flights %}
+Return:
+{{ return_flights }}
+{% endif %}
+Baggage: {{ baggage }}
+Fare conditions: {{ conditions }}
 Total price: {{ total }}
 
 How to pay:

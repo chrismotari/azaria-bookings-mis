@@ -1,6 +1,6 @@
 import uuid
 
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.utils import timezone
 
@@ -27,7 +27,44 @@ class OfferQuerySet(models.QuerySet):
         )
 
 
-class Offer(models.Model):
+class Trip(models.Model):
+    """Trip type, return date, baggage per passenger and fare conditions: an offer's, and a booking's copy of them."""
+
+    class TripType(models.TextChoices):
+        ONE_WAY = "one_way", "One way"
+        RETURN = "return", "Return"
+
+    class Policy(models.TextChoices):
+        NOT_ALLOWED = "not_allowed", "Not allowed"
+        WITH_FEE = "with_fee", "With a fee"
+        FREE = "free", "Free"
+
+    MAX_CHECKED_BAGS = 3
+    FIELDS = [
+        "trip_type",
+        "return_date",
+        "checked_bags",
+        "checked_bag_kg",
+        "cabin_bag_kg",
+        "refund_policy",
+        "change_policy",
+    ]
+
+    trip_type = models.CharField(max_length=10, choices=TripType.choices, default=TripType.ONE_WAY)
+    # The first return flight's departure date; null for one-way trips.
+    return_date = models.DateField(null=True, blank=True)
+    checked_bags = models.PositiveSmallIntegerField(default=0, validators=[MaxValueValidator(MAX_CHECKED_BAGS)])
+    # Null when the weight is not stated.
+    checked_bag_kg = models.PositiveSmallIntegerField(null=True, blank=True, validators=[MinValueValidator(1)])
+    cabin_bag_kg = models.PositiveSmallIntegerField(null=True, blank=True, validators=[MinValueValidator(1)])
+    refund_policy = models.CharField(max_length=20, choices=Policy.choices, default=Policy.NOT_ALLOWED)
+    change_policy = models.CharField(max_length=20, choices=Policy.choices, default=Policy.NOT_ALLOWED)
+
+    class Meta:
+        abstract = True
+
+
+class Offer(Trip):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     class TicketClass(models.TextChoices):
         ECONOMY = "economy", "Economy"
@@ -35,12 +72,14 @@ class Offer(models.Model):
         BUSINESS = "business", "Business"
         FIRST = "first", "First"
 
+    # origin, destination, departure_date and return_date are derived from the segments when they are written.
     origin = models.ForeignKey(Airport, on_delete=models.PROTECT, related_name="+")
     destination = models.ForeignKey(Airport, on_delete=models.PROTECT, related_name="+")
     departure_date = models.DateField()
     ticket_class = models.CharField(max_length=20, choices=TicketClass.choices)
-    # Per person, in settings.CURRENCY.
+    # Per person, in settings.CURRENCY; for a return trip, the round trip.
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    # The ticketing airline; each segment names its own carrier.
     airline = models.ForeignKey(Airline, on_delete=models.PROTECT, related_name="offers")
     # Inclusive through that day in Nairobi time.
     valid_until = models.DateField()
@@ -55,51 +94,91 @@ class Offer(models.Model):
         ordering = ["departure_date", "price"]
 
     def __str__(self):
-        return f"{self.origin.code} → {self.destination.code} {self.departure_date} ({self.airline})"
+        arrow = "⇄" if self.trip_type == self.TripType.RETURN else "→"
+        return f"{self.origin.code} {arrow} {self.destination.code} {self.departure_date} ({self.airline})"
 
     @property
     def is_bookable(self):
         today = timezone.localdate()
         return self.is_active and self.valid_until >= today and self.departure_date >= today
 
-    def set_stops(self, stops):
-        """Replace the stop list; stops: ordered dicts of airport and duration_minutes."""
-        self.stops.all().delete()
-        OfferStop.objects.bulk_create(
-            OfferStop(offer=self, position=position, airport=stop["airport"], duration_minutes=stop["duration_minutes"])
-            for position, stop in enumerate(stops, start=1)
-        )
+    def set_segments(self, segments):
+        """Replace the segments; segments: validated dicts in flight order (see Segment.FIELDS)."""
+        self.segments.all().delete()
+        OfferSegment.objects.bulk_create(OfferSegment.build(segments, offer=self))
 
 
-class Stop(models.Model):
-    """A stop between origin and destination. Under 24 hours it is a layover, otherwise a stopover."""
+class Segment(models.Model):
+    """One flight of an itinerary. Times are the local times of the airport concerned, with no time zone."""
 
-    MAX_PER_FLIGHT = 4
+    class Direction(models.TextChoices):
+        OUTBOUND = "outbound", "Outbound"
+        RETURN = "return", "Return"
+
+    # At most 4 connections per direction.
+    MAX_PER_DIRECTION = 5
     STOPOVER_MINUTES = 24 * 60
+    FIELDS = [
+        "direction",
+        "airline",
+        "flight_number",
+        "operating_airline",
+        "origin",
+        "destination",
+        "departure_date",
+        "departure_time",
+        "arrival_date",
+        "arrival_time",
+    ]
 
-    # From 1, in flight order.
+    direction = models.CharField(max_length=10, choices=Direction.choices)
+    # From 1 within the direction, in flight order.
     position = models.PositiveSmallIntegerField()
-    airport = models.ForeignKey(Airport, on_delete=models.PROTECT, related_name="+")
-    duration_minutes = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    # The marketing carrier.
+    airline = models.ForeignKey(Airline, on_delete=models.PROTECT, related_name="+")
+    flight_number = models.CharField(
+        max_length=5, validators=[RegexValidator(r"^\d{1,4}[A-Z]?$", "1 to 4 digits and an optional letter.")]
+    )
+    # Set only for a codeshare.
+    operating_airline = models.ForeignKey(Airline, on_delete=models.PROTECT, null=True, blank=True, related_name="+")
+    origin = models.ForeignKey(Airport, on_delete=models.PROTECT, related_name="+")
+    destination = models.ForeignKey(Airport, on_delete=models.PROTECT, related_name="+")
+    departure_date = models.DateField()
+    departure_time = models.TimeField()
+    arrival_date = models.DateField()
+    arrival_time = models.TimeField()
 
     class Meta:
         abstract = True
-        ordering = ["position"]
+        ordering = ["direction", "position"]
 
     def __str__(self):
-        return f"{self.airport.code} ({self.kind}, {self.duration_minutes} min)"
+        return f"{self.flight} {self.origin.code} → {self.destination.code} {self.departure_date}"
 
     @property
-    def kind(self):
-        return "stopover" if self.duration_minutes >= self.STOPOVER_MINUTES else "layover"
+    def flight(self):
+        return f"{self.airline.iata_code} {self.flight_number}"
+
+    def as_data(self):
+        """The segment as a dict of Segment.FIELDS, the shape the API takes."""
+        return {field: getattr(self, field) for field in self.FIELDS}
+
+    @classmethod
+    def build(cls, segments, **owner):
+        """Unsaved rows for segments (dicts of FIELDS in flight order), numbered from 1 within each direction."""
+        positions = dict.fromkeys(cls.Direction.values, 0)
+        rows = []
+        for data in segments:
+            positions[data["direction"]] += 1
+            rows.append(cls(**owner, position=positions[data["direction"]], **{f: data[f] for f in cls.FIELDS}))
+        return rows
 
 
-class OfferStop(Stop):
+class OfferSegment(Segment):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    offer = models.ForeignKey(Offer, on_delete=models.CASCADE, related_name="stops")
+    offer = models.ForeignKey(Offer, on_delete=models.CASCADE, related_name="segments")
 
-    class Meta(Stop.Meta):
+    class Meta(Segment.Meta):
         constraints = [
-            models.UniqueConstraint(fields=["offer", "position"], name="unique_offer_stop_position"),
-            models.CheckConstraint(condition=models.Q(duration_minutes__gt=0), name="offer_stop_duration_positive"),
+            models.UniqueConstraint(fields=["offer", "direction", "position"], name="unique_offer_segment_position"),
         ]

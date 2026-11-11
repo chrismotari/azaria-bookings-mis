@@ -1,3 +1,4 @@
+from catalog.models import Trip
 from core.emails import EMAIL_TASK_OPTIONS, format_date, format_price, send_email
 from core.models import AppSettings
 from core.tenancy import tenant_task
@@ -23,8 +24,13 @@ def describe_query(query):
         prices = f"Up to {format_price(query.price_max)}"
     else:
         prices = "Any"
+    if query.trip_type == Trip.TripType.RETURN:
+        trip = "Return" + (f", back {format_date(query.return_date)}" if query.return_date else "")
+    else:
+        trip = query.get_trip_type_display() if query.trip_type else "Any"
     return {
         "route": f"{_airport(query.origin)} → {_airport(query.destination)}",
+        "trip": trip,
         "dates": dates,
         "prices": prices,
         "ticket_class": query.get_ticket_class_display() if query.ticket_class else "Any",

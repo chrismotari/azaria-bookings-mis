@@ -12,6 +12,7 @@ import { AirlineBadge } from '../../components/AirlineBadge';
 import { Button } from '../../components/Button';
 import { Field, inputStyle } from '../../components/Field';
 import { FormSection } from '../../components/FormSection';
+import { tripSummary } from '../../components/Itinerary';
 import {
   OfferFilterErrors,
   OfferFilterFields,
@@ -22,7 +23,7 @@ import {
 import { Pagination } from '../../components/Pagination';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { colors, font, weight } from '../../theme';
-import { formatDate, formatPrice, stopsLabel, ticketClassLabel } from '../../utils/format';
+import { formatDate, formatPrice, stopsLabel, ticketClassLabel, tripDates } from '../../utils/format';
 import { OfferFields } from './OfferFields';
 import { OfferFormValues, offerSchema, toOfferBody } from './offerSchema';
 
@@ -201,11 +202,7 @@ export function ChosenOffers({ options }: { options: OfferOptions }) {
       {options.custom.map((values, index) => (
         <View key={index} style={styles.chosenBlock}>
           <View style={styles.chosen}>
-            <Text style={styles.chosenText}>
-              Custom: {values.origin?.code} → {values.destination?.code}, {formatDate(values.departure_date)},{' '}
-              {values.airline?.name}, {ticketClassLabel(values.ticket_class)}, {stopsLabel(values.stops.length)},{' '}
-              {formatPrice(values.price)}
-            </Text>
+            <Text style={styles.chosenText}>Custom: {customLine(values)}</Text>
             <Button title="Remove" variant="link" onPress={() => options.removeCustom(index)} />
           </View>
           {options.customErrors[index] ? <Text style={styles.error}>{options.customErrors[index]}</Text> : null}
@@ -232,13 +229,28 @@ export function MessageField({ value, onChange }: { value: string; onChange: (va
   );
 }
 
+/** e.g. "NBO ⇄ LHR, Fri, 10 Apr 2026 – Fri, 17 Apr 2026, Kenya Airways, Economy, Return · 1 stop, $900.00". */
+function customLine(values: OfferFormValues): string {
+  const outbound = values.segments.outbound;
+  const back = values.trip_type === 'return' ? values.segments.return : [];
+  const stops = Math.max(outbound.length, back.length) - 1;
+  return [
+    `${outbound[0]?.origin?.code} ${back.length ? '⇄' : '→'} ${outbound[outbound.length - 1]?.destination?.code}`,
+    tripDates({ departure_date: outbound[0]?.departure_date, return_date: back[0]?.departure_date ?? null }),
+    values.airline?.name,
+    ticketClassLabel(values.ticket_class),
+    `${back.length ? 'Return' : 'One way'} · ${stopsLabel(stops)}`,
+    formatPrice(values.price),
+  ].join(', ');
+}
+
 function offerLine(offer: AdminOffer): string {
   return [
-    `${offer.origin.code} → ${offer.destination.code}`,
-    formatDate(offer.departure_date),
+    `${offer.origin.code} ${offer.trip_type === 'return' ? '⇄' : '→'} ${offer.destination.code}`,
+    tripDates(offer),
     offer.airline.name,
     ticketClassLabel(offer.ticket_class),
-    stopsLabel(offer.stop_count),
+    tripSummary(offer),
     formatPrice(offer.price),
     offer.is_public ? 'public' : 'private',
   ].join(', ');

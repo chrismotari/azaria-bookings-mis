@@ -2,7 +2,14 @@ Hello {{ booking.user.full_name }},
 
 The hold on your booking for {{ route }} on {{ departure }} has lapsed because we did not receive your payment in time.
 
-Stops: {{ stops }}
+Outbound:
+{{ outbound_flights }}
+{% if return_flights %}
+Return:
+{{ return_flights }}
+{% endif %}
+Baggage: {{ baggage }}
+Fare conditions: {{ conditions }}
 
 If the offer is still available, you can book it again in the app:
 {{ frontend_url }}/offers/{{ booking.offer_id }}

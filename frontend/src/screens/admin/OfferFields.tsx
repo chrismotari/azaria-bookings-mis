@@ -1,18 +1,26 @@
-import { Control, Controller } from 'react-hook-form';
+import { Control, Controller, useFormState, useWatch } from 'react-hook-form';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { TICKET_CLASSES } from '../../api/types';
+import { TICKET_CLASSES, TripType } from '../../api/types';
 import { AirlinePicker } from '../../components/AirlinePicker';
-import { AirportPicker } from '../../components/AirportPicker';
 import { DateField } from '../../components/DateField';
 import { FieldGrid } from '../../components/Field';
 import { FormSection } from '../../components/FormSection';
 import { OptionChips } from '../../components/OptionChips';
+import { SegmentedControl } from '../../components/SegmentedControl';
 import { TextField } from '../../components/TextField';
 import { Toggle } from '../../components/Toggle';
-import { colors, font } from '../../theme';
+import { colors, font, space } from '../../theme';
+import { POLICIES } from '../../utils/format';
 import { OfferFormValues } from './offerSchema';
-import { StopFields } from './StopFields';
+import { SegmentFields } from './SegmentFields';
+
+const TRIP_TYPES: { value: TripType; label: string }[] = [
+  { value: 'one_way', label: 'One way' },
+  { value: 'return', label: 'Return' },
+];
+
+const BAG_COUNTS = ['0', '1', '2', '3'].map((value) => ({ value, label: value === '0' ? 'None' : value }));
 
 type Props = {
   control: Control<OfferFormValues>;
@@ -22,56 +30,106 @@ type Props = {
   plain?: boolean;
 };
 
-/** The offer fields shared by the create/edit form and the respond screen, in titled sections. */
+/** The offer fields shared by the create/edit form and the custom offers of Respond and Mark unavailable. */
 export function OfferFields({ control, showPublicToggle = true, plain }: Props) {
+  const tripType = useWatch({ control, name: 'trip_type' });
+  const checkedBags = useWatch({ control, name: 'checked_bags' });
+  const { errors } = useFormState({ control, name: 'segments' });
+  // Itinerary rules the server reports for the whole list rather than one field.
+  const itineraryError = errors.segments?.message;
+
   return (
     <>
-      <FormSection title="Route" plain={plain}>
-        <FieldGrid columns={2}>
-          {(['origin', 'destination'] as const).map((name) => (
-            <Controller
-              key={name}
-              control={control}
-              name={name}
-              render={({ field, fieldState }) => (
-                <AirportPicker
-                  label={name === 'origin' ? 'From' : 'To'}
-                  value={field.value}
-                  onChange={field.onChange}
-                  error={fieldState.error?.message}
-                />
-              )}
-            />
-          ))}
-        </FieldGrid>
+      <FormSection title="Trip" plain={plain}>
+        <Controller
+          control={control}
+          name="trip_type"
+          render={({ field }) => (
+            <View style={styles.trip}>
+              <SegmentedControl label="Trip type" options={TRIP_TYPES} value={field.value} onChange={field.onChange} />
+            </View>
+          )}
+        />
+        {itineraryError ? <Text style={styles.error}>{itineraryError}</Text> : null}
       </FormSection>
       <FormSection
-        title="Stops"
-        description="In flight order. Under 24 hours is a layover; 24 hours or more is a stopover."
+        title="Outbound flights"
+        description="In flight order, with each airport's local times as printed on the ticket."
         plain={plain}
       >
-        <StopFields control={control} />
+        <SegmentFields control={control} direction="outbound" />
       </FormSection>
-      <FormSection title="Dates" plain={plain}>
+      {tripType === 'return' ? (
+        <FormSection title="Return flights" description="Back from the destination to the origin." plain={plain}>
+          <SegmentFields control={control} direction="return" />
+        </FormSection>
+      ) : null}
+      <FormSection title="Baggage and fare conditions" description="Per passenger." plain={plain}>
+        <Controller
+          control={control}
+          name="checked_bags"
+          render={({ field, fieldState }) => (
+            <OptionChips
+              label="Checked bags"
+              options={BAG_COUNTS}
+              value={field.value}
+              onChange={field.onChange}
+              error={fieldState.error?.message}
+            />
+          )}
+        />
         <FieldGrid columns={2}>
-          {(['departure_date', 'valid_until'] as const).map((name) => (
+          {checkedBags !== '0' ? (
             <Controller
-              key={name}
               control={control}
-              name={name}
+              name="checked_bag_kg"
               render={({ field, fieldState }) => (
-                <DateField
-                  label={name === 'departure_date' ? 'Departure date' : 'Valid until (inclusive)'}
+                <TextField
+                  label="Weight per checked bag, kg (optional)"
                   value={field.value}
-                  onChange={field.onChange}
+                  onChangeText={field.onChange}
+                  onBlur={field.onBlur}
                   error={fieldState.error?.message}
+                  keyboardType="number-pad"
+                  placeholder="e.g. 23"
                 />
               )}
             />
-          ))}
+          ) : null}
+          <Controller
+            control={control}
+            name="cabin_bag_kg"
+            render={({ field, fieldState }) => (
+              <TextField
+                label="Cabin bag, kg (optional)"
+                value={field.value}
+                onChangeText={field.onChange}
+                onBlur={field.onBlur}
+                error={fieldState.error?.message}
+                keyboardType="number-pad"
+                placeholder="e.g. 7"
+              />
+            )}
+          />
         </FieldGrid>
+        {(['refund_policy', 'change_policy'] as const).map((name) => (
+          <Controller
+            key={name}
+            control={control}
+            name={name}
+            render={({ field, fieldState }) => (
+              <OptionChips
+                label={name === 'refund_policy' ? 'Refunds' : 'Changes'}
+                options={POLICIES}
+                value={field.value}
+                onChange={field.onChange}
+                error={fieldState.error?.message}
+              />
+            )}
+          />
+        ))}
       </FormSection>
-      <FormSection title="Flight" plain={plain}>
+      <FormSection title="Fare" plain={plain}>
         <Controller
           control={control}
           name="ticket_class"
@@ -91,7 +149,7 @@ export function OfferFields({ control, showPublicToggle = true, plain }: Props) 
             name="airline"
             render={({ field, fieldState }) => (
               <AirlinePicker
-                label="Airline"
+                label="Ticketing airline"
                 value={field.value}
                 onChange={field.onChange}
                 error={fieldState.error?.message}
@@ -103,12 +161,24 @@ export function OfferFields({ control, showPublicToggle = true, plain }: Props) 
             name="price"
             render={({ field, fieldState }) => (
               <TextField
-                label="Price per person (USD)"
+                label={tripType === 'return' ? 'Return price per person (USD)' : 'Price per person (USD)'}
                 value={field.value}
                 onChangeText={field.onChange}
                 onBlur={field.onBlur}
                 error={fieldState.error?.message}
                 keyboardType="decimal-pad"
+              />
+            )}
+          />
+          <Controller
+            control={control}
+            name="valid_until"
+            render={({ field, fieldState }) => (
+              <DateField
+                label="Valid until (inclusive)"
+                value={field.value}
+                onChange={field.onChange}
+                error={fieldState.error?.message}
               />
             )}
           />
@@ -135,6 +205,8 @@ export function OfferFields({ control, showPublicToggle = true, plain }: Props) 
 }
 
 const styles = StyleSheet.create({
-  toggle: { gap: 4 },
+  trip: { maxWidth: 320 },
+  toggle: { gap: space.xs },
   help: { color: colors.muted, fontSize: font.small },
+  error: { color: colors.dangerText, fontSize: font.small },
 });

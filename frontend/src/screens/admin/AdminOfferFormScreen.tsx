@@ -16,44 +16,43 @@ import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { colors, font, weight } from '../../theme';
 import { OfferFields } from './OfferFields';
-import { OfferFormValues, offerSchema, toOfferBody, toStopFormValues } from './offerSchema';
+import {
+  OfferFormValues,
+  offerDefaults,
+  offerSchema,
+  toItineraryFormValues,
+  toOfferBody,
+  tripFormValues,
+} from './offerSchema';
 
 const FIELDS = [
-  'origin',
-  'destination',
-  'departure_date',
+  'trip_type',
+  'segments',
   'ticket_class',
   'price',
-  'stops',
   'airline',
   'valid_until',
   'is_public',
+  'checked_bags',
+  'checked_bag_kg',
+  'cabin_bag_kg',
+  'refund_policy',
+  'change_policy',
 ] as const;
 
-const EMPTY: OfferFormValues = {
-  origin: null,
-  destination: null,
-  departure_date: '',
-  ticket_class: 'economy',
-  price: '',
-  stops: [],
-  airline: null,
-  valid_until: '',
-  is_public: true,
-};
-
 function toFormValues(offer: AdminOffer): OfferFormValues {
-  return {
-    origin: offer.origin,
-    destination: offer.destination,
-    departure_date: offer.departure_date,
+  return offerDefaults({
+    trip_type: offer.trip_type,
+    segments: toItineraryFormValues(offer.itinerary),
     ticket_class: offer.ticket_class,
     price: offer.price,
-    stops: toStopFormValues(offer.stops),
     airline: offer.airline,
     valid_until: offer.valid_until,
     is_public: offer.is_public,
-  };
+    ...tripFormValues(offer),
+    refund_policy: offer.refund_policy,
+    change_policy: offer.change_policy,
+  });
 }
 
 export function AdminOfferNewScreen() {
@@ -63,7 +62,7 @@ export function AdminOfferNewScreen() {
     <Screen maxWidth={760}>
       <BackLink label="Offers" onPress={backToOffers} />
       <Text style={styles.title}>New offer</Text>
-      <OfferForm initial={EMPTY} onDone={backToOffers} />
+      <OfferForm initial={offerDefaults()} onDone={backToOffers} />
     </Screen>
   );
 }

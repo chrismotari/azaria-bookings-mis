@@ -35,6 +35,8 @@ function queryPrefill(filters: OfferFilterValues): QueryPrefill {
     destination: filters.destination.airport?.code,
     date_from: filters.date_from,
     date_to: filters.date_to,
+    trip_type: filters.trip_type || undefined,
+    return_date: filters.trip_type === 'return' ? filters.return_from : undefined,
     price_min: filters.price_min.trim(),
     price_max: filters.price_max.trim(),
     ticket_class: filters.ticket_class || undefined,

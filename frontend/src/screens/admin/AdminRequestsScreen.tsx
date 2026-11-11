@@ -129,7 +129,12 @@ function QueryTableRow({ query, onPress }: { query: AdminQuery; onPress: () => v
       accessibilityLabel={`${query.user.full_name}, ${details.route}, ${status.label}`}
       cells={[
         <TwoLineCell key="customer" primary={query.user.full_name} secondary={query.user.email} />,
-        <RouteCell key="route" origin={query.origin} destination={query.destination} />,
+        <RouteCell
+          key="route"
+          origin={query.origin}
+          destination={query.destination}
+          returnTrip={query.trip_type === 'return'}
+        />,
         details.dates,
         <TwoLineCell
           key="criteria"
@@ -161,7 +166,7 @@ function AdminQueryCard({ query, selected, onPress }: { query: AdminQuery; selec
         </Text>
         <StatusChip label={status.label} tone={status.tone} />
       </View>
-      <RouteLine origin={query.origin} destination={query.destination} />
+      <RouteLine origin={query.origin} destination={query.destination} returnTrip={query.trip_type === 'return'} />
       <View style={styles.fact}>
         <Icon name="calendar-outline" size={16} color={colors.muted} />
         <Text style={styles.text}>{details.dates}</Text>
