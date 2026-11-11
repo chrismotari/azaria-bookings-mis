@@ -19,6 +19,7 @@ class Booking(Trip):
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     class Status(models.TextChoices):
         REQUESTED = "requested", "Requested"
         AVAILABILITY_CONFIRMED = "availability_confirmed", "Availability confirmed"
@@ -102,7 +103,9 @@ class BookingEvent(models.Model):
     from_status = models.CharField(max_length=30, choices=Booking.Status.choices, blank=True)
     to_status = models.CharField(max_length=30, choices=Booking.Status.choices)
     # Null when the system acted.
-    actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

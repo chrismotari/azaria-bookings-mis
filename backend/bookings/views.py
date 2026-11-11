@@ -59,7 +59,9 @@ class BookingListCreateView(generics.ListAPIView):
         serializer = BookingCreateSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         booking = create_booking(request.user, serializer.validated_data)
-        return Response(BookingDetailSerializer(booking, context={"request": request}).data, status=status.HTTP_201_CREATED)
+        return Response(
+            BookingDetailSerializer(booking, context={"request": request}).data, status=status.HTTP_201_CREATED
+        )
 
 
 class BookingDetailView(generics.RetrieveAPIView):
@@ -107,7 +109,9 @@ class AdminBookingListView(generics.ListAPIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         booking = create_booking(data["user"], data, admin=request.user)
-        return Response(AdminBookingDetailSerializer(booking, context={"request": request}).data, status=status.HTTP_201_CREATED)
+        return Response(
+            AdminBookingDetailSerializer(booking, context={"request": request}).data, status=status.HTTP_201_CREATED
+        )
 
 
 class AdminBookingDetailView(generics.RetrieveAPIView):

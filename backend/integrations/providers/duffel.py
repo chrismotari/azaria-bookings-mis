@@ -125,7 +125,7 @@ def map_offer(offer, cabin):
     """A Duffel offer as a Result. Technical stops inside a segment are ignored."""
     segments = []
     duffel_segments = []
-    for direction, piece in zip(DIRECTIONS, offer["slices"]):
+    for direction, piece in zip(DIRECTIONS, offer["slices"], strict=False):
         for segment in piece["segments"]:
             duffel_segments.append(segment)
             departure_date, departure_time = _local(segment["departing_at"])

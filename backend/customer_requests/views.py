@@ -75,4 +75,6 @@ class AdminQueryRespondView(APIView):
         data = serializer.validated_data
         respond_to_query(pk, data["message"], data["offer_ids"], data["new_offers"])
         query = with_responses(Query.objects.select_related("user", "origin", "destination")).get(pk=pk)
-        return Response(AdminQueryDetailSerializer(query, context={"request": request}).data, status=status.HTTP_201_CREATED)
+        return Response(
+            AdminQueryDetailSerializer(query, context={"request": request}).data, status=status.HTTP_201_CREATED
+        )

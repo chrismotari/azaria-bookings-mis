@@ -139,7 +139,9 @@ def test_boarding_pass_endpoints_reject_customers_and_guests(api, customer_api, 
 # Delete
 
 
-def test_delete_removes_the_file_from_disk(admin_api, make_booking, add_pass, private_media, django_capture_on_commit_callbacks):
+def test_delete_removes_the_file_from_disk(
+    admin_api, make_booking, add_pass, private_media, django_capture_on_commit_callbacks
+):
     boarding_pass = add_pass(make_booking())
     path = private_media / boarding_pass.file.name
     assert path.exists()
@@ -170,9 +172,7 @@ def test_complete_fails_without_boarding_passes(admin_api, make_booking):
     assert booking.status == Status.PAID
 
 
-def test_complete_sends_every_file_attached(
-    admin_api, make_booking, add_pass, django_capture_on_commit_callbacks
-):
+def test_complete_sends_every_file_attached(admin_api, make_booking, add_pass, django_capture_on_commit_callbacks):
     booking = make_booking()
     add_pass(booking, "Cara.pdf", PDF)
     add_pass(booking, "Otto.png", PNG)

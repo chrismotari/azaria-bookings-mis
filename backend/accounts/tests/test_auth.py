@@ -46,9 +46,7 @@ def test_register_requires_fields(api, field):
 
 
 def test_login_refresh_and_me(api, customer):
-    response = api.post(
-        "/api/auth/login", {"email": "Customer@Example.com", "password": "Str0ng-pass!"}, format="json"
-    )
+    response = api.post("/api/auth/login", {"email": "Customer@Example.com", "password": "Str0ng-pass!"}, format="json")
     assert response.status_code == 200
     assert response.data["user"]["email"] == customer.email
 

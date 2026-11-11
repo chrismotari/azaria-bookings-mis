@@ -61,9 +61,7 @@ def blocking_invoices(tenant, on=None):
 def overdue_invoice(tenant):
     """The oldest unpaid, not waived invoice past its due date (the agency's overdue notice), or None."""
     return (
-        Invoice.objects.filter(
-            tenant=tenant, status=Invoice.Status.UNPAID, suspension_waived=False, due_on__lt=today()
-        )
+        Invoice.objects.filter(tenant=tenant, status=Invoice.Status.UNPAID, suspension_waived=False, due_on__lt=today())
         .order_by("due_on", "number")
         .first()
     )
@@ -142,9 +140,7 @@ def issue_invoice(subscription):
 
     with transaction.atomic():
         platform = PlatformSettings.objects.select_for_update().get()
-        subscription = Subscription.objects.select_for_update().select_related("plan", "tenant").get(
-            pk=subscription.pk
-        )
+        subscription = Subscription.objects.select_for_update().select_related("plan", "tenant").get(pk=subscription.pk)
         if subscription.ended_on:
             raise ValidationError({"detail": ["This subscription has ended."]})
         amount = subscription.plan.price_for(subscription.billing_cycle)

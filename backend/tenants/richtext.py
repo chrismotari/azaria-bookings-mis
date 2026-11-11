@@ -18,4 +18,3 @@ def sanitize(value):
     ).strip()
     # An editor's empty document.
     return "" if cleaned in ("<p></p>", "<p><br></p>") else cleaned
-

@@ -112,7 +112,9 @@ class Offer(Trip):
     integration = models.ForeignKey(
         "integrations.Integration", on_delete=models.PROTECT, null=True, blank=True, related_name="offers"
     )
-    route = models.ForeignKey("integrations.Route", on_delete=models.PROTECT, null=True, blank=True, related_name="offers")
+    route = models.ForeignKey(
+        "integrations.Route", on_delete=models.PROTECT, null=True, blank=True, related_name="offers"
+    )
     provider_ref = models.CharField(max_length=200, null=True, blank=True)
     fare_key = models.CharField(max_length=500, null=True, blank=True)
     # The provider's amount for one adult in its own currency, and its USD conversion when published.

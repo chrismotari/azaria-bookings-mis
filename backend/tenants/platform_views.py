@@ -76,7 +76,9 @@ class PlatformTenantListView(generics.ListCreateAPIView):
             )
         except DjangoValidationError as exc:
             # The address checks raise plain errors; the others name their fields.
-            raise serializers.ValidationError(exc.message_dict if hasattr(exc, "error_dict") else {"slug": exc.messages})
+            raise serializers.ValidationError(
+                exc.message_dict if hasattr(exc, "error_dict") else {"slug": exc.messages}
+            ) from exc
         return Response(TenantDetailSerializer(agencies().get(pk=tenant.pk)).data, status=status.HTTP_201_CREATED)
 
 

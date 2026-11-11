@@ -1,9 +1,9 @@
 from rest_framework import serializers
 
 from accounts.models import User
+from accounts.serializers import UserSerializer
 from airlines.models import Airline
 from airlines.serializers import AirlineSerializer
-from accounts.serializers import UserSerializer
 from catalog.itinerary import airlines_in, itinerary_errors
 from catalog.models import Trip
 from catalog.serializers import OfferSerializer, SegmentInputSerializer, itinerary_data

@@ -147,9 +147,7 @@ def test_edit_details(admin_api, customer, other_customer):
     assert admin_api.delete(url).status_code == 405
 
 
-def test_deactivated_customers_cannot_sign_in_or_refresh_and_keep_their_bookings(
-    admin_api, api, customer, make_offer
-):
+def test_deactivated_customers_cannot_sign_in_or_refresh_and_keep_their_bookings(admin_api, api, customer, make_offer):
     offer = make_offer()
     booking = Booking.objects.create(user=customer, offer=offer, passenger_count=1, unit_price=offer.price)
     tokens = login(api, customer.email).data
@@ -232,9 +230,17 @@ def test_admins_deactivate_other_admins_but_not_themselves(admin_api, admin_user
     admin_user.refresh_from_db()
     assert admin_user.is_active
     # Their own details can still be edited.
-    assert admin_api.patch(f"/api/admin/users/{admin_user.id}", {"phone": "+254700000099"}, format="json").status_code == 200
+    assert (
+        admin_api.patch(f"/api/admin/users/{admin_user.id}", {"phone": "+254700000099"}, format="json").status_code
+        == 200
+    )
 
-    assert admin_api.patch(f"/api/admin/users/{second.id}", {"is_active": False, "role": "customer"}, format="json").status_code == 200
+    assert (
+        admin_api.patch(
+            f"/api/admin/users/{second.id}", {"is_active": False, "role": "customer"}, format="json"
+        ).status_code
+        == 200
+    )
     second.refresh_from_db()
     assert (second.is_active, second.role) == (False, User.Role.ADMIN)
     assert login(api, second.email).status_code == 401

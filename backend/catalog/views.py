@@ -53,7 +53,9 @@ class OfferListView(generics.ListAPIView):
     filterset_class = OfferFilter
 
     def get_queryset(self):
-        return Offer.objects.publicly_visible().bookable().select_related(*OFFER_RELATED).prefetch_related(*OFFER_SEGMENTS)
+        return (
+            Offer.objects.publicly_visible().bookable().select_related(*OFFER_RELATED).prefetch_related(*OFFER_SEGMENTS)
+        )
 
 
 class OfferDetailView(generics.RetrieveAPIView):
@@ -61,7 +63,9 @@ class OfferDetailView(generics.RetrieveAPIView):
     serializer_class = OfferSerializer
 
     def get_queryset(self):
-        return Offer.objects.visible_to(self.request.user).select_related(*OFFER_RELATED).prefetch_related(*OFFER_SEGMENTS)
+        return (
+            Offer.objects.visible_to(self.request.user).select_related(*OFFER_RELATED).prefetch_related(*OFFER_SEGMENTS)
+        )
 
 
 class AdminOfferListView(generics.ListCreateAPIView):

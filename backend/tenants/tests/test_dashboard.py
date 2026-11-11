@@ -66,8 +66,6 @@ def test_an_empty_platform(platform):
     assert data["currency"] == "USD"
 
 
-
-
 def test_the_figures(platform):
     test_tenant = with_billing_email(TEST_SCHEMA, "a@test.test")
     other = with_billing_email(OTHER_SCHEMA, "a@other.test")

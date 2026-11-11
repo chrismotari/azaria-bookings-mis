@@ -39,8 +39,8 @@ def run(action, *args, **kwargs):
     except DjangoValidationError as exc:
         errors = exc.message_dict
         if set(errors) == {"detail"}:
-            raise Conflict(errors["detail"][0])
-        raise serializers.ValidationError(errors)
+            raise Conflict(errors["detail"][0]) from exc
+        raise serializers.ValidationError(errors) from exc
 
 
 class Conflict(APIException):

@@ -34,7 +34,7 @@ def connections(flights):
     Both times are local to the connection airport, so their difference is the wait.
     """
     found = []
-    for previous, following in zip(flights, flights[1:]):
+    for previous, following in zip(flights, flights[1:], strict=False):
         minutes = int((departs(following) - arrives(previous)).total_seconds() // 60)
         kind = "stopover" if minutes >= Segment.STOPOVER_MINUTES else "layover"
         found.append({"airport": previous["destination"], "wait_minutes": minutes, "kind": kind})
@@ -63,7 +63,9 @@ def _direction_errors(label, flights, kept_airlines):
             errors.append(f"{prefix}: From and To must differ.")
         days = (flight["arrival_date"] - flight["departure_date"]).days
         if not -1 <= days <= 2:
-            errors.append(f"{prefix}: the arrival date must be between one day before and two days after the departure.")
+            errors.append(
+                f"{prefix}: the arrival date must be between one day before and two days after the departure."
+            )
         for airline in (flight["airline"], flight.get("operating_airline")):
             if airline is not None and not airline.is_active and airline.pk not in kept_airlines:
                 errors.append(f"{prefix}: {airline.name} is no longer active.")
@@ -110,7 +112,9 @@ def itinerary_errors(trip_type, segments, kept_airlines=(), route=None):
         if inbound[0]["origin"] != destination:
             errors.append(f"Return flight 1: must leave from {destination.code}, where the outbound flights arrive.")
         if inbound[-1]["destination"] != origin:
-            errors.append(f"Return flight {len(inbound)}: must arrive at {origin.code}, where the outbound flights start.")
+            errors.append(
+                f"Return flight {len(inbound)}: must arrive at {origin.code}, where the outbound flights start."
+            )
         if departs(inbound[0]) <= arrives(outbound[-1]):
             errors.append("Return flight 1: must leave after the outbound flights arrive.")
     return errors

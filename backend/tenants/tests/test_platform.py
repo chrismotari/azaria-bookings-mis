@@ -215,7 +215,13 @@ def test_a_failed_creation_leaves_nothing_behind(platform, monkeypatch):
         raise RuntimeError("cannot create the admin")
 
     monkeypatch.setattr(User.objects, "create_user", fail)
-    data = {"name": "Broken", "slug": "broken", "admin_name": "B", "admin_email": "b@b.test", "admin_password": PASSWORD}
+    data = {
+        "name": "Broken",
+        "slug": "broken",
+        "admin_name": "B",
+        "admin_email": "b@b.test",
+        "admin_password": PASSWORD,
+    }
     with pytest.raises(RuntimeError):
         platform.post("/api/platform/tenants", data, format="json")
     assert not Tenant.objects.filter(schema_name="broken").exists()
@@ -349,10 +355,16 @@ def test_suspending_and_restoring_an_admin(admin_user, platform):
     assert agency.get("/api/auth/me").status_code == 401
     agency.credentials()
     assert agency.post("/api/auth/refresh", {"refresh": tokens["refresh"]}, format="json").status_code == 401
-    assert agency.post("/api/auth/login", {"email": admin_user.email, "password": PASSWORD}, format="json").status_code == 401
+    assert (
+        agency.post("/api/auth/login", {"email": admin_user.email, "password": PASSWORD}, format="json").status_code
+        == 401
+    )
 
     assert platform.patch(url, {"is_active": True}, format="json").data["is_active"] is True
-    assert agency.post("/api/auth/login", {"email": admin_user.email, "password": PASSWORD}, format="json").status_code == 200
+    assert (
+        agency.post("/api/auth/login", {"email": admin_user.email, "password": PASSWORD}, format="json").status_code
+        == 200
+    )
 
 
 def test_customers_and_other_agencies_admins_cannot_be_changed_here(customer, platform):

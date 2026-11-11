@@ -68,7 +68,10 @@ def test_booking_copies_segments_baggage_and_conditions(customer_api, return_off
     assert (booking.trip_type, booking.return_date) == ("return", day(37))
     assert (booking.checked_bags, booking.checked_bag_kg, booking.cabin_bag_kg) == (1, 23, 7)
     assert (booking.refund_policy, booking.change_policy) == ("with_fee", "free")
-    assert [(s.direction, s.position, s.flight, s.operating_airline and s.operating_airline.name) for s in booking.segments.all()] == [
+    assert [
+        (s.direction, s.position, s.flight, s.operating_airline and s.operating_airline.name)
+        for s in booking.segments.all()
+    ] == [
         ("outbound", 1, f"{airline_named().iata_code} 310", None),
         ("outbound", 2, f"{airline_named().iata_code} 6001", "Emirates"),
         ("return", 1, f"{airline_named().iata_code} 101", None),

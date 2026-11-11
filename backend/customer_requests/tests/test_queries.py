@@ -222,9 +222,7 @@ def test_admin_responds_with_existing_and_new_offers(
 def test_admin_may_respond_more_than_once(admin_api, query, make_offer):
     offer = make_offer(destination="DXB")
     for _ in range(2):
-        response = admin_api.post(
-            f"/api/admin/queries/{query.id}/respond", {"offer_ids": [offer.id]}, format="json"
-        )
+        response = admin_api.post(f"/api/admin/queries/{query.id}/respond", {"offer_ids": [offer.id]}, format="json")
         assert response.status_code == 201
     assert QueryResponse.objects.filter(query=query).count() == 2
 
@@ -265,9 +263,7 @@ def test_respond_is_all_or_nothing_when_a_new_offer_is_invalid(admin_api, query,
 def test_respond_to_closed_query_returns_409(admin_api, query, make_offer):
     query.status = Query.Status.CLOSED
     query.save()
-    response = admin_api.post(
-        f"/api/admin/queries/{query.id}/respond", {"offer_ids": [make_offer().id]}, format="json"
-    )
+    response = admin_api.post(f"/api/admin/queries/{query.id}/respond", {"offer_ids": [make_offer().id]}, format="json")
     assert response.status_code == 409
     assert QueryResponse.objects.count() == 0
 

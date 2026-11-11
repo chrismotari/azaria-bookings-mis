@@ -2,7 +2,6 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from accounts.tokens import TenantTokenRefreshSerializer
-
 from rates.views import PlatformExchangeRatesView
 from support import views as support
 
@@ -20,7 +19,9 @@ urlpatterns = [
     path("tenants/<uuid:pk>/domains/<uuid:domain_id>/make-primary", views.PlatformDomainMakePrimaryView.as_view()),
     path("tenants/<uuid:pk>/admins", views.PlatformAgencyAdminListView.as_view()),
     path("tenants/<uuid:pk>/admins/<uuid:admin_id>", views.PlatformAgencyAdminDetailView.as_view()),
-    path("tenants/<uuid:pk>/admins/<uuid:admin_id>/password-reset", views.PlatformAgencyAdminPasswordResetView.as_view()),
+    path(
+        "tenants/<uuid:pk>/admins/<uuid:admin_id>/password-reset", views.PlatformAgencyAdminPasswordResetView.as_view()
+    ),
     path("tenants/<uuid:pk>/subscriptions", billing.TenantSubscriptionListView.as_view()),
     path("plans", billing.PlanListView.as_view()),
     path("plans/<uuid:pk>", billing.PlanDetailView.as_view()),

@@ -199,7 +199,8 @@ def mark_unavailable(booking_id, actor, message="", offers=(), new_offers=()):
     """Marks the booking unavailable. With at least one offer, also suggests them to the customer.
 
     The suggestions go into a new request for the booking's customer (route, date and class from the booked
-    offer, trip type and return date from the booking), answered with one response holding the message and offers, and linked as booking.alternatives.
+    offer, trip type and return date from the booking), answered with one response holding the message and offers,
+    and linked as booking.alternatives.
     The request's own emails are not sent; the unavailable email tells the customer instead.
     """
 
@@ -246,7 +247,9 @@ def add_boarding_pass(booking_id, uploaded_file):
     with transaction.atomic():
         booking = _lock_paid_booking(booking_id)
         if booking.boarding_passes.count() >= BoardingPass.MAX_PER_BOOKING:
-            raise ValidationError({"file": f"A booking can have at most {BoardingPass.MAX_PER_BOOKING} boarding passes."})
+            raise ValidationError(
+                {"file": f"A booking can have at most {BoardingPass.MAX_PER_BOOKING} boarding passes."}
+            )
         return BoardingPass.objects.create(booking=booking, file=uploaded_file, original_name=uploaded_file.name)
 
 

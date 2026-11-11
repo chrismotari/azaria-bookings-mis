@@ -101,7 +101,9 @@ def test_a_customer_follows_their_chat(customer_api, customer, admin_api, django
     mail.outbox.clear()
     with django_capture_on_commit_callbacks(execute=True):
         reply = admin_api.post(
-            f"/api/admin/chats/{chat_id}/messages", {"body": "20 kg", "attachment": pdf("rules.pdf")}, format="multipart"
+            f"/api/admin/chats/{chat_id}/messages",
+            {"body": "20 kg", "attachment": pdf("rules.pdf")},
+            format="multipart",
         )
     assert reply.status_code == 201
     [email] = mail.outbox
@@ -214,8 +216,9 @@ def test_chats_close_48_hours_after_their_last_message(customer_api):
 
 def test_another_agency_does_not_see_these_chats(customer_api):
     start(customer_api)
-    from accounts.models import User
     from django_tenants.utils import schema_context
+
+    from accounts.models import User
 
     with schema_context("other"):
         admin = User.objects.create_user(email="boss@other.test", password="Str0ng-pass!", full_name="O", role="admin")

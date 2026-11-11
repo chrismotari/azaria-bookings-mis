@@ -16,6 +16,4 @@ class AdminCustomerFilter(django_filters.FilterSet):
         value = value.strip()
         if not value:
             return queryset
-        return queryset.filter(
-            Q(full_name__icontains=value) | Q(email__icontains=value) | Q(phone__icontains=value)
-        )
+        return queryset.filter(Q(full_name__icontains=value) | Q(email__icontains=value) | Q(phone__icontains=value))

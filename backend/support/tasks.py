@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 
 
 def _load(conversation_id, message_id):
-    message = Message.objects.select_related("conversation").filter(pk=message_id, conversation_id=conversation_id).first()
+    message = (
+        Message.objects.select_related("conversation").filter(pk=message_id, conversation_id=conversation_id).first()
+    )
     return (message.conversation, message) if message else (None, None)
 
 

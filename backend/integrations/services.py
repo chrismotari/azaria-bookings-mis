@@ -10,8 +10,8 @@ from decimal import ROUND_HALF_UP, Decimal
 from django.db import connection, transaction
 from django.db.models import Sum
 from django.utils import timezone
-from rest_framework.status import HTTP_502_BAD_GATEWAY
 from rest_framework.exceptions import APIException, ValidationError
+from rest_framework.status import HTTP_502_BAD_GATEWAY
 
 import rates
 from airlines.models import Airline
@@ -714,7 +714,7 @@ def recheck_fare(booking, user):
         results = provider_for(integration).search(request)
     except ProviderError as exc:
         _finish_recheck(run, SearchRun.Status.FAILED, 0, [f"{integration.name}, {departure:%d %b}: {exc}"])
-        raise ProviderFailed(f"{integration.name} could not be searched: {exc}")
+        raise ProviderFailed(f"{integration.name} could not be searched: {exc}") from exc
     except Exception:
         _finish_recheck(run, SearchRun.Status.FAILED, 0, ["The search stopped on an unexpected error."])
         raise

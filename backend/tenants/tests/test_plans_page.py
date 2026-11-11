@@ -124,12 +124,20 @@ def test_agency_plans_show_its_current_plans_to_its_admins_only(customer_api):
     tenant = Tenant.objects.get(schema_name=TEST_SCHEMA)
     other = Tenant.objects.get(schema_name=OTHER_SCHEMA)
     Subscription.objects.create(
-        tenant=tenant, plan=current, kind="subscription", billing_cycle="monthly",
-        started_on=date(2026, 1, 1), next_period_start=date(2026, 2, 1),
+        tenant=tenant,
+        plan=current,
+        kind="subscription",
+        billing_cycle="monthly",
+        started_on=date(2026, 1, 1),
+        next_period_start=date(2026, 2, 1),
     )
     Subscription.objects.create(
-        tenant=other, plan=Plan.objects.get(name="Premium"), kind="subscription", billing_cycle="monthly",
-        started_on=date(2026, 1, 1), next_period_start=date(2026, 2, 1),
+        tenant=other,
+        plan=Plan.objects.get(name="Premium"),
+        kind="subscription",
+        billing_cycle="monthly",
+        started_on=date(2026, 1, 1),
+        next_period_start=date(2026, 2, 1),
     )
     admin = User.objects.create_user(email="boss@test.test", password="Str0ng-pass!", full_name="B", role="admin")
     client = APIClient()

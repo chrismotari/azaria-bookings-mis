@@ -7,19 +7,19 @@ from celery import shared_task
 from django.db import transaction
 from django.utils import timezone
 
+from catalog.itinerary import by_direction
+from catalog.models import Trip
 from core.emails import (
     EMAIL_TASK_OPTIONS,
-    format_date,
-    format_datetime,
     format_baggage,
     format_conditions,
+    format_date,
+    format_datetime,
     format_direction,
     format_price,
     format_segment_changes,
     send_email,
 )
-from catalog.itinerary import by_direction
-from catalog.models import Trip
 from core.models import AppSettings
 from core.tenancy import for_each_tenant, queue, tenant_task
 
@@ -32,7 +32,9 @@ def _booking_in(booking_id, status):
     """The booking, or None when it is gone or no longer in the status the email describes."""
     return (
         Booking.objects.select_related("user", "airline", "offer__origin", "offer__destination")
-        .prefetch_related(*(f"segments__{field}" for field in ("airline", "operating_airline", "origin", "destination")))
+        .prefetch_related(
+            *(f"segments__{field}" for field in ("airline", "operating_airline", "origin", "destination"))
+        )
         .filter(pk=booking_id, status=status)
         .first()
     )

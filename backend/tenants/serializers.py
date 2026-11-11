@@ -114,7 +114,7 @@ class DomainSerializer(serializers.ModelSerializer):
         try:
             DomainNameValidator(accept_idna=False)(domain)
         except DjangoValidationError:
-            raise serializers.ValidationError("Enter a valid hostname, e.g. acme.192.168.1.5.nip.io.")
+            raise serializers.ValidationError("Enter a valid hostname, e.g. acme.192.168.1.5.nip.io.") from None
         return domain
 
 

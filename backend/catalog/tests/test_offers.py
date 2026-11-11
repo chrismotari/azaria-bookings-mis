@@ -273,9 +273,7 @@ def test_admin_create_validation(admin_api, airports, overrides, field):
 
 
 def test_admin_create_rejects_same_origin_and_destination(admin_api, airports):
-    response = admin_api.post(
-        "/api/admin/offers", payload(airports, destination="NBO"), format="json"
-    )
+    response = admin_api.post("/api/admin/offers", payload(airports, destination="NBO"), format="json")
     assert response.status_code == 400
     assert "segments" in response.data
 
@@ -338,7 +336,9 @@ def test_admin_patch_validates_against_existing_values(admin_api, airports):
 def test_admin_patch_of_lapsed_offer_allowed(admin_api, airports):
     with freeze_time("2026-02-01"):
         offer = make_offer(airports, valid_until=TODAY - timedelta(days=1))
-    response = admin_api.patch(f"/api/admin/offers/{offer.id}", {"airline": str(airline_named("Emirates").id)}, format="json")
+    response = admin_api.patch(
+        f"/api/admin/offers/{offer.id}", {"airline": str(airline_named("Emirates").id)}, format="json"
+    )
     assert response.status_code == 200
 
 

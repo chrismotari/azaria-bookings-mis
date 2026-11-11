@@ -268,7 +268,9 @@ def test_the_fares_screen_skips_recheck_runs(admin_api, booking, route, duffel_a
     assert [run["trigger"] for run in runs] == ["recheck", "manual"]
 
 
-def test_an_alternative_from_another_airline_changes_the_ticketing_airline(admin_api, customer_api, booking, duffel_api):
+def test_an_alternative_from_another_airline_changes_the_ticketing_airline(
+    admin_api, customer_api, booking, duffel_api
+):
     assert booking.airline.iata_code == "EK"
     duffel_api.reply = without_ek()
     [alternative] = recheck(admin_api, booking).json()["alternatives"]

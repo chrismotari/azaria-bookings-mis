@@ -1,6 +1,6 @@
-from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
 from django.urls import include, path
 
 from tenants.views import AgencyView, apple_app_site_association, assetlinks

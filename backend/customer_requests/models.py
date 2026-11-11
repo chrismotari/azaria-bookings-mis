@@ -11,6 +11,7 @@ class Query(models.Model):
     """A customer's request for options when no listed offer fits."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     class Status(models.TextChoices):
         OPEN = "open", "Open"
         RESPONDED = "responded", "Responded"

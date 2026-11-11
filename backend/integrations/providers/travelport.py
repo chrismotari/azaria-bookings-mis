@@ -2,7 +2,7 @@
 
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from xml.etree import ElementTree
 
@@ -164,7 +164,7 @@ def _policy(pricing, allowed, penalty_tag):
     amount, percentage = penalty.findtext("Amount"), penalty.findtext("Percentage")
     try:
         value = _money(amount)[1] if amount else Decimal(percentage) if percentage else None
-    except (InvalidOperation, ProviderError):
+    except InvalidOperation, ProviderError:
         value = None
     return "free" if value == 0 else "with_fee"
 
@@ -197,7 +197,7 @@ def map_response(response, cabin):
 def map_solution(solution, segments, fares, cabin):
     """An AirPricingSolution as a Result: its journeys are the directions. Technical stops are ignored."""
     flights = []
-    for direction, journey in zip(DIRECTIONS, solution.findall("Journey")):
+    for direction, journey in zip(DIRECTIONS, solution.findall("Journey"), strict=False):
         for ref in journey.findall("AirSegmentRef"):
             segment = segments.get(ref.get("Key"))
             if segment is None:
@@ -236,7 +236,7 @@ def map_solution(solution, segments, fares, cabin):
     ticketing = solution.get("LatestTicketingTime") or pricing.get("LatestTicketingTime")
     expires_at = datetime.fromisoformat(ticketing) if ticketing else None
     if expires_at and expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
+        expires_at = expires_at.replace(tzinfo=UTC)
     return Result(
         segments=flights,
         airline=pricing.get("PlatingCarrier") or (flights[0].airline if flights else None),

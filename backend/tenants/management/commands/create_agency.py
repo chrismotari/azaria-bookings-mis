@@ -8,7 +8,9 @@ class Command(BaseCommand):
     help = "Create an agency (tenant): its schema, primary domain, settings and first admin."
 
     def add_arguments(self, parser):
-        parser.add_argument("--schema", required=True, help="The address, e.g. azaria (reached at azaria.<base domain>).")
+        parser.add_argument(
+            "--schema", required=True, help="The address, e.g. azaria (reached at azaria.<base domain>)."
+        )
         parser.add_argument("--name", required=True)
         parser.add_argument("--admin-email", required=True)
         parser.add_argument("--admin-password", required=True)
@@ -24,5 +26,5 @@ class Command(BaseCommand):
                 admin_name=options["admin_name"],
             )
         except ValidationError as exc:
-            raise CommandError(" ".join(exc.messages))
+            raise CommandError(" ".join(exc.messages)) from exc
         self.stdout.write(self.style.SUCCESS(f"Agency {tenant.name} created at {domain_for(options['schema'])}."))

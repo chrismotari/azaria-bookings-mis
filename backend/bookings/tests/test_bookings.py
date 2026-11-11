@@ -159,7 +159,10 @@ def test_passenger_count_limits_are_inclusive(customer_api, offer, count):
     [
         {"is_active": False},
         {"is_public": False},
-        {"departure_date": timezone.localdate() - timedelta(days=1), "valid_until": timezone.localdate() - timedelta(days=2)},
+        {
+            "departure_date": timezone.localdate() - timedelta(days=1),
+            "valid_until": timezone.localdate() - timedelta(days=2),
+        },
     ],
 )
 def test_cannot_book_unbookable_or_hidden_offer(customer_api, make_offer, overrides):
@@ -177,7 +180,9 @@ def test_cannot_book_once_valid_until_has_passed(customer_api, offer):
 
 
 def test_cannot_book_unknown_offer(customer_api):
-    response = customer_api.post("/api/bookings", {"offer": "00000000-0000-4000-8000-000000000000", "passenger_count": 1}, format="json")
+    response = customer_api.post(
+        "/api/bookings", {"offer": "00000000-0000-4000-8000-000000000000", "passenger_count": 1}, format="json"
+    )
     assert response.status_code == 400
     assert "offer" in response.data
 
@@ -425,7 +430,9 @@ def test_admin_detail_includes_customer_and_timeline(admin_api, admin_user, cust
 
 def test_dashboard_counts(admin_api, make_booking, other_customer, airports):
     Query.objects.create(user=other_customer, destination=airports["LHR"], date_from=timezone.localdate())
-    Query.objects.create(user=other_customer, destination=airports["DXB"], date_from=timezone.localdate(), status="closed")
+    Query.objects.create(
+        user=other_customer, destination=airports["DXB"], date_from=timezone.localdate(), status="closed"
+    )
     make_booking(status=Status.REQUESTED)
     make_booking(status=Status.REQUESTED, user=other_customer)
     make_booking(status=Status.AVAILABILITY_CONFIRMED, user=other_customer)

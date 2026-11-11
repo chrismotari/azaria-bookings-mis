@@ -22,9 +22,7 @@ DEADLINE = datetime(2026, 3, 2, 18, 0, tzinfo=NAIROBI)
 
 @pytest.fixture
 def instructions(db):
-    AppSettings.objects.update(
-        payment_instructions="M-Pesa paybill 123456, account AZARIA.", reminder_hours_before=4
-    )
+    AppSettings.objects.update(payment_instructions="M-Pesa paybill 123456, account AZARIA.", reminder_hours_before=4)
 
 
 @pytest.fixture
@@ -66,7 +64,11 @@ def test_expire_unpaid_bookings_around_the_deadline(make_booking, django_capture
     assert statuses(booking) == [expected]
     if expected == Status.EXPIRED:
         event = BookingEvent.objects.get(booking=booking)
-        assert (event.from_status, event.to_status, event.actor) == (Status.AVAILABILITY_CONFIRMED, Status.EXPIRED, None)
+        assert (event.from_status, event.to_status, event.actor) == (
+            Status.AVAILABILITY_CONFIRMED,
+            Status.EXPIRED,
+            None,
+        )
         [email] = mail.outbox
         assert email.subject == "Your booking has expired"
     else:
@@ -194,7 +196,11 @@ def test_expire_stale_requests(make_booking, django_capture_on_commit_callbacks)
     )
     with django_capture_on_commit_callbacks(execute=True):
         assert tasks.expire_stale_requests() == 1
-    assert statuses(departed, departs_today, confirmed) == [Status.EXPIRED, Status.REQUESTED, Status.AVAILABILITY_CONFIRMED]
+    assert statuses(departed, departs_today, confirmed) == [
+        Status.EXPIRED,
+        Status.REQUESTED,
+        Status.AVAILABILITY_CONFIRMED,
+    ]
     assert BookingEvent.objects.get(booking=departed).actor is None
     assert [email.subject for email in mail.outbox] == ["Your booking has expired"]
 
@@ -277,7 +283,10 @@ def test_admin_reads_and_updates_settings(admin_api, settings):
     assert response.status_code == 200
     assert response.data == payload
     app_settings = AppSettings.get()
-    assert (app_settings.payment_hold_hours, app_settings.admin_notification_email) == (48, "bookings@azariabookings.com")
+    assert (app_settings.payment_hold_hours, app_settings.admin_notification_email) == (
+        48,
+        "bookings@azariabookings.com",
+    )
     assert AppSettings.objects.count() == 1
 
 

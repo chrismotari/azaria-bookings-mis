@@ -182,10 +182,21 @@ def test_ending_stops_invoicing(agency):
 @pytest.mark.parametrize(
     "started_on, cycle, periods",
     [
-        (date(2026, 1, 31), MONTHLY, [(date(2026, 1, 31), date(2026, 2, 27)), (date(2026, 2, 28), date(2026, 3, 30)),
-                                      (date(2026, 3, 31), date(2026, 4, 29))]),
+        (
+            date(2026, 1, 31),
+            MONTHLY,
+            [
+                (date(2026, 1, 31), date(2026, 2, 27)),
+                (date(2026, 2, 28), date(2026, 3, 30)),
+                (date(2026, 3, 31), date(2026, 4, 29)),
+            ],
+        ),
         (date(2028, 2, 29), ANNUAL, [(date(2028, 2, 29), date(2029, 2, 27)), (date(2029, 2, 28), date(2030, 2, 27))]),
-        (date(2026, 12, 15), MONTHLY, [(date(2026, 12, 15), date(2027, 1, 14)), (date(2027, 1, 15), date(2027, 2, 14))]),
+        (
+            date(2026, 12, 15),
+            MONTHLY,
+            [(date(2026, 12, 15), date(2027, 1, 14)), (date(2027, 1, 15), date(2027, 2, 14))],
+        ),
     ],
 )
 def test_periods_keep_the_starting_day(agency, started_on, cycle, periods):

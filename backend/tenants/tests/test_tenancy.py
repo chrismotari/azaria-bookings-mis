@@ -238,7 +238,20 @@ def test_create_agency_creates_schema_domain_settings_and_admin():
 
 
 @pytest.mark.parametrize(
-    "slug", ["ab", "1acme", "Acme", "acme_travel", "a" * 31, "public", "www", "app-admin", "other", "pg-catalog", "information-schema"]
+    "slug",
+    [
+        "ab",
+        "1acme",
+        "Acme",
+        "acme_travel",
+        "a" * 31,
+        "public",
+        "www",
+        "app-admin",
+        "other",
+        "pg-catalog",
+        "information-schema",
+    ],
 )
 def test_create_agency_rejects_bad_reserved_or_taken_addresses(slug):
     with pytest.raises(ValidationError):

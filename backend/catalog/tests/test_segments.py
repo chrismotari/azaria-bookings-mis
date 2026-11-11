@@ -80,9 +80,7 @@ def test_one_way_offer_shape(admin_api, airports, kq):
 
 
 def test_return_offer_shape_with_connection_and_codeshare(admin_api, airports, kq, ek):
-    response = create(
-        admin_api, round_trip(kq, ek), trip_type="return", refund_policy="with_fee", change_policy="free"
-    )
+    response = create(admin_api, round_trip(kq, ek), trip_type="return", refund_policy="with_fee", change_policy="free")
     assert response.status_code == 201, response.data
     data = response.data
     assert data["trip_type"] == "return"
@@ -150,7 +148,10 @@ def connected(kq, second_from="DXB", second_departs="08:00"):
     ("segments_for", "message"),
     [
         (lambda kq, ek: [], "Add the outbound flights."),
-        (lambda kq, ek: connected(kq, second_from="MBA"), "Outbound flight 2: must leave from DXB, where flight 1 arrives."),
+        (
+            lambda kq, ek: connected(kq, second_from="MBA"),
+            "Outbound flight 2: must leave from DXB, where flight 1 arrives.",
+        ),
         (lambda kq, ek: connected(kq, second_departs="07:00"), "Outbound flight 2: must leave after flight 1 arrives."),
         (lambda kq, ek: connected(kq, second_departs="06:00"), "Outbound flight 2: must leave after flight 1 arrives."),
         (
@@ -175,8 +176,10 @@ def connected(kq, second_from="DXB", second_departs="08:00"):
         (
             lambda kq, ek: [
                 flight("outbound", kq, str(n), a, b, (day(30), f"0{n}:00"), (day(30), f"0{n}:30"))
-                for n, (a, b) in enumerate([("NBO", "DXB"), ("DXB", "MBA"), ("MBA", "DXB"), ("DXB", "MBA"),
-                                            ("MBA", "DXB"), ("DXB", "LHR")], start=1)
+                for n, (a, b) in enumerate(
+                    [("NBO", "DXB"), ("DXB", "MBA"), ("MBA", "DXB"), ("DXB", "MBA"), ("MBA", "DXB"), ("DXB", "LHR")],
+                    start=1,
+                )
             ],
             "Outbound: at most 5 flights (4 connections).",
         ),
@@ -204,8 +207,14 @@ def test_five_flights_are_allowed(admin_api, airports, kq):
     ("change", "message"),
     [
         (lambda segments: segments.pop(), "Add the return flights."),
-        (lambda segments: segments[2].update(origin="DXB"), "Return flight 1: must leave from LHR, where the outbound flights arrive."),
-        (lambda segments: segments[2].update(destination="MBA"), "Return flight 1: must arrive at NBO, where the outbound flights start."),
+        (
+            lambda segments: segments[2].update(origin="DXB"),
+            "Return flight 1: must leave from LHR, where the outbound flights arrive.",
+        ),
+        (
+            lambda segments: segments[2].update(destination="MBA"),
+            "Return flight 1: must arrive at NBO, where the outbound flights start.",
+        ),
         (
             lambda segments: segments[2].update(
                 departure_date=day(31).isoformat(), departure_time="12:30", arrival_date=day(32).isoformat()

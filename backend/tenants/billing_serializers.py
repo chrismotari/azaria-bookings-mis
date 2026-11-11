@@ -23,7 +23,9 @@ class PlanSerializer(serializers.ModelSerializer):
     monthly_price = serializers.DecimalField(
         max_digits=12, decimal_places=2, min_value=0, allow_null=True, required=False
     )
-    annual_price = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=0, allow_null=True, required=False)
+    annual_price = serializers.DecimalField(
+        max_digits=12, decimal_places=2, min_value=0, allow_null=True, required=False
+    )
 
     class Meta:
         model = Plan
@@ -59,8 +61,7 @@ class PlanSerializer(serializers.ModelSerializer):
         if plan and "kind" in attrs and attrs["kind"] != plan.kind:
             raise serializers.ValidationError({"kind": "A plan's kind cannot be changed."})
         prices = {
-            cycle: attrs.get(f"{cycle}_price", getattr(plan, f"{cycle}_price", None))
-            for cycle in ["monthly", "annual"]
+            cycle: attrs.get(f"{cycle}_price", getattr(plan, f"{cycle}_price", None)) for cycle in ["monthly", "annual"]
         }
         self._validate_tag(attrs)
         if all(price is None for price in prices.values()):

@@ -132,8 +132,10 @@ def test_offers_return_the_airline_with_an_absolute_logo_url(api, make_offer):
     assert second["airline"]["logo_url"] is None
     # On another agency's host the URL follows that host.
     request = APIRequestFactory().get("/", HTTP_HOST="acme.localhost")
-    assert AirlineSerializer(with_logo, context={"request": request}).data["logo_url"].startswith(
-        "http://acme.localhost/media/airline_logos/"
+    assert (
+        AirlineSerializer(with_logo, context={"request": request})
+        .data["logo_url"]
+        .startswith("http://acme.localhost/media/airline_logos/")
     )
 
 

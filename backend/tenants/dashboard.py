@@ -108,7 +108,12 @@ def summary():
         },
         "revenue_by_month": [{"month": f"{month:%Y-%m}", "total": money(by_month.get(month))} for month in months],
         "plans": [
-            {"id": str(row["plan_id"]), "name": row["plan__name"], "kind": row["plan__kind"], "agencies": row["agencies"]}
+            {
+                "id": str(row["plan_id"]),
+                "name": row["plan__name"],
+                "kind": row["plan__kind"],
+                "agencies": row["agencies"],
+            }
             for row in plans
         ],
         "attention": [

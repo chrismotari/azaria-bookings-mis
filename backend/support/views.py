@@ -3,8 +3,8 @@
 import mimetypes
 
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.http import FileResponse, Http404
 from django.db import connection
+from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
 from django_tenants.utils import get_public_schema_name, schema_context
 from rest_framework import generics, status
@@ -47,7 +47,7 @@ def write(conversation, data, *, from_staff, author_name):
             author_name=author_name,
         )
     except DjangoValidationError as exc:
-        raise ChatClosed(exc.messages[0])
+        raise ChatClosed(exc.messages[0]) from exc
 
 
 class GuestChatThrottle(IPScopedRateThrottle):
@@ -95,7 +95,11 @@ class ChatsView(generics.ListAPIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
         conversation = services.start_chat(
-            email=data["email"], subject=data["subject"], body=data["body"], attachment=data.get("attachment"), user=user
+            email=data["email"],
+            subject=data["subject"],
+            body=data["body"],
+            attachment=data.get("attachment"),
+            user=user,
         )
         if user is None:
             # A guest's chat is a single message: nothing to read back.
@@ -152,7 +156,9 @@ class DeskChatListView(DeskView, generics.ListAPIView):
 
 class DeskChatDetailView(DeskView, APIView):
     def get(self, request, pk):
-        conversation = get_object_or_404(Conversation.objects.select_related("agency").prefetch_related("messages"), pk=pk)
+        conversation = get_object_or_404(
+            Conversation.objects.select_related("agency").prefetch_related("messages"), pk=pk
+        )
         services.mark_read(conversation, by_staff=True)
         return Response(DeskConversationDetailSerializer(conversation).data)
 

@@ -39,4 +39,4 @@ class TenantTokenRefreshSerializer(TokenRefreshSerializer):
             return super().validate(attrs)
         except ObjectDoesNotExist:
             # The token's user is gone (e.g. after a local database reset): a rejected session, not a server error.
-            raise InvalidToken("The user for this token no longer exists.")
+            raise InvalidToken("The user for this token no longer exists.") from None

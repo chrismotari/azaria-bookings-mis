@@ -1,7 +1,7 @@
 """The Duffel provider: requests it sends and how recorded responses map to results."""
 
 import json
-from datetime import date, datetime, time, timezone
+from datetime import UTC, date, datetime, time
 from decimal import Decimal
 
 import httpx
@@ -81,7 +81,7 @@ def test_one_way_direct_offer(duffel_api):
     assert direct.fare_type == "public"
     assert direct.seats_left is None
     assert direct.provider_ref == "off_0000AgYrSpqKZx0Q2Wmc9X"
-    assert direct.expires_at == datetime(2026, 11, 1, 9, 30, 1, 120000, tzinfo=timezone.utc)
+    assert direct.expires_at == datetime(2026, 11, 1, 9, 30, 1, 120000, tzinfo=UTC)
 
 
 def test_connection_codeshare_bags_conditions_and_currency(duffel_api):

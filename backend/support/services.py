@@ -33,7 +33,11 @@ def _notify(conversation, message):
         task = tasks.notify_platform_desk if to_desk else tasks.notify_platform_requester
         transaction.on_commit(lambda: task.delay(str(conversation.pk), str(message.pk)))
     else:
-        queue(tasks.notify_desk_new_message if to_desk else tasks.notify_requester_reply, str(conversation.pk), str(message.pk))
+        queue(
+            tasks.notify_desk_new_message if to_desk else tasks.notify_requester_reply,
+            str(conversation.pk),
+            str(message.pk),
+        )
 
 
 def start_chat(*, email, subject, body, attachment=None, user=None, agency=None):
@@ -49,9 +53,7 @@ def start_chat(*, email, subject, body, attachment=None, user=None, agency=None)
             last_message_at=timezone.now(),
             staff_unread=True,
         )
-        message = _add(
-            conversation, body=body, attachment=attachment, from_staff=False, author_name=conversation.name
-        )
+        message = _add(conversation, body=body, attachment=attachment, from_staff=False, author_name=conversation.name)
         _notify(conversation, message)
     return conversation
 
@@ -95,7 +97,5 @@ def close(conversation, user=None):
 
 def close_idle_chats():
     """Closes every open chat whose last message is older than IDLE_LIMIT; returns how many."""
-    idle = Conversation.objects.filter(
-        status=Conversation.Status.OPEN, last_message_at__lt=timezone.now() - IDLE_LIMIT
-    )
+    idle = Conversation.objects.filter(status=Conversation.Status.OPEN, last_message_at__lt=timezone.now() - IDLE_LIMIT)
     return idle.update(status=Conversation.Status.CLOSED, closed_at=timezone.now(), closed_by=None)

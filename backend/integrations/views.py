@@ -126,7 +126,7 @@ def uuid_param(params, name, required=False):
     try:
         return uuid.UUID(value)
     except ValueError:
-        raise serializers.ValidationError({name: "Not a valid id."})
+        raise serializers.ValidationError({name: "Not a valid id."}) from None
 
 
 class FareListView(APIView):
@@ -189,7 +189,7 @@ class FareHistoryView(APIView):
         try:
             departure_date = date.fromisoformat(params.get("departure_date", ""))
         except ValueError:
-            raise serializers.ValidationError({"departure_date": "Enter a date as YYYY-MM-DD."})
+            raise serializers.ValidationError({"departure_date": "Enter a date as YYYY-MM-DD."}) from None
         return Response(
             [
                 {

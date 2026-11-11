@@ -20,6 +20,6 @@ class Command(BaseCommand):
         try:
             password_validation.validate_password(password, User(email=email, full_name=name))
         except ValidationError as exc:
-            raise CommandError(" ".join(exc.messages))
+            raise CommandError(" ".join(exc.messages)) from exc
         User.objects.create_user(email=email, password=password, full_name=name, role=User.Role.ADMIN)
         self.stdout.write(self.style.SUCCESS(f"Admin {email} created."))

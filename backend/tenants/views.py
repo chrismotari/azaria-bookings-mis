@@ -50,9 +50,7 @@ class AgencyView(APIView):
 def apple_app_site_association(request):
     if not settings.IOS_APP_ID:
         raise Http404
-    return JsonResponse(
-        {"applinks": {"details": [{"appIDs": [settings.IOS_APP_ID], "components": [{"/": "*"}]}]}}
-    )
+    return JsonResponse({"applinks": {"details": [{"appIDs": [settings.IOS_APP_ID], "components": [{"/": "*"}]}]}})
 
 
 def assetlinks(request):

@@ -2,7 +2,7 @@
 integrations in runs, re-checks and the admin API, alongside Duffel."""
 
 import base64
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import UTC, date, datetime, time, timedelta
 from decimal import Decimal
 from xml.etree import ElementTree
 
@@ -119,7 +119,7 @@ def test_one_way_direct_solution(travelport_api):
     assert direct.fare_type == "public"
     assert direct.seats_left == 4
     assert direct.provider_ref == "SOL1xKQ100"
-    assert direct.expires_at == datetime(2026, 11, 3, 20, 59, tzinfo=timezone.utc)
+    assert direct.expires_at == datetime(2026, 11, 3, 20, 59, tzinfo=UTC)
 
 
 def test_connection_codeshare_bags_conditions_and_private_fare(travelport_api):

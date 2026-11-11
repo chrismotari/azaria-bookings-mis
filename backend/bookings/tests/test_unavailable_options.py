@@ -60,9 +60,7 @@ def mark_unavailable(admin_api, booking, body=None, capture=None):
 def test_without_options_the_customer_is_pointed_to_a_new_request(
     admin_api, booking, django_capture_on_commit_callbacks
 ):
-    response, callbacks = mark_unavailable(
-        admin_api, booking, {"message": "Sorry"}, django_capture_on_commit_callbacks
-    )
+    response, callbacks = mark_unavailable(admin_api, booking, {"message": "Sorry"}, django_capture_on_commit_callbacks)
     assert response.status_code == 200, response.data
     assert response.data["status"] == "unavailable"
     assert response.data["alternatives"] is None
@@ -114,7 +112,14 @@ def test_with_custom_offers(admin_api, booking, airports, django_capture_on_comm
     response, _ = mark_unavailable(
         admin_api,
         booking,
-        {"new_offers": [new_offer(airports), new_offer(airports, airline=str(airline_named("Kenya Airways").id), segments=direct("NBO", "LHR", in_days(31)))]},
+        {
+            "new_offers": [
+                new_offer(airports),
+                new_offer(
+                    airports, airline=str(airline_named("Kenya Airways").id), segments=direct("NBO", "LHR", in_days(31))
+                ),
+            ]
+        },
         django_capture_on_commit_callbacks,
     )
     assert response.status_code == 200, response.data
@@ -160,9 +165,7 @@ def test_from_each_allowed_status(admin_api, booking, make_offer, from_status):
         lambda airports, offer: {"offer_ids": ["not-a-uuid"]},
         lambda airports, offer: {"offer_ids": [str(offer.id)]},
         lambda airports, offer: {"new_offers": [new_offer(airports, price="0")]},
-        lambda airports, offer: {
-            "new_offers": [new_offer(airports, segments=via_dubai()[::-1])]
-        },
+        lambda airports, offer: {"new_offers": [new_offer(airports, segments=via_dubai()[::-1])]},
     ],
 )
 def test_invalid_options_change_nothing(admin_api, booking, airports, make_offer, body_for):

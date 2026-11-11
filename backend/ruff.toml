@@ -1,0 +1,13 @@
+line-length = 120
+target-version = "py314"
+extend-exclude = ["migrations"]
+
+[lint]
+select = ["E", "W", "F", "I", "B", "UP"]
+
+[lint.isort]
+known-first-party = ["accounts", "airlines", "airports", "bookings", "catalog", "config", "core", "customer_requests", "integrations", "rates", "support", "tenants"]
+
+[lint.per-file-ignores]
+# Shared fixtures are imported into test modules and then named as test arguments.
+"**/tests/**" = ["F811"]

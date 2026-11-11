@@ -96,12 +96,36 @@ def test_confirm_with_new_segments(admin_api, booking):
     assert response.data["changes"] == {
         "segments": {
             "old": [
-                {"direction": "outbound", "flight": f"{code} 310", "route": "NBO → DXB", "departure": f"{date} 00:50", "arrival": "05:40"},
-                {"direction": "outbound", "flight": f"{code} 312", "route": "DXB → LHR", "departure": f"{date} 07:55", "arrival": "12:30"},
+                {
+                    "direction": "outbound",
+                    "flight": f"{code} 310",
+                    "route": "NBO → DXB",
+                    "departure": f"{date} 00:50",
+                    "arrival": "05:40",
+                },
+                {
+                    "direction": "outbound",
+                    "flight": f"{code} 312",
+                    "route": "DXB → LHR",
+                    "departure": f"{date} 07:55",
+                    "arrival": "12:30",
+                },
             ],
             "new": [
-                {"direction": "outbound", "flight": f"{code} 310", "route": "NBO → DXB", "departure": f"{date} 00:50", "arrival": "05:40"},
-                {"direction": "outbound", "flight": f"{code} 312", "route": "DXB → LHR", "departure": f"{date} 09:00", "arrival": "12:30"},
+                {
+                    "direction": "outbound",
+                    "flight": f"{code} 310",
+                    "route": "NBO → DXB",
+                    "departure": f"{date} 00:50",
+                    "arrival": "05:40",
+                },
+                {
+                    "direction": "outbound",
+                    "flight": f"{code} 312",
+                    "route": "DXB → LHR",
+                    "departure": f"{date} 09:00",
+                    "arrival": "12:30",
+                },
             ],
         }
     }
@@ -137,7 +161,9 @@ def test_changes_are_accepted_like_any_other(admin_api, customer_api, booking):
         (lambda: {"segments": [{**direct()[0], "origin": "MBA"}]}, "segments"),
         (lambda: {"segments": [{**direct()[0], "origin": "XXX"}]}, "segments"),
         (
-            lambda: {"segments": [*direct(), {**direct()[0], "direction": "return", "origin": "LHR", "destination": "NBO"}]},
+            lambda: {
+                "segments": [*direct(), {**direct()[0], "direction": "return", "origin": "LHR", "destination": "NBO"}]
+            },
             "segments",
         ),
     ],
@@ -224,7 +250,8 @@ def test_email_lists_the_changes(admin_api, booking, django_capture_on_commit_ca
     later = f"{day(31):%a}, {day(31).day} {day(31):%b %Y}"
     for text in (
         "Price per person: USD 650.00 → USD 700.00",
-        f"Flights: Outbound {code} 310 NBO → DXB, {date} 00:50 – 05:40; Outbound {code} 312 DXB → LHR, {date} 07:55 – 12:30"
+        f"Flights: Outbound {code} 310 NBO → DXB, {date} 00:50 – 05:40; "
+        f"Outbound {code} 312 DXB → LHR, {date} 07:55 – 12:30"
         f" → Outbound {code} 100 NBO → LHR, {later} 10:00 – 18:00",
         "accept or decline these changes in the app before you pay",
         f"/bookings/{booking.id}",

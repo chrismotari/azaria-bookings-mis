@@ -62,7 +62,11 @@ def notify_tenant_suspended_non_payment(tenant_id):
             return
         platform = PlatformSettings.get()
         invoices = [
-            {"number": invoice.number, "amount": billing.format_amount(invoice.amount), "due": billing.format_day(invoice.due_on)}
+            {
+                "number": invoice.number,
+                "amount": billing.format_amount(invoice.amount),
+                "due": billing.format_day(invoice.due_on),
+            }
             for invoice in sorted(billing.blocking_invoices(tenant), key=lambda invoice: invoice.number)
         ]
         context = {
