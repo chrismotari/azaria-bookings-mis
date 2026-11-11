@@ -20,4 +20,4 @@ The full specification is in @SPEC.md. Treat it as the source of truth.
 - Web app: `cd frontend && npx expo start --web`
 - Backend tests: `cd backend && pytest`
 - Backend lint and format: `cd backend && ruff check . && ruff format .`
-- Frontend checks: `cd frontend && npx tsc --noEmit && npm run lint`
+- Frontend checks: `cd frontend && npx tsc --noEmit && npm run lint && npm run format:check` (`npm run format` to fix)

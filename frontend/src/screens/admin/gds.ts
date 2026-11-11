@@ -145,7 +145,9 @@ export const RUN_STATUS: Record<RunStatus, { label: string; tone: Tone }> = {
 };
 
 export function runDates(run: { date_from: string; date_to: string }): string {
-  return run.date_from === run.date_to ? formatDate(run.date_from) : `${formatDate(run.date_from)} – ${formatDate(run.date_to)}`;
+  return run.date_from === run.date_to
+    ? formatDate(run.date_from)
+    : `${formatDate(run.date_from)} – ${formatDate(run.date_to)}`;
 }
 
 export const FARE_TYPES: Record<FareType, string> = {

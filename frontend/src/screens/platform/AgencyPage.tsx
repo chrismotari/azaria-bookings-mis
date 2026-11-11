@@ -292,7 +292,10 @@ function Admins({ tenant }: { tenant: TenantDetail }) {
 }
 
 const allowanceSchema = z.object({
-  monthly_search_allowance: z.string().trim().regex(/^\d{1,9}$/, 'Enter a whole number of searches.'),
+  monthly_search_allowance: z
+    .string()
+    .trim()
+    .regex(/^\d{1,9}$/, 'Enter a whole number of searches.'),
 });
 
 /** Fare searches per calendar month: what the agency used this month, and the allowance (editable). */
@@ -348,7 +351,12 @@ function SearchAllowance({ tenant }: { tenant: TenantDetail }) {
       <FormError message={formError} />
       {saved && !formState.isDirty ? <Text style={styles.saved}>Allowance saved.</Text> : null}
       <FormFooter>
-        <Button title="Save allowance" onPress={onSave} loading={formState.isSubmitting} disabled={!formState.isDirty} />
+        <Button
+          title="Save allowance"
+          onPress={onSave}
+          loading={formState.isSubmitting}
+          disabled={!formState.isDirty}
+        />
       </FormFooter>
     </Card>
   );
@@ -467,8 +475,8 @@ function Domains({ tenant }: { tenant: TenantDetail }) {
     <Card>
       <Text style={styles.section}>Domains</Text>
       <Text style={styles.muted}>
-        Hostnames that open this agency. The primary one is used in its email links. Extra hostnames also need to
-        be allowed in the server settings (ALLOWED_HOSTS and CORS).
+        Hostnames that open this agency. The primary one is used in its email links. Extra hostnames also need to be
+        allowed in the server settings (ALLOWED_HOSTS and CORS).
       </Text>
       <View style={styles.domains}>
         {tenant.domains.map((item) => (
@@ -521,10 +529,7 @@ const SLUG = /^[a-z][a-z0-9-]{2,29}$/;
 // Mirrors the server's rules; the server also checks reserved and taken addresses and the password's strength.
 const newSchema = z.object({
   name: z.string().trim().min(1, "Enter the agency's name.").max(100),
-  slug: z
-    .string()
-    .trim()
-    .regex(SLUG, 'Use 3 to 30 lowercase letters, digits and hyphens, starting with a letter.'),
+  slug: z.string().trim().regex(SLUG, 'Use 3 to 30 lowercase letters, digits and hyphens, starting with a letter.'),
   admin_name: z.string().trim().min(1, "Enter the admin's name.").max(150),
   admin_email: z.email('Enter a valid email address.'),
   admin_password: z.string().min(1, 'Enter a password for the admin.'),
@@ -604,8 +609,8 @@ function NewAgencyForm({ onClose, onCreated }: Omit<NewAgencyProps, 'open'>) {
       }
     >
       <Text style={styles.text}>
-        Creating an agency sets up its own data, its address and its first admin, who can sign in there straight
-        away. This takes a few seconds.
+        Creating an agency sets up its own data, its address and its first admin, who can sign in there straight away.
+        This takes a few seconds.
       </Text>
       {field('name', 'Agency name', { autoCapitalize: 'words' })}
       {field('slug', 'Address', { autoCapitalize: 'none', placeholder: 'e.g. acme-travel' })}
@@ -624,7 +629,13 @@ function NewAgencyForm({ onClose, onCreated }: Omit<NewAgencyProps, 'open'>) {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.md },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: space.md,
+  },
   headerText: { gap: 2, flexShrink: 1 },
   titleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },

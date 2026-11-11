@@ -15,7 +15,9 @@ export function apiUrlFor(host: string): string {
  * Web: each agency has its own hostname with its API on it, so {host} is the page's hostname. Native apps use the
  * stored agency's address instead (see agency/agency.ts).
  */
-export const API_URL = apiUrlFor(Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.hostname : '');
+export const API_URL = apiUrlFor(
+  Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.hostname : '',
+);
 
 /** Native: the shared app serving every agency, which it learns from links or a typed code. */
 export const IS_NATIVE = Platform.OS !== 'web';
@@ -33,7 +35,10 @@ export const APP_SCHEME = 'azaria';
 export const PLATFORM_HOST = process.env.EXPO_PUBLIC_PLATFORM_HOST ?? '';
 
 export const IS_PLATFORM =
-  Platform.OS === 'web' && typeof window !== 'undefined' && !!PLATFORM_HOST && window.location.hostname === PLATFORM_HOST;
+  Platform.OS === 'web' &&
+  typeof window !== 'undefined' &&
+  !!PLATFORM_HOST &&
+  window.location.hostname === PLATFORM_HOST;
 
 // The owner signs in only at /login on the root host, so the usual guesses (admin.<host>, <host>/admin/...) go
 // there. Runs before the app starts so navigation opens on /login.

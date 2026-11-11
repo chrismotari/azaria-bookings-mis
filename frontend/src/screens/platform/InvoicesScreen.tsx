@@ -42,8 +42,7 @@ function invoiceStatus(invoice: AgencyInvoice): {
   return invoice.overdue ? { label: 'Overdue', tone: 'danger' } : { label: 'Unpaid', tone: 'warning' };
 }
 
-const period = (invoice: AgencyInvoice) =>
-  `${formatDate(invoice.period_start)} – ${formatDate(invoice.period_end)}`;
+const period = (invoice: AgencyInvoice) => `${formatDate(invoice.period_start)} – ${formatDate(invoice.period_end)}`;
 
 /** Web only: opens the invoice's PDF in a new tab (preview first). */
 export function openInvoice(invoice: AgencyInvoice, path: string) {
@@ -312,9 +311,7 @@ function InvoiceDetail({ invoice }: { invoice: Invoice }) {
           <Button title="Mark unpaid" variant="danger" onPress={() => run('mark-unpaid')} loading={act.isPending} />
         ) : null}
       </ActionBar>
-      <FormError
-        message={act.isError ? errorMessage(act.error) : pdf.isError ? errorMessage(pdf.error) : null}
-      />
+      <FormError message={act.isError ? errorMessage(act.error) : pdf.isError ? errorMessage(pdf.error) : null} />
       {notice ? <Text style={styles.saved}>{notice}</Text> : null}
 
       <Card>

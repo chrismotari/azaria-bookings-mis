@@ -62,7 +62,11 @@ export function AdminFaresScreen({ navigation, route }: BottomTabScreenProps<Adm
     queryFn: async () =>
       (
         await api.get<FareList>('/admin/fares', {
-          params: { route: routeId, ...(runId ? { run: runId } : {}), ...(show === 'picked' ? { picked: 'true' } : {}) },
+          params: {
+            route: routeId,
+            ...(runId ? { run: runId } : {}),
+            ...(show === 'picked' ? { picked: 'true' } : {}),
+          },
         })
       ).data,
   });
@@ -455,7 +459,13 @@ const styles = StyleSheet.create({
   historyLabel: { width: 130, fontSize: font.caption, color: colors.muted },
   historyTrack: { flex: 1, minWidth: 0, height: 8, borderRadius: 4, backgroundColor: colors.neutralTint },
   historyBar: { height: 8, borderRadius: 4, backgroundColor: colors.primary },
-  historyValue: { width: 80, textAlign: 'right', fontSize: font.small, fontWeight: weight.semibold, color: colors.text },
+  historyValue: {
+    width: 80,
+    textAlign: 'right',
+    fontSize: font.small,
+    fontWeight: weight.semibold,
+    color: colors.text,
+  },
   fare: {
     gap: space.md,
     padding: space.lg,
@@ -465,7 +475,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   farePublished: { borderColor: colors.successText },
-  between: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
+  between: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: space.sm,
+  },
   bottom: { alignItems: 'flex-end' },
   carrier: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexShrink: 1, minWidth: 0 },
   shrink: { flexShrink: 1, minWidth: 0, gap: 2 },

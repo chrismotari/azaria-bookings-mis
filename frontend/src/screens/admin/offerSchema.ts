@@ -68,7 +68,14 @@ export function itineraryDefaults(
     outbound: [newSegment({ origin, destination, departure_date: departureDate, arrival_date: departureDate })],
     return:
       tripType === 'return'
-        ? [newSegment({ origin: destination, destination: origin, departure_date: returnDate, arrival_date: returnDate })]
+        ? [
+            newSegment({
+              origin: destination,
+              destination: origin,
+              departure_date: returnDate,
+              arrival_date: returnDate,
+            }),
+          ]
         : [],
   };
 }
@@ -148,8 +155,17 @@ export function checkItinerary(
         return;
       }
       if (previous.destination && flight.origin && previous.destination.code !== flight.origin.code) {
-        issue(direction, index, 'origin', `Must leave from ${previous.destination.code}, where flight ${index} arrives.`);
-      } else if (TIME.test(previous.arrival_time) && TIME.test(flight.departure_time) && departs(flight) <= arrives(previous)) {
+        issue(
+          direction,
+          index,
+          'origin',
+          `Must leave from ${previous.destination.code}, where flight ${index} arrives.`,
+        );
+      } else if (
+        TIME.test(previous.arrival_time) &&
+        TIME.test(flight.departure_time) &&
+        departs(flight) <= arrives(previous)
+      ) {
         issue(direction, index, 'departure_time', `Must leave after flight ${index} arrives.`);
       }
     });
@@ -180,7 +196,12 @@ export function checkItinerary(
       issue('return', back.length - 1, 'destination', `Must arrive at ${start.code}, where the trip starts.`);
     }
     const arrived = outbound[outbound.length - 1];
-    if (arrived && TIME.test(arrived.arrival_time) && TIME.test(first.departure_time) && departs(first) <= arrives(arrived)) {
+    if (
+      arrived &&
+      TIME.test(arrived.arrival_time) &&
+      TIME.test(first.departure_time) &&
+      departs(first) <= arrives(arrived)
+    ) {
       issue('return', 0, 'departure_time', 'Must leave after the outbound flights arrive.');
     }
   }

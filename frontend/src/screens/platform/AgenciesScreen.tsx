@@ -46,7 +46,11 @@ export function AgenciesScreen({ navigation, route }: BottomTabScreenProps<Platf
   const tenants = useQuery({
     queryKey: [...AGENCIES_KEY, search, filter, page],
     queryFn: async () => {
-      const params = { page, ...(search ? { search } : {}), ...(filter !== 'all' ? { is_active: String(filter === 'active') } : {}) };
+      const params = {
+        page,
+        ...(search ? { search } : {}),
+        ...(filter !== 'all' ? { is_active: String(filter === 'active') } : {}),
+      };
       return (await api.get<Paginated<Tenant>>('/platform/tenants', { params })).data;
     },
     placeholderData: keepPreviousData,
@@ -176,7 +180,13 @@ function AgencyCard({ tenant, selected, onPress }: { tenant: Tenant; selected: b
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   hidden: { display: 'none' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: space.sm,
+  },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   cards: { gap: space.md },
   between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },

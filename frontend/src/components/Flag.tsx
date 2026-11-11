@@ -14,7 +14,9 @@ export function Flag({ code }: Props) {
   if (!key || !FLAG_CODES.has(key)) {
     return null;
   }
-  return <Image source={{ uri: `/flags/${key}.svg` }} style={styles.flag} aria-hidden accessibilityIgnoresInvertColors />;
+  return (
+    <Image source={{ uri: `/flags/${key}.svg` }} style={styles.flag} aria-hidden accessibilityIgnoresInvertColors />
+  );
 }
 
 const FLAG_WIDTH = 16;

@@ -8,7 +8,12 @@ type Props = Omit<TextInputProps, 'style'> & { label: string; error?: string };
 export function TextField({ label, error, ...inputProps }: Props) {
   return (
     <Field label={label} error={error}>
-      <TextInput style={inputStyle} placeholderTextColor={colors.placeholder} accessibilityLabel={label} {...inputProps} />
+      <TextInput
+        style={inputStyle}
+        placeholderTextColor={colors.placeholder}
+        accessibilityLabel={label}
+        {...inputProps}
+      />
     </Field>
   );
 }

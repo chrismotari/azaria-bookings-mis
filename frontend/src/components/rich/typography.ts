@@ -2,7 +2,6 @@ import { colors, font, WEB_SYSTEM_FONT } from '../../theme';
 
 export const SYSTEM_FONT = WEB_SYSTEM_FONT;
 
-
 /** The app's typography for rendered rich text (descriptions) and for the editor, scoped to a class. */
 export function richTextCss(scope: string) {
   return `

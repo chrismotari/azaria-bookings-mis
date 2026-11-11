@@ -7,7 +7,16 @@ import { z } from 'zod';
 
 import { api } from '../../api/client';
 import { applyServerErrors } from '../../api/errors';
-import { Airline, Airport, Integration, Route, RouteSchedule, TICKET_CLASSES, TicketClass, TripType } from '../../api/types';
+import {
+  Airline,
+  Airport,
+  Integration,
+  Route,
+  RouteSchedule,
+  TICKET_CLASSES,
+  TicketClass,
+  TripType,
+} from '../../api/types';
 import { AirlineBadge } from '../../components/AirlineBadge';
 import { AirlinePicker } from '../../components/AirlinePicker';
 import { AirportPicker } from '../../components/AirportPicker';
@@ -65,7 +74,10 @@ const schema = z
     pick_cheapest: z.boolean(),
     pick_cheapest_direct: z.boolean(),
     max_per_date: z.string(),
-    markup_percent: z.string().trim().regex(/^\d{1,4}(\.\d{1,2})?$/, 'Enter a percentage, e.g. 5 or 7.5.'),
+    markup_percent: z
+      .string()
+      .trim()
+      .regex(/^\d{1,4}(\.\d{1,2})?$/, 'Enter a percentage, e.g. 5 or 7.5.'),
     markup_fixed: z.string().trim().regex(MONEY, 'Enter an amount in USD, e.g. 20 or 12.50.'),
     schedule: z.enum(['manual', 'daily', 'weekly']),
     schedule_weekday: z.string(),
@@ -101,9 +113,17 @@ const schema = z
       } else if (!ISO_DATE.test(values.window_to)) {
         ctx.addIssue({ code: 'custom', path: ['window_to'], message: 'Choose the last departure date.' });
       } else if (values.window_to < values.window_from) {
-        ctx.addIssue({ code: 'custom', path: ['window_to'], message: 'The last departure date must be on or after the first.' });
+        ctx.addIssue({
+          code: 'custom',
+          path: ['window_to'],
+          message: 'The last departure date must be on or after the first.',
+        });
       } else if ((Date.parse(values.window_to) - Date.parse(values.window_from)) / 86_400_000 + 1 > MAX_WINDOW_DAYS) {
-        ctx.addIssue({ code: 'custom', path: ['window_to'], message: `Search at most ${MAX_WINDOW_DAYS} days at a time.` });
+        ctx.addIssue({
+          code: 'custom',
+          path: ['window_to'],
+          message: `Search at most ${MAX_WINDOW_DAYS} days at a time.`,
+        });
       }
     } else {
       const from = Number(values.days_ahead_from);
@@ -113,9 +133,17 @@ const schema = z
       } else if (!/^\d+$/.test(values.days_ahead_to)) {
         ctx.addIssue({ code: 'custom', path: ['days_ahead_to'], message: 'Enter a number of days.' });
       } else if (to < from) {
-        ctx.addIssue({ code: 'custom', path: ['days_ahead_to'], message: 'The window must end on or after its start.' });
+        ctx.addIssue({
+          code: 'custom',
+          path: ['days_ahead_to'],
+          message: 'The window must end on or after its start.',
+        });
       } else if (to - from > MAX_WINDOW_DAYS) {
-        ctx.addIssue({ code: 'custom', path: ['days_ahead_to'], message: `The window can span at most ${MAX_WINDOW_DAYS} days.` });
+        ctx.addIssue({
+          code: 'custom',
+          path: ['days_ahead_to'],
+          message: `The window can span at most ${MAX_WINDOW_DAYS} days.`,
+        });
       }
     }
   });
@@ -284,7 +312,12 @@ export function RouteForm({ route, integrations, onSaved, onCancel }: Props) {
             control={control}
             name="ticket_class"
             render={({ field }) => (
-              <SelectField<TicketClass> label="Cabin" options={TICKET_CLASSES} value={field.value} onChange={field.onChange} />
+              <SelectField<TicketClass>
+                label="Cabin"
+                options={TICKET_CLASSES}
+                value={field.value}
+                onChange={field.onChange}
+              />
             )}
           />
           <Controller
@@ -374,7 +407,12 @@ export function RouteForm({ route, integrations, onSaved, onCancel }: Props) {
             name="schedule"
             render={({ field }) => (
               <Field label="Scheduled search">
-                <SegmentedControl<RouteSchedule> label="Scheduled search" options={SCHEDULES} value={field.value} onChange={field.onChange} />
+                <SegmentedControl<RouteSchedule>
+                  label="Scheduled search"
+                  options={SCHEDULES}
+                  value={field.value}
+                  onChange={field.onChange}
+                />
               </Field>
             )}
           />
@@ -454,14 +492,21 @@ export function RouteForm({ route, integrations, onSaved, onCancel }: Props) {
         <Controller
           control={control}
           name="pick_cheapest_direct"
-          render={({ field }) => <Toggle label="The cheapest direct fare" value={field.value} onChange={field.onChange} />}
+          render={({ field }) => (
+            <Toggle label="The cheapest direct fare" value={field.value} onChange={field.onChange} />
+          )}
         />
         <FieldGrid>
           <Controller
             control={control}
             name="max_per_date"
             render={({ field }) => (
-              <SelectField label="Cheapest fares per date" options={PER_DATE} value={field.value} onChange={field.onChange} />
+              <SelectField
+                label="Cheapest fares per date"
+                options={PER_DATE}
+                value={field.value}
+                onChange={field.onChange}
+              />
             )}
           />
           <Controller
@@ -498,7 +543,11 @@ export function RouteForm({ route, integrations, onSaved, onCancel }: Props) {
             control={control}
             name="is_active"
             render={({ field }) => (
-              <Toggle label={field.value ? 'Active' : 'Inactive (not searched)'} value={field.value} onChange={field.onChange} />
+              <Toggle
+                label={field.value ? 'Active' : 'Inactive (not searched)'}
+                value={field.value}
+                onChange={field.onChange}
+              />
             )}
           />
         ) : null}
@@ -507,7 +556,9 @@ export function RouteForm({ route, integrations, onSaved, onCancel }: Props) {
       <FormError message={formError} />
       {saved && !formState.isDirty ? <Text style={styles.saved}>Route saved.</Text> : null}
       <View style={styles.buttons}>
-        {onCancel ? <Button title="Cancel" variant="secondary" onPress={onCancel} disabled={formState.isSubmitting} /> : null}
+        {onCancel ? (
+          <Button title="Cancel" variant="secondary" onPress={onCancel} disabled={formState.isSubmitting} />
+        ) : null}
         <Button
           title={route ? 'Save route' : 'Create route'}
           onPress={onSubmit}
@@ -541,7 +592,11 @@ function ToggleChips<T extends string | number>({
             onPress={() =>
               onChange(selected ? value.filter((item) => item !== option.value) : [...value, option.value])
             }
-            style={({ hovered }: PressState) => [styles.chip, hovered && styles.chipHovered, selected && styles.chipSelected]}
+            style={({ hovered }: PressState) => [
+              styles.chip,
+              hovered && styles.chipHovered,
+              selected && styles.chipSelected,
+            ]}
           >
             <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{option.label}</Text>
           </Pressable>
@@ -561,7 +616,11 @@ function AirlineList({ value, onChange }: { value: Airline[]; onChange: (value: 
           <Text style={styles.airlineName} numberOfLines={1}>
             {airline.name} · {airline.iata_code}
           </Text>
-          <Button title="Remove" variant="link" onPress={() => onChange(value.filter((item) => item.id !== airline.id))} />
+          <Button
+            title="Remove"
+            variant="link"
+            onPress={() => onChange(value.filter((item) => item.id !== airline.id))}
+          />
         </View>
       ))}
       <AirlinePicker

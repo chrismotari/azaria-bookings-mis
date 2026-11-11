@@ -25,7 +25,13 @@ export function SelectField<T extends string>({ label, options, value, onChange 
           value,
           'aria-label': label,
           onChange: (event: { target: { value: string } }) => onChange(event.target.value as T),
-          style: { ...inputStyle, fontFamily: WEB_SYSTEM_FONT, borderStyle: 'solid', boxSizing: 'border-box', width: '100%' },
+          style: {
+            ...inputStyle,
+            fontFamily: WEB_SYSTEM_FONT,
+            borderStyle: 'solid',
+            boxSizing: 'border-box',
+            width: '100%',
+          },
         },
         options.map((option) => createElement('option', { key: option.value, value: option.value }, option.label)),
       )}

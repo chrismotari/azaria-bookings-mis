@@ -76,8 +76,7 @@ export function PlatformDashboardScreen({ navigation }: Props) {
       icon: 'business-outline',
       tone: 'info',
       emphasised: false,
-      onPress: () =>
-        navigation.navigate('PlatformAgencies', { status: suspendedTotal ? 'suspended' : 'all' }),
+      onPress: () => navigation.navigate('PlatformAgencies', { status: suspendedTotal ? 'suspended' : 'all' }),
       action: suspendedTotal ? 'View suspended' : 'View agencies',
     },
     {

@@ -1,0 +1,5 @@
+dist/
+.expo/
+public/
+assets/
+package-lock.json

@@ -119,7 +119,13 @@ function Fact({ icon, text }: { icon: IconName; text: string }) {
 const styles = StyleSheet.create({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   list: { gap: space.md },
-  between: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: space.sm },
+  between: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: space.sm,
+  },
   airline: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexShrink: 1, minWidth: 0 },
   airlineName: { fontSize: font.body, fontWeight: weight.bold, color: colors.text, flexShrink: 1 },
   facts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.lg },

@@ -95,7 +95,10 @@ function IntegrationRow({ integration }: { integration: Integration }) {
           </Text>
         </View>
         <View style={styles.chips}>
-          <StatusChip label={integration.is_active ? 'Enabled' : 'Disabled'} tone={integration.is_active ? 'info' : 'neutral'} />
+          <StatusChip
+            label={integration.is_active ? 'Enabled' : 'Disabled'}
+            tone={integration.is_active ? 'info' : 'neutral'}
+          />
           <StatusChip label={status.label} tone={status.tone} />
         </View>
       </View>
@@ -106,7 +109,13 @@ function IntegrationRow({ integration }: { integration: Integration }) {
       ) : null}
       <FormError message={error ? errorMessage(error) : null} />
       <View style={styles.actions}>
-        <Button title="Test" variant="secondary" icon="pulse-outline" onPress={() => test.mutate()} loading={test.isPending} />
+        <Button
+          title="Test"
+          variant="secondary"
+          icon="pulse-outline"
+          onPress={() => test.mutate()}
+          loading={test.isPending}
+        />
         <Button
           title={integration.is_active ? 'Disable' : 'Enable'}
           variant="secondary"
@@ -213,7 +222,11 @@ function IntegrationDialog({ integration, onClose }: { integration?: Integration
       footer={
         <>
           <Button title="Cancel" variant="secondary" onPress={onClose} disabled={formState.isSubmitting} />
-          <Button title={integration ? 'Save credentials' : 'Add integration'} onPress={onSave} loading={formState.isSubmitting} />
+          <Button
+            title={integration ? 'Save credentials' : 'Add integration'}
+            onPress={onSave}
+            loading={formState.isSubmitting}
+          />
         </>
       }
     >
@@ -295,7 +308,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  between: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
+  between: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: space.sm,
+  },
   shrink: { flexShrink: 1, minWidth: 0 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   name: { fontSize: font.body, fontWeight: weight.bold, color: colors.text },

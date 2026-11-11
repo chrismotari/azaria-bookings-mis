@@ -77,11 +77,7 @@ export function AdminRoutesScreen({ navigation, route }: BottomTabScreenProps<Ad
       title="Route"
       backLabel="All routes"
       onClose={close}
-      detail={
-        selected ? (
-          <RouteDetailView key={selected} id={selected} integrations={integrations.data ?? []} />
-        ) : null
-      }
+      detail={selected ? <RouteDetailView key={selected} id={selected} integrations={integrations.data ?? []} /> : null}
       list={
         <Screen card>
           <View style={styles.header}>
@@ -171,7 +167,11 @@ function LastRun({ run }: { run: SearchRun | null }) {
 function NewFares({ item, onFares }: { item: Route; onFares: () => void }) {
   return (
     <View style={styles.newFares}>
-      {item.new_fares ? <StatusChip label={`${item.new_fares} new`} tone="info" /> : <Text style={styles.muted}>None</Text>}
+      {item.new_fares ? (
+        <StatusChip label={`${item.new_fares} new`} tone="info" />
+      ) : (
+        <Text style={styles.muted}>None</Text>
+      )}
       {item.last_run ? <Button title="Fares" variant="link" onPress={onFares} /> : null}
     </View>
   );
@@ -361,7 +361,15 @@ function RunItem({ run }: { run: SearchRun }) {
   );
 }
 
-function SearchNowDialog({ route, integrations, onClose }: { route: Route; integrations: Integration[]; onClose: () => void }) {
+function SearchNowDialog({
+  route,
+  integrations,
+  onClose,
+}: {
+  route: Route;
+  integrations: Integration[];
+  onClose: () => void;
+}) {
   const queryClient = useQueryClient();
   const usage = useSearchUsage();
   const range = windowDates(route, todayInNairobi());
@@ -412,13 +420,20 @@ function SearchNowDialog({ route, integrations, onClose }: { route: Route; integ
       </Text>
       <View style={styles.summary}>
         <SummaryLine label="Route's window" value={windowLabel(route)} />
-        <SummaryLine label="Departures" value={passed ? 'None left' : runDates({ date_from: range.from, date_to: range.to })} />
+        <SummaryLine
+          label="Departures"
+          value={passed ? 'None left' : runDates({ date_from: range.from, date_to: range.to })}
+        />
         <SummaryLine label="Departure dates" value={String(dates.length)} />
         <SummaryLine label="Integrations" value={String(integrationCount)} />
         <SummaryLine label="Searches needed" value={String(needed)} strong />
         <SummaryLine
           label="Left this month"
-          value={left === undefined ? '…' : `${left.toLocaleString('en-US')} of ${usage.data?.allowance.toLocaleString('en-US')}`}
+          value={
+            left === undefined
+              ? '…'
+              : `${left.toLocaleString('en-US')} of ${usage.data?.allowance.toLocaleString('en-US')}`
+          }
         />
       </View>
       {integrationCount === 0 ? <Text style={styles.error}>No active integration to search with.</Text> : null}
@@ -441,12 +456,24 @@ function SummaryLine({ label, value, strong }: { label: string; value: string; s
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: space.sm,
+  },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   section: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text },
   cards: { gap: space.md },
   shrink: { flexShrink: 1, minWidth: 0 },
-  between: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
+  between: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: space.sm,
+  },
   routeCell: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: space.md },
   lastRun: { gap: 2, alignItems: 'flex-start' },
   newFares: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },

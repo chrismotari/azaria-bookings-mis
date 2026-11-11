@@ -285,7 +285,12 @@ function FareRecheckPanel({ booking, onApply }: { booking: AdminBookingDetail; o
             <>
               <Text style={styles.muted}>The cheapest other flights on the same dates:</Text>
               {answer.alternatives.map((fare) => (
-                <Alternative key={fare.fare_key} fare={fare} inUse={applied === fare.fare_key} onUse={() => use(fare)} />
+                <Alternative
+                  key={fare.fare_key}
+                  fare={fare}
+                  inUse={applied === fare.fare_key}
+                  onUse={() => use(fare)}
+                />
               ))}
             </>
           ) : (
@@ -362,10 +367,22 @@ function Line({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  recheckBar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
+  recheckBar: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.sm,
+  },
   shrink: { flex: 1, flexShrink: 1, minWidth: 0 },
   result: { gap: space.sm, padding: space.md, borderRadius: radius.md, backgroundColor: colors.background },
-  resultHeader: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
+  resultHeader: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.sm,
+  },
   amounts: { gap: space.xs },
   line: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: space.sm },
   alternative: {

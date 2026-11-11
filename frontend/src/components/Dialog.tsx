@@ -34,7 +34,11 @@ export function Dialog({ open, title, onClose, size = 'small', busy, footer, err
       <View style={[styles.backdrop, !isWide && styles.backdropNarrow]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={close} accessible={false} />
         <View
-          style={[styles.card, size === 'wide' ? styles.wide : size === 'large' ? styles.large : styles.small, !isWide && styles.cardNarrow]}
+          style={[
+            styles.card,
+            size === 'wide' ? styles.wide : size === 'large' ? styles.large : styles.small,
+            !isWide && styles.cardNarrow,
+          ]}
           aria-label={title}
         >
           <View style={styles.header}>

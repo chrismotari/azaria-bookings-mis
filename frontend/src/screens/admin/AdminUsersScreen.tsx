@@ -58,14 +58,18 @@ export function AdminUsersScreen({ navigation, route }: BottomTabScreenProps<Adm
       title={admins ? 'Admin' : 'Customer'}
       backLabel={admins ? 'All system admins' : 'All users'}
       onClose={close}
-      detail={selected ? <AdminUserDetailView
+      detail={
+        selected ? (
+          <AdminUserDetailView
             key={selected}
             id={selected}
             onPromoted={(message) => {
               setNotice(message);
               close();
             }}
-          /> : null}
+          />
+        ) : null
+      }
       list={
         <Screen card>
           <View style={styles.header}>
@@ -188,7 +192,13 @@ function UserCard({ user, selected, onPress }: { user: AdminCustomer; selected: 
 const styles = StyleSheet.create({
   notice: { color: colors.successText, fontWeight: weight.semibold },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: space.sm,
+  },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   cards: { gap: space.md },
   between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },

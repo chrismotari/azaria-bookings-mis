@@ -113,10 +113,22 @@ function QueryRow({ query, selected, onPress }: { query: Query; selected: boolea
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: space.sm,
+  },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   list: { gap: space.md },
-  between: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: space.sm },
+  between: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: space.sm,
+  },
   fact: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   text: { fontSize: font.body, color: colors.text, flexShrink: 1 },
   muted: { color: colors.muted, fontSize: font.small },

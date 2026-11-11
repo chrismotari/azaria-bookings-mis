@@ -65,7 +65,13 @@ export function formatDateTime(isoDateTime: string): string {
 export function timeAgo(isoDateTime: string, now: number = Date.now()): string {
   const minutes = Math.max(0, Math.floor((now - Date.parse(isoDateTime)) / 60_000));
   const [count, unit] =
-    minutes < 1 ? [0, ''] : minutes < 60 ? [minutes, 'minute'] : minutes < 1440 ? [Math.floor(minutes / 60), 'hour'] : [Math.floor(minutes / 1440), 'day'];
+    minutes < 1
+      ? [0, '']
+      : minutes < 60
+        ? [minutes, 'minute']
+        : minutes < 1440
+          ? [Math.floor(minutes / 60), 'hour']
+          : [Math.floor(minutes / 1440), 'day'];
   return count === 0 ? 'just now' : `${count} ${unit}${count === 1 ? '' : 's'} ago`;
 }
 

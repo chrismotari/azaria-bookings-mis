@@ -30,7 +30,12 @@ export function ExploreSearchBar({ value, onChange, errors, onSearch, compact }:
   const swap = () => onChange({ ...value, origin: value.destination, destination: value.origin });
 
   const from = (
-    <AirportSearchField label="From" value={value.origin} onChange={(q) => set('origin', q)} onSubmitEditing={onSearch} />
+    <AirportSearchField
+      label="From"
+      value={value.origin}
+      onChange={(q) => set('origin', q)}
+      onSubmitEditing={onSearch}
+    />
   );
   const to = (
     <AirportSearchField
@@ -41,18 +46,38 @@ export function ExploreSearchBar({ value, onChange, errors, onSearch, compact }:
     />
   );
   const dateFrom = (
-    <DateField label="Departing from" value={value.date_from} onChange={(d) => set('date_from', d)} error={errors.date_from} />
+    <DateField
+      label="Departing from"
+      value={value.date_from}
+      onChange={(d) => set('date_from', d)}
+      error={errors.date_from}
+    />
   );
   const dateTo = (
-    <DateField label="Departing until" value={value.date_to} onChange={(d) => set('date_to', d)} error={errors.date_to} />
+    <DateField
+      label="Departing until"
+      value={value.date_to}
+      onChange={(d) => set('date_to', d)}
+      error={errors.date_to}
+    />
   );
   const ticketClass = (
-    <SelectField label="Class" options={CLASS_OPTIONS} value={value.ticket_class} onChange={(c) => set('ticket_class', c)} />
+    <SelectField
+      label="Class"
+      options={CLASS_OPTIONS}
+      value={value.ticket_class}
+      onChange={(c) => set('ticket_class', c)}
+    />
   );
   const search = <Button title="Search" variant="accent" icon="search" onPress={onSearch} />;
   const tripType = (
     <View style={styles.tripType}>
-      <SegmentedControl label="Trip type" options={TRIP_TYPE_OPTIONS} value={value.trip_type} onChange={(t) => set('trip_type', t)} />
+      <SegmentedControl
+        label="Trip type"
+        options={TRIP_TYPE_OPTIONS}
+        value={value.trip_type}
+        onChange={(t) => set('trip_type', t)}
+      />
     </View>
   );
   const returning = value.trip_type === 'return';
@@ -65,7 +90,12 @@ export function ExploreSearchBar({ value, onChange, errors, onSearch, compact }:
     />
   );
   const returnTo = (
-    <DateField label="Returning until" value={value.return_to} onChange={(d) => set('return_to', d)} error={errors.return_to} />
+    <DateField
+      label="Returning until"
+      value={value.return_to}
+      onChange={(d) => set('return_to', d)}
+      error={errors.return_to}
+    />
   );
 
   return (
@@ -138,7 +168,12 @@ function SwapButton({ onPress, vertical }: { onPress: () => void; vertical?: boo
 const SWAP = 36;
 
 const styles = StyleSheet.create({
-  band: { backgroundColor: colors.primary, paddingHorizontal: space.lg, paddingTop: space.xl, paddingBottom: space.xxl },
+  band: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: space.lg,
+    paddingTop: space.xl,
+    paddingBottom: space.xxl,
+  },
   bandCompact: { paddingTop: space.lg, paddingBottom: space.xl },
   inner: { width: '100%', maxWidth: 1100, alignSelf: 'center', gap: space.lg },
   headline: { fontSize: font.display, fontWeight: weight.heavy, color: colors.primaryText },

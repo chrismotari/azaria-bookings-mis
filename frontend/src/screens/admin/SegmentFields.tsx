@@ -44,7 +44,13 @@ export function SegmentFields<T extends ItineraryForm>({ control: formControl, d
     if (direction === 'return' && fields.length === 0) {
       const first = outbound[0];
       const last = outbound[outbound.length - 1];
-      append(newSegment({ origin: last?.destination ?? null, destination: first?.origin ?? null, airline: last?.airline ?? null }));
+      append(
+        newSegment({
+          origin: last?.destination ?? null,
+          destination: first?.origin ?? null,
+          airline: last?.airline ?? null,
+        }),
+      );
     }
     // Only when the return section first appears empty.
     // eslint-disable-next-line react-hooks/exhaustive-deps

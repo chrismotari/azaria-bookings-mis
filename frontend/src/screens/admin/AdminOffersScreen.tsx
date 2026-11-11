@@ -116,7 +116,10 @@ export function AdminOffersScreen({ navigation, route }: BottomTabScreenProps<Ad
         <Screen card>
           <View style={styles.header}>
             <Text style={styles.title}>Offers</Text>
-            <Button title="New offer" onPress={() => rootNavigation.navigate('AdminTabs', { screen: 'AdminOfferNew' })} />
+            <Button
+              title="New offer"
+              onPress={() => rootNavigation.navigate('AdminTabs', { screen: 'AdminOfferNew' })}
+            />
           </View>
 
           {!isWide ? (
@@ -210,7 +213,9 @@ function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: R
         label={offer.is_bookable ? 'Bookable' : offer.is_active ? 'Lapsed' : 'Deactivated'}
         tone={offer.is_bookable ? 'success' : offer.is_active ? 'warning' : 'neutral'}
       />
-      {offer.missing_since && offer.is_active ? <StatusChip label="Not found in the last search" tone="danger" /> : null}
+      {offer.missing_since && offer.is_active ? (
+        <StatusChip label="Not found in the last search" tone="danger" />
+      ) : null}
     </View>
   );
   const toggle = (
@@ -234,11 +239,7 @@ function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: R
             destination={offer.destination}
             returnTrip={offer.trip_type === 'return'}
           />,
-          <TwoLineCell
-            key="dates"
-            primary={tripDates(offer)}
-            secondary={`until ${formatDate(offer.valid_until)}`}
-          />,
+          <TwoLineCell key="dates" primary={tripDates(offer)} secondary={`until ${formatDate(offer.valid_until)}`} />,
           <View key="flight" style={styles.airlineCell}>
             <AirlineBadge airline={offer.airline} size={32} />
             <View style={styles.shrink}>
@@ -281,15 +282,33 @@ function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: R
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: space.sm,
+  },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   actions: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
   count: { color: colors.muted },
   cards: { gap: space.md },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
-  rowActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm, flexWrap: 'wrap' },
+  rowActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: space.sm,
+    flexWrap: 'wrap',
+  },
   cell: { color: colors.text },
   airlineCell: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   shrink: { flexShrink: 1, minWidth: 0 },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
+  cardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: space.sm,
+    flexWrap: 'wrap',
+  },
 });

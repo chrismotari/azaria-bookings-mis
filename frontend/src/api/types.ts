@@ -181,14 +181,7 @@ export type AdminQuery = Query & { user: User };
 export type AdminQueryDetail = AdminQuery & { responses: QueryResponse[] };
 
 export type BookingStatus =
-  | 'requested'
-  | 'availability_confirmed'
-  | 'paid'
-  | 'completed'
-  | 'unavailable'
-  | 'cancelled'
-  | 'expired'
-  | 'declined';
+  'requested' | 'availability_confirmed' | 'paid' | 'completed' | 'unavailable' | 'cancelled' | 'expired' | 'declined';
 
 export type BookingEvent = {
   id: string;

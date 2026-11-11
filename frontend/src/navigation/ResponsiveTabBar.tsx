@@ -225,7 +225,13 @@ const styles = StyleSheet.create({
     paddingVertical: space.xs,
     ...shadow,
   },
-  moreItem: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingVertical: 12 },
+  moreItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    paddingHorizontal: space.lg,
+    paddingVertical: 12,
+  },
   moreItemPressed: { backgroundColor: colors.primaryTint },
   moreLabel: { flex: 1, color: colors.text, fontSize: font.body },
   inlineBadge: {

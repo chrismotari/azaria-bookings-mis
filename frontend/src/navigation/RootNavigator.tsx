@@ -213,9 +213,7 @@ function MainTabsNavigator() {
   const hiddenRoutes = [...MAIN_FORM_PAGES, ...(!user ? GATED_TABS : isWide ? ['Account'] : [])];
   return (
     <MainTabs.Navigator
-      tabBar={(props) => (
-        <ResponsiveTabBar {...props} hiddenRoutes={hiddenRoutes} parentRoutes={MAIN_PARENT_ROUTES} />
-      )}
+      tabBar={(props) => <ResponsiveTabBar {...props} hiddenRoutes={hiddenRoutes} parentRoutes={MAIN_PARENT_ROUTES} />}
       screenOptions={tabScreenOptions(isWide)}
     >
       <MainTabs.Screen
@@ -382,7 +380,11 @@ function PlatformTabsNavigator() {
         component={AgenciesScreen}
         options={tab('Agencies', 'business-outline', 'business')}
       />
-      <PlatformTabs.Screen name="PlatformPlans" component={PlansScreen} options={tab('Plans', 'layers-outline', 'layers')} />
+      <PlatformTabs.Screen
+        name="PlatformPlans"
+        component={PlansScreen}
+        options={tab('Plans', 'layers-outline', 'layers')}
+      />
       <PlatformTabs.Screen
         name="PlatformInvoices"
         component={InvoicesScreen}
@@ -415,7 +417,11 @@ function PlatformStack() {
         {user ? (
           <>
             <Stack.Screen name="PlatformTabs" component={PlatformTabsNavigator} options={{ headerShown: false }} />
-            <Stack.Screen name="PlatformHome" component={PlatformHomeScreen} options={{ title: 'Home', ...publicPage }} />
+            <Stack.Screen
+              name="PlatformHome"
+              component={PlatformHomeScreen}
+              options={{ title: 'Home', ...publicPage }}
+            />
             <Stack.Screen
               name="PlatformPricing"
               component={PlatformPricingScreen}
@@ -424,14 +430,26 @@ function PlatformStack() {
           </>
         ) : (
           <>
-            <Stack.Screen name="PlatformHome" component={PlatformHomeScreen} options={{ title: 'Home', ...publicPage }} />
+            <Stack.Screen
+              name="PlatformHome"
+              component={PlatformHomeScreen}
+              options={{ title: 'Home', ...publicPage }}
+            />
             <Stack.Screen
               name="PlatformPricing"
               component={PlatformPricingScreen}
               options={{ title: 'Pricing', ...publicPage }}
             />
-            <Stack.Screen name="PlatformLogin" component={PlatformLoginScreen} options={{ title: 'Sign in', ...publicPage }} />
-            <Stack.Screen name="PlatformTabs" component={PlatformSignInFirst} options={{ title: 'Sign in', ...publicPage }} />
+            <Stack.Screen
+              name="PlatformLogin"
+              component={PlatformLoginScreen}
+              options={{ title: 'Sign in', ...publicPage }}
+            />
+            <Stack.Screen
+              name="PlatformTabs"
+              component={PlatformSignInFirst}
+              options={{ title: 'Sign in', ...publicPage }}
+            />
           </>
         )}
       </Stack.Navigator>
@@ -462,7 +480,11 @@ export function RootNavigator() {
           <Stack.Group screenOptions={{ header: () => <AppBar brandOnly /> }}>
             <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Sign in' }} />
             <Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Create account' }} />
-            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} options={{ title: 'Forgot password' }} />
+            <Stack.Screen
+              name="ForgotPassword"
+              component={ForgotPasswordScreen}
+              options={{ title: 'Forgot password' }}
+            />
             <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} options={{ title: 'Reset password' }} />
             <Stack.Screen name="AdminTabs" component={AdminSignInFirst} options={{ title: 'Sign in' }} />
           </Stack.Group>

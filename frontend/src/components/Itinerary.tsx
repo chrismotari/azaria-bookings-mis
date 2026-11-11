@@ -56,7 +56,9 @@ export function DirectionLine({ direction }: { direction: ItineraryDirection }) 
         <Text style={styles.code}>{first.origin.code}</Text>
       </View>
       <View style={styles.middle}>
-        <Text style={[styles.stops, direction.stop_count === 0 && styles.direct]}>{stopsLabel(direction.stop_count)}</Text>
+        <Text style={[styles.stops, direction.stop_count === 0 && styles.direct]}>
+          {stopsLabel(direction.stop_count)}
+        </Text>
         <View style={styles.track}>
           <View style={styles.rule} />
           {direction.connections.map((connection, index) => (

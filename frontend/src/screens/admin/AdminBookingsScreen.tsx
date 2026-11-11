@@ -209,10 +209,22 @@ function AdminBookingCard({
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: space.sm,
+  },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   cards: { gap: space.md },
-  between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
+  between: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: space.sm,
+  },
   customer: { flexShrink: 1, fontSize: font.body, fontWeight: weight.bold, color: colors.text },
   facts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.lg },
   fact: { flexDirection: 'row', alignItems: 'center', gap: space.xs },

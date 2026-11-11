@@ -95,7 +95,9 @@ export function QueryDetailView({ id }: { id: string }) {
                   key={offer.id}
                   offer={offer}
                   compact={width < ROW_WIDTH}
-                  onPress={() => navigation.navigate('Main', { screen: 'Explore', params: { id: offer.id, query: id } })}
+                  onPress={() =>
+                    navigation.navigate('Main', { screen: 'Explore', params: { id: offer.id, query: id } })
+                  }
                 />
               ))}
             </View>

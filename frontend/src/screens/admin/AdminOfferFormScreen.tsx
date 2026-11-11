@@ -87,8 +87,8 @@ export function AdminOfferEditView({ id, onDone }: { id: string; onDone: () => v
         <View style={styles.missing} accessibilityRole="alert">
           <Text style={styles.missingTitle}>Not found in the last search</Text>
           <Text style={styles.missingText}>
-            The route's searches have not found these flights since {formatDateTime(missingSince)}. Check them in
-            your GDS, and deactivate the offer if they are gone.
+            The route's searches have not found these flights since {formatDateTime(missingSince)}. Check them in your
+            GDS, and deactivate the offer if they are gone.
           </Text>
         </View>
       ) : null}

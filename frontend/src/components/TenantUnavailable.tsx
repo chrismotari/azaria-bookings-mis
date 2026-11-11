@@ -19,7 +19,9 @@ export function TenantUnavailable({ message }: { message: string }) {
           <Card>
             <EmptyState icon="business-outline" title="Agency not available" message={message} />
             {/* Native: the shared app can move on to another agency. */}
-            {IS_NATIVE ? <Button title="Switch agency" variant="secondary" onPress={() => void switchAgency()} /> : null}
+            {IS_NATIVE ? (
+              <Button title="Switch agency" variant="secondary" onPress={() => void switchAgency()} />
+            ) : null}
           </Card>
         </View>
       </View>

@@ -78,7 +78,10 @@ export function BookingNewScreen({ navigation, route }: BottomTabScreenProps<Mai
 
   return (
     <Screen maxWidth={640}>
-      <BackLink label="Offer" onPress={() => navigation.navigate('Explore', { id: offerId, ...(query ? { query } : {}) })} />
+      <BackLink
+        label="Offer"
+        onPress={() => navigation.navigate('Explore', { id: offerId, ...(query ? { query } : {}) })}
+      />
       <Text style={styles.title}>Book this flight</Text>
       <Card>
         {directionsOf(data.itinerary).map(({ key, label, direction }) => (

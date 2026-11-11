@@ -327,7 +327,12 @@ const styles = StyleSheet.create({
   change: { color: colors.primary, fontWeight: weight.bold },
   results: { borderWidth: 1, borderColor: colors.border, borderRadius: 6, overflow: 'hidden' },
   message: { padding: space.md, color: colors.muted },
-  option: { paddingVertical: space.sm, paddingHorizontal: space.md, borderBottomWidth: 1, borderBottomColor: colors.border },
+  option: {
+    paddingVertical: space.sm,
+    paddingHorizontal: space.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
   pressed: { backgroundColor: colors.primaryTint },
   optionName: { color: colors.text, fontWeight: weight.semibold },
   optionText: { color: colors.muted, fontSize: font.small },

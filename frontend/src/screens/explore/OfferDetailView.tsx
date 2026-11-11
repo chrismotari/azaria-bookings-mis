@@ -93,7 +93,12 @@ export function OfferDetailView({ id, query }: { id: string; query?: string }) {
             <Button
               title="Book"
               variant="accent"
-              onPress={() => requireAuth({ screen: 'Main', params: { screen: 'BookingNew', params: query ? { offer: id, query } : { offer: id } } })}
+              onPress={() =>
+                requireAuth({
+                  screen: 'Main',
+                  params: { screen: 'BookingNew', params: query ? { offer: id, query } : { offer: id } },
+                })
+              }
             />
           ) : (
             <Text style={styles.notice}>This offer can no longer be booked.</Text>

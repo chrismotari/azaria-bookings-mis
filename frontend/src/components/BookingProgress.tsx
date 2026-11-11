@@ -48,7 +48,9 @@ export function BookingProgress({ status, message }: { status: BookingStatus; me
         return (
           <View key={step.status} style={styles.step}>
             <View style={styles.markerRow}>
-              <View style={[styles.connector, index === 0 && styles.hidden, index <= doneUpTo && styles.connectorDone]} />
+              <View
+                style={[styles.connector, index === 0 && styles.hidden, index <= doneUpTo && styles.connectorDone]}
+              />
               <View style={[styles.marker, done && styles.markerDone, isCurrent && styles.markerCurrent]}>
                 {done ? (
                   <Icon name="checkmark" size={16} color={colors.primaryText} />

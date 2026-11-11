@@ -73,8 +73,9 @@ export function AdminQueryDetailView({ id }: { id: string }) {
             {response.message ? <Text style={styles.text}>{response.message}</Text> : null}
             {response.offers.map((offer) => (
               <Text key={offer.id} style={styles.text}>
-                • {offer.origin.code} {offer.trip_type === 'return' ? '⇄' : '→'} {offer.destination.code}, {tripDates(offer)},{' '}
-                {offer.airline.name}, {ticketClassLabel(offer.ticket_class)}, {tripSummary(offer)}, {formatPrice(offer.price)}
+                • {offer.origin.code} {offer.trip_type === 'return' ? '⇄' : '→'} {offer.destination.code},{' '}
+                {tripDates(offer)}, {offer.airline.name}, {ticketClassLabel(offer.ticket_class)}, {tripSummary(offer)},{' '}
+                {formatPrice(offer.price)}
               </Text>
             ))}
           </Card>

@@ -183,7 +183,13 @@ function AdminQueryCard({ query, selected, onPress }: { query: AdminQuery; selec
 const styles = StyleSheet.create({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   cards: { gap: space.md },
-  between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
+  between: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: space.sm,
+  },
   customer: { flexShrink: 1, fontSize: font.body, fontWeight: weight.bold, color: colors.text },
   fact: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   text: { fontSize: font.body, color: colors.text, flexShrink: 1 },

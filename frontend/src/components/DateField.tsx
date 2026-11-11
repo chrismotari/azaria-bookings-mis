@@ -23,7 +23,13 @@ export function DateField({ label, value, onChange, error, accessibilityLabel = 
           value,
           'aria-label': accessibilityLabel,
           onChange: (event: { target: { value: string } }) => onChange(event.target.value),
-          style: { ...inputStyle, fontFamily: WEB_SYSTEM_FONT, borderStyle: 'solid', boxSizing: 'border-box', width: '100%' },
+          style: {
+            ...inputStyle,
+            fontFamily: WEB_SYSTEM_FONT,
+            borderStyle: 'solid',
+            boxSizing: 'border-box',
+            width: '100%',
+          },
         })
       ) : (
         <TextInput

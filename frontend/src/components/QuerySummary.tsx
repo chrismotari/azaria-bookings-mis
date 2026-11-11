@@ -43,7 +43,14 @@ function Criterion({ icon, label, value }: { icon: IconName; label: string; valu
 const styles = StyleSheet.create({
   box: { gap: space.md },
   grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: space.md, columnGap: space.lg },
-  criterion: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm, flexGrow: 1, flexBasis: 160, minWidth: 0 },
+  criterion: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: space.sm,
+    flexGrow: 1,
+    flexBasis: 160,
+    minWidth: 0,
+  },
   criterionText: { flexShrink: 1, minWidth: 0 },
   label: { fontSize: font.caption, color: colors.muted },
   value: { fontSize: font.body, fontWeight: weight.semibold, color: colors.text },

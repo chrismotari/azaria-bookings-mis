@@ -319,7 +319,9 @@ function BoardingPassUploads({ booking }: { booking: AdminBookingDetail }) {
           deletingId={remove.isPending ? remove.variables?.id : null}
         />
       ) : (
-        <Text style={styles.muted}>No files uploaded yet. Send boarding passes from the actions above once they are here.</Text>
+        <Text style={styles.muted}>
+          No files uploaded yet. Send boarding passes from the actions above once they are here.
+        </Text>
       )}
     </Card>
   );

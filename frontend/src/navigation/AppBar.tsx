@@ -293,7 +293,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  menuItem: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingVertical: 10 },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    paddingHorizontal: space.lg,
+    paddingVertical: 10,
+  },
   menuItemPressed: { backgroundColor: colors.primaryTint },
   menuItemText: { color: colors.text, fontSize: font.body },
 });

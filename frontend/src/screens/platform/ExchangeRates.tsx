@@ -67,8 +67,8 @@ export function ExchangeRates() {
         <>
           {stale ? (
             <Text style={styles.warning}>
-              {stale} currenc{stale === 1 ? 'y has' : 'ies have'} a rate more than 3 days old; check that the daily feed is
-              running.
+              {stale} currenc{stale === 1 ? 'y has' : 'ies have'} a rate more than 3 days old; check that the daily feed
+              is running.
             </Text>
           ) : null}
           <TextInput
@@ -104,10 +104,15 @@ function RateRow({ rate }: { rate: ExchangeRate }) {
   return (
     <View style={styles.row}>
       <Text style={styles.code}>{rate.currency}</Text>
-      <Text style={styles.rate}>{Number(rate.units_per_usd).toLocaleString('en-US', { maximumFractionDigits: 8 })}</Text>
+      <Text style={styles.rate}>
+        {Number(rate.units_per_usd).toLocaleString('en-US', { maximumFractionDigits: 8 })}
+      </Text>
       <Text style={styles.date}>{formatDate(rate.date)}</Text>
       <View style={styles.chips}>
-        <StatusChip label={rate.source === 'manual' ? 'Manual' : 'Feed'} tone={rate.source === 'manual' ? 'info' : 'neutral'} />
+        <StatusChip
+          label={rate.source === 'manual' ? 'Manual' : 'Feed'}
+          tone={rate.source === 'manual' ? 'info' : 'neutral'}
+        />
         {rate.stale ? <StatusChip label="Stale" tone="warning" /> : null}
       </View>
     </View>
@@ -132,7 +137,9 @@ function ManualRateForm() {
         units_per_usd: values.units_per_usd.trim(),
       });
       reset({ currency: '', units_per_usd: '' });
-      setSaved(`Saved: 1 USD = ${Number(data.units_per_usd).toLocaleString('en-US', { maximumFractionDigits: 8 })} ${data.currency} today.`);
+      setSaved(
+        `Saved: 1 USD = ${Number(data.units_per_usd).toLocaleString('en-US', { maximumFractionDigits: 8 })} ${data.currency} today.`,
+      );
       await queryClient.invalidateQueries({ queryKey: RATES_KEY });
     } catch (error) {
       setFormError(applyServerErrors(error, setError, ['currency', 'units_per_usd']));

@@ -40,7 +40,9 @@ export function BoardingPassList({ passes, onDelete, deletingId }: Props) {
         <View key={boardingPass.id} style={styles.row}>
           <View style={styles.fileIcon}>
             <Icon
-              name={boardingPass.original_name.toLowerCase().endsWith('.pdf') ? 'document-text-outline' : 'image-outline'}
+              name={
+                boardingPass.original_name.toLowerCase().endsWith('.pdf') ? 'document-text-outline' : 'image-outline'
+              }
               size={20}
               color={colors.primary}
             />

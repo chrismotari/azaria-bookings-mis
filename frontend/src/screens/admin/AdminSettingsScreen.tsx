@@ -30,7 +30,12 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-const FIELDS = ['payment_instructions', 'payment_hold_hours', 'reminder_hours_before', 'admin_notification_email'] as const;
+const FIELDS = [
+  'payment_instructions',
+  'payment_hold_hours',
+  'reminder_hours_before',
+  'admin_notification_email',
+] as const;
 
 const SETTINGS_KEY = ['admin', 'settings'];
 

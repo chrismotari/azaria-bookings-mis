@@ -194,12 +194,7 @@ function UserForm({ user, onPromoted }: { user: AdminCustomer; onPromoted: (mess
     <>
       <ActionBar>
         {user.is_active ? (
-          <Button
-            title="Send reset link"
-            variant="secondary"
-            onPress={onReset}
-            loading={sendReset.isPending}
-          />
+          <Button title="Send reset link" variant="secondary" onPress={onReset} loading={sendReset.isPending} />
         ) : null}
         {user.is_active && !isAdmin ? (
           <Button
