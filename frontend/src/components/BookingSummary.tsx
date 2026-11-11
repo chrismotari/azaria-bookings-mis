@@ -13,9 +13,9 @@ export function BookingSummary({ booking }: { booking: Booking }) {
   return (
     <View style={styles.box}>
       <View style={styles.airline}>
-        <AirlineBadge airline={offer.airline} />
+        <AirlineBadge airline={booking.airline} />
         <View style={styles.shrink}>
-          <Text style={styles.airlineName}>{offer.airline.name}</Text>
+          <Text style={styles.airlineName}>{booking.airline.name}</Text>
           <Text style={styles.muted}>{ticketClassLabel(offer.ticket_class)}</Text>
         </View>
       </View>

@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 def _booking_in(booking_id, status):
     """The booking, or None when it is gone or no longer in the status the email describes."""
     return (
-        Booking.objects.select_related("user", "offer__origin", "offer__destination", "offer__airline")
+        Booking.objects.select_related("user", "airline", "offer__origin", "offer__destination")
         .prefetch_related(*(f"segments__{field}" for field in ("airline", "operating_airline", "origin", "destination")))
         .filter(pk=booking_id, status=status)
         .first()
@@ -64,6 +64,8 @@ def describe_changes(booking):
     if "unit_price" in changes:
         old, new = (format_price(Decimal(changes["unit_price"][key])) for key in ("old", "new"))
         described.append({"label": "Price per person", "old": old, "new": new})
+    if "airline" in changes:
+        described.append({"label": "Ticketing airline", **changes["airline"]})
     if "segments" in changes:
         old, new = (format_segment_changes(changes["segments"][key]) for key in ("old", "new"))
         described.append({"label": "Flights", "old": old, "new": new})

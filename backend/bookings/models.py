@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import connection, models
 
+from airlines.models import Airline
 from catalog.models import Offer, Segment, Trip
 from core import files
 from core.storage import private_storage
@@ -13,8 +14,8 @@ from customer_requests.models import Query
 class Booking(Trip):
     """Status changes go through bookings.services only.
 
-    Its trip type, return date, baggage, fare conditions and segments are copied from the offer at creation, so
-    later offer edits leave it unchanged.
+    Its ticketing airline, trip type, return date, baggage, fare conditions and segments are copied from the offer
+    at creation, so later offer edits leave it unchanged.
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -34,6 +35,8 @@ class Booking(Trip):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="bookings")
     offer = models.ForeignKey(Offer, on_delete=models.PROTECT, related_name="bookings")
+    # The ticketing airline: the offer's at creation; confirming availability with changes may change it.
+    airline = models.ForeignKey(Airline, on_delete=models.PROTECT, related_name="+")
     query = models.ForeignKey(Query, on_delete=models.SET_NULL, null=True, blank=True, related_name="bookings")
     passenger_count = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(9)])
     notes = models.TextField(blank=True)
@@ -49,8 +52,8 @@ class Booking(Trip):
     status = models.CharField(max_length=30, choices=Status.choices, default=Status.REQUESTED)
     payment_deadline = models.DateTimeField(null=True, blank=True)
     reminder_sent_at = models.DateTimeField(null=True, blank=True)
-    # What the admin changed when confirming availability: {"unit_price": {"old", "new"}, "segments": {"old", "new"}}
-    # with only the changed keys; null when nothing changed.
+    # What the admin changed when confirming availability: {"unit_price": {"old", "new"}, "airline": {"old", "new"}
+    # (airline names), "segments": {"old", "new"}} with only the changed keys; null when nothing changed.
     changes = models.JSONField(null=True, blank=True)
     changes_accepted = models.BooleanField(default=False)
     # The request created with suggested options when the booking was marked unavailable.
@@ -62,6 +65,12 @@ class Booking(Trip):
 
     def __str__(self):
         return f"Booking {self.pk} ({self.status})"
+
+    def save(self, *args, **kwargs):
+        # Every new booking takes its offer's ticketing airline unless given one.
+        if self.airline_id is None and self.offer_id is not None:
+            self.airline_id = self.offer.airline_id
+        super().save(*args, **kwargs)
 
     @property
     def changes_awaiting_acceptance(self):

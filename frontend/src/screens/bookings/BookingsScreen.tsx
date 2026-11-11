@@ -83,9 +83,9 @@ function BookingRow({ booking, selected, onPress }: { booking: Booking; selected
     >
       <View style={styles.between}>
         <View style={styles.airline}>
-          <AirlineBadge airline={offer.airline} />
+          <AirlineBadge airline={booking.airline} />
           <Text style={styles.airlineName} numberOfLines={1}>
-            {offer.airline.name}
+            {booking.airline.name}
           </Text>
         </View>
         <StatusChip label={status.label} tone={status.tone} />

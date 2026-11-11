@@ -266,3 +266,27 @@ def test_the_fares_screen_skips_recheck_runs(admin_api, booking, route, duffel_a
     assert data["run"]["id"] == str(search_run.id)
     runs = admin_api.get(f"/api/admin/routes/{route.id}/runs").json()["results"]
     assert [run["trigger"] for run in runs] == ["recheck", "manual"]
+
+
+def test_an_alternative_from_another_airline_changes_the_ticketing_airline(admin_api, customer_api, booking, duffel_api):
+    assert booking.airline.iata_code == "EK"
+    duffel_api.reply = without_ek()
+    [alternative] = recheck(admin_api, booking).json()["alternatives"]
+    assert alternative["airline"]["iata_code"] == "KQ"
+
+    response = admin_api.post(
+        f"/api/admin/bookings/{booking.id}/confirm-availability",
+        {
+            "unit_price": alternative["selling_price"],
+            "airline": alternative["airline"]["id"],
+            "segments": alternative["segments"],
+        },
+        format="json",
+    )
+    assert response.status_code == 200, response.data
+    data = response.json()
+    assert data["changes"]["airline"] == {"old": booking.airline.name, "new": alternative["airline"]["name"]}
+    assert data["airline"]["iata_code"] == "KQ"
+    assert customer_api.get(f"/api/bookings/{booking.id}").json()["airline"]["iata_code"] == "KQ"
+    booking.refresh_from_db()
+    assert (booking.airline.iata_code, booking.offer.airline.iata_code) == ("KQ", "EK")

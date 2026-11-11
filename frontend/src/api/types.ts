@@ -203,6 +203,8 @@ export type SegmentChange = { direction: Direction; flight: string; route: strin
 /** Only the keys that changed are present. */
 export type BookingChanges = {
   unit_price?: { old: string; new: string };
+  /** Ticketing airline names. */
+  airline?: { old: string; new: string };
   segments?: { old: SegmentChange[]; new: SegmentChange[] };
 };
 
@@ -210,6 +212,8 @@ export type BookingChanges = {
 export type Booking = Trip & {
   id: string;
   offer: Offer;
+  /** The booking's own ticketing airline: the offer's when booked, changed only by confirming with changes. */
+  airline: Airline;
   query: string | null;
   passenger_count: number;
   notes: string;

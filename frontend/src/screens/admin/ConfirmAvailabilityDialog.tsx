@@ -9,6 +9,7 @@ import { api } from '../../api/client';
 import { applyServerErrors, errorMessage } from '../../api/errors';
 import {
   AdminBookingDetail,
+  Airline,
   BookingChanges,
   CheckedFare,
   Direction,
@@ -80,11 +81,14 @@ function toChanges(booking: AdminBookingDetail, segments: ItineraryFormValues): 
 }
 
 /** What confirming with these values would change, in the server's format; null when nothing would. */
-function pendingChanges(booking: AdminBookingDetail, values: Values): BookingChanges | null {
+function pendingChanges(booking: AdminBookingDetail, values: Values, airline: Airline): BookingChanges | null {
   const changes: BookingChanges = {};
   const price = Number(values.unit_price.trim());
   if (values.unit_price.trim() && price > 0 && price !== Number(booking.unit_price)) {
     changes.unit_price = { old: booking.unit_price, new: price.toFixed(2) };
+  }
+  if (airline.id !== booking.airline.id) {
+    changes.airline = { old: booking.airline.name, new: airline.name };
   }
   const before = toChanges(booking, toItineraryFormValues(booking.itinerary));
   const after = toChanges(booking, values.segments);
@@ -116,17 +120,20 @@ export function ConfirmAvailabilityDialog({ booking, open, onClose, onDone }: Pr
 
 function ConfirmForm({ booking, onClose, onDone }: Omit<Props, 'open'>) {
   const [formError, setFormError] = useState<string | null>(null);
+  // The ticketing airline is not edited here: it follows the fare a re-check fills in.
+  const [airline, setAirline] = useState<Airline>(booking.airline);
   const { control, handleSubmit, setError, setValue, formState } = useForm<Values>({
     resolver: zodResolver(schema(booking)),
     defaultValues: { unit_price: booking.unit_price, segments: toItineraryFormValues(booking.itinerary) },
   });
   const values = useWatch({ control }) as Values;
-  const changes = pendingChanges(booking, values);
+  const changes = pendingChanges(booking, values, airline);
   const { errors } = useFormState({ control, name: 'segments' });
 
-  // Fills the price (when the fare has a USD price) and flights from a re-checked fare.
+  // Fills the price (when the fare has a USD price), ticketing airline and flights from a re-checked fare.
   const applyFare = (fare: CheckedFare) => {
     const options = { shouldDirty: true, shouldValidate: true };
+    setAirline(fare.airline);
     if (fare.selling_price) {
       setValue('unit_price', fare.selling_price, options);
     }
@@ -140,6 +147,7 @@ function ConfirmForm({ booking, onClose, onDone }: Omit<Props, 'open'>) {
     try {
       const response = await api.post<AdminBookingDetail>(`/admin/bookings/${booking.id}/confirm-availability`, {
         unit_price: submitted.unit_price.trim(),
+        airline: airline.id,
         segments: toSegmentsBody(booking.trip_type, submitted.segments),
       });
       onDone(response.data);
@@ -186,6 +194,13 @@ function ConfirmForm({ booking, onClose, onDone }: Omit<Props, 'open'>) {
           )}
         />
       </FormSection>
+      <View style={styles.carrier}>
+        <Text style={styles.muted}>Ticketing airline</Text>
+        <AirlineBadge airline={airline} size={28} />
+        <Text style={[styles.strong, styles.shrink]} numberOfLines={1}>
+          {airline.name}
+        </Text>
+      </View>
       <FormSection title="Outbound flights" description="Local times of each airport." plain>
         <SegmentFields control={control} direction="outbound" />
       </FormSection>

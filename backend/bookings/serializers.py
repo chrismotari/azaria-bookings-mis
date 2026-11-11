@@ -1,6 +1,8 @@
 from rest_framework import serializers
 
 from accounts.models import User
+from airlines.models import Airline
+from airlines.serializers import AirlineSerializer
 from accounts.serializers import UserSerializer
 from catalog.itinerary import airlines_in, itinerary_errors
 from catalog.models import Trip
@@ -53,6 +55,8 @@ class BookingSerializer(serializers.ModelSerializer):
     """The trip fields and itinerary are the booking's own, copied from the offer when it was booked."""
 
     offer = OfferSerializer(read_only=True)
+    # The booking's own ticketing airline.
+    airline = AirlineSerializer(read_only=True)
     total_price = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
 
     class Meta:
@@ -60,6 +64,7 @@ class BookingSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "offer",
+            "airline",
             "query",
             "passenger_count",
             "notes",
@@ -131,12 +136,20 @@ class ConfirmAvailabilitySerializer(serializers.Serializer):
     """Optional changes made on confirming; context["booking"] is the booking being confirmed."""
 
     unit_price = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+    # The ticketing airline, e.g. when the flights change to another airline's.
+    airline = serializers.PrimaryKeyRelatedField(queryset=Airline.objects.all(), required=False)
     segments = SegmentInputSerializer(many=True, required=False)
 
     def validate_unit_price(self, value):
         if value <= 0:
             raise serializers.ValidationError("Price must be greater than 0.")
         return value
+
+    def validate_airline(self, airline):
+        # The booking may keep an airline deactivated later; choosing another needs it active.
+        if not airline.is_active and airline.pk != self.context["booking"].airline_id:
+            raise serializers.ValidationError("This airline is no longer active.")
+        return airline
 
     def validate_segments(self, segments):
         """The booking keeps its trip type and route; its flights and dates may change."""

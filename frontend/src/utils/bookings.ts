@@ -79,6 +79,9 @@ export function describeChanges(changes: BookingChanges): { label: string; old: 
       new: formatPrice(changes.unit_price.new),
     });
   }
+  if (changes.airline) {
+    rows.push({ label: 'Ticketing airline', old: changes.airline.old, new: changes.airline.new });
+  }
   if (changes.segments) {
     rows.push({
       label: 'Flights',

@@ -92,6 +92,7 @@ def create_booking(user, data, admin=None):
             passenger_count=data["passenger_count"],
             notes=data.get("notes", ""),
             unit_price=offer.price,
+            airline_id=offer.airline_id,
             source=offer.source,
             integration_id=offer.integration_id,
             fare_key=offer.fare_key,
@@ -165,8 +166,9 @@ def check_transition(booking, to_status):
         )
 
 
-def confirm_availability(booking_id, actor, unit_price=None, segments=None):
-    """Confirms availability, applying a new unit price and segments where they differ from the booking's.
+def confirm_availability(booking_id, actor, unit_price=None, airline=None, segments=None):
+    """Confirms availability, applying a new unit price, ticketing airline and segments where they differ from the
+    booking's.
 
     segments: validated segment dicts in flight order. What changed is recorded in booking.changes for the
     customer to accept or decline.
@@ -177,6 +179,9 @@ def confirm_availability(booking_id, actor, unit_price=None, segments=None):
         if unit_price is not None and unit_price != booking.unit_price:
             changes["unit_price"] = {"old": str(booking.unit_price), "new": str(unit_price)}
             booking.unit_price = unit_price
+        if airline is not None and airline.pk != booking.airline_id:
+            changes["airline"] = {"old": booking.airline.name, "new": airline.name}
+            booking.airline = airline
         if segments is not None:
             current = [s.as_data() for s in booking.segments.select_related(*SEGMENT_RELATED)]
             if not same_itinerary(current, segments):

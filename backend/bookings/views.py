@@ -35,7 +35,7 @@ from .services import (
     transition,
 )
 
-BOOKING_RELATED = ["offer__origin", "offer__destination", "offer__airline", "integration"]
+BOOKING_RELATED = ["airline", "offer__origin", "offer__destination", "offer__airline", "integration"]
 BOOKING_SEGMENTS = [
     *(f"segments__{field}" for field in ("airline", "operating_airline", "origin", "destination")),
     *(f"offer__segments__{field}" for field in ("airline", "operating_airline", "origin", "destination")),
@@ -131,7 +131,7 @@ class AdminBookingTransitionView(APIView):
 
 
 class AdminConfirmAvailabilityView(APIView):
-    """Body (optional): unit_price and segments; values that differ from the booking's are applied."""
+    """Body (optional): unit_price, airline (id) and segments; values that differ from the booking's are applied."""
 
     permission_classes = [IsAdminRole]
 

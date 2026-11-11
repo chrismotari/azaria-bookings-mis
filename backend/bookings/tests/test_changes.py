@@ -11,7 +11,7 @@ from bookings import tasks
 from bookings.models import Booking, BookingEvent
 from bookings.services import create_booking
 from core.models import AppSettings
-from core.tests.helpers import airline_named, flight, html_part
+from core.tests.helpers import TEST_SCHEMA, airline_named, flight, html_part
 
 pytestmark = pytest.mark.django_db
 
@@ -248,3 +248,72 @@ def test_declined_is_a_booking_status_filter(admin_api, customer_api, booking):
     customer_api.post(f"/api/bookings/{booking.id}/decline-changes")
     results = admin_api.get("/api/admin/bookings", {"status": "declined"}).data["results"]
     assert [b["id"] for b in results] == [str(booking.id)]
+
+
+# The ticketing airline
+
+
+def test_bookings_keep_the_offers_ticketing_airline(admin_api, customer_api, booking):
+    kq = airline_named("Kenya Airways")
+    assert booking.airline == kq
+    # Changing the offer's airline later leaves the booking's alone.
+    booking.offer.airline = airline_named("Emirates")
+    booking.offer.save()
+    assert customer_api.get(f"/api/bookings/{booking.id}").data["airline"]["name"] == "Kenya Airways"
+    assert admin_api.get(f"/api/admin/bookings/{booking.id}").data["airline"]["id"] == str(kq.id)
+    assert customer_api.get("/api/bookings").data["results"][0]["airline"]["name"] == "Kenya Airways"
+
+
+def test_confirm_with_a_new_airline(admin_api, customer_api, booking):
+    emirates = airline_named("Emirates")
+    response = confirm(admin_api, booking, {"airline": str(emirates.id)})
+    assert response.status_code == 200, response.data
+    assert response.data["changes"] == {"airline": {"old": "Kenya Airways", "new": "Emirates"}}
+    assert response.data["airline"]["name"] == "Emirates"
+    booking.refresh_from_db()
+    assert booking.airline == emirates
+    assert booking.changes_awaiting_acceptance
+    # The offer keeps its airline.
+    assert booking.offer.airline.name == "Kenya Airways"
+    assert customer_api.post(f"/api/bookings/{booking.id}/accept-changes").status_code == 200
+
+
+def test_confirm_with_the_same_airline_records_no_change(admin_api, booking):
+    response = confirm(admin_api, booking, {"airline": str(airline_named("Kenya Airways").id)})
+    assert response.status_code == 200, response.data
+    assert response.data["changes"] is None
+
+
+def test_confirm_refuses_an_inactive_airline_unless_the_booking_has_it(admin_api, booking):
+    emirates = airline_named("Emirates")
+    emirates.is_active = False
+    emirates.save()
+    response = confirm(admin_api, booking, {"airline": str(emirates.id)})
+    assert response.status_code == 400
+    assert response.data["airline"] == ["This airline is no longer active."]
+    booking.refresh_from_db()
+    assert (booking.status, booking.airline.name) == (Status.REQUESTED, "Kenya Airways")
+
+    # The booking's own airline, deactivated later, may stay.
+    kq = booking.airline
+    kq.is_active = False
+    kq.save()
+    response = confirm(admin_api, booking, {"airline": str(kq.id)})
+    assert response.status_code == 200, response.data
+    assert response.data["changes"] is None
+
+
+def test_email_lists_the_airline_change(admin_api, booking, django_capture_on_commit_callbacks):
+    with django_capture_on_commit_callbacks(execute=True):
+        confirm(admin_api, booking, {"airline": str(airline_named("Emirates").id)})
+    [email] = mail.outbox
+    assert "Ticketing airline: Kenya Airways → Emirates" in email.body
+    html = html_part(email)
+    assert "Ticketing airline" in html and "Emirates" in html
+
+
+def test_new_booking_email_names_the_bookings_airline(booking):
+    Booking.objects.filter(pk=booking.pk).update(airline=airline_named("Emirates"))
+    tasks.notify_admin_new_booking(TEST_SCHEMA, booking.id)
+    [email] = mail.outbox
+    assert "Airline: Emirates" in email.body

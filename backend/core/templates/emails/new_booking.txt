@@ -13,7 +13,7 @@ Return:
 Baggage: {{ baggage }}
 Fare conditions: {{ conditions }}
 Class: {{ ticket_class }}
-Airline: {{ booking.offer.airline }}
+Airline: {{ booking.airline }}
 Passengers: {{ booking.passenger_count }}
 Total price: {{ total }}
 Notes: {{ booking.notes|default:"(none)" }}
