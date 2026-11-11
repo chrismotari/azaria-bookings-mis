@@ -146,7 +146,6 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Re-check prices use today's rate and the offer's route's markup as it is now, even if the route was changed or deactivated (routes are never deleted).
 - Not found returns the 3 cheapest other fares in the booking's cabin with a rate, one per fare_key; a found fare without a rate fills only the flights.
 - Choosing a re-check alternative changes only price, ticketing airline and flights through confirm availability; the booking keeps its baggage and fare conditions.
-- Bookings made before re-checks existed took their offer's source, integration and fare_key in the migration.
 - Travelport: EMEA gateways (pre-production for test mode, production for live), Air schema v52 and the Galileo (1G) host; one adult (ADT), a leg per direction with the cabin as a permitted cabin and `MaxConnections` only when set, and `SolutionResult` true so each priced solution is one itinerary.
 - Travelport: test connection is a System service ping with the target branch (it searches nothing and counts against no allowance).
 - Travelport: journeys are the directions; checked bags are the fewest pieces of the solution's fare components (a weight allowance alone counts as one bag), with the weight only when every component states kilograms; cabin bag weight is not read (free text only).
@@ -160,3 +159,4 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Mobile app: switching agency, or signing out to follow a password link, rebuilds the whole session (query cache, auth, navigation); a link to `/app` or `azaria://open` opens the app's home, and an admin link while signed out reopens after sign-in, as on the web.
 - Mobile app: link prompts are the platform's native alerts; Find your agency and link handling are native-only files, so the web bundle does not contain them.
 - The welcome email is sent only on self-registration; its subject is "Welcome to <agency>".
+- Migrations are flattened to one initial migration per app (catalog needs two: it and integrations reference each other), plus the two seed-data migrations; there is no upgrade path from older databases.

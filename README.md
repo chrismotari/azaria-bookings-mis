@@ -62,7 +62,7 @@ python manage.py create_agency --schema azaria --name "Azaria Bookings" \
 
 `create_agency` creates the agency's schema, its domain `<schema>.localhost`, its settings and its first admin. Add more agencies the same way.
 
-A database created before return trips were added must be dropped and set up again: the catalog, requests and bookings migrations were regenerated. Otherwise, after pulling changes, `python manage.py migrate_schemas` applies new migrations to the platform and every agency.
+A database created before the migrations were flattened (each app back to `0001_initial`; catalog also has `0002_initial`) must be dropped and set up again. Otherwise, after pulling changes, `python manage.py migrate_schemas` applies new migrations to the platform and every agency.
 
 Exchange rates for fare searches arrive with the daily beat task; to load them at once, run `python manage.py shell -c "from rates.tasks import fetch_exchange_rates; fetch_exchange_rates()"`.
 
