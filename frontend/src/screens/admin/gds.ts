@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { api } from '../../api/client';
-import { FareType, Integration, Route, RunStatus, SearchUsage } from '../../api/types';
+import { FareType, Integration, Route, RouteSchedule, RunStatus, SearchUsage } from '../../api/types';
 import { Tone } from '../../components/StatusChip';
 import { formatDate, formatMoney } from '../../utils/format';
 
@@ -36,6 +36,45 @@ export const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 export function weekdaysLabel(weekdays: number[]): string {
   return weekdays.length === 0 || weekdays.length === 7 ? 'Every day' : weekdays.map((day) => WEEKDAYS[day]).join(', ');
 }
+
+export const SCHEDULES: { value: RouteSchedule; label: string }[] = [
+  { value: 'manual', label: 'Manual' },
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekly', label: 'Weekly' },
+];
+
+export function scheduleLabel(route: Route): string {
+  if (route.schedule === 'daily') {
+    return 'Searched daily';
+  }
+  if (route.schedule === 'weekly') {
+    return `Searched weekly on ${WEEKDAYS[route.schedule_weekday ?? 0]}`;
+  }
+  return 'Searched by hand';
+}
+
+export function windowLabel(route: Route): string {
+  if (route.window === 'fixed') {
+    return `${formatDate(route.window_from ?? '')} – ${formatDate(route.window_to ?? '')}`;
+  }
+  return `${route.days_ahead_from} to ${route.days_ahead_to} days ahead`;
+}
+
+function addDays(isoDate: string, days: number): string {
+  return new Date(Date.parse(`${isoDate}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** The departure dates a search of the route covers today (ISO dates): its window, without the part already past. */
+export function windowDates(route: Route, today: string): { from: string; to: string } {
+  if (route.window === 'rolling') {
+    return { from: addDays(today, route.days_ahead_from ?? 0), to: addDays(today, route.days_ahead_to ?? 0) };
+  }
+  const from = route.window_from ?? today;
+  return { from: from < today ? today : from, to: route.window_to ?? today };
+}
+
+/** Share of the month's allowance from which the Routes screen warns. */
+export const USAGE_WARNING = 0.8;
 
 /** The departure dates from one ISO date to another (inclusive) that fall on the weekdays (all when empty). */
 export function searchDates(from: string, to: string, weekdays: number[]): string[] {
@@ -99,6 +138,7 @@ export const RUN_STATUS: Record<RunStatus, { label: string; tone: Tone }> = {
   running: { label: 'Running', tone: 'info' },
   done: { label: 'Done', tone: 'success' },
   failed: { label: 'Failed', tone: 'danger' },
+  skipped: { label: 'Skipped', tone: 'warning' },
 };
 
 export function runDates(run: { date_from: string; date_to: string }): string {

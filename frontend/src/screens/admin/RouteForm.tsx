@@ -7,11 +7,12 @@ import { z } from 'zod';
 
 import { api } from '../../api/client';
 import { applyServerErrors } from '../../api/errors';
-import { Airline, Airport, Integration, Route, TICKET_CLASSES, TicketClass, TripType } from '../../api/types';
+import { Airline, Airport, Integration, Route, RouteSchedule, TICKET_CLASSES, TicketClass, TripType } from '../../api/types';
 import { AirlineBadge } from '../../components/AirlineBadge';
 import { AirlinePicker } from '../../components/AirlinePicker';
 import { AirportPicker } from '../../components/AirportPicker';
 import { Button } from '../../components/Button';
+import { DateField } from '../../components/DateField';
 import { Field, FieldGrid, FormError } from '../../components/Field';
 import { FormSection } from '../../components/FormSection';
 import { PressState } from '../../components/pressState';
@@ -20,7 +21,7 @@ import { SelectField } from '../../components/SelectField';
 import { TextField } from '../../components/TextField';
 import { Toggle } from '../../components/Toggle';
 import { colors, font, radius, space, weight } from '../../theme';
-import { FARES_KEY, ROUTES_KEY, WEEKDAYS } from './gds';
+import { FARES_KEY, ROUTES_KEY, SCHEDULES, WEEKDAYS } from './gds';
 
 const TRIP_TYPES: { value: TripType; label: string }[] = [
   { value: 'one_way', label: 'One way' },
@@ -36,6 +37,18 @@ const CONNECTIONS = [
 const PER_DATE = [1, 2, 3, 4, 5].map((count) => ({ value: String(count), label: String(count) }));
 
 const MONEY = /^\d{1,7}(\.\d{1,2})?$/;
+
+const WINDOWS: { value: Route['window']; label: string }[] = [
+  { value: 'rolling', label: 'Days ahead' },
+  { value: 'fixed', label: 'Fixed dates' },
+];
+
+const WEEKDAY_OPTIONS = WEEKDAYS.map((label, value) => ({ value: String(value), label }));
+
+/** The longest window, as the server allows it: fixed dates count both ends, days ahead their difference. */
+const MAX_WINDOW_DAYS = 60;
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 // Mirrors the server's rules.
 const schema = z
@@ -54,6 +67,14 @@ const schema = z
     max_per_date: z.string(),
     markup_percent: z.string().trim().regex(/^\d{1,4}(\.\d{1,2})?$/, 'Enter a percentage, e.g. 5 or 7.5.'),
     markup_fixed: z.string().trim().regex(MONEY, 'Enter an amount in USD, e.g. 20 or 12.50.'),
+    schedule: z.enum(['manual', 'daily', 'weekly']),
+    schedule_weekday: z.string(),
+    window: z.enum(['fixed', 'rolling']),
+    window_from: z.string(),
+    window_to: z.string(),
+    days_ahead_from: z.string().trim(),
+    days_ahead_to: z.string().trim(),
+    auto_publish: z.boolean(),
     is_active: z.boolean(),
   })
   .superRefine((values, ctx) => {
@@ -74,6 +95,29 @@ const schema = z
     if (!values.pick_cheapest && !values.pick_cheapest_direct) {
       ctx.addIssue({ code: 'custom', path: ['pick_cheapest'], message: 'Choose at least one pick rule.' });
     }
+    if (values.window === 'fixed') {
+      if (!ISO_DATE.test(values.window_from)) {
+        ctx.addIssue({ code: 'custom', path: ['window_from'], message: 'Choose the first departure date.' });
+      } else if (!ISO_DATE.test(values.window_to)) {
+        ctx.addIssue({ code: 'custom', path: ['window_to'], message: 'Choose the last departure date.' });
+      } else if (values.window_to < values.window_from) {
+        ctx.addIssue({ code: 'custom', path: ['window_to'], message: 'The last departure date must be on or after the first.' });
+      } else if ((Date.parse(values.window_to) - Date.parse(values.window_from)) / 86_400_000 + 1 > MAX_WINDOW_DAYS) {
+        ctx.addIssue({ code: 'custom', path: ['window_to'], message: `Search at most ${MAX_WINDOW_DAYS} days at a time.` });
+      }
+    } else {
+      const from = Number(values.days_ahead_from);
+      const to = Number(values.days_ahead_to);
+      if (!/^\d+$/.test(values.days_ahead_from)) {
+        ctx.addIssue({ code: 'custom', path: ['days_ahead_from'], message: 'Enter a number of days (0 is today).' });
+      } else if (!/^\d+$/.test(values.days_ahead_to)) {
+        ctx.addIssue({ code: 'custom', path: ['days_ahead_to'], message: 'Enter a number of days.' });
+      } else if (to < from) {
+        ctx.addIssue({ code: 'custom', path: ['days_ahead_to'], message: 'The window must end on or after its start.' });
+      } else if (to - from > MAX_WINDOW_DAYS) {
+        ctx.addIssue({ code: 'custom', path: ['days_ahead_to'], message: `The window can span at most ${MAX_WINDOW_DAYS} days.` });
+      }
+    }
   });
 
 type FormValues = z.infer<typeof schema>;
@@ -92,6 +136,11 @@ const FIELDS = [
   'max_per_date',
   'markup_percent',
   'markup_fixed',
+  'schedule_weekday',
+  'window_from',
+  'window_to',
+  'days_ahead_from',
+  'days_ahead_to',
 ] as const;
 
 function toValues(route?: Route): FormValues {
@@ -110,6 +159,14 @@ function toValues(route?: Route): FormValues {
     max_per_date: String(route?.max_per_date ?? 1),
     markup_percent: route ? String(Number(route.markup_percent)) : '0',
     markup_fixed: route ? String(Number(route.markup_fixed)) : '0',
+    schedule: route?.schedule ?? 'manual',
+    schedule_weekday: String(route?.schedule_weekday ?? 0),
+    window: route?.window ?? 'rolling',
+    window_from: route?.window_from ?? '',
+    window_to: route?.window_to ?? '',
+    days_ahead_from: String(route?.days_ahead_from ?? 1),
+    days_ahead_to: String(route?.days_ahead_to ?? 30),
+    auto_publish: route?.auto_publish ?? false,
     is_active: route?.is_active ?? true,
   };
 }
@@ -131,6 +188,8 @@ export function RouteForm({ route, integrations, onSaved, onCancel }: Props) {
     defaultValues: toValues(route),
   });
   const tripType = useWatch({ control, name: 'trip_type' });
+  const schedule = useWatch({ control, name: 'schedule' });
+  const windowKind = useWatch({ control, name: 'window' });
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
@@ -150,6 +209,13 @@ export function RouteForm({ route, integrations, onSaved, onCancel }: Props) {
       max_per_date: Number(values.max_per_date),
       markup_percent: values.markup_percent.trim(),
       markup_fixed: values.markup_fixed.trim(),
+      schedule: values.schedule,
+      schedule_weekday: values.schedule === 'weekly' ? Number(values.schedule_weekday) : null,
+      window: values.window,
+      ...(values.window === 'fixed'
+        ? { window_from: values.window_from, window_to: values.window_to }
+        : { days_ahead_from: Number(values.days_ahead_from), days_ahead_to: Number(values.days_ahead_to) }),
+      auto_publish: values.auto_publish,
       is_active: values.is_active,
     };
     try {
@@ -241,6 +307,98 @@ export function RouteForm({ route, integrations, onSaved, onCancel }: Props) {
             <Field label="Departure days (none chosen: every day)">
               <ToggleChips
                 options={WEEKDAYS.map((label, value) => ({ value, label }))}
+                value={field.value}
+                onChange={field.onChange}
+              />
+            </Field>
+          )}
+        />
+      </FormSection>
+
+      <FormSection
+        title="Dates and schedule"
+        description="The departure dates each search covers, and when the route is searched on its own (from 02:00 Nairobi time)."
+        plain
+      >
+        <Controller
+          control={control}
+          name="window"
+          render={({ field }) => (
+            <Field label="Departures">
+              <SegmentedControl label="Departures" options={WINDOWS} value={field.value} onChange={field.onChange} />
+            </Field>
+          )}
+        />
+        {windowKind === 'fixed' ? (
+          <FieldGrid columns={2}>
+            {(['window_from', 'window_to'] as const).map((part) => (
+              <Controller
+                key={part}
+                control={control}
+                name={part}
+                render={({ field, fieldState }) => (
+                  <DateField
+                    label={part === 'window_from' ? 'First departure' : 'Last departure'}
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={fieldState.error?.message}
+                  />
+                )}
+              />
+            ))}
+          </FieldGrid>
+        ) : (
+          <FieldGrid columns={2}>
+            {(['days_ahead_from', 'days_ahead_to'] as const).map((part) => (
+              <Controller
+                key={part}
+                control={control}
+                name={part}
+                render={({ field, fieldState }) => (
+                  <TextField
+                    label={part === 'days_ahead_from' ? 'From (days ahead)' : 'To (days ahead)'}
+                    value={field.value}
+                    onChangeText={field.onChange}
+                    onBlur={field.onBlur}
+                    error={fieldState.error?.message}
+                    keyboardType="number-pad"
+                  />
+                )}
+              />
+            ))}
+          </FieldGrid>
+        )}
+        <FieldGrid columns={2}>
+          <Controller
+            control={control}
+            name="schedule"
+            render={({ field }) => (
+              <Field label="Scheduled search">
+                <SegmentedControl<RouteSchedule> label="Scheduled search" options={SCHEDULES} value={field.value} onChange={field.onChange} />
+              </Field>
+            )}
+          />
+          {schedule === 'weekly' ? (
+            <Controller
+              control={control}
+              name="schedule_weekday"
+              render={({ field }) => (
+                <SelectField label="On" options={WEEKDAY_OPTIONS} value={field.value} onChange={field.onChange} />
+              )}
+            />
+          ) : null}
+        </FieldGrid>
+        <Controller
+          control={control}
+          name="auto_publish"
+          render={({ field }) => (
+            <Field label="Publishing">
+              <Toggle
+                label={
+                  field.value
+                    ? 'Publish picked fares automatically; offers no longer found are deactivated'
+                    : 'Review picked fares before publishing; offers no longer found are flagged'
+                }
                 value={field.value}
                 onChange={field.onChange}
               />

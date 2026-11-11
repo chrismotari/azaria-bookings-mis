@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 
 from airlines.models import Airline
@@ -119,6 +120,9 @@ class RouteSerializer(serializers.ModelSerializer):
     max_per_date = serializers.IntegerField(min_value=1, max_value=5, required=False)
     markup_percent = serializers.DecimalField(max_digits=6, decimal_places=2, min_value=0, required=False)
     markup_fixed = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0, required=False)
+    schedule_weekday = serializers.IntegerField(min_value=0, max_value=6, required=False, allow_null=True)
+    days_ahead_from = serializers.IntegerField(min_value=0, max_value=32767, default=1, allow_null=True)
+    days_ahead_to = serializers.IntegerField(min_value=0, max_value=32767, default=30, allow_null=True)
     last_run = serializers.SerializerMethodField()
     new_fares = serializers.IntegerField(read_only=True, default=0)
 
@@ -140,6 +144,14 @@ class RouteSerializer(serializers.ModelSerializer):
             "max_per_date",
             "markup_percent",
             "markup_fixed",
+            "schedule",
+            "schedule_weekday",
+            "window",
+            "window_from",
+            "window_to",
+            "days_ahead_from",
+            "days_ahead_to",
+            "auto_publish",
             "is_active",
             "created_at",
             "last_run",
@@ -176,14 +188,44 @@ class RouteSerializer(serializers.ModelSerializer):
             attrs["stay_nights"] = None
         if not current("pick_cheapest", True) and not current("pick_cheapest_direct", False):
             errors["pick_cheapest"] = "Choose at least one pick rule."
+        if current("schedule", Route.Schedule.MANUAL) == Route.Schedule.WEEKLY:
+            if current("schedule_weekday") is None:
+                errors["schedule_weekday"] = "Choose the day the weekly search runs."
+        else:
+            attrs["schedule_weekday"] = None
+        errors.update(self.window_errors(attrs, current))
         if errors:
             raise serializers.ValidationError(errors)
         return attrs
 
-
-class SearchSerializer(serializers.Serializer):
-    date_from = serializers.DateField()
-    date_to = serializers.DateField()
+    def window_errors(self, attrs, current):
+        """Checks the window and clears the other kind's fields."""
+        limit = services.MAX_SEARCH_DAYS
+        if current("window", Route.Window.ROLLING) == Route.Window.FIXED:
+            attrs["days_ahead_from"] = attrs["days_ahead_to"] = None
+            window_from, window_to = current("window_from"), current("window_to")
+            if window_from is None:
+                return {"window_from": "Choose the first departure date."}
+            if window_to is None:
+                return {"window_to": "Choose the last departure date."}
+            if window_to < window_from:
+                return {"window_to": "The last departure date must be on or after the first."}
+            if (window_to - window_from).days + 1 > limit:
+                return {"window_to": f"Search at most {limit} days at a time."}
+            if "window_to" in attrs and window_to < timezone.localdate():
+                return {"window_to": "The last departure date cannot be in the past."}
+            return {}
+        attrs["window_from"] = attrs["window_to"] = None
+        days_from, days_to = current("days_ahead_from"), current("days_ahead_to")
+        if days_from is None:
+            return {"days_ahead_from": "Enter how many days ahead the window starts."}
+        if days_to is None:
+            return {"days_ahead_to": "Enter how many days ahead the window ends."}
+        if days_to < days_from:
+            return {"days_ahead_to": "The window must end on or after its start."}
+        if days_to - days_from > limit:
+            return {"days_ahead_to": f"The window can span at most {limit} days."}
+        return {}
 
 
 class FareSerializer(serializers.ModelSerializer):

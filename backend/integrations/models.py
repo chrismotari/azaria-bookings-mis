@@ -53,6 +53,15 @@ class Integration(models.Model):
 class Route(models.Model):
     """A route the agency searches for fares, with how to pick among them and the markup to sell them at."""
 
+    class Schedule(models.TextChoices):
+        MANUAL = "manual", "Manual"
+        DAILY = "daily", "Daily"
+        WEEKLY = "weekly", "Weekly"
+
+    class Window(models.TextChoices):
+        FIXED = "fixed", "Fixed dates"
+        ROLLING = "rolling", "Days ahead"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     origin = models.ForeignKey(Airport, on_delete=models.PROTECT, related_name="+")
     destination = models.ForeignKey(Airport, on_delete=models.PROTECT, related_name="+")
@@ -70,6 +79,18 @@ class Route(models.Model):
     integrations = models.ManyToManyField(Integration, blank=True, related_name="routes")
     # Departure weekdays to search, 0 = Monday; empty for every day.
     weekdays = models.JSONField(default=list, blank=True)
+    schedule = models.CharField(max_length=10, choices=Schedule.choices, default=Schedule.MANUAL)
+    # Weekly schedules only: the day the search runs, 0 = Monday.
+    schedule_weekday = models.PositiveSmallIntegerField(null=True, blank=True, validators=[MaxValueValidator(6)])
+    # The departure dates a run searches: from window_from to window_to (fixed), or from days_ahead_from to
+    # days_ahead_to days after the day it runs (rolling); the other pair is null.
+    window = models.CharField(max_length=10, choices=Window.choices, default=Window.ROLLING)
+    window_from = models.DateField(null=True, blank=True)
+    window_to = models.DateField(null=True, blank=True)
+    days_ahead_from = models.PositiveSmallIntegerField(null=True, blank=True, default=1)
+    days_ahead_to = models.PositiveSmallIntegerField(null=True, blank=True, default=30)
+    # Publish picked fares at once, and let every run reprice or deactivate the route's offers.
+    auto_publish = models.BooleanField(default=False)
     # Per departure date: the cheapest fares and/or the cheapest direct one, at most max_per_date of them.
     pick_cheapest = models.BooleanField(default=True)
     pick_cheapest_direct = models.BooleanField(default=False)
@@ -93,12 +114,15 @@ class SearchRun(models.Model):
 
     class Trigger(models.TextChoices):
         MANUAL = "manual", "Manual"
+        SCHEDULED = "scheduled", "Scheduled"
 
     class Status(models.TextChoices):
         QUEUED = "queued", "Queued"
         RUNNING = "running", "Running"
         DONE = "done", "Done"
         FAILED = "failed", "Failed"
+        # A scheduled run that could not start; the reason is in errors.
+        SKIPPED = "skipped", "Skipped"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     route = models.ForeignKey(Route, on_delete=models.CASCADE, related_name="runs")

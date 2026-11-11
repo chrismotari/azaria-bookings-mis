@@ -132,3 +132,10 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Duffel: a missing refund or change condition is not allowed; allowed with a zero penalty is free; otherwise (including an unstated penalty) with a fee.
 - Duffel: a non-empty `private_fares` is a private fare, an empty one public, a missing one unknown; seats left are always null (Duffel does not give them).
 - Exchange rates: the feed's rates are stored under the Nairobi date of the fetch; a failed feed stores nothing and the task errors. The platform screen lists every currency with a stored rate.
+- A scheduled run that cannot start (over the allowance, window passed, no date on the weekdays, no active integration) is a SearchRun with status `skipped`, no searches and the reason in its errors; Search now refuses the same cases with 409.
+- Only scheduled runs (skipped ones included) count as a route's run for the day or week, so a skip is recorded once and a manual search does not replace the scheduled one. Weeks run Monday to Sunday in Nairobi time.
+- A rolling window counts from the Nairobi date the run starts, both ends included, with M − N ≤ 60 as written; a fixed window keeps Search now's 60 dates and is searched without its past days. New routes default to 1 to 30 days ahead.
+- "Edited since publishing" is the offer's `price_edited` flag: set when the admin's offer form saves a different price on a GDS offer, cleared when a fare is published onto it.
+- Refresh judges an offer "not found" only on departure dates at least one search answered for (a failed run refreshes nothing); a matching fare without a rate counts as found but changes no figures; `missing_since` keeps the first search that missed it.
+- Refresh runs before auto-publish; a fare auto-publish cannot publish is noted in the run's errors.
+- The platform dashboard lists only agencies with searches this month, most first. The Fares screen opens on the latest run that was not skipped.

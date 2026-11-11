@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { applyServerErrors } from '../../api/errors';
@@ -14,7 +14,8 @@ import { FormError } from '../../components/Field';
 import { FormFooter } from '../../components/FormSection';
 import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
-import { colors, font, weight } from '../../theme';
+import { colors, font, radius, space, weight } from '../../theme';
+import { formatDateTime } from '../../utils/format';
 import { OfferFields } from './OfferFields';
 import {
   OfferFormValues,
@@ -79,7 +80,21 @@ export function AdminOfferEditView({ id, onDone }: { id: string; onDone: () => v
   if (offer.isError) {
     return <ErrorState error={offer.error} onRetry={() => offer.refetch()} />;
   }
-  return <OfferForm id={id} initial={toFormValues(offer.data)} onDone={onDone} />;
+  const missingSince = offer.data.is_active ? offer.data.missing_since : null;
+  return (
+    <>
+      {missingSince ? (
+        <View style={styles.missing} accessibilityRole="alert">
+          <Text style={styles.missingTitle}>Not found in the last search</Text>
+          <Text style={styles.missingText}>
+            The route's searches have not found these flights since {formatDateTime(missingSince)}. Check them in
+            your GDS, and deactivate the offer if they are gone.
+          </Text>
+        </View>
+      ) : null}
+      <OfferForm id={id} initial={toFormValues(offer.data)} onDone={onDone} />
+    </>
+  );
 }
 
 type FormProps = { id?: string; initial: OfferFormValues; onDone: () => void };
@@ -127,4 +142,14 @@ function OfferForm({ id, initial, onDone }: FormProps) {
 
 const styles = StyleSheet.create({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
+  missing: {
+    gap: space.xs,
+    padding: space.md,
+    borderRadius: radius.md,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.dangerText,
+    backgroundColor: colors.dangerTint,
+  },
+  missingTitle: { fontWeight: weight.bold, color: colors.dangerText },
+  missingText: { color: colors.text },
 });

@@ -62,7 +62,7 @@ def test_an_empty_platform(platform):
     assert [row["month"] for row in data["revenue_by_month"]][:2] == ["2025-04", "2025-05"]
     assert data["revenue_by_month"][-1] == {"month": "2026-03", "total": "0.00"}
     assert len(data["revenue_by_month"]) == 12
-    assert data["plans"] == [] and data["attention"] == []
+    assert data["plans"] == [] and data["attention"] == [] and data["fare_searches"] == []
     assert data["currency"] == "USD"
 
 

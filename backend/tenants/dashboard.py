@@ -6,7 +6,7 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import TruncMonth
-from django_tenants.utils import get_public_schema_name
+from django_tenants.utils import get_public_schema_name, schema_context
 
 from . import billing
 from .models import BillingCycle, Invoice, Subscription, Tenant
@@ -23,6 +23,26 @@ def monthly_value(subscription):
     """A monthly price as is, an annual one as a twelfth."""
     price = subscription.plan.price_for(subscription.billing_cycle) or ZERO
     return price if subscription.billing_cycle == BillingCycle.MONTHLY else price / 12
+
+
+def fare_searches(agencies):
+    """This month's fare searches of each agency that made any, with its allowance; most used first."""
+    from integrations.services import searches_this_month
+
+    rows = []
+    for tenant in agencies.order_by("name"):
+        # Runs live in the agency's own schema.
+        with schema_context(tenant.schema_name):
+            used = searches_this_month()
+        if used:
+            rows.append(
+                {
+                    "tenant": {"id": str(tenant.pk), "name": tenant.name},
+                    "used": used,
+                    "allowance": tenant.monthly_search_allowance,
+                }
+            )
+    return sorted(rows, key=lambda row: -row["used"])
 
 
 def summary():
@@ -102,4 +122,5 @@ def summary():
             }
             for invoice in attention
         ],
+        "fare_searches": fare_searches(agencies),
     }

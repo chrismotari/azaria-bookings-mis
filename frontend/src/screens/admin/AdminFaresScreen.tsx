@@ -68,7 +68,8 @@ export function AdminFaresScreen({ navigation, route }: BottomTabScreenProps<Adm
   });
 
   const back = () => navigation.navigate('AdminRoutes', { id: routeId });
-  const runOptions = (runs.data?.results ?? []).map((run, index) => ({
+  // Skipped runs searched nothing.
+  const runOptions = (runs.data?.results ?? []).filter((run) => run.status !== 'skipped').map((run, index) => ({
     value: index === 0 && !runId ? '' : run.id,
     label: `${runDates(run)} · searched ${formatDateTime(run.created_at)}${index === 0 ? ' (latest)' : ''}`,
   }));

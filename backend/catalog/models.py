@@ -124,6 +124,10 @@ class Offer(Trip):
     fare_type = models.CharField(max_length=10, null=True, blank=True)
     # When the provider last priced it.
     price_checked_at = models.DateTimeField(null=True, blank=True)
+    # Set when the admin changes the price after publishing, so refreshes in review mode leave it alone.
+    price_edited = models.BooleanField(default=False)
+    # Review-mode routes: since when the route's searches no longer find these flights; null while found.
+    missing_since = models.DateTimeField(null=True, blank=True)
 
     objects = OfferQuerySet.as_manager()
 

@@ -136,6 +136,8 @@ export type OfferGdsFields = {
   rate: string | null;
   rate_date: string | null;
   fare_type: FareType | null;
+  /** Set while the route's searches no longer find the flights (review-mode routes). */
+  missing_since: string | null;
 };
 
 export type AdminOffer = Offer &
@@ -399,6 +401,8 @@ export type PlatformDashboard = {
     due_on: string;
     suspends_on: string | null;
   }[];
+  /** This month's fare searches of each agency that made any, most used first. */
+  fare_searches: { tenant: { id: string; name: string }; used: number; allowance: number }[];
 };
 
 export type PublicPlan = Pick<
@@ -464,12 +468,13 @@ export type Integration = {
   created_at: string;
 };
 
-export type RunStatus = 'queued' | 'running' | 'done' | 'failed';
+/** skipped: a scheduled run that could not start; the reason is in errors. */
+export type RunStatus = 'queued' | 'running' | 'done' | 'failed' | 'skipped';
 
 export type SearchRun = {
   id: string;
   route: string;
-  trigger: 'manual';
+  trigger: 'manual' | 'scheduled';
   date_from: string;
   date_to: string;
   status: RunStatus;
@@ -481,6 +486,8 @@ export type SearchRun = {
   created_at: string;
   finished_at: string | null;
 };
+
+export type RouteSchedule = 'manual' | 'daily' | 'weekly';
 
 /** A route the agency searches; 0 is Monday in weekdays. */
 export type Route = {
@@ -503,6 +510,17 @@ export type Route = {
   max_per_date: number;
   markup_percent: string;
   markup_fixed: string;
+  schedule: RouteSchedule;
+  /** Weekly schedules: the day it runs, 0 = Monday. */
+  schedule_weekday: number | null;
+  /** fixed: window_from to window_to; rolling: days_ahead_from to days_ahead_to days after the day it runs. */
+  window: 'fixed' | 'rolling';
+  window_from: string | null;
+  window_to: string | null;
+  days_ahead_from: number | null;
+  days_ahead_to: number | null;
+  /** Publishes picked fares at once; its offers follow every search. */
+  auto_publish: boolean;
   is_active: boolean;
   created_at: string;
   last_run: SearchRun | null;

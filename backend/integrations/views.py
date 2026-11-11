@@ -12,14 +12,13 @@ from rest_framework.views import APIView
 from core.permissions import IsAdminRole
 
 from . import services
-from .models import Fare, Integration, Route
+from .models import Fare, Integration, Route, SearchRun
 from .providers import ProviderError, provider_for
 from .serializers import (
     IntegrationSerializer,
     PublishSerializer,
     RouteSerializer,
     RunSerializer,
-    SearchSerializer,
     fares_data,
 )
 
@@ -91,16 +90,13 @@ class RouteDetailView(generics.RetrieveUpdateAPIView):
 
 
 class RouteSearchView(APIView):
-    """Search now: queues a run over a departure date range."""
+    """Search now: queues a run over the route's window."""
 
     permission_classes = [IsAdminRole]
 
     def post(self, request, pk):
         route = get_object_or_404(Route.objects.select_related("origin", "destination"), pk=pk)
-        serializer = SearchSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-        run = services.start_search(route, data["date_from"], data["date_to"], request.user)
+        run = services.start_search(route, request.user)
         run.refresh_from_db()
         return Response(RunSerializer(run).data, status=status.HTTP_201_CREATED)
 
@@ -134,7 +130,8 @@ def uuid_param(params, name, required=False):
 
 
 class FareListView(APIView):
-    """A route's fares from one run (the latest by default), grouped per departure date and sorted by USD amount.
+    """A route's fares from one run (by default the latest one not skipped), grouped per departure date and sorted
+    by USD amount.
 
     Filters: run, status (dismissed fares only when asked for), picked.
     """
@@ -146,7 +143,10 @@ class FareListView(APIView):
         route = get_object_or_404(Route, pk=uuid_param(params, "route", required=True))
         run_id = uuid_param(params, "run")
         runs = route.runs.select_related("started_by")
-        run = get_object_or_404(runs, pk=run_id) if run_id else runs.order_by("-created_at").first()
+        if run_id:
+            run = get_object_or_404(runs, pk=run_id)
+        else:
+            run = runs.exclude(status=SearchRun.Status.SKIPPED).order_by("-created_at").first()
         if run is None:
             return Response({"run": None, "dates": []})
 

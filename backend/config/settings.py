@@ -233,4 +233,8 @@ CELERY_BEAT_SCHEDULE = {
         "task": "integrations.tasks.delete_old_fares",
         "schedule": timedelta(days=1),
     },
+    "run-due-route-searches": {
+        "task": "integrations.tasks.run_due_route_searches",
+        "schedule": timedelta(hours=1),
+    },
 }

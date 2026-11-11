@@ -187,9 +187,9 @@ const COLUMNS: Column[] = [
   { label: 'Route', flex: 2 },
   { label: 'Departure / valid until', flex: 2 },
   { label: 'Flight', flex: 2.6 },
-  { label: 'Price', flex: 1.4 },
-  { label: 'Status', flex: 2 },
-  { label: 'Active', flex: 2.2 },
+  { label: 'Price', flex: 1.3 },
+  { label: 'Status', flex: 2.5 },
+  { label: 'Active', flex: 1.8 },
 ];
 
 type RowProps = {
@@ -210,6 +210,7 @@ function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: R
         label={offer.is_bookable ? 'Bookable' : offer.is_active ? 'Lapsed' : 'Deactivated'}
         tone={offer.is_bookable ? 'success' : offer.is_active ? 'warning' : 'neutral'}
       />
+      {offer.missing_since && offer.is_active ? <StatusChip label="Not found in the last search" tone="danger" /> : null}
     </View>
   );
   const toggle = (

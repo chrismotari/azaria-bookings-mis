@@ -14,7 +14,7 @@ from core.tests.helpers import OTHER_SCHEMA, TEST_SCHEMA
 from integrations.models import Fare, Integration, Route
 from tenants.models import Tenant
 
-from .conftest import TODAY, recorded
+from .conftest import TODAY, recorded, set_window
 
 pytestmark = pytest.mark.django_db
 
@@ -24,10 +24,9 @@ DEC_1 = date(2026, 12, 1)
 @pytest.fixture
 def searched(admin_api, route, integration, duffel_api, exchange_rates, django_capture_on_commit_callbacks):
     """The route searched for 1 December: a USD direct fare (650) and a GBP connecting one (576.58 USD, picked)."""
+    set_window(route, DEC_1, DEC_1)
     with django_capture_on_commit_callbacks(execute=True):
-        response = admin_api.post(
-            f"/api/admin/routes/{route.id}/search", {"date_from": "2026-12-01", "date_to": "2026-12-01"}, format="json"
-        )
+        response = admin_api.post(f"/api/admin/routes/{route.id}/search")
     assert response.status_code == 201
     return {fare.net_currency: fare for fare in Fare.objects.all()}
 
@@ -256,9 +255,7 @@ def test_publishing_the_same_flights_again_updates_the_offer(
     first = publish(admin_api, searched["GBP"], price="650.00").data
     offer = Offer.objects.get(pk=first["offer"])
     with django_capture_on_commit_callbacks(execute=True):
-        admin_api.post(
-            f"/api/admin/routes/{route.id}/search", {"date_from": "2026-12-01", "date_to": "2026-12-01"}, format="json"
-        )
+        admin_api.post(f"/api/admin/routes/{route.id}/search")
     later = Fare.objects.filter(net_currency="GBP", status="new").get()
     Fare.objects.filter(pk=later.pk).update(net_amount=Decimal("400"), net_usd=Decimal("506.33"))
     response = publish(admin_api, later, price="560.00", valid_until="2026-11-20", is_public=False)

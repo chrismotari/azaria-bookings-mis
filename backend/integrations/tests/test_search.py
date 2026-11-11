@@ -14,7 +14,7 @@ from integrations.models import Fare, SearchRun
 from rates.models import ExchangeRate
 from tenants.models import Tenant
 
-from .conftest import TODAY, offers_for, recorded
+from .conftest import TODAY, offers_for, recorded, set_window
 
 pytestmark = pytest.mark.django_db
 
@@ -23,15 +23,12 @@ DEC_1 = date(2026, 12, 1)
 
 @pytest.fixture
 def search(admin_api, django_capture_on_commit_callbacks):
-    """Search now on a route, running the queued run at once; returns the response."""
+    """Search now on a route with a fixed window, running the queued run at once; returns the response."""
 
     def run(route, date_from=DEC_1, date_to=DEC_1):
+        set_window(route, date_from, date_to)
         with django_capture_on_commit_callbacks(execute=True):
-            return admin_api.post(
-                f"/api/admin/routes/{route.id}/search",
-                {"date_from": date_from.isoformat(), "date_to": date_to.isoformat()},
-                format="json",
-            )
+            return admin_api.post(f"/api/admin/routes/{route.id}/search")
 
     return run
 
@@ -243,23 +240,6 @@ def test_the_allowance_is_per_nairobi_calendar_month(search, route, integration,
     with freeze_time("2026-11-30 21:30:00"):
         assert admin_api.get("/api/admin/search-usage").data == {"allowance": 3, "used": 0, "left": 3}
         assert search(route, DEC_1, DEC_1 + timedelta(days=1)).status_code == 201
-
-
-@pytest.mark.parametrize(
-    ("date_from", "date_to", "field"),
-    [
-        (TODAY - timedelta(days=1), TODAY, "date_from"),
-        (DEC_1, DEC_1 - timedelta(days=1), "date_to"),
-        (DEC_1, DEC_1 + timedelta(days=60), "date_to"),
-    ],
-)
-def test_the_date_range(search, route, integration, date_from, date_to, field):
-    response = search(route, date_from, date_to)
-    assert response.status_code == 400 and field in response.data
-
-
-def test_sixty_days_is_the_longest_range(search, route, integration, duffel_api):
-    assert search(route, DEC_1, DEC_1 + timedelta(days=59)).status_code == 201
 
 
 def test_no_search_without_an_active_integration(search, route, make_integration):

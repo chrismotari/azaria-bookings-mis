@@ -158,6 +158,7 @@ class AdminOfferSerializer(serializers.ModelSerializer):
             "segments",
             "source",
             *Offer.GDS_FIELDS,
+            "missing_since",
         ]
         read_only_fields = [
             "id",
@@ -169,6 +170,7 @@ class AdminOfferSerializer(serializers.ModelSerializer):
             "created_at",
             "source",
             *Offer.GDS_FIELDS,
+            "missing_since",
         ]
 
     def to_representation(self, instance):
@@ -225,6 +227,9 @@ class AdminOfferSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def update(self, instance, validated_data):
         segments = validated_data.pop("segments", None)
+        if instance.source == Offer.Source.GDS and validated_data.get("price", instance.price) != instance.price:
+            # Refreshes in review mode then leave the admin's price alone.
+            validated_data["price_edited"] = True
         offer = super().update(instance, validated_data)
         if segments is not None:
             offer.set_segments(segments)

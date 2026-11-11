@@ -119,3 +119,10 @@ def make_route(airports, carriers):
 @pytest.fixture
 def route(make_route):
     return make_route()
+
+
+def set_window(route, date_from, date_to):
+    """Gives the route a fixed window of departure dates."""
+    route.window, route.window_from, route.window_to = "fixed", date_from, date_to
+    route.days_ahead_from = route.days_ahead_to = None
+    route.save()

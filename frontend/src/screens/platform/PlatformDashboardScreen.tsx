@@ -177,6 +177,40 @@ export function PlatformDashboardScreen({ navigation }: Props) {
           </Card>
         </View>
       </View>
+      <Card>
+        <Text style={styles.section}>Fare searches this month</Text>
+        {data.fare_searches.length === 0 ? (
+          <Text style={styles.muted}>No agency has searched for fares this month.</Text>
+        ) : (
+          data.fare_searches.map((row) => (
+            <Pressable
+              key={row.tenant.id}
+              accessibilityRole="link"
+              accessibilityLabel={`${row.tenant.name}: ${row.used} of ${row.allowance} searches`}
+              onPress={() => navigation.navigate('PlatformAgencies', { id: row.tenant.id })}
+              style={({ hovered, pressed }: PressState) => [styles.usageRow, (hovered || pressed) && styles.rowHovered]}
+            >
+              <View style={styles.planTop}>
+                <Text style={[styles.strong, styles.shrink]} numberOfLines={1}>
+                  {row.tenant.name}
+                </Text>
+                <Text style={styles.strong}>
+                  {row.used.toLocaleString('en-US')} of {row.allowance.toLocaleString('en-US')}
+                </Text>
+              </View>
+              <View style={styles.planTrack}>
+                <View
+                  style={[
+                    styles.planBar,
+                    { width: `${Math.min(row.allowance ? row.used / row.allowance : 1, 1) * 100}%` },
+                    row.used >= row.allowance * 0.8 && styles.usageHigh,
+                  ]}
+                />
+              </View>
+            </Pressable>
+          ))
+        )}
+      </Card>
     </Screen>
   );
 }
@@ -383,6 +417,14 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
   },
   rowHovered: { backgroundColor: colors.background },
+  usageRow: {
+    gap: space.xs,
+    paddingVertical: space.sm,
+    paddingHorizontal: space.sm,
+    marginHorizontal: -space.sm,
+    borderRadius: radius.sm,
+  },
+  usageHigh: { backgroundColor: colors.warningText },
   rowMain: { flex: 1, minWidth: 0, gap: 2 },
   strong: { fontSize: font.body, fontWeight: weight.bold, color: colors.text },
   shrink: { flexShrink: 1, flexGrow: 1 },

@@ -17,9 +17,10 @@ from airports.models import Airport
 from catalog.itinerary import derived_fields, itinerary_errors
 from catalog.models import Offer, OfferSegment, Segment, Trip
 from core.exceptions import Conflict
+from core.tenancy import queue
 from tenants.models import Tenant
 
-from .models import Fare, Integration, SearchRun
+from .models import Fare, Integration, Route, SearchRun
 from .providers import ProviderError, SearchRequest, provider_for
 
 logger = logging.getLogger(__name__)
@@ -27,6 +28,8 @@ logger = logging.getLogger(__name__)
 CENT = Decimal("0.01")
 MAX_SEARCH_DAYS = 60
 FARES_KEPT_DAYS = 30
+# Publishing defaults: valid for a week (never after departure), public, at the selling price.
+PUBLISH_VALID_DAYS = 7
 FLIGHT_NUMBER = re.compile(r"^\d{1,4}[A-Z]?$")
 
 
@@ -69,43 +72,106 @@ def search_integrations(route):
     return list((chosen if chosen.exists() else Integration.objects.all()).filter(is_active=True))
 
 
-def date_range_errors(date_from, date_to):
-    errors = {}
-    if date_from < timezone.localdate():
-        errors["date_from"] = "The first departure date cannot be in the past."
-    if date_to < date_from:
-        errors["date_to"] = "The last departure date must be on or after the first."
-    elif (date_to - date_from).days + 1 > MAX_SEARCH_DAYS:
-        errors["date_to"] = f"Search at most {MAX_SEARCH_DAYS} days at a time."
-    return errors
+def window_dates(route, today):
+    """The first and last departure date of the route's window as it stands today."""
+    if route.window == Route.Window.ROLLING:
+        return today + timedelta(days=route.days_ahead_from), today + timedelta(days=route.days_ahead_to)
+    return route.window_from, route.window_to
 
 
-def start_search(route, date_from, date_to, user):
-    """Queues a run of the route over the dates; refused (409) when it would exceed this month's allowance."""
-    if errors := date_range_errors(date_from, date_to):
-        raise ValidationError(errors)
+def start_search(route, user=None, trigger=SearchRun.Trigger.MANUAL):
+    """Queues a run of the route over its window (the part not yet past).
+
+    A manual search that cannot start (no date left, no integration, over this month's allowance) is refused with
+    409; a scheduled one is recorded as a skipped run with the reason instead.
+    """
     if not route.is_active:
         raise Conflict("Activate the route before searching it.")
+    today = timezone.localdate()
+    window_from, window_to = window_dates(route, today)
+    date_from = max(window_from, today)
+    with transaction.atomic():
+        # One search start at a time per agency, so two cannot both fit in what is left.
+        tenant = Tenant.objects.select_for_update().get(schema_name=connection.schema_name)
+        try:
+            needed = searches_needed(route, date_from, window_to)
+            left = max(tenant.monthly_search_allowance - searches_this_month(), 0)
+            if needed > left:
+                raise Conflict(f"This search needs {needed} searches, but only {left} are left this month.")
+        except Conflict as exc:
+            if trigger == SearchRun.Trigger.MANUAL:
+                raise
+            return SearchRun.objects.create(
+                route=route,
+                trigger=trigger,
+                date_from=window_from,
+                date_to=window_to,
+                status=SearchRun.Status.SKIPPED,
+                errors=[str(exc.detail)],
+                finished_at=timezone.now(),
+            )
+        run = SearchRun.objects.create(
+            route=route, trigger=trigger, date_from=date_from, date_to=window_to, started_by=user, searches_made=needed
+        )
+        from .tasks import run_search
+
+        queue(run_search, str(run.pk))
+    return run
+
+
+def searches_needed(route, date_from, date_to):
+    """Departure dates × integrations; Conflict when there is nothing to search."""
+    if date_to < date_from:
+        raise Conflict("The route's dates have passed.")
     integrations = search_integrations(route)
     if not integrations:
         raise Conflict("There is no active integration to search with.")
     dates = search_dates(route, date_from, date_to)
     if not dates:
-        raise ValidationError({"date_to": "No date in this range falls on the route's weekdays."})
-    needed = len(dates) * len(integrations)
-    with transaction.atomic():
-        # One search start at a time per agency, so two cannot both fit in what is left.
-        tenant = Tenant.objects.select_for_update().get(schema_name=connection.schema_name)
-        left = max(tenant.monthly_search_allowance - searches_this_month(), 0)
-        if needed > left:
-            raise Conflict(f"This search needs {needed} searches, but only {left} are left this month.")
-        run = SearchRun.objects.create(
-            route=route, date_from=date_from, date_to=date_to, started_by=user, searches_made=needed
-        )
-        from .tasks import run_search
+        raise Conflict("No date in the route's window falls on its departure days.")
+    return len(dates) * len(integrations)
 
-        transaction.on_commit(lambda: run_search.delay(connection.schema_name, str(run.pk)))
-    return run
+
+# Scheduled runs
+
+# Scheduled searches start from this hour (Nairobi time).
+SCHEDULE_HOUR = 2
+
+
+def due_routes():
+    """Active scheduled routes due now: daily ones without a scheduled run today, weekly ones on their weekday
+    without a scheduled run this week. A skipped run counts, so a skip is recorded once."""
+    now = timezone.localtime()
+    if now.hour < SCHEDULE_HOUR:
+        return []
+    today = now.date()
+    day_start = timezone.make_aware(datetime.combine(today, time.min))
+    week_start = day_start - timedelta(days=today.weekday())
+    scheduled = SearchRun.objects.filter(trigger=SearchRun.Trigger.SCHEDULED)
+    routes = Route.objects.select_related("origin", "destination").filter(is_active=True)
+    daily = routes.filter(schedule=Route.Schedule.DAILY).exclude(
+        pk__in=scheduled.filter(created_at__gte=day_start).values("route")
+    )
+    weekly = routes.filter(schedule=Route.Schedule.WEEKLY, schedule_weekday=today.weekday()).exclude(
+        pk__in=scheduled.filter(created_at__gte=week_start).values("route")
+    )
+    return [*daily, *weekly]
+
+
+def run_due_route_searches():
+    """Starts a scheduled run of every due route; returns how many started (skipped ones not counted)."""
+    started = 0
+    for route in due_routes():
+        try:
+            run = start_search(route, trigger=SearchRun.Trigger.SCHEDULED)
+        except Exception:
+            logger.exception("Scheduled search of route %s failed to start.", route.pk)
+            continue
+        if run.status == SearchRun.Status.SKIPPED:
+            logger.info("Scheduled search of route %s skipped: %s", route.pk, run.errors[0])
+        else:
+            started += 1
+    return started
 
 
 # Running
@@ -257,6 +323,8 @@ def execute_run(run):
     on = timezone.localdate(run.created_at)
     problems = Counter()
     fares = []
+    # Departure dates at least one integration answered for: only there can an offer be "not found".
+    searched_days = set()
     failed_searches = made = 0
     try:
         integrations = search_integrations(route)
@@ -280,6 +348,7 @@ def execute_run(run):
                     failed_searches += 1
                     problems[f"{integration.name}, {day:%d %b}: {exc}"] += 1
                     continue
+                searched_days.add(day)
                 for result in results:
                     fare, problem = build_fare(run, integration, result, lookup, on)
                     if problem:
@@ -300,7 +369,72 @@ def execute_run(run):
     run.errors = [f"{message} ({count}×)" if count > 1 else message for message, count in problems.items()]
     run.finished_at = timezone.now()
     run.save(update_fields=["status", "searches_made", "fares_found", "errors", "finished_at"])
+    if status == SearchRun.Status.DONE:
+        try:
+            refresh_offers(run, searched_days)
+            if route.auto_publish:
+                run.errors += auto_publish(run)
+        except Exception:
+            logger.exception("Updating offers after search run %s failed.", run.pk)
+            run.errors.append("Updating the route's offers stopped on an unexpected error.")
+        run.save(update_fields=["errors"])
     return run
+
+
+def refresh_offers(run, searched_days):
+    """Brings the route's active GDS offers departing on the searched dates up to date with the run's fares.
+
+    Found (a fare with the same fare_key, the cheapest in USD): its net amount, currency and conversion, the selling
+    price at the run's rate (in review mode only while the admin has not edited the price) and price_checked_at.
+    Not found: deactivated on an auto-publish route, otherwise marked missing.
+    """
+    route = run.route
+    found = {}
+    for fare in run.fares.all():
+        kept = found.get(fare.fare_key)
+        if kept is None or kept.net_usd is None or (fare.net_usd is not None and fare.net_usd < kept.net_usd):
+            found[fare.fare_key] = fare
+    with transaction.atomic():
+        offers = Offer.objects.select_for_update().filter(
+            route=route, source=Offer.Source.GDS, is_active=True, departure_date__in=searched_days
+        )
+        for offer in offers:
+            fare = found.get(offer.fare_key)
+            if fare is None:
+                if route.auto_publish:
+                    offer.is_active = False
+                    offer.save(update_fields=["is_active"])
+                elif offer.missing_since is None:
+                    offer.missing_since = run.finished_at
+                    offer.save(update_fields=["missing_since"])
+                continue
+            offer.missing_since = None
+            fields = ["missing_since"]
+            # Without a rate the fare cannot be priced in USD; the offer is only marked as found.
+            if not fare.no_rate:
+                offer.net_amount, offer.net_currency = fare.net_amount, fare.net_currency
+                offer.net_usd, offer.rate, offer.rate_date = fare.net_usd, fare.rate, fare.rate_date
+                offer.price_checked_at = run.finished_at
+                fields += ["net_amount", "net_currency", "net_usd", "rate", "rate_date", "price_checked_at"]
+                if route.auto_publish or not offer.price_edited:
+                    offer.price = fare.selling_price
+                    fields.append("price")
+            offer.save(update_fields=fields)
+
+
+def auto_publish(run):
+    """Publishes the run's picked fares with the publish dialog's defaults; returns why any could not be."""
+    problems = []
+    today = timezone.localdate()
+    for fare in run.fares.filter(picked=True, status=Fare.Status.NEW, no_rate=False):
+        departure = date.fromisoformat(fare.departure_date)
+        valid_until = min(today + timedelta(days=PUBLISH_VALID_DAYS), departure)
+        try:
+            publish(fare.pk, fare.selling_price, valid_until, is_public=True)
+        except (Conflict, ValidationError) as exc:
+            detail = exc.detail if isinstance(exc.detail, str) else next(iter(exc.detail.values()))[0]
+            problems.append(f"Not published, {fare.fare_key}: {detail}")
+    return problems
 
 
 def connection_count(itinerary):
@@ -425,9 +559,11 @@ def publish(fare_id, price, valid_until, is_public):
         }
         offer = Offer.objects.select_for_update().filter(is_active=True, fare_key=fare.fare_key).first()
         if offer is not None:
-            for field, value in {"price": price, **source}.items():
+            # Found and priced again: no longer missing, and the price is the one just chosen.
+            updates = {"price": price, **source, "missing_since": None, "price_edited": False}
+            for field, value in updates.items():
                 setattr(offer, field, value)
-            offer.save(update_fields=["price", *source])
+            offer.save(update_fields=list(updates))
         else:
             offer = Offer.objects.create(
                 **derived,

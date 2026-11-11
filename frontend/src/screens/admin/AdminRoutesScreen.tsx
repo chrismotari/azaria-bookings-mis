@@ -11,10 +11,8 @@ import { Integration, Paginated, Route, SearchRun } from '../../api/types';
 import { ActionBar } from '../../components/ActionBar';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
-import { DateField } from '../../components/DateField';
 import { DetailLayout } from '../../components/DetailLayout';
 import { Dialog } from '../../components/Dialog';
-import { FieldGrid } from '../../components/Field';
 import { Pagination } from '../../components/Pagination';
 import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
@@ -29,21 +27,22 @@ import {
   ROUTES_KEY,
   RUN_STATUS,
   USAGE_KEY,
+  USAGE_WARNING,
   connectionsLabel,
   markupLabel,
   pickRuleLabel,
   routeIntegrationCount,
   runDates,
+  scheduleLabel,
   searchDates,
   tripLabel,
   useIntegrations,
   useSearchUsage,
   weekdaysLabel,
+  windowDates,
+  windowLabel,
 } from './gds';
 import { RouteForm } from './RouteForm';
-
-/** The longest departure date range one search covers. */
-const MAX_SEARCH_DAYS = 60;
 
 export function AdminRoutesScreen({ navigation, route }: BottomTabScreenProps<AdminTabParamList, 'AdminRoutes'>) {
   const isWide = useIsWide();
@@ -97,6 +96,16 @@ export function AdminRoutesScreen({ navigation, route }: BottomTabScreenProps<Ad
             </View>
             <Button title="New route" onPress={() => setCreating(true)} />
           </View>
+          {usage.data && usage.data.used >= usage.data.allowance * USAGE_WARNING ? (
+            <View style={styles.banner} accessibilityRole="alert">
+              <Text style={styles.bannerText}>
+                {usage.data.left === 0
+                  ? "This month's searches are used up."
+                  : `${Math.floor((usage.data.used / usage.data.allowance) * 100)}% of this month's searches are used.`}{' '}
+                Searches that need more than what is left are refused, and scheduled ones skipped, until next month.
+              </Text>
+            </View>
+          ) : null}
 
           {routes.isPending ? (
             <LoadingState />
@@ -186,7 +195,7 @@ function RouteRow({ item, wide, selected, onOpen, onFares }: RowProps) {
           <TwoLineCell
             key="cabin"
             primary={ticketClassLabel(item.ticket_class)}
-            secondary={item.is_active ? undefined : 'Inactive'}
+            secondary={item.is_active ? scheduleLabel(item) : 'Inactive'}
           />,
           <LastRun key="run" run={item.last_run} />,
           <NewFares key="fares" item={item} onFares={onFares} />,
@@ -203,6 +212,7 @@ function RouteRow({ item, wide, selected, onOpen, onFares }: RowProps) {
       <Text style={styles.text}>
         {tripLabel(item)} · {ticketClassLabel(item.ticket_class)} · {weekdaysLabel(item.weekdays)}
       </Text>
+      {item.is_active ? <Text style={styles.muted}>{scheduleLabel(item)}</Text> : null}
       <LastRun run={item.last_run} />
       <View style={styles.between}>
         <NewFares item={item} onFares={onFares} />
@@ -250,6 +260,10 @@ function RouteDetailView({ id, integrations }: { id: string; integrations: Integ
         </Text>
         <Text style={styles.muted}>
           {weekdaysLabel(data.weekdays)} · {pickRuleLabel(data)} · Markup {markupLabel(data)}
+        </Text>
+        <Text style={styles.muted}>
+          Departures {windowLabel(data)} · {scheduleLabel(data)} ·{' '}
+          {data.auto_publish ? 'Picked fares published automatically' : 'Picked fares wait for review'}
         </Text>
         {data.is_active ? null : <Text style={styles.warning}>Inactive: activate it below to search it.</Text>}
       </Card>
@@ -322,8 +336,10 @@ function RunItem({ run }: { run: SearchRun }) {
       </View>
       <Text style={styles.small}>
         {formatDateTime(run.created_at)}
-        {run.started_by ? ` · ${run.started_by}` : ''} · {run.searches_made} search
-        {run.searches_made === 1 ? '' : 'es'} · {run.fares_found} fare{run.fares_found === 1 ? '' : 's'}
+        {run.trigger === 'scheduled' ? ' · Scheduled' : run.started_by ? ` · ${run.started_by}` : ''}
+        {run.status === 'skipped'
+          ? ''
+          : ` · ${run.searches_made} search${run.searches_made === 1 ? '' : 'es'} · ${run.fares_found} fare${run.fares_found === 1 ? '' : 's'}`}
       </Text>
       {run.errors.map((message, index) => (
         <Text key={index} style={styles.error}>
@@ -343,30 +359,15 @@ function RunItem({ run }: { run: SearchRun }) {
   );
 }
 
-function addDays(isoDate: string, days: number): string {
-  return new Date(Date.parse(`${isoDate}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
-}
-
 function SearchNowDialog({ route, integrations, onClose }: { route: Route; integrations: Integration[]; onClose: () => void }) {
   const queryClient = useQueryClient();
   const usage = useSearchUsage();
-  const today = todayInNairobi();
-  const [from, setFrom] = useState(addDays(today, 7));
-  const [to, setTo] = useState(addDays(today, 13));
+  const range = windowDates(route, todayInNairobi());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const valid = /^\d{4}-\d{2}-\d{2}$/.test(from) && /^\d{4}-\d{2}-\d{2}$/.test(to);
-  const rangeError = !valid
-    ? 'Choose both dates.'
-    : from < today
-      ? 'The first departure date cannot be in the past.'
-      : to < from
-        ? 'The last departure date must be on or after the first.'
-        : searchDates(from, to, []).length > MAX_SEARCH_DAYS
-          ? `Search at most ${MAX_SEARCH_DAYS} days at a time.`
-          : null;
-  const dates = rangeError ? [] : searchDates(from, to, route.weekdays);
+  const passed = range.to < range.from;
+  const dates = passed ? [] : searchDates(range.from, range.to, route.weekdays);
   const integrationCount = routeIntegrationCount(route, integrations);
   const needed = dates.length * integrationCount;
   const left = usage.data?.left;
@@ -376,7 +377,7 @@ function SearchNowDialog({ route, integrations, onClose }: { route: Route; integ
     setBusy(true);
     setError(null);
     try {
-      await api.post(`/admin/routes/${route.id}/search`, { date_from: from, date_to: to });
+      await api.post(`/admin/routes/${route.id}/search`);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ROUTES_KEY }),
         queryClient.invalidateQueries({ queryKey: USAGE_KEY }),
@@ -399,12 +400,7 @@ function SearchNowDialog({ route, integrations, onClose }: { route: Route; integ
       footer={
         <>
           <Button title="Cancel" variant="secondary" onPress={onClose} disabled={busy} />
-          <Button
-            title="Search now"
-            onPress={start}
-            loading={busy}
-            disabled={rangeError !== null || needed === 0 || over}
-          />
+          <Button title="Search now" onPress={start} loading={busy} disabled={needed === 0 || over} />
         </>
       }
     >
@@ -412,12 +408,9 @@ function SearchNowDialog({ route, integrations, onClose }: { route: Route; integ
         One search per departure date{route.weekdays.length ? ` (${weekdaysLabel(route.weekdays)})` : ''} with each
         integration. Results appear under the route's fares when the run is done.
       </Text>
-      <FieldGrid columns={2}>
-        <DateField label="First departure" value={from} onChange={setFrom} />
-        <DateField label="Last departure" value={to} onChange={setTo} />
-      </FieldGrid>
-      {rangeError ? <Text style={styles.error}>{rangeError}</Text> : null}
       <View style={styles.summary}>
+        <SummaryLine label="Route's window" value={windowLabel(route)} />
+        <SummaryLine label="Departures" value={passed ? 'None left' : runDates({ date_from: range.from, date_to: range.to })} />
         <SummaryLine label="Departure dates" value={String(dates.length)} />
         <SummaryLine label="Integrations" value={String(integrationCount)} />
         <SummaryLine label="Searches needed" value={String(needed)} strong />
@@ -427,8 +420,9 @@ function SearchNowDialog({ route, integrations, onClose }: { route: Route; integ
         />
       </View>
       {integrationCount === 0 ? <Text style={styles.error}>No active integration to search with.</Text> : null}
-      {!rangeError && dates.length === 0 ? (
-        <Text style={styles.error}>No date in this range falls on the route's departure days.</Text>
+      {passed ? <Text style={styles.error}>The route's dates have passed; change its window below.</Text> : null}
+      {!passed && dates.length === 0 ? (
+        <Text style={styles.error}>No date in the route's window falls on its departure days.</Text>
       ) : null}
       {over ? <Text style={styles.error}>This needs more searches than are left this month.</Text> : null}
     </Dialog>
@@ -469,4 +463,12 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   summary: { gap: space.xs, padding: space.md, borderRadius: radius.md, backgroundColor: colors.background },
+  banner: {
+    padding: space.md,
+    borderRadius: radius.md,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.warningText,
+    backgroundColor: colors.warningTint,
+  },
+  bannerText: { color: colors.warningText },
 });

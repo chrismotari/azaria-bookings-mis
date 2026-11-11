@@ -25,3 +25,9 @@ def run_search(run_id):
 def delete_old_fares():
     """Daily, in every active agency: fares older than 30 days, except published ones."""
     return for_each_tenant(services.delete_old_fares, "delete_old_fares")
+
+
+@shared_task
+def run_due_route_searches():
+    """Hourly, in every active agency: starts the scheduled searches that are due."""
+    return for_each_tenant(services.run_due_route_searches, "run_due_route_searches")
