@@ -6,7 +6,6 @@ import { StyleSheet, Text, View } from 'react-native';
 import { api } from '../../api/client';
 import { Paginated, Tenant } from '../../api/types';
 import { Button } from '../../components/Button';
-import { DetailLayout } from '../../components/DetailLayout';
 import { Pagination } from '../../components/Pagination';
 import { Screen } from '../../components/Screen';
 import { SegmentedControl } from '../../components/SegmentedControl';
@@ -19,7 +18,7 @@ import { AgencyStatusFilter, PlatformTabParamList } from '../../navigation/types
 import { colors, font, space, useIsWide, weight } from '../../theme';
 import { useListPage } from '../../utils/listPage';
 import { useDebounced } from '../../utils/useDebounced';
-import { AGENCIES_KEY, AgencyDetailView, createdOn, NewAgencyDialog, tenantStatus } from './AgencyDetailView';
+import { AGENCIES_KEY, AgencyPage, createdOn, NewAgencyDialog, tenantStatus } from './AgencyPage';
 
 const COLUMNS: Column[] = [
   { label: 'Name', flex: 2 },
@@ -37,8 +36,7 @@ const FILTERS: { value: AgencyStatusFilter; label: string }[] = [
 export function AgenciesScreen({ navigation, route }: BottomTabScreenProps<PlatformTabParamList, 'PlatformAgencies'>) {
   const selected = route.params?.id;
   const close = useCallback(() => navigation.setParams({ id: undefined }), [navigation]);
-  // With an agency open the list is too narrow for the table.
-  const asTable = useIsWide() && selected === undefined;
+  const asTable = useIsWide();
   const [text, setText] = useState('');
   const search = useDebounced(text.trim(), 300);
   // In the URL, so the dashboard can link to a filtered list.
@@ -57,12 +55,10 @@ export function AgenciesScreen({ navigation, route }: BottomTabScreenProps<Platf
   const filtered = search !== '' || filter !== 'all';
 
   return (
-    <DetailLayout
-      title="Agency"
-      backLabel="All agencies"
-      onClose={close}
-      detail={selected ? <AgencyDetailView key={selected} id={selected} /> : null}
-      list={
+    <View style={styles.fill}>
+      {selected ? <AgencyPage key={selected} id={selected} onBack={close} /> : null}
+      {/* Kept mounted under an open agency, so its search and page are still there on the way back. */}
+      <View style={[styles.fill, selected !== undefined && styles.hidden]}>
         <Screen card>
           <View style={styles.header}>
             <Text style={styles.title}>Agencies</Text>
@@ -127,8 +123,8 @@ export function AgenciesScreen({ navigation, route }: BottomTabScreenProps<Platf
             }}
           />
         </Screen>
-      }
-    />
+      </View>
+    </View>
   );
 }
 
@@ -178,6 +174,8 @@ function AgencyCard({ tenant, selected, onPress }: { tenant: Tenant; selected: b
 }
 
 const styles = StyleSheet.create({
+  fill: { flex: 1 },
+  hidden: { display: 'none' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   cards: { gap: space.md },

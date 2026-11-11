@@ -3,6 +3,7 @@
 import uuid
 
 import pytest
+from django.core import mail
 from django_tenants.utils import schema_context, schema_exists
 from rest_framework.test import APIClient
 
@@ -307,3 +308,91 @@ def test_agency_and_domain_ids_are_uuids(platform):
     assert platform.get("/api/platform/tenants/1").status_code == 404
     assert platform.get("/api/platform/tenants/not-a-uuid").status_code == 404
     assert platform.get("/api/platform/invoices", {"tenant": "12"}).data["results"] == []
+
+
+# An agency's admins
+
+
+def agency_id(schema=TEST_SCHEMA):
+    return Tenant.objects.get(schema_name=schema).pk
+
+
+def test_the_owner_lists_an_agencys_admins_only(admin_user, customer, platform):
+    response = platform.get(f"/api/platform/tenants/{agency_id()}/admins")
+    assert response.status_code == 200
+    assert response.data == [
+        {
+            "id": str(admin_user.id),
+            "email": "owner@example.com",
+            "full_name": "Owner",
+            "phone": "",
+            "is_active": True,
+            "last_login": None,
+        }
+    ]
+    # The other agency's admins are its own.
+    assert platform.get(f"/api/platform/tenants/{agency_id(OTHER_SCHEMA)}/admins").data == []
+
+
+def test_suspending_and_restoring_an_admin(admin_user, platform):
+    agency = APIClient()
+    tokens = agency.post("/api/auth/login", {"email": admin_user.email, "password": PASSWORD}, format="json").data
+    url = f"/api/platform/tenants/{agency_id()}/admins/{admin_user.id}"
+    # Only is_active changes.
+    response = platform.patch(url, {"is_active": False, "full_name": "Renamed", "role": "customer"}, format="json")
+    assert response.status_code == 200 and response.data["is_active"] is False
+    with schema_context(TEST_SCHEMA):
+        admin_user.refresh_from_db()
+    assert (admin_user.is_active, admin_user.full_name, admin_user.role) == (False, "Owner", User.Role.ADMIN)
+    # Suspended: no sign-in, and the tokens it holds are refused.
+    agency.credentials(HTTP_AUTHORIZATION=f"Bearer {tokens['access']}")
+    assert agency.get("/api/auth/me").status_code == 401
+    agency.credentials()
+    assert agency.post("/api/auth/refresh", {"refresh": tokens["refresh"]}, format="json").status_code == 401
+    assert agency.post("/api/auth/login", {"email": admin_user.email, "password": PASSWORD}, format="json").status_code == 401
+
+    assert platform.patch(url, {"is_active": True}, format="json").data["is_active"] is True
+    assert agency.post("/api/auth/login", {"email": admin_user.email, "password": PASSWORD}, format="json").status_code == 200
+
+
+def test_customers_and_other_agencies_admins_cannot_be_changed_here(customer, platform):
+    with schema_context(OTHER_SCHEMA):
+        other = User.objects.create_user(email="boss@other.test", full_name="Boss", role=User.Role.ADMIN)
+    for tenant, user in [(agency_id(), customer), (agency_id(), other)]:
+        base = f"/api/platform/tenants/{tenant}/admins/{user.id}"
+        assert platform.patch(base, {"is_active": False}, format="json").status_code == 404
+        assert platform.post(f"{base}/password-reset").status_code == 404
+    with schema_context(TEST_SCHEMA):
+        customer.refresh_from_db()
+    assert customer.is_active
+
+
+def test_sending_an_admin_a_reset_link(admin_user, platform, django_capture_on_commit_callbacks):
+    with django_capture_on_commit_callbacks(execute=True):
+        response = platform.post(f"/api/platform/tenants/{agency_id()}/admins/{admin_user.id}/password-reset")
+    assert response.status_code == 200
+    assert response.data["detail"] == "A reset link has been sent to owner@example.com."
+    assert len(mail.outbox) == 1 and mail.outbox[0].to == ["owner@example.com"]
+    link = next(line for line in mail.outbox[0].body.splitlines() if "/reset-password?" in line)
+    assert link.strip().startswith("http://test.localhost:8081/reset-password?uid=")
+
+
+def test_no_reset_link_for_a_suspended_admin_or_agency(admin_user, platform, django_capture_on_commit_callbacks):
+    url = f"/api/platform/tenants/{agency_id()}/admins/{admin_user.id}/password-reset"
+    with schema_context(TEST_SCHEMA):
+        User.objects.filter(pk=admin_user.pk).update(is_active=False)
+    with django_capture_on_commit_callbacks(execute=True):
+        assert platform.post(url).status_code == 409
+    with schema_context(TEST_SCHEMA):
+        User.objects.filter(pk=admin_user.pk).update(is_active=True)
+    Tenant.objects.filter(schema_name=TEST_SCHEMA).update(is_active=False)
+    with django_capture_on_commit_callbacks(execute=True):
+        assert platform.post(url).status_code == 409
+    assert mail.outbox == []
+
+
+def test_agency_admins_need_the_platform_owner(admin_user):
+    client = root_client()
+    base = f"/api/platform/tenants/{agency_id()}/admins"
+    assert client.get(base).status_code == 401
+    assert client.post(f"{base}/{admin_user.id}/password-reset").status_code == 401

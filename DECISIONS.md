@@ -160,3 +160,5 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Mobile app: link prompts are the platform's native alerts; Find your agency and link handling are native-only files, so the web bundle does not contain them.
 - The welcome email is sent only on self-registration; its subject is "Welcome to <agency>".
 - Migrations are flattened to one initial migration per app (catalog needs two: it and integrations reference each other), plus the two seed-data migrations; there is no upgrade path from older databases.
+- An agency's "super users" on the platform are its admins (role admin); the owner suspends/restores them (is_active) and sends the usual reset link. Suspending the last admin is allowed.
+- The platform's agency detail is a full page at the same URL `/agencies/<id>` instead of a drawer; the list stays mounted underneath so its search and page are kept.

@@ -4,12 +4,14 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from django_tenants.utils import get_public_schema_name
+from django_tenants.utils import get_public_schema_name, schema_context
 from rest_framework import generics, serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from accounts.models import User
+from accounts.tasks import send_password_reset_email
 from core.throttling import IPScopedRateThrottle
 
 from . import billing, services
@@ -17,6 +19,7 @@ from .models import Domain, Tenant
 from .permissions import IsPlatformOwner
 from .serializers import (
     DomainSerializer,
+    PlatformAgencyAdminSerializer,
     PlatformLoginSerializer,
     PlatformUserSerializer,
     TenantCreateSerializer,
@@ -140,3 +143,58 @@ class PlatformDomainMakePrimaryView(APIView):
                 domain.is_primary = True
                 domain.save(update_fields=["is_primary"])
         return Response(DomainSerializer(domain).data)
+
+
+# An agency's admins (role admin in its schema): suspend or restore them, or email them a reset link.
+
+
+def agency_admins():
+    return User.objects.filter(role=User.Role.ADMIN)
+
+
+class PlatformAgencyAdminListView(APIView):
+    permission_classes = [IsPlatformOwner]
+
+    def get(self, request, pk):
+        tenant = get_object_or_404(agencies(), pk=pk)
+        with schema_context(tenant.schema_name):
+            admins = list(agency_admins().order_by("full_name", "email"))
+        return Response(PlatformAgencyAdminSerializer(admins, many=True).data)
+
+
+class PlatformAgencyAdminDetailView(APIView):
+    """Suspending (is_active false) blocks sign-in and refuses its tokens; nothing is deleted."""
+
+    permission_classes = [IsPlatformOwner]
+
+    def patch(self, request, pk, admin_id):
+        tenant = get_object_or_404(agencies(), pk=pk)
+        with schema_context(tenant.schema_name):
+            admin = get_object_or_404(agency_admins(), pk=admin_id)
+            serializer = PlatformAgencyAdminSerializer(admin, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+
+
+class PlatformAgencyAdminPasswordResetView(APIView):
+    """Emails the admin the agency's usual reset link; suspended admins and agencies get none."""
+
+    permission_classes = [IsPlatformOwner]
+
+    def post(self, request, pk, admin_id):
+        tenant = get_object_or_404(agencies(), pk=pk)
+        with schema_context(tenant.schema_name):
+            admin = get_object_or_404(agency_admins(), pk=admin_id)
+        if not tenant.is_active:
+            return Response(
+                {"detail": "The agency is suspended: reactivate it before sending a reset link."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        if not admin.is_active:
+            return Response(
+                {"detail": "This admin is suspended: restore them before sending a reset link."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        transaction.on_commit(lambda: send_password_reset_email.delay(tenant.schema_name, admin.pk))
+        return Response({"detail": f"A reset link has been sent to {admin.email}."})

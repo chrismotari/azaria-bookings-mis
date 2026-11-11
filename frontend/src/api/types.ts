@@ -340,6 +340,17 @@ export type Tenant = {
 
 export type TenantDetail = Tenant & { domains: TenantDomain[] };
 
+/** One of an agency's admins, as the system owner sees them. */
+export type AgencyAdmin = {
+  id: string;
+  email: string;
+  full_name: string;
+  phone: string;
+  /** False while suspended: no sign-in, and its tokens are refused. */
+  is_active: boolean;
+  last_login: string | null;
+};
+
 export type PlanKind = 'subscription' | 'support';
 export type BillingCycle = 'monthly' | 'annual';
 

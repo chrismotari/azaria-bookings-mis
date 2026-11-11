@@ -20,6 +20,15 @@ class PlatformUserSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class PlatformAgencyAdminSerializer(serializers.ModelSerializer):
+    """One of an agency's admins as the owner sees them; only is_active can be changed."""
+
+    class Meta:
+        model = User
+        fields = ["id", "email", "full_name", "phone", "is_active", "last_login"]
+        read_only_fields = ["id", "email", "full_name", "phone", "last_login"]
+
+
 class PlatformLoginSerializer(LoginSerializer):
     """Signs in the system owner: active superusers of the public schema only."""
 

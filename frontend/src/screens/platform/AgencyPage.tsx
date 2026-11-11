@@ -7,8 +7,8 @@ import { z } from 'zod';
 
 import { api } from '../../api/client';
 import { applyServerErrors, errorMessage } from '../../api/errors';
-import { Tenant, TenantDetail, TenantDomain } from '../../api/types';
-import { ActionBar } from '../../components/ActionBar';
+import { AgencyAdmin, Tenant, TenantDetail, TenantDomain } from '../../api/types';
+import { BackLink } from '../../components/BackLink';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { useConfirm } from '../../components/ConfirmDialog';
@@ -16,10 +16,11 @@ import { Dialog } from '../../components/Dialog';
 import { FormError } from '../../components/Field';
 import { FormFooter } from '../../components/FormSection';
 import { StatusChip, Tone } from '../../components/StatusChip';
+import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
 import { PLATFORM_HOST } from '../../config';
-import { colors, font, radius, space, weight } from '../../theme';
+import { colors, font, radius, space, useIsWide, weight } from '../../theme';
 import { formatDate, formatDateTime } from '../../utils/format';
 import { AgencyBilling } from './AgencyBilling';
 import { AGENCIES_KEY } from './keys';
@@ -45,18 +46,24 @@ const detailKey = (id: string) => [...AGENCIES_KEY, 'detail', id];
 /** The date part of a timestamp, for formatDate. */
 export const createdOn = (tenant: Tenant) => formatDate(tenant.created_at.slice(0, 10));
 
-export function AgencyDetailView({ id }: { id: string }) {
+/** An agency's own page: everything about it, with a way back to the list. */
+export function AgencyPage({ id, onBack }: { id: string; onBack: () => void }) {
   const tenant = useQuery({
     queryKey: detailKey(id),
     queryFn: async () => (await api.get<TenantDetail>(`/platform/tenants/${id}`)).data,
   });
-  if (tenant.isPending) {
-    return <LoadingState />;
-  }
-  if (tenant.isError) {
-    return <ErrorState error={tenant.error} onRetry={() => tenant.refetch()} />;
-  }
-  return <Agency tenant={tenant.data} />;
+  return (
+    <Screen>
+      <BackLink label="All agencies" onPress={onBack} />
+      {tenant.isPending ? (
+        <LoadingState />
+      ) : tenant.isError ? (
+        <ErrorState error={tenant.error} onRetry={() => tenant.refetch()} />
+      ) : (
+        <Agency tenant={tenant.data} />
+      )}
+    </Screen>
+  );
 }
 
 /** Refreshes the open agency and the list after a change. */
@@ -103,42 +110,184 @@ function Agency({ tenant }: { tenant: TenantDetail }) {
   };
 
   const status = tenantStatus(tenant);
+  const isWide = useIsWide();
+  const main = (
+    <>
+      <Card>
+        <Text style={styles.section}>Agency</Text>
+        <NameForm tenant={tenant} />
+        <Detail label="Address" value={tenant.primary_domain ?? '—'} />
+        <Detail label="Created" value={createdOn(tenant)} />
+      </Card>
+      <Admins tenant={tenant} />
+      <Domains tenant={tenant} />
+    </>
+  );
+  const side = (
+    <>
+      <AgencyBilling tenant={tenant} onSaved={refresh} />
+      <SearchAllowance tenant={tenant} />
+    </>
+  );
   return (
     <>
-      <ActionBar>
+      <View style={styles.header}>
+        <View style={styles.headerText}>
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>{tenant.name}</Text>
+            <StatusChip label={status.label} tone={status.tone} />
+          </View>
+          <Text style={styles.muted}>{tenant.primary_domain ?? tenant.slug}</Text>
+        </View>
         <Button
-          title={tenant.is_active ? 'Suspend' : 'Reactivate'}
+          title={tenant.is_active ? 'Suspend agency' : 'Reactivate agency'}
           variant={tenant.is_active ? 'danger' : 'primary'}
           onPress={toggle}
           loading={setActive.isPending}
         />
-      </ActionBar>
+      </View>
       <FormError message={setActive.isError ? errorMessage(setActive.error) : null} />
-
-      <Card>
-        <View style={styles.between}>
-          <Text style={styles.section}>Agency</Text>
-          <StatusChip label={status.label} tone={status.tone} />
-        </View>
-        {!tenant.is_active ? (
-          <Text style={styles.muted}>
+      {!tenant.is_active ? (
+        <Card>
+          <Text style={styles.text}>
             {tenant.suspension_reason === 'non_payment'
               ? 'Suspended automatically: an invoice is more than a month overdue. Marking it paid reactivates the agency; reactivating it now waives that invoice for suspension.'
               : 'Suspended: its app answers that the agency is not available. Data is kept.'}
             {tenant.suspended_at ? ` Since ${formatDateTime(tenant.suspended_at)}.` : ''}
           </Text>
-        ) : null}
-        <NameForm tenant={tenant} />
-        <Detail label="Address" value={tenant.primary_domain ?? '—'} />
-        <Detail label="Created" value={createdOn(tenant)} />
-      </Card>
+        </Card>
+      ) : null}
 
-      <AgencyBilling tenant={tenant} onSaved={refresh} />
-
-      <SearchAllowance tenant={tenant} />
-
-      <Domains tenant={tenant} />
+      {isWide ? (
+        <View style={styles.columns}>
+          <View style={styles.column}>{main}</View>
+          <View style={styles.column}>{side}</View>
+        </View>
+      ) : (
+        <>
+          {main}
+          {side}
+        </>
+      )}
     </>
+  );
+}
+
+const adminsKey = (id: string) => [...AGENCIES_KEY, 'admins', id];
+
+/** The agency's admins: suspend or restore each one, or email them a password reset link. */
+function Admins({ tenant }: { tenant: TenantDetail }) {
+  const confirm = useConfirm();
+  const queryClient = useQueryClient();
+  const key = adminsKey(tenant.id);
+  const base = `/platform/tenants/${tenant.id}/admins`;
+  const admins = useQuery({
+    queryKey: key,
+    queryFn: async () => (await api.get<AgencyAdmin[]>(base)).data,
+  });
+  const setActive = useMutation({
+    mutationFn: async ({ admin, is_active }: { admin: AgencyAdmin; is_active: boolean }) =>
+      (await api.patch<AgencyAdmin>(`${base}/${admin.id}`, { is_active })).data,
+    onSuccess: (data) =>
+      queryClient.setQueryData<AgencyAdmin[]>(key, (list) => list?.map((item) => (item.id === data.id ? data : item))),
+  });
+  const sendReset = useMutation({
+    mutationFn: async (admin: AgencyAdmin) =>
+      (await api.post<{ detail: string }>(`${base}/${admin.id}/password-reset`)).data,
+  });
+
+  const onToggle = async (admin: AgencyAdmin) => {
+    const suspending = admin.is_active;
+    if (
+      await confirm(
+        suspending
+          ? {
+              title: 'Suspend this admin?',
+              message: `${admin.full_name} (${admin.email}) can no longer sign in to ${tenant.name}, and is signed out everywhere. Nothing is deleted.`,
+              confirmLabel: 'Suspend',
+              tone: 'danger',
+            }
+          : {
+              title: 'Restore this admin?',
+              message: `${admin.full_name} (${admin.email}) can sign in to ${tenant.name} again.`,
+              confirmLabel: 'Restore',
+              tone: 'primary',
+            },
+      )
+    ) {
+      sendReset.reset();
+      setActive.mutate({ admin, is_active: !suspending });
+    }
+  };
+
+  const onReset = async (admin: AgencyAdmin) => {
+    if (
+      await confirm({
+        title: 'Send a password reset link?',
+        message: `${admin.email} gets an email with a link to choose a new password. Their current password keeps working until then.`,
+        confirmLabel: 'Send link',
+        tone: 'primary',
+      })
+    ) {
+      setActive.reset();
+      sendReset.mutate(admin);
+    }
+  };
+
+  const busy = setActive.isPending || sendReset.isPending;
+  const actionError = setActive.error ?? sendReset.error;
+  return (
+    <Card>
+      <Text style={styles.section}>Admins</Text>
+      <Text style={styles.muted}>
+        The agency's admin accounts. A suspended admin cannot sign in; reset links are sent only while the agency and
+        the admin are active.
+      </Text>
+      {admins.isPending ? (
+        <LoadingState />
+      ) : admins.isError ? (
+        <ErrorState error={admins.error} onRetry={() => admins.refetch()} />
+      ) : admins.data.length === 0 ? (
+        <Text style={styles.muted}>This agency has no admins.</Text>
+      ) : (
+        <View style={styles.domains}>
+          {admins.data.map((admin) => (
+            <View key={admin.id} style={styles.admin}>
+              <View style={styles.adminText}>
+                <View style={styles.titleRow}>
+                  <Text style={styles.adminName} numberOfLines={1}>
+                    {admin.full_name || admin.email}
+                  </Text>
+                  {admin.is_active ? null : <StatusChip label="Suspended" tone="danger" />}
+                </View>
+                <Text style={styles.text} numberOfLines={1}>
+                  {admin.email}
+                </Text>
+                <Text style={styles.small}>
+                  {admin.last_login ? `Last signed in ${formatDateTime(admin.last_login)}` : 'Never signed in'}
+                </Text>
+              </View>
+              <View style={styles.actions}>
+                <Button
+                  title="Send reset link"
+                  variant="link"
+                  onPress={() => onReset(admin)}
+                  disabled={busy || !admin.is_active || !tenant.is_active}
+                />
+                <Button
+                  title={admin.is_active ? 'Suspend' : 'Restore'}
+                  variant="link"
+                  onPress={() => onToggle(admin)}
+                  disabled={busy}
+                />
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+      <FormError message={actionError ? errorMessage(actionError) : null} />
+      {sendReset.isSuccess ? <Text style={styles.saved}>{sendReset.data.detail}</Text> : null}
+    </Card>
   );
 }
 
@@ -475,7 +624,26 @@ function NewAgencyForm({ onClose, onCreated }: Omit<NewAgencyProps, 'open'>) {
 }
 
 const styles = StyleSheet.create({
-  between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: space.md },
+  headerText: { gap: 2, flexShrink: 1 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
+  title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
+  columns: { flexDirection: 'row', alignItems: 'flex-start', gap: space.lg },
+  column: { flex: 1, minWidth: 0, gap: space.lg },
+  admin: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: space.sm,
+    padding: space.sm,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  adminText: { gap: 2, flexShrink: 1, minWidth: 0 },
+  adminName: { fontSize: font.body, fontWeight: weight.bold, color: colors.text, flexShrink: 1 },
+  small: { fontSize: font.small, color: colors.muted },
   section: { fontSize: font.heading, fontWeight: weight.bold, color: colors.tertiary },
   subsection: { fontSize: font.body, fontWeight: weight.bold, color: colors.text, marginTop: space.xs },
   text: { color: colors.text, fontSize: font.body },

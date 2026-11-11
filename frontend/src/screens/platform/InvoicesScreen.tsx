@@ -255,7 +255,7 @@ function InvoiceDetail({ invoice }: { invoice: Invoice }) {
     onSuccess: (data, { action }) => {
       queryClient.setQueryData(detailKey(invoice.id), data);
       setNotice(action === 'resend' ? `Sent again to the agency's billing email.` : null);
-      // Paying can reactivate the agency, so its drawer and the list refresh too.
+      // Paying can reactivate the agency, so its page and the list refresh too.
       void queryClient.invalidateQueries({ queryKey: INVOICES_KEY });
       return queryClient.invalidateQueries({ queryKey: AGENCIES_KEY });
     },
