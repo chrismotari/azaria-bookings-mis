@@ -336,7 +336,9 @@ function RunItem({ run }: { run: SearchRun }) {
       </View>
       <Text style={styles.small}>
         {formatDateTime(run.created_at)}
-        {run.trigger === 'scheduled' ? ' · Scheduled' : run.started_by ? ` · ${run.started_by}` : ''}
+        {run.trigger === 'scheduled' ? ' · Scheduled' : ''}
+        {run.trigger === 'recheck' ? ' · Booking re-check' : ''}
+        {run.trigger !== 'scheduled' && run.started_by ? ` · ${run.started_by}` : ''}
         {run.status === 'skipped'
           ? ''
           : ` · ${run.searches_made} search${run.searches_made === 1 ? '' : 'es'} · ${run.fares_found} fare${run.fares_found === 1 ? '' : 's'}`}
@@ -346,7 +348,7 @@ function RunItem({ run }: { run: SearchRun }) {
           {message}
         </Text>
       ))}
-      {run.status === 'done' || run.status === 'failed' ? (
+      {run.trigger !== 'recheck' && (run.status === 'done' || run.status === 'failed') ? (
         <Button
           title="Fares from this run"
           variant="link"

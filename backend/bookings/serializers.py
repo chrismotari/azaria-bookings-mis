@@ -103,11 +103,19 @@ class BookingDetailSerializer(BookingSerializer):
 
 
 class AdminBookingSerializer(BookingSerializer):
+    """Also where the booking's fare came from: source, integration ({id, name} or null) and fare_key."""
+
     user = UserSerializer(read_only=True)
 
     class Meta(BookingSerializer.Meta):
-        fields = [*BookingSerializer.Meta.fields, "user"]
+        fields = [*BookingSerializer.Meta.fields, "user", "source", "integration", "fare_key"]
         read_only_fields = fields
+
+    def to_representation(self, booking):
+        data = super().to_representation(booking)
+        integration = booking.integration
+        data["integration"] = {"id": str(integration.pk), "name": integration.name} if integration else None
+        return data
 
 
 class AdminBookingDetailSerializer(AdminBookingSerializer):

@@ -92,6 +92,9 @@ def create_booking(user, data, admin=None):
             passenger_count=data["passenger_count"],
             notes=data.get("notes", ""),
             unit_price=offer.price,
+            source=offer.source,
+            integration_id=offer.integration_id,
+            fare_key=offer.fare_key,
             **{field: getattr(offer, field) for field in Trip.FIELDS},
         )
         BookingSegment.objects.bulk_create(

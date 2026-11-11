@@ -140,3 +140,10 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Refresh judges an offer "not found" only on departure dates at least one search answered for (a failed run refreshes nothing); a matching fare without a rate counts as found but changes no figures; `missing_since` keeps the first search that missed it.
 - Refresh runs before auto-publish; a fare auto-publish cannot publish is noted in the run's errors.
 - The platform dashboard lists only agencies with searches this month, most first. The Fares screen opens on the latest run that was not skipped.
+- A booking re-check is a SearchRun of the offer's route with trigger `recheck` (one search, no fares stored); it shows in the route's recent runs but never as a Fares screen run, and counts even when the provider fails.
+- Re-check refusals are 409 (manual booking, status not requested, disabled integration, no search left); a provider error is 502 with the provider's message.
+- A re-check searches the booking's first departure date, return date, route and the offer's cabin, with max connections set to the booking's own (busier direction) so its flights can be found.
+- Re-check prices use today's rate and the offer's route's markup as it is now, even if the route was changed or deactivated (routes are never deleted).
+- Not found returns the 3 cheapest other fares in the booking's cabin with a rate, one per fare_key; a found fare without a rate fills only the flights.
+- Choosing a re-check alternative changes only price and flights through confirm availability; the booking keeps its baggage and fare conditions.
+- Bookings made before re-checks existed took their offer's source, integration and fare_key in the migration.

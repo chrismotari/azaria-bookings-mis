@@ -7,8 +7,10 @@ from rest_framework.views import APIView
 
 from core.permissions import IsAdminRole
 from customer_requests.models import Query
-from integrations.models import Fare
 from customer_requests.serializers import SuggestedOptionsSerializer
+from integrations.models import Fare
+from integrations.serializers import recheck_data
+from integrations.services import recheck_fare
 
 from .models import BoardingPass, Booking
 from .serializers import (
@@ -33,7 +35,7 @@ from .services import (
     transition,
 )
 
-BOOKING_RELATED = ["offer__origin", "offer__destination", "offer__airline"]
+BOOKING_RELATED = ["offer__origin", "offer__destination", "offer__airline", "integration"]
 BOOKING_SEGMENTS = [
     *(f"segments__{field}" for field in ("airline", "operating_airline", "origin", "destination")),
     *(f"offer__segments__{field}" for field in ("airline", "operating_airline", "origin", "destination")),
@@ -140,6 +142,20 @@ class AdminConfirmAvailabilityView(APIView):
         serializer.is_valid(raise_exception=True)
         booking = confirm_availability(pk, request.user, **serializer.validated_data)
         return Response(AdminBookingDetailSerializer(booking, context={"request": request}).data)
+
+
+class AdminRecheckFareView(APIView):
+    """Searches a requested GDS booking's flights again and returns their current price, or alternatives; the
+    booking itself is not changed."""
+
+    permission_classes = [IsAdminRole]
+
+    def post(self, request, pk):
+        booking = generics.get_object_or_404(
+            Booking.objects.select_related("integration", "offer__route", "offer__origin", "offer__destination"),
+            pk=pk,
+        )
+        return Response(recheck_data(recheck_fare(booking, request.user), {"request": request}))
 
 
 class AdminMarkUnavailableView(APIView):

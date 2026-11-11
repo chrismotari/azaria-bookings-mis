@@ -130,8 +130,8 @@ def uuid_param(params, name, required=False):
 
 
 class FareListView(APIView):
-    """A route's fares from one run (by default the latest one not skipped), grouped per departure date and sorted
-    by USD amount.
+    """A route's fares from one run (by default the latest one that searched the route), grouped per departure date
+    and sorted by USD amount.
 
     Filters: run, status (dismissed fares only when asked for), picked.
     """
@@ -146,7 +146,13 @@ class FareListView(APIView):
         if run_id:
             run = get_object_or_404(runs, pk=run_id)
         else:
-            run = runs.exclude(status=SearchRun.Status.SKIPPED).order_by("-created_at").first()
+            # Skipped runs searched nothing; booking re-checks store no fares.
+            run = (
+                runs.exclude(status=SearchRun.Status.SKIPPED)
+                .exclude(trigger=SearchRun.Trigger.RECHECK)
+                .order_by("-created_at")
+                .first()
+            )
         if run is None:
             return Response({"run": None, "dates": []})
 

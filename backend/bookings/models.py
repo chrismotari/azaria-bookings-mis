@@ -39,6 +39,13 @@ class Booking(Trip):
     notes = models.TextField(blank=True)
     # Per person, copied from the offer at creation.
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    # Copied from the offer at creation, so the fare can be searched again; integration and fare_key are null for
+    # manual offers.
+    source = models.CharField(max_length=10, choices=Offer.Source.choices, default=Offer.Source.MANUAL)
+    integration = models.ForeignKey(
+        "integrations.Integration", on_delete=models.PROTECT, null=True, blank=True, related_name="bookings"
+    )
+    fare_key = models.CharField(max_length=500, null=True, blank=True)
     status = models.CharField(max_length=30, choices=Status.choices, default=Status.REQUESTED)
     payment_deadline = models.DateTimeField(null=True, blank=True)
     reminder_sent_at = models.DateTimeField(null=True, blank=True)

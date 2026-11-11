@@ -239,7 +239,49 @@ export type BookingDetail = Booking & {
   boarding_passes?: BoardingPass[];
 };
 
-export type AdminBooking = Booking & { user: User };
+export type AdminBooking = Booking & {
+  user: User;
+  /** Copied from the offer when booked; integration and fare_key are null for manual offers. */
+  source: OfferSource;
+  integration: { id: string; name: string } | null;
+  fare_key: string | null;
+};
+
+/** A flight as the API takes it: airline ids, airport codes, local dates and "HH:MM" times. */
+export type SegmentInput = {
+  direction: Direction;
+  airline: string;
+  flight_number: string;
+  operating_airline: string | null;
+  origin: string;
+  destination: string;
+  departure_date: string;
+  departure_time: string;
+  arrival_date: string;
+  arrival_time: string;
+};
+
+/** A fare found by re-checking a booking, priced now; the USD fields are null (and no_rate true) without a rate. */
+export type CheckedFare = {
+  fare_key: string;
+  /** The ticketing airline. */
+  airline: Airline;
+  ticket_class: TicketClass;
+  net_amount: string;
+  net_currency: string;
+  net_usd: string | null;
+  rate: string | null;
+  rate_date: string | null;
+  no_rate: boolean;
+  /** USD with the route's markup. */
+  selling_price: string | null;
+  /** In the shape confirm-availability takes. */
+  segments: SegmentInput[];
+  itinerary: Itinerary;
+};
+
+/** found: the booked flights' current price in fare; otherwise the cheapest others on the same dates. */
+export type FareRecheck = { found: boolean; fare: CheckedFare | null; alternatives: CheckedFare[] };
 
 export type AdminBookingDetail = AdminBooking & { events: BookingEvent[]; boarding_passes: BoardingPass[] };
 
@@ -474,7 +516,8 @@ export type RunStatus = 'queued' | 'running' | 'done' | 'failed' | 'skipped';
 export type SearchRun = {
   id: string;
   route: string;
-  trigger: 'manual' | 'scheduled';
+  /** recheck: one search for a booking's fare; it stores no fares. */
+  trigger: 'manual' | 'scheduled' | 'recheck';
   date_from: string;
   date_to: string;
   status: RunStatus;

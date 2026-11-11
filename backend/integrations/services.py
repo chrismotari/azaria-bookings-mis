@@ -3,17 +3,20 @@
 import logging
 import re
 from collections import Counter, defaultdict
+from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
 from django.db import connection, transaction
 from django.db.models import Sum
 from django.utils import timezone
-from rest_framework.exceptions import ValidationError
+from rest_framework.status import HTTP_502_BAD_GATEWAY
+from rest_framework.exceptions import APIException, ValidationError
 
 import rates
 from airlines.models import Airline
 from airports.models import Airport
+from bookings.models import Booking
 from catalog.itinerary import derived_fields, itinerary_errors
 from catalog.models import Offer, OfferSegment, Segment, Trip
 from core.exceptions import Conflict
@@ -256,37 +259,46 @@ def _segments_of(result, lookup):
     return segments, None
 
 
-def build_fare(run, integration, result, lookup, on):
-    """An unsaved Fare for a result, or (None, why it is skipped)."""
-    route = run.route
+def check_result(result, lookup, trip_type, origin, destination):
+    """(segments with model instances, ticketing airline, None) for a result that fits the trip, or
+    (None, None, why it is skipped)."""
     segments, problem = _segments_of(result, lookup)
     if problem:
-        return None, problem
-    trip_type = (
+        return None, None, problem
+    found_type = (
         Trip.TripType.RETURN
         if any(s["direction"] == Segment.Direction.RETURN for s in segments)
         else Trip.TripType.ONE_WAY
     )
-    if trip_type != route.trip_type:
-        return None, "the trip type does not match the route"
-    if errors := itinerary_errors(trip_type, segments, route=(route.origin, route.destination)):
-        return None, errors[0].rstrip(".")
+    if found_type != trip_type:
+        return None, None, "the trip type does not match the route"
+    if errors := itinerary_errors(trip_type, segments, route=(origin, destination)):
+        return None, None, errors[0].rstrip(".")
     airline = lookup.airlines.get(result.airline)
     if airline is None:
-        return None, f"airline {result.airline} is not in the airline list"
+        return None, None, f"airline {result.airline} is not in the airline list"
     if not airline.is_active:
-        return None, f"{airline.name} is no longer active"
+        return None, None, f"{airline.name} is no longer active"
     if result.ticket_class not in Offer.TicketClass.values:
-        return None, f"unknown cabin {result.ticket_class}"
+        return None, None, f"unknown cabin {result.ticket_class}"
     if result.checked_bags > Trip.MAX_CHECKED_BAGS:
-        return None, f"more than {Trip.MAX_CHECKED_BAGS} checked bags"
+        return None, None, f"more than {Trip.MAX_CHECKED_BAGS} checked bags"
+    return segments, airline, None
+
+
+def build_fare(run, integration, result, lookup, on):
+    """An unsaved Fare for a result, or (None, why it is skipped)."""
+    route = run.route
+    segments, airline, problem = check_result(result, lookup, route.trip_type, route.origin, route.destination)
+    if problem:
+        return None, problem
 
     fare = Fare(
         run=run,
         route=route,
         integration=integration,
         itinerary=stored_segments(segments),
-        trip_type=trip_type,
+        trip_type=route.trip_type,
         ticket_class=result.ticket_class,
         airline=airline,
         net_amount=result.net_amount,
@@ -614,3 +626,141 @@ def price_history(route, departure_date):
         if kept is None or fare.net_usd < kept.net_usd:
             cheapest[fare.run_id] = fare
     return sorted(cheapest.values(), key=lambda fare: fare.run.created_at)
+
+
+# Re-checking a booking's fare
+
+# How many other fares a re-check returns when the booked flights are not found.
+RECHECK_ALTERNATIVES = 3
+
+
+class ProviderFailed(APIException):
+    """The provider could not answer a search made while the admin waits."""
+
+    status_code = HTTP_502_BAD_GATEWAY
+    default_detail = "The fare provider could not be searched."
+    default_code = "provider_error"
+
+
+@dataclass
+class CheckedFare:
+    """A result of a re-check, priced in USD now with the offer's route's markup; the USD fields are None (and
+    no_rate set) when its currency has no rate."""
+
+    fare_key: str
+    airline: Airline
+    ticket_class: str
+    segments: list
+    net_amount: Decimal
+    net_currency: str
+    net_usd: Decimal | None = None
+    rate: Decimal | None = None
+    rate_date: date | None = None
+    no_rate: bool = False
+    selling_price: Decimal | None = None
+
+
+@dataclass
+class Recheck:
+    # The booked fare_key's cheapest result, or None when it was not found.
+    fare: CheckedFare | None
+    # Only when not found: the cheapest other fares in the booking's cabin with a rate, one per fare_key.
+    alternatives: list
+
+
+def recheck_fare(booking, user):
+    """Searches the booking's flights again (its dates, route, cabin and trip type) through its integration.
+
+    One search, counted against the allowance as a run of the offer's route (trigger recheck) that stores no fares.
+    Nothing about the booking changes: the admin applies the answer by confirming availability.
+    """
+    offer = booking.offer
+    route = offer.route
+    if booking.source != Offer.Source.GDS or booking.integration is None or route is None:
+        raise Conflict("This booking's offer was entered by hand, so it has no fare to re-check.")
+    if booking.status != Booking.Status.REQUESTED:
+        raise Conflict("Only a requested booking's fare can be re-checked.")
+    integration = booking.integration
+    if not integration.is_active:
+        raise Conflict(f"{integration.name} is disabled. Enable it in Settings to re-check this fare.")
+
+    booked = [s.as_data() for s in booking.segments.select_related("airline", "origin", "destination")]
+    departure = booked[0]["departure_date"]
+    with transaction.atomic():
+        tenant = Tenant.objects.select_for_update().get(schema_name=connection.schema_name)
+        left = max(tenant.monthly_search_allowance - searches_this_month(), 0)
+        if left < 1:
+            raise Conflict(f"This re-check needs 1 search, but only {left} are left this month.")
+        run = SearchRun.objects.create(
+            route=route,
+            trigger=SearchRun.Trigger.RECHECK,
+            date_from=departure,
+            date_to=departure,
+            status=SearchRun.Status.RUNNING,
+            searches_made=1,
+            started_by=user,
+        )
+
+    request = SearchRequest(
+        origin=offer.origin.code,
+        destination=offer.destination.code,
+        departure_date=departure,
+        return_date=booking.return_date,
+        cabin=offer.ticket_class,
+        # As many connections as the booking has, so its own flights can be found.
+        max_connections=connection_count(booked),
+    )
+    try:
+        results = provider_for(integration).search(request)
+    except ProviderError as exc:
+        _finish_recheck(run, SearchRun.Status.FAILED, 0, [f"{integration.name}, {departure:%d %b}: {exc}"])
+        raise ProviderFailed(f"{integration.name} could not be searched: {exc}")
+    except Exception:
+        _finish_recheck(run, SearchRun.Status.FAILED, 0, ["The search stopped on an unexpected error."])
+        raise
+
+    today = timezone.localdate()
+    lookup = Lookup()
+    checked, problems = [], Counter()
+    for result in results:
+        segments, airline, problem = check_result(result, lookup, booking.trip_type, offer.origin, offer.destination)
+        if problem:
+            problems[f"{integration.name}: skipped, {problem}"] += 1
+            continue
+        fare = CheckedFare(
+            fare_key=fare_key(segments, result.ticket_class),
+            airline=airline,
+            ticket_class=result.ticket_class,
+            segments=segments,
+            net_amount=result.net_amount,
+            net_currency=result.net_currency.upper(),
+        )
+        try:
+            conversion = rates.convert(fare.net_amount, fare.net_currency, on=today)
+        except rates.NoRate:
+            fare.no_rate = True
+        else:
+            fare.net_usd, fare.rate, fare.rate_date = conversion.usd, conversion.rate, conversion.rate_date
+            fare.selling_price = markup(conversion.usd, route)
+        checked.append(fare)
+    errors = [f"{message} ({count}×)" if count > 1 else message for message, count in problems.items()]
+    _finish_recheck(run, SearchRun.Status.DONE, len(checked), errors)
+
+    same = [fare for fare in checked if fare.fare_key == booking.fare_key]
+    if same:
+        cheapest_same = min(same, key=lambda fare: (fare.no_rate, fare.net_usd or fare.net_amount))
+        return Recheck(fare=cheapest_same, alternatives=[])
+    cheapest = {}
+    for fare in checked:
+        if fare.no_rate or fare.ticket_class != offer.ticket_class:
+            continue
+        kept = cheapest.get(fare.fare_key)
+        if kept is None or fare.net_usd < kept.net_usd:
+            cheapest[fare.fare_key] = fare
+    alternatives = sorted(cheapest.values(), key=lambda fare: fare.net_usd)[:RECHECK_ALTERNATIVES]
+    return Recheck(fare=None, alternatives=alternatives)
+
+
+def _finish_recheck(run, status, found, errors):
+    run.status, run.fares_found, run.errors, run.finished_at = status, found, errors, timezone.now()
+    run.save(update_fields=["status", "fares_found", "errors", "finished_at"])

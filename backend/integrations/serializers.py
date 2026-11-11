@@ -300,3 +300,34 @@ class PublishSerializer(serializers.Serializer):
         if value <= 0:
             raise serializers.ValidationError("Price must be greater than 0.")
         return value
+
+
+class CheckedFareSerializer(serializers.Serializer):
+    """A re-checked fare: segments in the shape confirm-availability takes, and its itinerary as offers return it."""
+
+    fare_key = serializers.CharField()
+    airline = AirlineSerializer()
+    ticket_class = serializers.CharField()
+    net_amount = serializers.DecimalField(max_digits=14, decimal_places=3)
+    net_currency = serializers.CharField()
+    net_usd = serializers.DecimalField(max_digits=12, decimal_places=2, allow_null=True)
+    rate = serializers.DecimalField(max_digits=20, decimal_places=8, allow_null=True)
+    rate_date = serializers.DateField(allow_null=True)
+    no_rate = serializers.BooleanField()
+    selling_price = serializers.DecimalField(max_digits=12, decimal_places=2, allow_null=True)
+
+    def to_representation(self, fare):
+        return {
+            **super().to_representation(fare),
+            "segments": services.stored_segments(fare.segments),
+            **itinerary_data(services.segment_rows(fare.segments), self.context),
+        }
+
+
+def recheck_data(recheck, context):
+    """{found, fare, alternatives}: the booked flights' current price, or the cheapest others when not found."""
+    return {
+        "found": recheck.fare is not None,
+        "fare": CheckedFareSerializer(recheck.fare, context=context).data if recheck.fare else None,
+        "alternatives": CheckedFareSerializer(recheck.alternatives, many=True, context=context).data,
+    }

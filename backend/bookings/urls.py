@@ -16,6 +16,7 @@ urlpatterns = [
     path("admin/bookings", views.AdminBookingListView.as_view()),
     path("admin/bookings/<uuid:pk>", views.AdminBookingDetailView.as_view()),
     path("admin/bookings/<uuid:pk>/confirm-availability", views.AdminConfirmAvailabilityView.as_view()),
+    path("admin/bookings/<uuid:pk>/recheck-fare", views.AdminRecheckFareView.as_view()),
     path("admin/bookings/<uuid:pk>/mark-unavailable", views.AdminMarkUnavailableView.as_view()),
     path("admin/bookings/<uuid:pk>/mark-paid", views.AdminBookingTransitionView.as_view(to_status=Status.PAID)),
     # "Send boarding passes".

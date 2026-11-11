@@ -115,6 +115,8 @@ class SearchRun(models.Model):
     class Trigger(models.TextChoices):
         MANUAL = "manual", "Manual"
         SCHEDULED = "scheduled", "Scheduled"
+        # One search for a booking's fare; its results are returned, not stored.
+        RECHECK = "recheck", "Booking re-check"
 
     class Status(models.TextChoices):
         QUEUED = "queued", "Queued"
