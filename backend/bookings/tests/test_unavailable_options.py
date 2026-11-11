@@ -57,7 +57,9 @@ def mark_unavailable(admin_api, booking, body=None, capture=None):
     return response, callbacks
 
 
-def test_without_options_works_as_before(admin_api, booking, django_capture_on_commit_callbacks):
+def test_without_options_the_customer_is_pointed_to_a_new_request(
+    admin_api, booking, django_capture_on_commit_callbacks
+):
     response, callbacks = mark_unavailable(
         admin_api, booking, {"message": "Sorry"}, django_capture_on_commit_callbacks
     )

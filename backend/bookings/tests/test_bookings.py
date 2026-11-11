@@ -69,6 +69,12 @@ def test_admin_booking_endpoints_reject_customers_and_guests(api, customer_api, 
     assert booking.status == Status.REQUESTED
 
 
+def test_admins_book_through_the_admin_endpoint_only(admin_api, make_offer):
+    response = admin_api.post("/api/bookings", {"offer": str(make_offer().id), "passenger_count": 1}, format="json")
+    assert response.status_code == 403
+    assert not Booking.objects.exists()
+
+
 def test_customers_cannot_read_or_cancel_other_customers_bookings(other_customer_api, make_booking):
     booking = make_booking()
     assert other_customer_api.get("/api/bookings").data["results"] == []

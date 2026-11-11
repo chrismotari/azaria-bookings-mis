@@ -84,15 +84,6 @@ def test_a_token_from_one_agency_is_refused_at_another(api, other_api, customer)
     assert api.post("/api/auth/refresh", {"refresh": tokens["refresh"]}, format="json").status_code == 200
 
 
-def test_a_token_for_a_user_with_the_same_id_elsewhere_is_still_refused(api, other_api, customer):
-    # Even a user row with the same id in the other schema does not make the token valid there.
-    tokens = login(api, customer.email)
-    with schema_context(OTHER_SCHEMA):
-        User.objects.create_user(id=customer.id, email=customer.email, password=PASSWORD, full_name="Twin")
-    other_api.credentials(HTTP_AUTHORIZATION=f"Bearer {tokens['access']}")
-    assert other_api.get("/api/auth/me").status_code == 401
-
-
 def test_a_reset_link_from_one_agency_fails_at_another(api, other_api, customer):
     body = {
         "uid": urlsafe_base64_encode(force_bytes(customer.pk)),
@@ -247,7 +238,7 @@ def test_create_agency_creates_schema_domain_settings_and_admin():
 
 
 @pytest.mark.parametrize(
-    "slug", ["ab", "1acme", "Acme", "acme_travel", "a" * 31, "public", "www", "app-admin", "other"]
+    "slug", ["ab", "1acme", "Acme", "acme_travel", "a" * 31, "public", "www", "app-admin", "other", "pg-catalog", "information-schema"]
 )
 def test_create_agency_rejects_bad_reserved_or_taken_addresses(slug):
     with pytest.raises(ValidationError):

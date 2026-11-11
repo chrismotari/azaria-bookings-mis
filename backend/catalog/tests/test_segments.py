@@ -265,6 +265,14 @@ def test_segment_input_validation(admin_api, airports, kq, bad):
     assert "segments" in response.data
 
 
+def test_segment_airport_codes_are_accepted_in_any_case(admin_api, airports, kq):
+    segments = one_way(kq)
+    segments[0].update(origin=" nbo ", destination="lhr")
+    response = create(admin_api, segments)
+    assert response.status_code == 201, response.data
+    assert response.data["itinerary"]["outbound"]["segments"][0]["destination"]["code"] == "LHR"
+
+
 def test_valid_until_is_checked_against_the_derived_departure(admin_api, airports, kq):
     response = create(admin_api, one_way(kq), valid_until=day(31).isoformat())
     assert response.status_code == 400

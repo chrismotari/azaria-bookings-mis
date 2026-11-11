@@ -84,6 +84,19 @@ def test_login_is_throttled_per_ip(api, customer):
     assert response.status_code == 429
 
 
+def test_the_throttle_ignores_the_forwarded_for_header(api, customer):
+    codes = [
+        api.post(
+            "/api/auth/login",
+            {"email": customer.email, "password": "wrong"},
+            format="json",
+            HTTP_X_FORWARDED_FOR=f"10.0.0.{n}",
+        ).status_code
+        for n in range(12)
+    ]
+    assert 429 in codes
+
+
 def test_register_is_throttled_per_ip(api):
     for i in range(10):
         api.post("/api/auth/register", {**REGISTER, "email": f"u{i}@example.com"}, format="json")

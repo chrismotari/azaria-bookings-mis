@@ -61,9 +61,11 @@ def test_the_booking_then_follows_the_normal_flow(admin_api, customer_api, custo
     assert customer_api.post(f"/api/bookings/{booking_id}/cancel").data["status"] == "cancelled"
 
 
-def test_admin_can_book_a_private_offer(admin_api, customer, make_offer):
+def test_admin_can_book_a_private_offer_which_the_customer_can_then_open(admin_api, customer_api, customer, make_offer):
     private = make_offer(is_public=False)
+    assert customer_api.get(f"/api/offers/{private.id}").status_code == 404
     assert book(admin_api, customer, private).status_code == 201
+    assert customer_api.get(f"/api/offers/{private.id}").status_code == 200
 
 
 @pytest.mark.parametrize(
