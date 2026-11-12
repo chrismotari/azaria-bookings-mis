@@ -1,8 +1,9 @@
 from .base import ProviderError, Result, ResultSegment, SearchRequest
 from .duffel import DuffelProvider
+from .sabre import SabreProvider
 from .travelport import TravelportProvider
 
-PROVIDERS = {"duffel": DuffelProvider, "travelport": TravelportProvider}
+PROVIDERS = {"duffel": DuffelProvider, "travelport": TravelportProvider, "sabre": SabreProvider}
 
 
 def provider_for(integration):

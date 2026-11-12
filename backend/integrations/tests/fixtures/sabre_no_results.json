@@ -1,0 +1,22 @@
+{
+  "groupedItineraryResponse": {
+    "version": "5.4.0",
+    "messages": [
+      {
+        "severity": "Info",
+        "type": "SERVER",
+        "code": "TRANSACTIONID",
+        "text": "7d3c1a2b9f"
+      },
+      {
+        "severity": "Error",
+        "type": "DEFAULT",
+        "code": "ERR",
+        "text": "NO COMPLETE JOURNEY CAN BE BUILT IN IF2/ADVJR1."
+      }
+    ],
+    "statistics": {
+      "itineraryCount": 0
+    }
+  }
+}

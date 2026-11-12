@@ -1,0 +1,8 @@
+{
+  "status": "NotProcessed",
+  "reportingSystem": "RAF",
+  "timeStamp": "2026-11-01T12:00:00+03:00",
+  "type": "Validation",
+  "errorCode": "ERR.RAF.VALIDATION",
+  "message": "Request contains incorrect values in PseudoCityCode"
+}

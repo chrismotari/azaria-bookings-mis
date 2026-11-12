@@ -27,6 +27,7 @@ export function useSearchUsage() {
 export const PROVIDERS: { value: Integration['provider']; label: string }[] = [
   { value: 'duffel', label: 'Duffel' },
   { value: 'travelport', label: 'Travelport' },
+  { value: 'sabre', label: 'Sabre' },
 ];
 
 export function providerLabel(provider: string): string {

@@ -129,7 +129,8 @@ function IntegrationRow({ integration }: { integration: Integration }) {
   );
 }
 
-type CredentialField = 'access_token' | 'username' | 'password' | 'target_branch';
+type CredentialField =
+  'access_token' | 'username' | 'password' | 'target_branch' | 'user_id' | 'pseudo_city_code' | 'domain';
 
 /** Each provider's credentials, as the API takes them. */
 const CREDENTIALS: Record<
@@ -148,17 +149,29 @@ const CREDENTIALS: Record<
     ],
     help: "Use the Universal API username, password and target branch (WAB) Travelport sent you. Test mode searches Travelport's pre-production system, live mode production.",
   },
+  sabre: {
+    fields: [
+      { name: 'user_id', label: 'User ID', placeholder: 'EPR' },
+      { name: 'password', label: 'Password', secret: true },
+      { name: 'pseudo_city_code', label: 'Pseudo city code', placeholder: 'PCC' },
+      { name: 'domain', label: 'Domain', placeholder: 'AA' },
+    ],
+    help: "Use your Sabre REST API credentials: user ID (EPR), password, pseudo city code (PCC) and domain (AA for agencies). A Dev Studio client ID V1:user:group:domain splits into user ID, PCC (group) and domain. Test mode searches Sabre's certification system, live mode production.",
+  },
 };
 
 const createSchema = z
   .object({
-    provider: z.enum(['duffel', 'travelport']),
+    provider: z.enum(['duffel', 'travelport', 'sabre']),
     name: z.string().trim().min(1, 'Enter a name.').max(100),
     mode: z.enum(['test', 'live']),
     access_token: z.string(),
     username: z.string(),
     password: z.string(),
     target_branch: z.string(),
+    user_id: z.string(),
+    pseudo_city_code: z.string(),
+    domain: z.string(),
   })
   .superRefine((values, ctx) => {
     for (const field of CREDENTIALS[values.provider].fields) {
@@ -184,6 +197,9 @@ function IntegrationDialog({ integration, onClose }: { integration?: Integration
       username: '',
       password: '',
       target_branch: '',
+      user_id: '',
+      pseudo_city_code: '',
+      domain: '',
     },
   });
   const credentials = CREDENTIALS[watch('provider')];

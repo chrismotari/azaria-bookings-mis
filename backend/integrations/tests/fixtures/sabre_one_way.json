@@ -1,0 +1,380 @@
+{
+  "groupedItineraryResponse": {
+    "version": "5.4.0",
+    "messages": [
+      {
+        "severity": "Info",
+        "type": "SCHEMA",
+        "code": "WRN",
+        "text": "Request version 5"
+      },
+      {
+        "severity": "Info",
+        "type": "SERVER",
+        "code": "TRANSACTIONID",
+        "text": "7d3c1a2b9e"
+      }
+    ],
+    "statistics": {
+      "itineraryCount": 2
+    },
+    "scheduleDescs": [
+      {
+        "id": 1,
+        "frequency": "SMTWTFS",
+        "stopCount": 0,
+        "eTicketable": true,
+        "totalMilesFlown": 4248,
+        "elapsedTime": 545,
+        "departure": {
+          "airport": "NBO",
+          "city": "NBO",
+          "country": "KE",
+          "time": "23:55:00+03:00",
+          "terminal": "1A"
+        },
+        "arrival": {
+          "airport": "LHR",
+          "city": "LHR",
+          "time": "06:00:00+00:00",
+          "dateAdjustment": 1
+        },
+        "carrier": {
+          "marketing": "KQ",
+          "marketingFlightNumber": 100,
+          "operating": "KQ",
+          "operatingFlightNumber": 100,
+          "equipment": {
+            "code": "789",
+            "typeForFirstLeg": "W",
+            "typeForLastLeg": "W"
+          }
+        }
+      },
+      {
+        "id": 2,
+        "frequency": "SMTWTFS",
+        "stopCount": 1,
+        "eTicketable": true,
+        "totalMilesFlown": 4248,
+        "elapsedTime": 545,
+        "departure": {
+          "airport": "NBO",
+          "city": "NBO",
+          "country": "KE",
+          "time": "10:15:00+03:00",
+          "terminal": "1A"
+        },
+        "arrival": {
+          "airport": "DXB",
+          "city": "DXB",
+          "time": "16:20:00+04:00"
+        },
+        "carrier": {
+          "marketing": "EK",
+          "marketingFlightNumber": 720,
+          "operating": "EK",
+          "operatingFlightNumber": 720,
+          "equipment": {
+            "code": "789",
+            "typeForFirstLeg": "W",
+            "typeForLastLeg": "W"
+          }
+        }
+      },
+      {
+        "id": 3,
+        "frequency": "SMTWTFS",
+        "stopCount": 0,
+        "eTicketable": true,
+        "totalMilesFlown": 4248,
+        "elapsedTime": 545,
+        "departure": {
+          "airport": "DXB",
+          "city": "DXB",
+          "country": "GB",
+          "time": "21:40:00+04:00",
+          "terminal": "1A"
+        },
+        "arrival": {
+          "airport": "LHR",
+          "city": "LHR",
+          "time": "01:55:00+00:00",
+          "dateAdjustment": 1
+        },
+        "carrier": {
+          "marketing": "KQ",
+          "marketingFlightNumber": 3110,
+          "operating": "EK",
+          "operatingFlightNumber": 3110,
+          "equipment": {
+            "code": "789",
+            "typeForFirstLeg": "W",
+            "typeForLastLeg": "W"
+          }
+        }
+      }
+    ],
+    "legDescs": [
+      {
+        "id": 1,
+        "elapsedTime": 545,
+        "schedules": [
+          {
+            "ref": 1
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "elapsedTime": 1000,
+        "schedules": [
+          {
+            "ref": 2
+          },
+          {
+            "ref": 3
+          }
+        ]
+      }
+    ],
+    "baggageAllowanceDescs": [
+      {
+        "id": 1,
+        "pieceCount": 2
+      },
+      {
+        "id": 2,
+        "weight": 30,
+        "unit": "kg"
+      }
+    ],
+    "fareComponentDescs": [
+      {
+        "id": 1,
+        "governingCarrier": "KQ",
+        "fareBasisCode": "VLOWKE",
+        "farePassengerType": "ADT",
+        "publishedFareAmount": 520,
+        "directionality": "OW"
+      },
+      {
+        "id": 2,
+        "governingCarrier": "EK",
+        "fareBasisCode": "QLSOPKE1",
+        "farePassengerType": "ADT",
+        "publishedFareAmount": 420,
+        "directionality": "OW"
+      }
+    ],
+    "itineraryGroups": [
+      {
+        "groupDescription": {
+          "legDescriptions": [
+            {
+              "departureDate": "2026-12-01",
+              "departureLocation": "NBO",
+              "arrivalLocation": "LHR"
+            }
+          ]
+        },
+        "itineraries": [
+          {
+            "id": 1,
+            "pricingSource": "ADVJR1",
+            "legs": [
+              {
+                "ref": 1
+              }
+            ],
+            "pricingInformation": [
+              {
+                "pricingSubsource": "MIP",
+                "fare": {
+                  "validatingCarrierCode": "KQ",
+                  "vita": true,
+                  "eTicketable": true,
+                  "lastTicketDate": "2026-11-20",
+                  "lastTicketTime": "18:00",
+                  "governingCarriers": "KQ",
+                  "passengerInfoList": [
+                    {
+                      "passengerInfo": {
+                        "passengerType": "ADT",
+                        "passengerNumber": 1,
+                        "nonRefundable": false,
+                        "fareComponents": [
+                          {
+                            "ref": 1,
+                            "beginAirport": "NBO",
+                            "endAirport": "LHR",
+                            "segments": [
+                              {
+                                "segment": {
+                                  "bookingCode": "V",
+                                  "cabinCode": "Y",
+                                  "mealCode": "M",
+                                  "seatsAvailable": 4,
+                                  "availabilityBreak": true
+                                }
+                              }
+                            ]
+                          }
+                        ],
+                        "baggageInformation": [
+                          {
+                            "provisionType": "A",
+                            "airlineCode": "KQ",
+                            "segments": [
+                              {
+                                "id": 0
+                              }
+                            ],
+                            "allowance": {
+                              "ref": 1
+                            }
+                          }
+                        ],
+                        "penaltiesInfo": {
+                          "penalties": [
+                            {
+                              "type": "Exchange",
+                              "applicability": "Before",
+                              "changeable": true,
+                              "amount": 0,
+                              "currency": "USD"
+                            },
+                            {
+                              "type": "Exchange",
+                              "applicability": "After",
+                              "changeable": false
+                            },
+                            {
+                              "type": "Refund",
+                              "applicability": "Before",
+                              "refundable": true,
+                              "amount": 100,
+                              "currency": "USD"
+                            }
+                          ]
+                        },
+                        "passengerTotalFare": {
+                          "totalFare": 640.0,
+                          "totalTaxAmount": 150.0,
+                          "currency": "USD",
+                          "baseFareAmount": 490.0,
+                          "baseFareCurrency": "USD"
+                        }
+                      }
+                    }
+                  ],
+                  "totalFare": {
+                    "totalPrice": 640.0,
+                    "totalTaxAmount": 150.0,
+                    "currency": "USD",
+                    "baseFareAmount": 490.0,
+                    "baseFareCurrency": "USD"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "id": 2,
+            "pricingSource": "ADVJR1",
+            "legs": [
+              {
+                "ref": 2
+              }
+            ],
+            "pricingInformation": [
+              {
+                "pricingSubsource": "MIP",
+                "fare": {
+                  "validatingCarrierCode": "EK",
+                  "vita": true,
+                  "eTicketable": true,
+                  "governingCarriers": "EK EK",
+                  "passengerInfoList": [
+                    {
+                      "passengerInfo": {
+                        "passengerType": "ADT",
+                        "passengerNumber": 1,
+                        "nonRefundable": true,
+                        "fareComponents": [
+                          {
+                            "ref": 2,
+                            "beginAirport": "NBO",
+                            "endAirport": "LHR",
+                            "segments": [
+                              {
+                                "segment": {
+                                  "bookingCode": "Q",
+                                  "cabinCode": "Y",
+                                  "mealCode": "M",
+                                  "seatsAvailable": 9,
+                                  "availabilityBreak": true
+                                }
+                              },
+                              {
+                                "segment": {
+                                  "bookingCode": "Q",
+                                  "cabinCode": "Y",
+                                  "mealCode": "M",
+                                  "seatsAvailable": 2,
+                                  "availabilityBreak": true
+                                }
+                              }
+                            ]
+                          }
+                        ],
+                        "baggageInformation": [
+                          {
+                            "provisionType": "A",
+                            "airlineCode": "EK",
+                            "segments": [
+                              {
+                                "id": 0
+                              },
+                              {
+                                "id": 1
+                              }
+                            ],
+                            "allowance": {
+                              "ref": 2
+                            }
+                          },
+                          {
+                            "provisionType": "B",
+                            "airlineCode": "EK",
+                            "segments": [
+                              {
+                                "id": 0
+                              }
+                            ],
+                            "allowance": {
+                              "ref": 1
+                            }
+                          }
+                        ],
+                        "passengerTotalFare": {
+                          "totalFare": 560.0,
+                          "currency": "EUR"
+                        }
+                      }
+                    }
+                  ],
+                  "totalFare": {
+                    "totalPrice": 560.0,
+                    "totalTaxAmount": 140.0,
+                    "currency": "EUR"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

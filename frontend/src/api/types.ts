@@ -542,7 +542,7 @@ export type DeskChatDetail = DeskChat & { messages: ChatMessage[] };
 /** A connection to a fare provider. Its credentials are written only, never returned. */
 export type Integration = {
   id: string;
-  provider: 'duffel' | 'travelport';
+  provider: 'duffel' | 'travelport' | 'sabre';
   name: string;
   mode: 'test' | 'live';
   is_active: boolean;

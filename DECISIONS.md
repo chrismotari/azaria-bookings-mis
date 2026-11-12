@@ -166,3 +166,8 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Step 40: the slim rail hides the list's filters and tabs (they stay applied); its collapsed state lasts for the session only, not across reloads.
 - Step 41: users had no creation date, so `date_joined` was added (nullable); users from before it count as customers but never as new.
 - Step 41: the overdue invoice is a tile under Needs action, not a second banner, since every admin screen already shows the overdue banner.
+- Sabre: Bargain Finder Max v5 (`/v5/offers/shop`) with its default grouped itinerary response, on `api.cert.platform.sabre.com` (test) and `api.platform.sabre.com` (live); a token is taken per provider instance (one per search), not cached between searches.
+- Sabre: the cabin is sent with PreferLevel Only; max connections is `MaxStopsQuantity`; penalty information comes from `VoluntaryChanges Match="Info"`, which asks without filtering; the requestor is the usual `TN` company code.
+- Sabre: only the first pricing of an itinerary and its first passenger are read; cabin codes Y economy, S/W premium economy, C/J business, F/P first.
+- Sabre: refund (exchange) is allowed when a "Before" (or unlabelled) penalty says refundable (changeable); free only when every such penalty states a zero amount; no penalty information is not allowed. Fare type is always unknown (the grouped response does not state private fares reliably).
+- Sabre: checked bags count only allowances with provision type A; the last ticketing date and time are read in the agency's time zone (23:59 when no time); error messages with no itineraries, such as "no complete journey", are a provider error with the first message.

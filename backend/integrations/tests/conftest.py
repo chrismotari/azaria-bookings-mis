@@ -12,7 +12,7 @@ from freezegun import freeze_time
 
 from airlines.models import Airline
 from integrations.models import Integration, Route
-from integrations.providers import duffel, travelport
+from integrations.providers import duffel, sabre, travelport
 from rates.models import ExchangeRate
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -105,6 +105,41 @@ class FakeTravelport:
         return (self.ping if request.url.path.endswith("/SystemService") else self.reply)(request)
 
 
+def itineraries_for(name, edit=None):
+    """A Sabre reply: the recorded itineraries moved to the date searched; edit(data) may change them first."""
+
+    def reply(request):
+        body = json.loads(request.content)["OTA_AirLowFareSearchRQ"]
+        searched = date.fromisoformat(body["OriginDestinationInformation"][0]["DepartureDateTime"][:10])
+        data = recorded(name)
+        for group in data["groupedItineraryResponse"].get("itineraryGroups") or []:
+            for leg in group["groupDescription"]["legDescriptions"]:
+                moved = date.fromisoformat(leg["departureDate"]) + (searched - RECORDED_ON)
+                leg["departureDate"] = moved.isoformat()
+        if edit:
+            edit(data)
+        return httpx.Response(200, json=data)
+
+    return reply
+
+
+def sabre_error(request):
+    return httpx.Response(400, json=recorded("sabre_bad_request.json"))
+
+
+class FakeSabre:
+    """Answers Sabre's REST API from recorded responses: token(request) and reply(request), set per test."""
+
+    def __init__(self):
+        self.requests = []
+        self.reply = itineraries_for("sabre_one_way.json")
+        self.token = lambda request: httpx.Response(200, json=recorded("sabre_token.json"))
+
+    def handle(self, request):
+        self.requests.append(request)
+        return (self.token if request.url.path == sabre.TOKEN_PATH else self.reply)(request)
+
+
 @pytest.fixture(autouse=True)
 def _frozen():
     # Noon in Nairobi; the clock runs so that later runs are later.
@@ -124,6 +159,26 @@ def travelport_api(monkeypatch):
     fake = FakeTravelport()
     monkeypatch.setattr(travelport, "transport", httpx.MockTransport(fake.handle))
     return fake
+
+
+@pytest.fixture
+def sabre_api(monkeypatch):
+    fake = FakeSabre()
+    monkeypatch.setattr(sabre, "transport", httpx.MockTransport(fake.handle))
+    return fake
+
+
+@pytest.fixture
+def make_sabre(db):
+    def make(name="Sabre test", **fields):
+        integration = Integration(provider="sabre", name=name, mode="test", **fields)
+        integration.set_credentials(
+            {"user_id": "7971", "password": "Sb-secret", "pseudo_city_code": "K2RL", "domain": "AA"}
+        )
+        integration.save()
+        return integration
+
+    return make
 
 
 @pytest.fixture

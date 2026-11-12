@@ -1,0 +1,186 @@
+{
+  "groupedItineraryResponse": {
+    "version": "5.4.0",
+    "messages": [],
+    "statistics": {
+      "itineraryCount": 1
+    },
+    "scheduleDescs": [
+      {
+        "id": 1,
+        "frequency": "SMTWTFS",
+        "stopCount": 0,
+        "eTicketable": true,
+        "totalMilesFlown": 4248,
+        "elapsedTime": 545,
+        "departure": {
+          "airport": "NBO",
+          "city": "NBO",
+          "country": "KE",
+          "time": "23:55:00+03:00",
+          "terminal": "1A"
+        },
+        "arrival": {
+          "airport": "LHR",
+          "city": "LHR",
+          "time": "06:00:00+00:00",
+          "dateAdjustment": 1
+        },
+        "carrier": {
+          "marketing": "KQ",
+          "marketingFlightNumber": 100,
+          "operating": "KQ",
+          "operatingFlightNumber": 100,
+          "equipment": {
+            "code": "789",
+            "typeForFirstLeg": "W",
+            "typeForLastLeg": "W"
+          }
+        }
+      },
+      {
+        "id": 2,
+        "frequency": "SMTWTFS",
+        "stopCount": 0,
+        "eTicketable": true,
+        "totalMilesFlown": 4248,
+        "elapsedTime": 545,
+        "departure": {
+          "airport": "LHR",
+          "city": "LHR",
+          "country": "GB",
+          "time": "18:40:00+00:00",
+          "terminal": "1A"
+        },
+        "arrival": {
+          "airport": "NBO",
+          "city": "NBO",
+          "time": "05:45:00+03:00",
+          "dateAdjustment": 1
+        },
+        "carrier": {
+          "marketing": "KQ",
+          "marketingFlightNumber": 101,
+          "operating": "KQ",
+          "operatingFlightNumber": 101,
+          "equipment": {
+            "code": "789",
+            "typeForFirstLeg": "W",
+            "typeForLastLeg": "W"
+          }
+        }
+      }
+    ],
+    "legDescs": [
+      {
+        "id": 1,
+        "schedules": [
+          {
+            "ref": 1
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "schedules": [
+          {
+            "ref": 2
+          }
+        ]
+      }
+    ],
+    "baggageAllowanceDescs": [
+      {
+        "id": 1,
+        "weight": 23,
+        "unit": "kg"
+      }
+    ],
+    "itineraryGroups": [
+      {
+        "groupDescription": {
+          "legDescriptions": [
+            {
+              "departureDate": "2026-12-01",
+              "departureLocation": "NBO",
+              "arrivalLocation": "LHR"
+            },
+            {
+              "departureDate": "2026-12-08",
+              "departureLocation": "LHR",
+              "arrivalLocation": "NBO"
+            }
+          ]
+        },
+        "itineraries": [
+          {
+            "id": 1,
+            "legs": [
+              {
+                "ref": 1
+              },
+              {
+                "ref": 2
+              }
+            ],
+            "pricingInformation": [
+              {
+                "fare": {
+                  "validatingCarrierCode": "KQ",
+                  "lastTicketDate": "2026-11-05",
+                  "passengerInfoList": [
+                    {
+                      "passengerInfo": {
+                        "passengerType": "ADT",
+                        "fareComponents": [
+                          {
+                            "ref": 1,
+                            "segments": [
+                              {
+                                "segment": {
+                                  "bookingCode": "K",
+                                  "cabinCode": "Y",
+                                  "mealCode": "M",
+                                  "availabilityBreak": true
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "ref": 2,
+                            "segments": [
+                              {
+                                "segment": {
+                                  "bookingCode": "K",
+                                  "cabinCode": "Y",
+                                  "mealCode": "M",
+                                  "availabilityBreak": true
+                                }
+                              }
+                            ]
+                          }
+                        ],
+                        "baggageInformation": [
+                          {
+                            "provisionType": "A",
+                            "allowance": {
+                              "ref": 1
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "totalFare": {
+                    "totalPrice": 812.3,
+                    "currency": "GBP"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
