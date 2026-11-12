@@ -164,3 +164,5 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - The platform's agency detail is a full page at the same URL `/agencies/<id>` instead of a drawer; the list stays mounted underneath so its search and page are kept. (Replaced in step 40: it opens beside the slim rail.)
 - An agency admin can make an active customer an admin (one way; they keep their requests and bookings). Users › System admins lists the admins with the same drawer: admins can edit, deactivate and send reset links to each other, but never deactivate themselves (409). New users are always customers.
 - Step 40: the slim rail hides the list's filters and tabs (they stay applied); its collapsed state lasts for the session only, not across reloads.
+- Step 41: users had no creation date, so `date_joined` was added (nullable); users from before it count as customers but never as new.
+- Step 41: the overdue invoice is a tile under Needs action, not a second banner, since every admin screen already shows the overdue banner.

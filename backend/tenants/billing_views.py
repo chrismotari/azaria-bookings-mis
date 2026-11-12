@@ -239,13 +239,24 @@ def this_tenant():
     return Tenant.objects.get(schema_name=connection.schema_name)
 
 
+def overdue_notice(tenant):
+    """The agency's oldest overdue invoice as its admins are told about it, or None."""
+    overdue = billing.overdue_invoice(tenant)
+    return overdue and {
+        "number": overdue.number,
+        "amount": f"{overdue.amount:.2f}",
+        "currency": AgencyInvoiceSerializer(overdue).data["currency"],
+        "due_on": overdue.due_on,
+        "suspends_on": billing.suspends_on(overdue),
+    }
+
+
 class AgencyBillingView(APIView):
     permission_classes = [IsAdminRole]
 
     def get(self, request):
         tenant = this_tenant()
         subscriptions = tenant.subscriptions.filter(ended_on__isnull=True).select_related("plan")
-        overdue = billing.overdue_invoice(tenant)
         return Response(
             {
                 "subscriptions": [
@@ -260,14 +271,7 @@ class AgencyBillingView(APIView):
                     for item in SubscriptionSerializer(subscriptions, many=True).data
                 ],
                 "billing_contact_email": PlatformSettings.get().billing_contact_email,
-                "overdue": overdue
-                and {
-                    "number": overdue.number,
-                    "amount": f"{overdue.amount:.2f}",
-                    "currency": AgencyInvoiceSerializer(overdue).data["currency"],
-                    "due_on": overdue.due_on,
-                    "suspends_on": billing.suspends_on(overdue),
-                },
+                "overdue": overdue_notice(tenant),
             }
         )
 

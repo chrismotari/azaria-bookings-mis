@@ -437,14 +437,14 @@ def test_dashboard_counts(admin_api, make_booking, other_customer, airports):
     make_booking(status=Status.REQUESTED, user=other_customer)
     make_booking(status=Status.AVAILABILITY_CONFIRMED, user=other_customer)
     make_booking(status=Status.CANCELLED)
-    response = admin_api.get("/api/admin/dashboard")
-    assert response.data == {
+    data = admin_api.get("/api/admin/dashboard").data
+    assert {key: data[key] for key in ["open_queries", "bookings_requested", "bookings_awaiting_payment"]} == {
         "open_queries": 1,
         "bookings_requested": 2,
         "bookings_awaiting_payment": 1,
-        "bookings_paid_awaiting_boarding_pass": 0,
-        "new_fares": 0,
     }
+    assert data["bookings_paid_awaiting_boarding_pass"] == 0
+    assert data["new_fares"] == 0
 
 
 # Email tasks

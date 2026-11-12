@@ -3,6 +3,7 @@ import uuid
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
+from django.utils import timezone
 
 
 class UserManager(BaseUserManager):
@@ -40,6 +41,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone = models.CharField(max_length=30, blank=True)
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.CUSTOMER)
     is_active = models.BooleanField(default=True)
+    # Null for users created before the field existed.
+    date_joined = models.DateTimeField(null=True, blank=True, default=timezone.now)
     # Django admin site access (technical support only).
     is_staff = models.BooleanField(default=False)
 

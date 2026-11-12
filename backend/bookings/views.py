@@ -6,12 +6,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from core.permissions import IsAdminRole
-from customer_requests.models import Query
 from customer_requests.serializers import SuggestedOptionsSerializer
-from integrations.models import Fare
 from integrations.serializers import recheck_data
 from integrations.services import recheck_fare
 
+from . import dashboard
 from .models import BoardingPass, Booking
 from .serializers import (
     AdminBookingCreateSerializer,
@@ -214,16 +213,4 @@ class AdminDashboardView(APIView):
     permission_classes = [IsAdminRole]
 
     def get(self, request):
-        counts = {
-            status: Booking.objects.filter(status=status).count()
-            for status in [Booking.Status.REQUESTED, Booking.Status.AVAILABILITY_CONFIRMED, Booking.Status.PAID]
-        }
-        return Response(
-            {
-                "open_queries": Query.objects.filter(status=Query.Status.OPEN).count(),
-                "bookings_requested": counts[Booking.Status.REQUESTED],
-                "bookings_awaiting_payment": counts[Booking.Status.AVAILABILITY_CONFIRMED],
-                "bookings_paid_awaiting_boarding_pass": counts[Booking.Status.PAID],
-                "new_fares": Fare.objects.filter(status=Fare.Status.NEW, picked=True).count(),
-            }
-        )
+        return Response(dashboard.summary())

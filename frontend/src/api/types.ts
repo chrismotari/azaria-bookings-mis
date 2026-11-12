@@ -289,6 +289,40 @@ export type Dashboard = {
   bookings_paid_awaiting_boarding_pass: number;
   /** Fares picked by a search, waiting to be published or dismissed. */
   new_fares: number;
+  /** Bookings that reached Paid, by the day they were marked paid (Nairobi time); amounts in USD. */
+  sales: { this_month: string; this_year: string; all_time: string; count_this_month: number };
+  sales_by_month: { month: string; total: string; count: number }[];
+  payments_due: {
+    id: string;
+    customer: DashboardCustomer;
+    route: DashboardRoute;
+    total: string;
+    payment_deadline: string;
+  }[];
+  departures: {
+    id: string;
+    customer: DashboardCustomer;
+    route: DashboardRoute;
+    departure_date: string;
+    passenger_count: number;
+    boarding_passes_sent: boolean;
+  }[];
+  top_routes: (DashboardRoute & { count: number; total: string })[];
+  customers: { total: number; new_this_month: number };
+  offers: { bookable: number; public_bookable: number; expiring_soon: number };
+  /** Null until the agency has an integration. */
+  searches: { used: number; allowance: number } | null;
+  overdue_invoice: OverdueInvoice | null;
+};
+
+/** The agency's oldest overdue invoice, as its admins are told about it. */
+export type OverdueInvoice = { number: string; amount: string; currency: string; due_on: string; suspends_on: string };
+
+type DashboardCustomer = { name: string; email: string };
+type DashboardRoute = {
+  origin: { code: string; city: string };
+  destination: { code: string; city: string };
+  trip_type: TripType;
 };
 
 export type AppSettings = {
@@ -431,7 +465,7 @@ export type AgencyBilling = {
     next_period_start: string;
   }[];
   billing_contact_email: string;
-  overdue: { number: string; amount: string; currency: string; due_on: string; suspends_on: string } | null;
+  overdue: OverdueInvoice | null;
 };
 
 /** The system owner's dashboard; amounts are decimals as strings in the platform's currency. */
