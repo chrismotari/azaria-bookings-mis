@@ -82,6 +82,12 @@ function boardingPassFiles() {
   return files;
 }
 
+/** Airlines come from the shared list (seed_airlines). */
+async function pickAirline(page, label) {
+  await field(page, label).fill('Kenya Airways');
+  await page.getByRole('button', { name: /^Kenya Airways, KQ/ }).first().click();
+}
+
 async function pickAirport(page, label, code, index = 0) {
   await page.locator(`[aria-label="${label}"]:visible`).nth(index).fill(code);
   await page.getByRole('button', { name: new RegExp(`^${code}\\b`) }).first().click();
@@ -140,20 +146,28 @@ await run('admin', async ({ page, shot }) => {
   await page.goto(`${APP}/admin/requests/${queryId}/respond`);
   await seen(page, 'Custom offers').waitFor();
   await page.waitForTimeout(1000);
-  // The custom offer form is prefilled with the request's airports.
-  await field(page, 'Departure date').fill(nairobiDate(21));
-  await field(page, 'Valid until (inclusive)').fill(nairobiDate(10));
-  await page.getByRole('radio', { name: 'Economy' }).nth(1).click();
-  // The airline comes from the shared list (seed_airlines).
-  await field(page, 'Airline').fill('Kenya Airways');
-  await page.getByRole('button', { name: /^Kenya Airways, KQ/ }).first().click();
-  await field(page, 'Price per person (USD)').fill('500');
-  // One 2 h 15 min layover in Dar es Salaam, through the stop editor.
-  await button(page, 'Add a stop').click();
-  await pickAirport(page, 'Stop 1 airport', 'DAR');
-  await field(page, 'Stop 1 hours').fill('2');
-  await field(page, 'Stop 1 minutes').fill('15');
+  // The custom offer form starts with one flight, prefilled with the request's airports (FROM -> TO).
+  // Route it through Dar es Salaam: FROM -> DAR, then a connecting DAR -> TO, a 2 h 15 min layover.
+  const day = nairobiDate(21);
+  await pickAirline(page, 'Outbound flight 1 airline');
+  await field(page, 'Outbound flight 1 number').fill('100');
+  await page.locator('div', { hasText: new RegExp(`^${TO} · `) }).getByRole('button', { name: 'Change' }).last().click();
+  await pickAirport(page, 'Outbound flight 1 to', 'DAR');
+  await field(page, 'Outbound flight 1 departure date').fill(day);
+  await field(page, 'Outbound flight 1 departure time').fill('10:00');
+  await field(page, 'Outbound flight 1 arrival date').fill(day);
+  await field(page, 'Outbound flight 1 arrival time').fill('11:00');
+  // A connecting flight starts with the airline, airport and dates of the one before.
+  await button(page, 'Add connecting flight').click();
+  await field(page, 'Outbound flight 2 number').fill('200');
+  await pickAirport(page, 'Outbound flight 2 to', TO);
+  await field(page, 'Outbound flight 2 departure time').fill('13:15');
+  await field(page, 'Outbound flight 2 arrival time').fill('14:30');
   await seen(page, 'Layover').waitFor();
+  await page.getByRole('radio', { name: 'Economy' }).nth(1).click();
+  if (await field(page, 'Ticketing airline').count()) await pickAirline(page, 'Ticketing airline');
+  await field(page, 'Price per person (USD)').fill('500');
+  await field(page, 'Valid until (inclusive)').fill(nairobiDate(10));
   await button(page, 'Add custom offer').click();
   await seen(page, 'Custom:').waitFor();
   await field(page, 'Message to the customer').fill('Option from the run skill flow.');
