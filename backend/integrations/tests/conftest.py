@@ -12,7 +12,7 @@ from freezegun import freeze_time
 
 from airlines.models import Airline
 from integrations.models import Integration, Route
-from integrations.providers import duffel, sabre, travelport
+from integrations.providers import amadeus, duffel, sabre, travelport
 from rates.models import ExchangeRate
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -140,6 +140,43 @@ class FakeSabre:
         return (self.token if request.url.path == sabre.TOKEN_PATH else self.reply)(request)
 
 
+def flight_offers_for(name, edit=None):
+    """An Amadeus reply: the recorded offers moved to the date searched; edit(data) may change them first."""
+
+    def reply(request):
+        body = json.loads(request.content)
+        searched = date.fromisoformat(body["originDestinations"][0]["departureDateTimeRange"]["date"])
+        data = recorded(name)
+        for offer in data["data"]:
+            for itinerary in offer["itineraries"]:
+                for segment in itinerary["segments"]:
+                    for end in ("departure", "arrival"):
+                        moved = datetime.fromisoformat(segment[end]["at"]) + (searched - RECORDED_ON)
+                        segment[end]["at"] = moved.isoformat()
+        if edit:
+            edit(data)
+        return httpx.Response(200, json=data)
+
+    return reply
+
+
+def amadeus_error(request):
+    return httpx.Response(400, json=recorded("amadeus_bad_request.json"))
+
+
+class FakeAmadeus:
+    """Answers Amadeus's REST API from recorded responses: token(request) and reply(request), set per test."""
+
+    def __init__(self):
+        self.requests = []
+        self.reply = flight_offers_for("amadeus_one_way.json")
+        self.token = lambda request: httpx.Response(200, json=recorded("amadeus_token.json"))
+
+    def handle(self, request):
+        self.requests.append(request)
+        return (self.token if request.url.path == amadeus.TOKEN_PATH else self.reply)(request)
+
+
 @pytest.fixture(autouse=True)
 def _frozen():
     # Noon in Nairobi; the clock runs so that later runs are later.
@@ -175,6 +212,24 @@ def make_sabre(db):
         integration.set_credentials(
             {"user_id": "7971", "password": "Sb-secret", "pseudo_city_code": "K2RL", "domain": "AA"}
         )
+        integration.save()
+        return integration
+
+    return make
+
+
+@pytest.fixture
+def amadeus_api(monkeypatch):
+    fake = FakeAmadeus()
+    monkeypatch.setattr(amadeus, "transport", httpx.MockTransport(fake.handle))
+    return fake
+
+
+@pytest.fixture
+def make_amadeus(db):
+    def make(name="Amadeus test", **fields):
+        integration = Integration(provider="amadeus", name=name, mode="test", **fields)
+        integration.set_credentials({"api_key": "AmK3yQ9", "api_secret": "Am-secret"})
         integration.save()
         return integration
 

@@ -1,0 +1,11 @@
+{
+  "type": "amadeusOAuth2Token",
+  "username": "agent@example.com",
+  "application_name": "Azaria",
+  "client_id": "AmK3yQ9",
+  "token_type": "Bearer",
+  "access_token": "Ab12Cd34Ef56Gh78",
+  "expires_in": 1799,
+  "state": "approved",
+  "scope": ""
+}

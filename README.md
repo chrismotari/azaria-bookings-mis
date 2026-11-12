@@ -6,7 +6,7 @@ Each agency gets its own site and data. Its admin lists flight deals, which anyo
 
 On the root host, the platform's owner manages agencies, plans and invoices, and answers platform support chats. Agencies pay outside the system; the owner marks invoices paid, and agencies with long-overdue invoices are suspended automatically.
 
-The system is in active development. An agency can connect fare providers (Duffel, Travelport and Sabre) to search its routes and publish the fares it chooses as offers; booking and ticketing stay manual, and the system works fully without any provider. Payment integrations are planned, so payments are recorded by hand for now.
+The system is in active development. An agency can connect fare providers (Duffel, Travelport, Sabre and Amadeus) to search its routes and publish the fares it chooses as offers; booking and ticketing stay manual, and the system works fully without any provider. Payment integrations are planned, so payments are recorded by hand for now.
 
 The full specification is in [SPEC.md](SPEC.md); choices made where it is silent are in [DECISIONS.md](DECISIONS.md).
 
@@ -130,6 +130,11 @@ Agencies add their own provider credentials under Settings › Integrations; not
 - **Certification (test):** register on Sabre Dev Studio (developer.sabre.com) and create an application. Its client id has the form `V1:<user id>:<group>:<domain>`; enter the user id, the group as the pseudo city code, the domain and the client secret as the password. Add a Sabre integration in **Test** mode and press Test (it only takes a token).
 - **Production:** needs a Sabre agreement with REST API access for your pseudo city, arranged through your Sabre account manager. Sabre gives an EPR user id, password and the `AA` domain for your PCC; switch the integration to **Live** and replace its credentials.
 - The app calls Bargain Finder Max v5 for searches only; booking and ticketing stay in your own Sabre terminal. It has been built against Sabre's documented responses and is not yet verified against a live Sabre account.
+
+**Amadeus (REST, Flight Offers Search).**
+- **Access:** Amadeus closed its self-service sign-up in 2026, so keys come through an Amadeus Enterprise agreement (via your Amadeus account manager or local Amadeus office). The application's API key and secret work in Amadeus's test environment; production access is granted on the same application.
+- Add an Amadeus integration in **Test** mode with the API key and secret and press Test (it only takes a token); switch to **Live** once production is enabled.
+- Searches only; booking and ticketing stay in your own terminal. The search does not return fare conditions, so Amadeus fares are shown as not refundable and not changeable; check the rules before selling. Built against Amadeus's documented responses and not yet verified against a live account.
 
 ## Mobile app
 

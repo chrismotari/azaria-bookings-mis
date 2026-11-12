@@ -130,7 +130,15 @@ function IntegrationRow({ integration }: { integration: Integration }) {
 }
 
 type CredentialField =
-  'access_token' | 'username' | 'password' | 'target_branch' | 'user_id' | 'pseudo_city_code' | 'domain';
+  | 'access_token'
+  | 'username'
+  | 'password'
+  | 'target_branch'
+  | 'user_id'
+  | 'pseudo_city_code'
+  | 'domain'
+  | 'api_key'
+  | 'api_secret';
 
 /** Each provider's credentials, as the API takes them. */
 const CREDENTIALS: Record<
@@ -158,11 +166,18 @@ const CREDENTIALS: Record<
     ],
     help: "Use your Sabre REST API credentials: user ID (EPR), password, pseudo city code (PCC) and domain (AA for agencies). A Dev Studio client ID V1:user:group:domain splits into user ID, PCC (group) and domain. Test mode searches Sabre's certification system, live mode production.",
   },
+  amadeus: {
+    fields: [
+      { name: 'api_key', label: 'API key' },
+      { name: 'api_secret', label: 'API secret', secret: true },
+    ],
+    help: "Use the API key and secret of your Amadeus application (Amadeus for Developers, under your Enterprise agreement). Test mode searches Amadeus's test environment, live mode production.",
+  },
 };
 
 const createSchema = z
   .object({
-    provider: z.enum(['duffel', 'travelport', 'sabre']),
+    provider: z.enum(['duffel', 'travelport', 'sabre', 'amadeus']),
     name: z.string().trim().min(1, 'Enter a name.').max(100),
     mode: z.enum(['test', 'live']),
     access_token: z.string(),
@@ -172,6 +187,8 @@ const createSchema = z
     user_id: z.string(),
     pseudo_city_code: z.string(),
     domain: z.string(),
+    api_key: z.string(),
+    api_secret: z.string(),
   })
   .superRefine((values, ctx) => {
     for (const field of CREDENTIALS[values.provider].fields) {
@@ -200,6 +217,8 @@ function IntegrationDialog({ integration, onClose }: { integration?: Integration
       user_id: '',
       pseudo_city_code: '',
       domain: '',
+      api_key: '',
+      api_secret: '',
     },
   });
   const credentials = CREDENTIALS[watch('provider')];

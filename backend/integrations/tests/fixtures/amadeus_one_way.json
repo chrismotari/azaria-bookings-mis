@@ -1,0 +1,246 @@
+{
+  "meta": {
+    "count": 2,
+    "links": {
+      "self": "https://test.api.amadeus.com/v2/shopping/flight-offers"
+    }
+  },
+  "data": [
+    {
+      "type": "flight-offer",
+      "id": "1",
+      "source": "GDS",
+      "instantTicketingRequired": false,
+      "nonHomogeneous": false,
+      "oneWay": false,
+      "numberOfBookableSeats": 4,
+      "itineraries": [
+        {
+          "duration": "PT9H5M",
+          "segments": [
+            {
+              "departure": {
+                "iataCode": "NBO",
+                "terminal": "1A",
+                "at": "2026-12-01T23:55:00"
+              },
+              "arrival": {
+                "iataCode": "LHR",
+                "at": "2026-12-02T06:00:00"
+              },
+              "carrierCode": "KQ",
+              "number": "100",
+              "aircraft": {
+                "code": "789"
+              },
+              "operating": {
+                "carrierCode": "KQ"
+              },
+              "duration": "PT9H5M",
+              "id": "1",
+              "numberOfStops": 0,
+              "blacklistedInEU": false
+            }
+          ]
+        }
+      ],
+      "price": {
+        "currency": "USD",
+        "total": "640.00",
+        "base": "400.00",
+        "fees": [
+          {
+            "amount": "0.00",
+            "type": "SUPPLIER"
+          },
+          {
+            "amount": "0.00",
+            "type": "TICKETING"
+          }
+        ],
+        "grandTotal": "640.00"
+      },
+      "pricingOptions": {
+        "fareType": [
+          "PUBLISHED"
+        ],
+        "includedCheckedBagsOnly": true
+      },
+      "validatingAirlineCodes": [
+        "KQ"
+      ],
+      "travelerPricings": [
+        {
+          "travelerId": "1",
+          "fareOption": "STANDARD",
+          "travelerType": "ADULT",
+          "price": {
+            "currency": "USD",
+            "total": "640.00",
+            "base": "400.00"
+          },
+          "fareDetailsBySegment": [
+            {
+              "segmentId": "1",
+              "cabin": "ECONOMY",
+              "fareBasis": "VLOWKE",
+              "class": "V",
+              "includedCheckedBags": {
+                "quantity": 2
+              }
+            }
+          ]
+        }
+      ],
+      "lastTicketingDate": "2026-11-20"
+    },
+    {
+      "type": "flight-offer",
+      "id": "2",
+      "source": "GDS",
+      "instantTicketingRequired": false,
+      "nonHomogeneous": false,
+      "oneWay": false,
+      "numberOfBookableSeats": 2,
+      "itineraries": [
+        {
+          "duration": "PT9H5M",
+          "segments": [
+            {
+              "departure": {
+                "iataCode": "NBO",
+                "terminal": "1A",
+                "at": "2026-12-01T10:15:00"
+              },
+              "arrival": {
+                "iataCode": "DXB",
+                "at": "2026-12-01T16:20:00"
+              },
+              "carrierCode": "EK",
+              "number": "720",
+              "aircraft": {
+                "code": "789"
+              },
+              "operating": {
+                "carrierCode": "EK"
+              },
+              "duration": "PT9H5M",
+              "id": "2",
+              "numberOfStops": 1,
+              "blacklistedInEU": false
+            },
+            {
+              "departure": {
+                "iataCode": "DXB",
+                "terminal": "1A",
+                "at": "2026-12-01T21:40:00"
+              },
+              "arrival": {
+                "iataCode": "LHR",
+                "at": "2026-12-02T01:55:00"
+              },
+              "carrierCode": "KQ",
+              "number": "3110",
+              "aircraft": {
+                "code": "789"
+              },
+              "operating": {
+                "carrierCode": "EK"
+              },
+              "duration": "PT9H5M",
+              "id": "3",
+              "numberOfStops": 0,
+              "blacklistedInEU": false
+            }
+          ]
+        }
+      ],
+      "price": {
+        "currency": "EUR",
+        "total": "560.00",
+        "base": "400.00",
+        "fees": [
+          {
+            "amount": "0.00",
+            "type": "SUPPLIER"
+          },
+          {
+            "amount": "0.00",
+            "type": "TICKETING"
+          }
+        ],
+        "grandTotal": "560.00"
+      },
+      "pricingOptions": {
+        "fareType": [
+          "NEGOTIATED"
+        ],
+        "includedCheckedBagsOnly": true
+      },
+      "validatingAirlineCodes": [
+        "EK"
+      ],
+      "travelerPricings": [
+        {
+          "travelerId": "1",
+          "fareOption": "STANDARD",
+          "travelerType": "ADULT",
+          "price": {
+            "currency": "EUR",
+            "total": "560.00",
+            "base": "400.00"
+          },
+          "fareDetailsBySegment": [
+            {
+              "segmentId": "2",
+              "cabin": "ECONOMY",
+              "fareBasis": "VLOWKE",
+              "class": "Q",
+              "includedCheckedBags": {
+                "weight": 30,
+                "weightUnit": "KG"
+              }
+            },
+            {
+              "segmentId": "3",
+              "cabin": "ECONOMY",
+              "fareBasis": "VLOWKE",
+              "class": "Q",
+              "includedCheckedBags": {
+                "weight": 30,
+                "weightUnit": "KG"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "dictionaries": {
+    "locations": {
+      "NBO": {
+        "cityCode": "NBO",
+        "countryCode": "KE"
+      },
+      "LHR": {
+        "cityCode": "LON",
+        "countryCode": "GB"
+      },
+      "DXB": {
+        "cityCode": "DXB",
+        "countryCode": "AE"
+      }
+    },
+    "aircraft": {
+      "789": "BOEING 787-9"
+    },
+    "currencies": {
+      "USD": "US DOLLAR",
+      "EUR": "EURO"
+    },
+    "carriers": {
+      "KQ": "KENYA AIRWAYS",
+      "EK": "EMIRATES"
+    }
+  }
+}

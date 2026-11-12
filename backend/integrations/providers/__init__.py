@@ -1,9 +1,15 @@
+from .amadeus import AmadeusProvider
 from .base import ProviderError, Result, ResultSegment, SearchRequest
 from .duffel import DuffelProvider
 from .sabre import SabreProvider
 from .travelport import TravelportProvider
 
-PROVIDERS = {"duffel": DuffelProvider, "travelport": TravelportProvider, "sabre": SabreProvider}
+PROVIDERS = {
+    "duffel": DuffelProvider,
+    "travelport": TravelportProvider,
+    "sabre": SabreProvider,
+    "amadeus": AmadeusProvider,
+}
 
 
 def provider_for(integration):

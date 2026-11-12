@@ -22,6 +22,7 @@ class Integration(models.Model):
         DUFFEL = "duffel", "Duffel"
         TRAVELPORT = "travelport", "Travelport"
         SABRE = "sabre", "Sabre"
+        AMADEUS = "amadeus", "Amadeus"
 
     class Mode(models.TextChoices):
         TEST = "test", "Test"
