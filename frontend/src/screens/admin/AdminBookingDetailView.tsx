@@ -18,7 +18,8 @@ import { FileField } from '../../components/FileField';
 import { FormError } from '../../components/Field';
 import { ItineraryCards, TripConditions } from '../../components/Itinerary';
 import { StatusChip } from '../../components/StatusChip';
-import { ErrorState, LoadingState } from '../../components/StatusViews';
+import { DetailError } from '../../components/DetailLayout';
+import { LoadingState } from '../../components/StatusViews';
 import { colors, font, weight } from '../../theme';
 import { BOOKING_STATUS, TERMINAL_STATUSES, changesAwaitingAcceptance } from '../../utils/bookings';
 import { formatDateTime } from '../../utils/format';
@@ -113,7 +114,7 @@ export function AdminBookingDetailView({ id }: { id: string }) {
     return <LoadingState />;
   }
   if (booking.isError) {
-    return <ErrorState error={booking.error} onRetry={() => booking.refetch()} />;
+    return <DetailError error={booking.error} onRetry={() => booking.refetch()} notFound="Booking not found" />;
   }
 
   const data = booking.data;

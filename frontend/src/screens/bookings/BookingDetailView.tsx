@@ -18,7 +18,8 @@ import { FormError } from '../../components/Field';
 import { ItineraryCards, TripConditions } from '../../components/Itinerary';
 import { Icon } from '../../components/Icon';
 import { StatusChip } from '../../components/StatusChip';
-import { ErrorState, LoadingState } from '../../components/StatusViews';
+import { DetailError } from '../../components/DetailLayout';
+import { LoadingState } from '../../components/StatusViews';
 import { colors, font, radius, space, weight } from '../../theme';
 import { BOOKING_STATUS, TERMINAL_STATUSES, changesAwaitingAcceptance, timeLeft } from '../../utils/bookings';
 import { formatDateTime } from '../../utils/format';
@@ -56,7 +57,7 @@ export function BookingDetailView({ id }: { id: string }) {
     return <LoadingState />;
   }
   if (booking.isError) {
-    return <ErrorState error={booking.error} onRetry={() => booking.refetch()} />;
+    return <DetailError error={booking.error} onRetry={() => booking.refetch()} notFound="Booking not found" />;
   }
 
   const data = booking.data;

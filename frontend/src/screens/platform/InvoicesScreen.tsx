@@ -11,7 +11,7 @@ import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { useConfirm } from '../../components/ConfirmDialog';
 import { DateField } from '../../components/DateField';
-import { DetailLayout } from '../../components/DetailLayout';
+import { DetailError, DetailLayout } from '../../components/DetailLayout';
 import { Dialog } from '../../components/Dialog';
 import { FormError } from '../../components/Field';
 import { Pagination } from '../../components/Pagination';
@@ -69,7 +69,7 @@ const COLUMNS: Column[] = [
 export function InvoicesScreen({ navigation, route }: BottomTabScreenProps<PlatformTabParamList, 'PlatformInvoices'>) {
   const selected = route.params?.id;
   const close = useCallback(() => navigation.setParams({ id: undefined }), [navigation]);
-  const asTable = useIsWide() && selected === undefined;
+  const asTable = useIsWide();
   // In the URL, so the dashboard can link to a filtered list.
   const filter = route.params?.status ?? 'all';
   const [page, setPage] = useListPage(filter);
@@ -89,6 +89,20 @@ export function InvoicesScreen({ navigation, route }: BottomTabScreenProps<Platf
       title="Invoice"
       backLabel="All invoices"
       onClose={close}
+      selected={selected}
+      rail={{
+        title: 'Invoices',
+        items: invoices.data?.results.map((invoice) => ({
+          id: invoice.id,
+          primary: invoice.number,
+          secondary: `Due ${formatDate(invoice.due_on)}`,
+          accessibilityLabel: `${invoice.number}, ${invoice.tenant.name}, ${invoiceStatus(invoice).label}`,
+        })),
+        onSelect: (id) => navigation.setParams({ id }),
+        page,
+        count: invoices.data?.count,
+        onPage: setPage,
+      }}
       detail={selected ? <InvoiceDetailView key={selected} id={selected} /> : null}
       list={
         <Screen card>
@@ -236,7 +250,7 @@ function InvoiceDetailView({ id }: { id: string }) {
     return <LoadingState />;
   }
   if (invoice.isError) {
-    return <ErrorState error={invoice.error} onRetry={() => invoice.refetch()} />;
+    return <DetailError error={invoice.error} onRetry={() => invoice.refetch()} notFound="Invoice not found" />;
   }
   return <InvoiceDetail invoice={invoice.data} />;
 }

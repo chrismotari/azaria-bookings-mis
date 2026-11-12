@@ -13,7 +13,8 @@ import { Button } from '../../components/Button';
 import { FormError } from '../../components/Field';
 import { FormFooter } from '../../components/FormSection';
 import { Screen } from '../../components/Screen';
-import { ErrorState, LoadingState } from '../../components/StatusViews';
+import { DetailError } from '../../components/DetailLayout';
+import { LoadingState } from '../../components/StatusViews';
 import { colors, font, radius, space, weight } from '../../theme';
 import { formatDateTime } from '../../utils/format';
 import { OfferFields } from './OfferFields';
@@ -78,7 +79,7 @@ export function AdminOfferEditView({ id, onDone }: { id: string; onDone: () => v
     return <LoadingState />;
   }
   if (offer.isError) {
-    return <ErrorState error={offer.error} onRetry={() => offer.refetch()} />;
+    return <DetailError error={offer.error} onRetry={() => offer.refetch()} notFound="Offer not found" />;
   }
   const missingSince = offer.data.is_active ? offer.data.missing_since : null;
   return (

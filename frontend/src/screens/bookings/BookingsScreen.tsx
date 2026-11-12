@@ -18,7 +18,7 @@ import { TripCard } from '../../components/TripCard';
 import { MainTabParamList } from '../../navigation/types';
 import { colors, font, space, weight } from '../../theme';
 import { BOOKING_STATUS, bookingDates, bookingRoute, passengersLabel } from '../../utils/bookings';
-import { tripDates } from '../../utils/format';
+import { formatDate, routeCodes, tripDates } from '../../utils/format';
 import { BookingDetailView } from './BookingDetailView';
 
 export function BookingsScreen({ navigation, route }: BottomTabScreenProps<MainTabParamList, 'Bookings'>) {
@@ -36,6 +36,20 @@ export function BookingsScreen({ navigation, route }: BottomTabScreenProps<MainT
       title="Booking"
       backLabel="All bookings"
       onClose={close}
+      selected={selected}
+      rail={{
+        title: 'My bookings',
+        items: bookings.data?.results.map((booking) => ({
+          id: booking.id,
+          primary: routeCodes(booking.offer.origin, booking.offer.destination, booking.trip_type === 'return'),
+          secondary: formatDate(bookingDates(booking).departure_date),
+          accessibilityLabel: `${bookingRoute(booking)}, ${BOOKING_STATUS[booking.status].label}`,
+        })),
+        onSelect: (id) => navigation.setParams({ id }),
+        page,
+        count: bookings.data?.count,
+        onPage: setPage,
+      }}
       detail={selected ? <BookingDetailView key={selected} id={selected} /> : null}
       list={
         <Screen maxWidth={900} card>

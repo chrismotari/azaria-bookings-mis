@@ -50,8 +50,7 @@ const COLUMNS: Column[] = [
 export function AdminBookingsScreen({ navigation, route }: BottomTabScreenProps<AdminTabParamList, 'AdminBookings'>) {
   const selected = route.params?.id;
   const close = useCallback(() => navigation.setParams({ id: undefined }), [navigation]);
-  // With a booking open the list is too narrow for the table.
-  const asTable = useIsWide() && selected === undefined;
+  const asTable = useIsWide();
   const status = route.params?.status ?? 'requested';
   const [page, setPage] = useListPage(status);
   const [creating, setCreating] = useState(false);
@@ -71,6 +70,20 @@ export function AdminBookingsScreen({ navigation, route }: BottomTabScreenProps<
       title="Booking"
       backLabel="All bookings"
       onClose={close}
+      selected={selected}
+      rail={{
+        title: 'Bookings',
+        items: bookings.data?.results.map((booking) => ({
+          id: booking.id,
+          primary: booking.user.email,
+          secondary: formatDateTime(booking.created_at),
+          accessibilityLabel: `${booking.user.full_name}, ${bookingRoute(booking)}, ${BOOKING_STATUS[booking.status].label}`,
+        })),
+        onSelect: (id) => navigation.setParams({ id }),
+        page,
+        count: bookings.data?.count,
+        onPage: setPage,
+      }}
       detail={selected ? <AdminBookingDetailView key={selected} id={selected} /> : null}
       list={
         <Screen card>

@@ -8,15 +8,14 @@ import { z } from 'zod';
 import { api } from '../../api/client';
 import { applyServerErrors, errorMessage } from '../../api/errors';
 import { AgencyAdmin, Tenant, TenantDetail, TenantDomain } from '../../api/types';
-import { BackLink } from '../../components/BackLink';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { useConfirm } from '../../components/ConfirmDialog';
+import { DetailError } from '../../components/DetailLayout';
 import { Dialog } from '../../components/Dialog';
 import { FormError } from '../../components/Field';
 import { FormFooter } from '../../components/FormSection';
 import { StatusChip, Tone } from '../../components/StatusChip';
-import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
 import { PLATFORM_HOST } from '../../config';
@@ -46,24 +45,19 @@ const detailKey = (id: string) => [...AGENCIES_KEY, 'detail', id];
 /** The date part of a timestamp, for formatDate. */
 export const createdOn = (tenant: Tenant) => formatDate(tenant.created_at.slice(0, 10));
 
-/** An agency's own page: everything about it, with a way back to the list. */
-export function AgencyPage({ id, onBack }: { id: string; onBack: () => void }) {
+/** Everything about an agency, beside the list. */
+export function AgencyPage({ id }: { id: string }) {
   const tenant = useQuery({
     queryKey: detailKey(id),
     queryFn: async () => (await api.get<TenantDetail>(`/platform/tenants/${id}`)).data,
   });
-  return (
-    <Screen>
-      <BackLink label="All agencies" onPress={onBack} />
-      {tenant.isPending ? (
-        <LoadingState />
-      ) : tenant.isError ? (
-        <ErrorState error={tenant.error} onRetry={() => tenant.refetch()} />
-      ) : (
-        <Agency tenant={tenant.data} />
-      )}
-    </Screen>
-  );
+  if (tenant.isPending) {
+    return <LoadingState />;
+  }
+  if (tenant.isError) {
+    return <DetailError error={tenant.error} onRetry={() => tenant.refetch()} notFound="Agency not found" />;
+  }
+  return <Agency tenant={tenant.data} />;
 }
 
 /** Refreshes the open agency and the list after a change. */

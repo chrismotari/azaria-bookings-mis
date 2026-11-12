@@ -17,7 +17,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/StatusVie
 import { TripCard } from '../../components/TripCard';
 import { MainTabParamList } from '../../navigation/types';
 import { colors, font, space, weight } from '../../theme';
-import { formatDateTime } from '../../utils/format';
+import { formatDateTime, routeCodes } from '../../utils/format';
 import { QUERY_STATUS, describeQuery } from '../../utils/queries';
 import { QueryDetailView } from './QueryDetailView';
 
@@ -37,6 +37,20 @@ export function RequestsScreen({ navigation, route }: BottomTabScreenProps<MainT
       title="Request"
       backLabel="All requests"
       onClose={close}
+      selected={selected}
+      rail={{
+        title: 'My requests',
+        items: queries.data?.results.map((query) => ({
+          id: query.id,
+          primary: routeCodes(query.origin, query.destination, query.trip_type === 'return'),
+          secondary: formatDateTime(query.created_at),
+          accessibilityLabel: `${describeQuery(query).route}, ${QUERY_STATUS[query.status].label}`,
+        })),
+        onSelect: (id) => navigation.setParams({ id }),
+        page,
+        count: queries.data?.count,
+        onPage: setPage,
+      }}
       detail={selected ? <QueryDetailView key={selected} id={selected} /> : null}
       list={
         <Screen maxWidth={900} card>

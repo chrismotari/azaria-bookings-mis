@@ -16,7 +16,8 @@ import { Dialog } from '../../components/Dialog';
 import { FormError } from '../../components/Field';
 import { FormFooter } from '../../components/FormSection';
 import { StatusChip, Tone } from '../../components/StatusChip';
-import { ErrorState, LoadingState } from '../../components/StatusViews';
+import { DetailError } from '../../components/DetailLayout';
+import { LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
 import { useAuth } from '../../auth/AuthContext';
 import { colors, font, space, weight } from '../../theme';
@@ -83,7 +84,7 @@ export function AdminUserDetailView({ id, onPromoted }: { id: string; onPromoted
     return <LoadingState />;
   }
   if (user.isError) {
-    return <ErrorState error={user.error} onRetry={() => user.refetch()} />;
+    return <DetailError error={user.error} onRetry={() => user.refetch()} notFound="User not found" />;
   }
   return <UserForm user={user.data} onPromoted={onPromoted} />;
 }

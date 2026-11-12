@@ -141,3 +141,12 @@ export function refundLabel(policy: Policy): string {
 export function changeLabel(policy: Policy): string {
   return CHANGES[policy];
 }
+
+/** Compact route, "NBO → LHR" or "NBO ⇄ LHR" for a return trip; "Any" for an open end. */
+export function routeCodes(
+  origin: { code: string } | null | undefined,
+  destination: { code: string } | null | undefined,
+  returnTrip: boolean,
+): string {
+  return `${origin?.code ?? 'Any'} ${returnTrip ? '⇄' : '→'} ${destination?.code ?? 'Any'}`;
+}

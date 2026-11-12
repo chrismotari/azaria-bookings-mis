@@ -14,7 +14,8 @@ import { FlightRow } from '../../components/FlightRow';
 import { Icon } from '../../components/Icon';
 import { QuerySummary } from '../../components/QuerySummary';
 import { StatusChip } from '../../components/StatusChip';
-import { ErrorState, LoadingState } from '../../components/StatusViews';
+import { DetailError } from '../../components/DetailLayout';
+import { LoadingState } from '../../components/StatusViews';
 import { colors, font, radius, space, weight } from '../../theme';
 import { formatDateTime } from '../../utils/format';
 import { QUERY_STATUS } from '../../utils/queries';
@@ -40,7 +41,7 @@ export function QueryDetailView({ id }: { id: string }) {
     return <LoadingState />;
   }
   if (query.isError) {
-    return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
+    return <DetailError error={query.error} onRetry={() => query.refetch()} notFound="Request not found" />;
   }
 
   const data = query.data;

@@ -160,7 +160,7 @@ Root host, `/api/platform/`: `login`, `refresh`, `me` (active public-schema supe
 Look and layout
 - Colours only as tokens in `src/theme.ts`: primary indigo #1800d2, amber #ffb400 (prices and main calls to action, dark text), slate green #4a6660, neutrals (#252525, #2d3434, #6c7171, #a8b1b5, background #f2f4f7, surface #fff), status (success #51d77a, warning #faba2f, danger #fe455f, info #2275ff) with AA-contrast chip tints. Typography scale 28/22/18/15/13/12, system font.
 - Wide (≥ 900 px): indigo top bar with brand, nav items with icons, account menu (initials). Narrow: slim top bar plus bottom tabs; with more than five tabs, four stay in the bar and the rest go under a "More" tab (a menu carrying their badges). No horizontal scrolling at 390 or 1280 px.
-- List → detail opens a right-hand drawer (~480 px) on wide screens with its own URL (no history entries; Escape closes); full screen on narrow. Forms that start new work (Book, Request options, New offer, Respond) are full pages; short tasks use a shared Dialog (small/large, focus-managed, full screen on phones).
+- List → detail on wide screens: the list shrinks to a slim, collapsible rail on the left (one short identifier and one time per row, see §20) and the detail fills the rest, with its own URL (no history entries; Escape closes); full screen on narrow. Forms that start new work (Book, Request options, New offer, Respond) are full pages; short tasks use a shared Dialog (small/large, focus-managed, full screen on phones).
 - Every list has loading, empty and error states; zod mirrors server validation; dates via a web date input; uploads and file opening are web only.
 - Airline badge: logo or initials in the same fixed square frame. Country flags (bundled flag-icons SVGs) only in airport pickers, offer detail header and connection rows, decorative.
 - Compact route lines show "NBO → LHR" for one-way and "NBO ⇄ LHR" for return trips, with both dates.
@@ -175,7 +175,7 @@ Agency app
 
 Platform app (root host, web only)
 - Public: home (short introduction, See pricing) and `/pricing` with a slim public bar. `/login`, `/admin` and `admin.<root host>` lead to sign-in; nothing on the public pages links to it.
-- Owner: Dashboard (agency counts, revenue, monthly recurring, outstanding/overdue, 12-month bar chart in plain views, agencies per plan, needs attention, fare searches this month per agency against its allowance), Agencies (table; each agency opens its own page (`/agencies/<id>`, back to the list) with agency, admins (suspend/restore, send a password reset link), domains, plan & billing, fare searches (used this month, editable allowance)), Plans (kind tabs, tag column, rich-text dialog, link to pricing), Invoices (filters, drawer actions behind confirm dialogs), Chats, Settings (billing and support, and Exchange rates: latest rate per currency with date, source and stale warning, a manual rate for today, the feed's credit).
+- Owner: Dashboard (agency counts, revenue, monthly recurring, outstanding/overdue, 12-month bar chart in plain views, agencies per plan, needs attention, fare searches this month per agency against its allowance), Agencies (table; each agency opens beside the slim rail (`/agencies/<id>`) with agency, admins (suspend/restore, send a password reset link), domains, plan & billing, fare searches (used this month, editable allowance)), Plans (kind tabs, tag column, rich-text dialog, link to pricing), Invoices (filters, drawer actions behind confirm dialogs), Chats, Settings (billing and support, and Exchange rates: latest rate per currency with date, source and stale warning, a manual rate for today, the feed's credit).
 - PlanShowcase (public pricing and agency Plans): Monthly/Annual switch with saving, featured Recommended/Basic/Advanced cards, Show all plans, support plans section, "Your plan" for running plans.
 
 ## 12. Tests
@@ -221,6 +221,7 @@ All delivered; each was one commit.
 37. Re-check a booking's fare (see §17).
 38. Second provider: Travelport (see §18).
 39. Mobile app: one shared app, agency from links or code (see §19).
+40. Detail pages with a slim list rail (see §20).
 
 ## 14. Step 34: Return trips and flight details
 
@@ -385,3 +386,42 @@ Tests
 - `GET /api/agency` (active, suspended, root host); the verification files with and without settings; email links using the app address for an agency with a custom primary domain; the welcome email on registration (and none for admin-created users, who get the set-password email with the app lines).
 - Frontend: type-check and web export; the web build never shows Find your agency.
 - Device check, done by the user (cannot run here): iOS and Android builds; first launch with a code; a link before and after install; a link to another agency (Switch and Cancel); a reset link while signed in; Switch agency from the menu; API calls going to the right agency.
+
+## 20. Step 40: Detail pages with a slim list rail
+
+Goal: when an item is open on a wide screen, the detail takes most of the page. The list stays beside it as a slim rail on the left with only what is needed to find an item, and the rail can be collapsed. Narrow screens are unchanged (the detail stays full screen with the back link). Frontend only, in the shared `DetailLayout`; no API changes.
+
+Wide screens (≥ 900 px), nothing open
+- The full list as today: title, intro, filters, tabs, table or cards, pagination.
+
+Wide screens, an item open
+- **Rail** (left, 280 px, surface background, right border): a header with the list's title (e.g. "Chats") and a collapse button («); below it the rows of the page currently loaded, with the current filter and status tab kept but not shown; at the bottom a compact pager (‹ page n of m ›) when there is more than one page.
+- **Rail rows**: two lines, no chips, cards, icons or columns. Line 1 is the identifier, line 2 the time (muted, 13 px), both one line with ellipsis. The open item is highlighted (indigo left edge and light tint, `aria-current`); unread chats have a bold line 1. Each row is a link; its accessible label also carries the status.
+- **Rows per screen:**
+
+| Screen | Line 1 | Line 2 |
+|---|---|---|
+| Chats (agency and platform desks) | requester email | last message time |
+| Support (customer and agency) | subject | last message time |
+| Bookings (customer) | route line | departure date |
+| Requests (customer) | route line | sent date |
+| Admin Bookings | customer email | booked time |
+| Admin Requests | customer email | received time |
+| Offers | route line | departure date |
+| Routes | route line | last run time ("Never run") |
+| Users | email | name |
+| Invoices (platform) | invoice number | due date |
+| Agencies (platform) | agency name | joined date |
+| Explore | route line | departure date |
+
+- **Detail**: fills the rest of the width. It no longer slides in or overlaps; it keeps its header with the title and ✕, its own scrolling and its URL. Escape and ✕ close it and bring the full list back with its filters, page and scroll position.
+- **Escape** closes the detail on every list screen, whether the page was opened from the list or straight from its URL, and wherever the focus is (a text field in the detail included), except while a dialog or menu is open, where Escape closes only that.
+- **Not found and errors stay in the detail.** An id that does not exist (or is not visible to this user) shows a "<Item> not found" empty state with "Back to <list>" inside the detail pane; the rail, top bar and navigation stay. Other errors show the error with Try again in the same place. Server wording such as "No Conversation matches the given query." is never shown.
+- **Platform Agencies** joins this layout: an agency opens beside the slim rail (`/agencies/<id>` kept) instead of as a separate full page, so Escape and not-found work as above.
+- **Collapse**: « collapses the rail to a 44 px strip holding only an expand button (») with the label "Show list"; the detail then takes the full width. The choice is remembered for the session across all list screens (in memory) and both buttons are keyboard reachable with labels "Hide list" / "Show list".
+- Switching between items keeps the rail's scroll position.
+
+Tests
+- Frontend: type-check, lint, format check and web export.
+- Browser check at 1280 px on Chats, Admin Bookings, Explore and platform Agencies: open an item, check the rail rows, switch items, collapse and expand, Escape back to the full list with its filter and page kept (also after loading a detail URL directly and with the focus in a text field); a made-up id shows not found inside the detail only; at 390 px the detail is still full screen.
+

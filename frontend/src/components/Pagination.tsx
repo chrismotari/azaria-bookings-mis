@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { colors } from '../theme';
 import { Button } from './Button';
 
-const PAGE_SIZE = 20;
+export const PAGE_SIZE = 20;
 
 type Props = { page: number; count: number; onChange: (page: number) => void };
 

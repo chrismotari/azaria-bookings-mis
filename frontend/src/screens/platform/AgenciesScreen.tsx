@@ -6,6 +6,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { api } from '../../api/client';
 import { Paginated, Tenant } from '../../api/types';
 import { Button } from '../../components/Button';
+import { DetailLayout } from '../../components/DetailLayout';
 import { Pagination } from '../../components/Pagination';
 import { Screen } from '../../components/Screen';
 import { SegmentedControl } from '../../components/SegmentedControl';
@@ -59,10 +60,26 @@ export function AgenciesScreen({ navigation, route }: BottomTabScreenProps<Platf
   const filtered = search !== '' || filter !== 'all';
 
   return (
-    <View style={styles.fill}>
-      {selected ? <AgencyPage key={selected} id={selected} onBack={close} /> : null}
-      {/* Kept mounted under an open agency, so its search and page are still there on the way back. */}
-      <View style={[styles.fill, selected !== undefined && styles.hidden]}>
+    <DetailLayout
+      title="Agency"
+      backLabel="All agencies"
+      onClose={close}
+      selected={selected}
+      rail={{
+        title: 'Agencies',
+        items: tenants.data?.results.map((tenant) => ({
+          id: tenant.id,
+          primary: tenant.name,
+          secondary: `Joined ${createdOn(tenant)}`,
+          accessibilityLabel: label(tenant),
+        })),
+        onSelect: (id) => navigation.setParams({ id }),
+        page,
+        count: tenants.data?.count,
+        onPage: setPage,
+      }}
+      detail={selected ? <AgencyPage key={selected} id={selected} /> : null}
+      list={
         <Screen card>
           <View style={styles.header}>
             <Text style={styles.title}>Agencies</Text>
@@ -127,8 +144,8 @@ export function AgenciesScreen({ navigation, route }: BottomTabScreenProps<Platf
             }}
           />
         </Screen>
-      </View>
-    </View>
+      }
+    />
   );
 }
 
@@ -178,8 +195,6 @@ function AgencyCard({ tenant, selected, onPress }: { tenant: Tenant; selected: b
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
-  hidden: { display: 'none' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',

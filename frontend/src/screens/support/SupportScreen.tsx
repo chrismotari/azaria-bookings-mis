@@ -9,7 +9,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { BackLink } from '../../components/BackLink';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
-import { DetailLayout } from '../../components/DetailLayout';
+import { DetailError, DetailLayout } from '../../components/DetailLayout';
 import { Dialog } from '../../components/Dialog';
 import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
@@ -78,6 +78,18 @@ function SupportChats({ endpoints, selected, select, backLabel, onBack, intro }:
       title="Chat"
       backLabel="All chats"
       onClose={close}
+      selected={selected}
+      rail={{
+        title: 'Support',
+        items: chats.data?.map((chat) => ({
+          id: chat.id,
+          primary: chat.subject,
+          secondary: chatTime(chat.last_message_at),
+          accessibilityLabel: `${chat.subject}, ${chat.status === 'open' ? 'open' : 'closed'}${chat.unread ? ', unread' : ''}`,
+          strong: chat.unread,
+        })),
+        onSelect: select,
+      }}
       detail={selected ? <ChatDetailView key={selected} endpoints={endpoints} id={selected} /> : null}
       list={
         <Screen card>
@@ -155,7 +167,7 @@ function ChatDetailView({ endpoints, id }: { endpoints: ChatEndpoints; id: strin
     return <LoadingState />;
   }
   if (chat.isError) {
-    return <ErrorState error={chat.error} onRetry={() => chat.refetch()} />;
+    return <DetailError error={chat.error} onRetry={() => chat.refetch()} notFound="Chat not found" />;
   }
   const open = chat.data.status === 'open';
   return (

@@ -31,8 +31,7 @@ export function AdminUsersScreen({ navigation, route }: BottomTabScreenProps<Adm
   // In the URL, so a reload or a shared link keeps the System admins list.
   const admins = route.params?.role === 'admin';
   const close = useCallback(() => navigation.setParams({ id: undefined }), [navigation]);
-  // With a customer open the list is too narrow for the table.
-  const asTable = useIsWide() && selected === undefined;
+  const asTable = useIsWide();
   const [text, setText] = useState('');
   const search = useDebounced(text.trim(), 300);
   const [page, setPage] = useState(1);
@@ -58,6 +57,20 @@ export function AdminUsersScreen({ navigation, route }: BottomTabScreenProps<Adm
       title={admins ? 'Admin' : 'Customer'}
       backLabel={admins ? 'All system admins' : 'All users'}
       onClose={close}
+      selected={selected}
+      rail={{
+        title: admins ? 'System admins' : 'Users',
+        items: users.data?.results.map((user) => ({
+          id: user.id,
+          primary: user.email,
+          secondary: user.full_name,
+          accessibilityLabel: `${user.full_name}, ${user.email}, ${USER_STATUS[String(user.is_active)].label}`,
+        })),
+        onSelect: (id) => navigation.setParams({ id }),
+        page,
+        count: users.data?.count,
+        onPage: setPage,
+      }}
       detail={
         selected ? (
           <AdminUserDetailView

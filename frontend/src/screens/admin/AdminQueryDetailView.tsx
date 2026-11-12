@@ -10,7 +10,8 @@ import { Card } from '../../components/Card';
 import { tripSummary } from '../../components/Itinerary';
 import { QuerySummary } from '../../components/QuerySummary';
 import { StatusChip } from '../../components/StatusChip';
-import { ErrorState, LoadingState } from '../../components/StatusViews';
+import { DetailError } from '../../components/DetailLayout';
+import { LoadingState } from '../../components/StatusViews';
 import { colors, font, weight } from '../../theme';
 import { formatDateTime, formatPrice, ticketClassLabel, tripDates } from '../../utils/format';
 import { QUERY_STATUS } from '../../utils/queries';
@@ -30,7 +31,7 @@ export function AdminQueryDetailView({ id }: { id: string }) {
     return <LoadingState />;
   }
   if (query.isError) {
-    return <ErrorState error={query.error} onRetry={() => query.refetch()} />;
+    return <DetailError error={query.error} onRetry={() => query.refetch()} notFound="Request not found" />;
   }
 
   const data = query.data;

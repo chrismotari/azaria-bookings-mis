@@ -23,6 +23,7 @@ import { SegmentedControl } from '../../components/SegmentedControl';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { MainTabParamList, QueryPrefill } from '../../navigation/types';
 import { colors, font, radius, space, useIsWide } from '../../theme';
+import { formatDate, routeCodes } from '../../utils/format';
 import { ExploreFilters } from './ExploreFilters';
 import { ExploreSearchBar } from './ExploreSearchBar';
 import { OfferDetailView } from './OfferDetailView';
@@ -58,8 +59,7 @@ const ORDERING_OPTIONS: { value: Ordering; label: string }[] = [
 export function ExploreScreen({ navigation, route }: BottomTabScreenProps<MainTabParamList, 'Explore'>) {
   const selected = route.params?.id;
   const close = useCallback(() => navigation.setParams({ id: undefined, query: undefined }), [navigation]);
-  // Beside an open detail the list column is too narrow for the sidebar and the one-row search bar.
-  const compact = !useIsWide() || selected !== undefined;
+  const compact = !useIsWide();
   const [draft, setDraft] = useState<OfferFilterValues>(EMPTY_OFFER_FILTERS);
   const [errors, setErrors] = useState<OfferFilterErrors>({});
   const [filters, setFilters] = useState<OfferFilterValues>(EMPTY_OFFER_FILTERS);
@@ -134,6 +134,20 @@ export function ExploreScreen({ navigation, route }: BottomTabScreenProps<MainTa
       title="Flight deal"
       backLabel="All deals"
       onClose={close}
+      selected={selected}
+      rail={{
+        title: 'Deals',
+        items: offers.data?.results.map((offer) => ({
+          id: offer.id,
+          primary: routeCodes(offer.origin, offer.destination, offer.trip_type === 'return'),
+          secondary: formatDate(offer.departure_date),
+          accessibilityLabel: `${routeCodes(offer.origin, offer.destination, offer.trip_type === 'return')}, ${offer.airline.name}, ${formatDate(offer.departure_date)}`,
+        })),
+        onSelect: (id) => navigation.setParams({ id, query: undefined }),
+        page,
+        count: offers.data?.count,
+        onPage: setPage,
+      }}
       detail={selected ? <OfferDetailView key={selected} id={selected} query={route.params?.query} /> : null}
       list={
         <ScrollView style={styles.scroll}>

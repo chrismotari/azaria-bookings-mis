@@ -50,8 +50,7 @@ function criteria(query: AdminQuery): string {
 export function AdminRequestsScreen({ navigation, route }: BottomTabScreenProps<AdminTabParamList, 'AdminRequests'>) {
   const selected = route.params?.id;
   const close = useCallback(() => navigation.setParams({ id: undefined }), [navigation]);
-  // With a request open the list is too narrow for the table.
-  const asTable = useIsWide() && selected === undefined;
+  const asTable = useIsWide();
   const status = route.params?.status ?? 'open';
   const [page, setPage] = useListPage(status);
   const queries = useQuery({
@@ -70,6 +69,20 @@ export function AdminRequestsScreen({ navigation, route }: BottomTabScreenProps<
       title="Request"
       backLabel="All requests"
       onClose={close}
+      selected={selected}
+      rail={{
+        title: 'Requests',
+        items: queries.data?.results.map((query) => ({
+          id: query.id,
+          primary: query.user.email,
+          secondary: formatDateTime(query.created_at),
+          accessibilityLabel: `${query.user.full_name}, ${describeQuery(query).route}, ${QUERY_STATUS[query.status].label}`,
+        })),
+        onSelect: (id) => navigation.setParams({ id }),
+        page,
+        count: queries.data?.count,
+        onPage: setPage,
+      }}
       detail={selected ? <AdminQueryDetailView key={selected} id={selected} /> : null}
       list={
         <Screen card>

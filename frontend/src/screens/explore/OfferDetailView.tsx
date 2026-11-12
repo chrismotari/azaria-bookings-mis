@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { isAxiosError } from 'axios';
 import { useState } from 'react';
 import { StyleSheet, Text, View, ViewStyle } from 'react-native';
 
@@ -13,7 +12,8 @@ import { Icon, IconName } from '../../components/Icon';
 import { ItineraryCards, TripConditions } from '../../components/Itinerary';
 import { PriceTag } from '../../components/PriceTag';
 import { RouteLine } from '../../components/RouteLine';
-import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
+import { DetailError } from '../../components/DetailLayout';
+import { LoadingState } from '../../components/StatusViews';
 import { colors, font, space, weight } from '../../theme';
 import { formatDate, ticketClassLabel, timeAgo } from '../../utils/format';
 
@@ -33,10 +33,14 @@ export function OfferDetailView({ id, query }: { id: string; query?: string }) {
     return <LoadingState />;
   }
   if (offer.isError) {
-    if (isAxiosError(offer.error) && offer.error.response?.status === 404) {
-      return <EmptyState icon="airplane-outline" title="Deal not available" message="This deal is not available." />;
-    }
-    return <ErrorState error={offer.error} onRetry={() => offer.refetch()} />;
+    return (
+      <DetailError
+        error={offer.error}
+        onRetry={() => offer.refetch()}
+        notFound="Deal not found"
+        message="This deal is not available."
+      />
+    );
   }
 
   const data = offer.data;

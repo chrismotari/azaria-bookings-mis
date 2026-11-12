@@ -1,7 +1,6 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
-import { isAxiosError } from 'axios';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -11,7 +10,7 @@ import { Integration, Paginated, Route, SearchRun } from '../../api/types';
 import { ActionBar } from '../../components/ActionBar';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
-import { DetailLayout } from '../../components/DetailLayout';
+import { DetailError, DetailLayout } from '../../components/DetailLayout';
 import { Dialog } from '../../components/Dialog';
 import { Pagination } from '../../components/Pagination';
 import { Screen } from '../../components/Screen';
@@ -20,7 +19,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/StatusVie
 import { Column, RouteCell, Table, TableRow, TwoLineCell } from '../../components/Table';
 import { AdminTabParamList } from '../../navigation/types';
 import { colors, font, radius, space, useIsWide, weight } from '../../theme';
-import { formatDateTime, ticketClassLabel, todayInNairobi } from '../../utils/format';
+import { formatDateTime, routeCodes, ticketClassLabel, todayInNairobi } from '../../utils/format';
 import { useListPage, useMissingPageReset } from '../../utils/listPage';
 import {
   FARES_KEY,
@@ -48,7 +47,7 @@ export function AdminRoutesScreen({ navigation, route }: BottomTabScreenProps<Ad
   const isWide = useIsWide();
   const selected = route.params?.id;
   const close = useCallback(() => navigation.setParams({ id: undefined }), [navigation]);
-  const asTable = isWide && selected === undefined;
+  const asTable = isWide;
   const [page, setPage] = useListPage(null);
   const [creating, setCreating] = useState(false);
   const integrations = useIntegrations();
@@ -77,6 +76,20 @@ export function AdminRoutesScreen({ navigation, route }: BottomTabScreenProps<Ad
       title="Route"
       backLabel="All routes"
       onClose={close}
+      selected={selected}
+      rail={{
+        title: 'Routes',
+        items: routes.data?.results.map((item) => ({
+          id: item.id,
+          primary: routeCodes(item.origin, item.destination, item.trip_type === 'return'),
+          secondary: item.last_run ? formatDateTime(item.last_run.created_at) : 'Never run',
+          accessibilityLabel: `${routeCodes(item.origin, item.destination, item.trip_type === 'return')}, ${item.is_active ? 'active' : 'inactive'}${item.new_fares ? `, ${item.new_fares} new fares` : ''}`,
+        })),
+        onSelect: (id) => navigation.setParams({ id }),
+        page,
+        count: routes.data?.count,
+        onPage: setPage,
+      }}
       detail={selected ? <RouteDetailView key={selected} id={selected} integrations={integrations.data ?? []} /> : null}
       list={
         <Screen card>
@@ -235,10 +248,7 @@ function RouteDetailView({ id, integrations }: { id: string; integrations: Integ
     return <LoadingState />;
   }
   if (route.isError) {
-    if (isAxiosError(route.error) && route.error.response?.status === 404) {
-      return <EmptyState icon="git-branch-outline" title="Route not found" message="This route does not exist." />;
-    }
-    return <ErrorState error={route.error} onRetry={() => route.refetch()} />;
+    return <DetailError error={route.error} onRetry={() => route.refetch()} notFound="Route not found" />;
   }
 
   const data = route.data;

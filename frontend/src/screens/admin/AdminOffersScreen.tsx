@@ -31,7 +31,7 @@ import { Column, RouteCell, Table, TableRow, TwoLineCell } from '../../component
 import { Toggle } from '../../components/Toggle';
 import { AdminTabParamList } from '../../navigation/types';
 import { colors, font, space, useIsWide, weight } from '../../theme';
-import { formatDate, ticketClassLabel, tripDates } from '../../utils/format';
+import { formatDate, routeCodes, ticketClassLabel, tripDates } from '../../utils/format';
 import { AdminOfferEditView } from './AdminOfferFormScreen';
 
 type AdminFilters = OfferFilterValues & { is_active: '' | 'true' | 'false'; is_public: '' | 'true' | 'false' };
@@ -50,8 +50,7 @@ export function AdminOffersScreen({ navigation, route }: BottomTabScreenProps<Ad
   const isWide = useIsWide();
   const selected = route.params?.id;
   const close = useCallback(() => navigation.setParams({ id: undefined }), [navigation]);
-  // With the edit panel open the list is too narrow for the table.
-  const asTable = isWide && selected === undefined;
+  const asTable = isWide;
   const [draft, setDraft] = useState<AdminFilters>(EMPTY_FILTERS);
   const [errors, setErrors] = useState<OfferFilterErrors>({});
   const [filters, setFilters] = useState<AdminFilters>(EMPTY_FILTERS);
@@ -111,6 +110,20 @@ export function AdminOffersScreen({ navigation, route }: BottomTabScreenProps<Ad
       title="Edit offer"
       backLabel="All offers"
       onClose={close}
+      selected={selected}
+      rail={{
+        title: 'Offers',
+        items: offers.data?.results.map((offer) => ({
+          id: offer.id,
+          primary: routeCodes(offer.origin, offer.destination, offer.trip_type === 'return'),
+          secondary: formatDate(offer.departure_date),
+          accessibilityLabel: `${routeCodes(offer.origin, offer.destination, offer.trip_type === 'return')}, ${offer.airline.name}, ${offer.is_active ? 'active' : 'deactivated'}`,
+        })),
+        onSelect: (id) => navigation.setParams({ id }),
+        page,
+        count: offers.data?.count,
+        onPage: setPage,
+      }}
       detail={selected ? <AdminOfferEditView key={selected} id={selected} onDone={close} /> : null}
       list={
         <Screen card>

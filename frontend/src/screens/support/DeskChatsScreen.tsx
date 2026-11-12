@@ -10,7 +10,7 @@ import { ActionBar } from '../../components/ActionBar';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { useConfirm } from '../../components/ConfirmDialog';
-import { DetailLayout } from '../../components/DetailLayout';
+import { DetailError, DetailLayout } from '../../components/DetailLayout';
 import { FormError } from '../../components/Field';
 import { Pagination } from '../../components/Pagination';
 import { Screen } from '../../components/Screen';
@@ -81,6 +81,21 @@ function DeskChats({ endpoints, selected, select, intro }: DeskChatsProps) {
       title="Chat"
       backLabel="All chats"
       onClose={close}
+      selected={selected}
+      rail={{
+        title: 'Chats',
+        items: chats.data?.results.map((chat) => ({
+          id: chat.id,
+          primary: chat.email,
+          secondary: chatTime(chat.last_message_at),
+          accessibilityLabel: `${chat.subject}, ${requesterLabel(chat)}${chat.unread ? ', unread' : ''}`,
+          strong: chat.unread,
+        })),
+        onSelect: select,
+        page,
+        count: chats.data?.count,
+        onPage: setPage,
+      }}
       detail={selected ? <DeskChatView key={selected} endpoints={endpoints} id={selected} /> : null}
       list={
         <Screen card>
@@ -173,7 +188,7 @@ function DeskChatView({ endpoints, id }: { endpoints: DeskEndpoints; id: string 
     return <LoadingState />;
   }
   if (chat.isError) {
-    return <ErrorState error={chat.error} onRetry={() => chat.refetch()} />;
+    return <DetailError error={chat.error} onRetry={() => chat.refetch()} notFound="Chat not found" />;
   }
   const data = chat.data;
   const open = data.status === 'open';
