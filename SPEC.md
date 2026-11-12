@@ -224,6 +224,11 @@ All delivered; each was one commit.
 40. Detail pages with a slim list rail (see §20).
 41. Agency dashboard (see §21).
 
+Pending (not yet built):
+
+42. Third provider: Sabre (see §22).
+43. Fourth provider: Amadeus (see §23).
+
 ## 14. Step 34: Return trips and flight details
 
 Goal: offers describe real itineraries the way airlines and GDSs do: one-way or return, each direction made of flight segments with flight numbers and local times, plus the baggage allowance and fare conditions. This works for offers the admin enters by hand and is the shape GDS results will later be mapped into. Prices stay USD.
@@ -457,4 +462,30 @@ Screen (Admins › Dashboard), top to bottom; two columns from 900 px where note
 Tests
 - Backend: each figure against bookings in every status (only Paid and Completed count as sales; dated by their Paid event, including month and year edges in Nairobi time); the 48-hour and 7-day windows at their edges; the five-item limits and ordering; top routes grouping by trip type; customers excluding admins and inactive users; offers bookable and expiring; searches null without an integration; the overdue invoice; and that another agency's data never appears.
 - Frontend: type-check, lint, format check, web export; browser check at 1280 and 390 px with sales, an overdue invoice and an empty agency.
+
+## 22. Step 42: Third provider: Sabre
+
+Goal: an agency that works in Sabre can search its routes through it, exactly as with Duffel and Travelport. It cannot be tried against Sabre from here; correctness rests on recorded responses in Sabre's documented shape.
+
+- Sabre's REST APIs behind the same provider interface, with `httpx`: Bargain Finder Max (`POST /v5/offers/shop`, the grouped itinerary response) on the certification host in test mode and the production host in live mode.
+- Authentication: a token from `POST /v2/auth/token` (client credentials; the client id `V1:<user id>:<PCC>:<domain>` and the password each base64-encoded, joined by a colon and base64-encoded again), taken once per provider instance and sent as a bearer token. Credentials: user id (EPR), password, PCC and domain (`AA` for agencies; Dev Studio accounts are given theirs).
+- Request: the PCC in the point of sale, one adult (ADT), an origin–destination per direction with its date, the cabin as the only cabin allowed, max connections as the most stops when set, and penalty information asked for (not filtered on).
+- Mapping into step 34's itinerary shape with the same skip rules: legs → directions; schedules → segments with marketing and operating carriers and flight numbers, airports and local dates and times (the leg's date with the schedule's day adjustments; offsets dropped; technical stops ignored); the total price and its currency; the validating carrier → ticketing airline; checked baggage allowances → `checked_bags` (fewest across allowances, a weight alone being one bag) and kilograms when every allowance gives them; refund and exchange penalties before departure → policies (no penalty information: not allowed; allowed with a zero amount: free; otherwise with a fee); fare type unknown; the fewest seats available → seats left; the last ticketing date and time → expiry; the itinerary's id → provider reference.
+- Errors: an HTTP error or a response whose messages carry an error and no itineraries is a provider error with Sabre's message. Test connection takes a token (it searches nothing).
+- Integration provider gains `sabre`; Settings › Integrations takes Sabre's four credentials with help text.
+- README: obtaining Sabre Dev Studio (certification) credentials and production access.
+- Tests: the token request and the search sent (headers, body, test and live hosts, max connections only when set), mapping from recorded responses (one-way with a connection and codeshare, return, day changes, baggage by pieces and by weight, penalties, seats and expiry, a non-USD currency), errors (token refused, HTTP error, error messages without itineraries), and a Sabre integration in a run beside Duffel, in a re-check and in the admin API (credentials required and never returned).
+
+## 23. Step 43: Fourth provider: Amadeus
+
+Goal: an agency with an Amadeus API contract can search its routes through it. Amadeus closed its self-service sign-up in 2026; agencies get keys through an Amadeus Enterprise agreement. As with Sabre, it is built from Amadeus's documented shapes and tested with recorded responses.
+
+- Amadeus's Flight Offers Search (`POST /v2/shopping/flight-offers`, with `X-HTTP-Method-Override: GET`) behind the same interface, with `httpx`, on `test.api.amadeus.com` in test mode and `api.amadeus.com` in live mode.
+- Authentication: an OAuth2 token from `POST /v1/security/oauth2/token` (client credentials: API key and API secret), taken once per provider instance and sent as a bearer token. Credentials: API key, API secret.
+- Request: one adult, an origin–destination per direction with its date, GDS sources, the cabin as a cabin restriction on every direction, and max connections (Amadeus allows at most 2) when set.
+- Mapping with the same skip rules: itineraries → directions; segments with marketing and operating carriers, flight numbers, airports and local dates and times (technical stops ignored); the grand total and its currency; the first validating airline → ticketing airline; included checked bags per segment → `checked_bags` (fewest across segments, a weight alone being one bag) and kilograms when every segment gives them; refund and change policies not allowed (the search does not state conditions); negotiated or corporate fares private, published ones public; bookable seats → seats left; last ticketing date → expiry; the offer's id → provider reference.
+- Errors: an HTTP error is a provider error with Amadeus's error detail. Test connection takes a token (it searches nothing).
+- Integration provider gains `amadeus`; Settings › Integrations takes the API key and secret with help text.
+- README: obtaining Amadeus API access.
+- Tests: as for Sabre: token and search requests, mapping from recorded responses, errors, and an Amadeus integration in a run, a re-check and the admin API.
 
