@@ -230,6 +230,10 @@ All delivered; each was one commit.
 43. Fourth provider: Amadeus (see §23).
 44. Agency themes (see §24).
 
+Pending (not yet built):
+
+45. Tours (see §25).
+
 ## 14. Step 34: Return trips and flight details
 
 Goal: offers describe real itineraries the way airlines and GDSs do: one-way or return, each direction made of flight segments with flight numbers and local times, plus the baggage allowance and fare conditions. This works for offers the admin enters by hand and is the shape GDS results will later be mapped into. Prices stay USD.
@@ -535,3 +539,55 @@ App
 Tests
 - Backend: the migration's eight themes pass every rule, the default is Indigo & Amber, and existing agencies get it; every contrast rule refuses a failing colour with its ratio on create and on change; colours stored lowercase and the tint and hover derived; exactly one default (make-default moves it; the default cannot be deactivated; an inactive theme cannot be made default); an inactive theme is refused for an agency except the one it already has, and is missing from the admin list; `create_agency` and the command with and without a theme; `GET /api/agency`, admin settings (an admin changes only their own agency's theme), the platform themes and tenants endpoints and their permissions; agency emails render with the agency's colours, platform emails with Azaria's.
 - Frontend: type-check, lint, format check, web export. Browser check at 1280 and 390 px on two agencies with different themes: Explore, offer detail, a booking, Dashboard and Settings, with no leftovers in Azaria's colours; changing the theme in Settings; the platform Themes section (create a theme, a failing pair with Save disabled, edit, make default, deactivate) and the New agency dialog. Device check (the user's): the native app takes the agency's theme and changes it on Switch agency.
+
+## 25. Step 45: Tours
+
+Goal: an agency also sells tours, for example "Maasai Mara, 3 days" on fixed dates with a fixed number of slots. Its admin creates tours. They show as cards on Explore, and a signed-in customer books slots on their own: as long as slots are left, giving the travellers' names books them at once, with no admin step. Payment stays outside the system. When payments are added later, a tour booking will be confirmed on payment; this step does not prepare for that. Prices are USD per person, like flights. Hotels are a later step.
+
+From this step the system is for travel agencies, not only flight ticketing: the opening paragraph of this document says so when the step is built. §1's "passenger details" exclusion stays for flights; tour bookings take each traveller's name (below).
+
+Model (per agency)
+- **Tour**: title (≤ 120), destination (≤ 120, free text, e.g. "Maasai Mara, Kenya"), start_date, end_date (≥ start_date), price (per person, > 0), slots (1–500), summary (≤ 300, plain text, shown on cards), description (sanitized rich HTML ≤ 10,000 characters, as plan descriptions), included and not_included (lists of short lines, ≤ 30 each of ≤ 200 characters), meeting_point (≤ 200, blank allowed), is_active, created_at, updated_at. Never deleted.
+  - Slots left = slots − travellers on its confirmed bookings. Slots cannot be set below the travellers already booked.
+  - Start and end dates cannot change once the tour has a confirmed booking (409); the admin cancels those bookings first.
+  - **Bookable**: active, start_date after today (Nairobi), and at least one slot left. Booking closes at the end of the day before the tour starts.
+- **TourPhoto**: tour, image (PNG/JPEG/WebP ≤ 2 MB, content-checked, public storage `tours/<schema>/<tour>/`, random UUID names), position, created_at. At most 8 per tour; the first is the cover. Deleting a photo deletes its file. Public storage (§2) now holds airline logos and tour photos.
+- **TourBooking**: tour, user (customer), traveller_count (1–20), travellers (a list of full names, one per traveller, each 2–100 characters), contact_phone, notes (≤ 1,000), unit_price (copied from the tour), status (confirmed / cancelled / completed), cancelled_by (customer / admin, null otherwise), created_at. Total = unit_price × traveller_count.
+- **TourBookingEvent**: booking, from_status (null on creation), to_status, actor (null = system), created_at.
+
+Booking rules (`tours/services.py`, atomic, the tour locked with `select_for_update`, so two customers can never take the last slot together)
+- A customer books a bookable tour: travellers 1 to min(20, slots left), one name per traveller (the first prefilled with the customer's name), contact phone (prefilled from the account, required), optional notes. Too few slots left answers 409 "Only N slots left". Not bookable answers 409. The booking is confirmed at once.
+- Several bookings by one customer on one tour are allowed (for example a second group).
+- Customer cancels: confirmed bookings, until the end of the day before the tour starts. Slots are freed.
+- Admin cancels: confirmed bookings, at any time before the tour ends, with an optional reason (≤ 500) shown to the customer. Slots are freed.
+- System completes: daily, confirmed bookings whose tour ended before today become completed.
+- Every change writes a TourBookingEvent and queues its email on commit. Views never set status.
+
+Emails (HTML plus text, as §6)
+- Customer: tour booked (tour, dates, meeting point, travellers, total, "Pay as your agency instructs": the agency's payment instructions from AppSettings), booking cancelled by the agency (with the reason). No email when the customer cancels.
+- Agency admin (`admin_notification_email`): new tour booking, tour booking cancelled by the customer.
+
+Scheduled task
+- `complete_finished_tour_bookings`, daily, each agency.
+
+API (agency host)
+- Public: `tours` (bookable tours; filters: `search` over title and destination, start date range, price range; ordering by start date (default) or price) and `tours/{id}` (a bookable tour, or any tour the signed-in customer has booked). Each tour returns its fields, `slots_left`, `duration_days` (end − start + 1), `photos` (`[{id, url}]` in order) and `bookable`. `agency` gains `has_tours` (any bookable tour), so the app shows the Tours tab only when there is something to book.
+- Signed in (customers): `tour-bookings` (own; create; `{id}`; `cancel`), each with its tour and status timeline.
+- Admin: `admin/tours` (all tours with `booked` and `slots_left`; filters upcoming / past / inactive; create, PATCH, no delete), `admin/tours/{id}/photos` (upload, one image per request), `admin/tours/{id}/photos/{photo_id}` (delete; PATCH `{position}` to reorder), `admin/tours/{id}/bookings`, and `admin/tour-bookings` (status filter; `{id}`; `cancel {reason}`).
+
+App
+- **Explore** gains a Flights / Tours switch at the top, shown only when `has_tours`. Flights is the default and is unchanged.
+- **Tours list**: a search box (destination or name), start date range and price range filters (sidebar on wide screens, panel on phones, as for flights), and sort by date or price. Results are cards: cover photo (a neutral placeholder with an icon when there is none), title, destination, dates and number of days, "From $X per person", and an "N slots left" chip from 5 down. Two to three columns on wide screens, one on phones. Empty state: "No tours right now".
+- **Tour detail** (own URL): a photo gallery (cover large, the rest as thumbnails; tapping opens the photo large), title, destination, dates and days, the summary, the description, Included and Not included lists, meeting point, and a price card with slots left and Book. When not bookable, the card says why: fully booked, or bookings closed.
+- **Book tour** (full page, behind the auth gate): traveller stepper (up to the slots left, at most 20), a name field per traveller, contact phone, notes, live total, and Confirm booking. On success it opens the booking with a "You're booked" banner. A 409 shows its message and refreshes the slots left.
+- **Customer Bookings** gains a Flights / Tours switch (shown when the customer has any tour booking or the agency has tours). Tour booking cards show the cover, title, dates, travellers and total. Tour booking detail: tour summary with a link to the tour, travellers, contact phone, notes, total, status with its timeline, the agency's payment instructions while confirmed, the reason when cancelled by the agency, and Cancel booking (confirm dialog) while allowed.
+- **Admin › Tours** (a nav item; on phones it joins the "More" menu as the rules for tabs already say):
+  - A table with title, dates, booked / slots, price and status (Upcoming, Fully booked, Past, Inactive), with the upcoming / past / inactive filter. A tour opens beside the slim rail (§20).
+  - The tour detail shows its fields, its photos and its bookings (lead traveller, travellers, contact phone, status, created). It has Edit and Activate or Deactivate.
+  - Each booking opens with its travellers, notes, timeline and Cancel booking (dialog with an optional reason).
+  - New tour and Edit tour are full pages: the fields, a rich-text editor for the description, line editors for Included and Not included, and photos (web only: add, delete, move up or down; the first is the cover). The form refuses dates or slots that break the rules above with the server's message.
+- The admin dashboard, sales figures and the flight Bookings screen are unchanged in this step.
+
+Tests
+- Backend: tour validation (dates, slots, lists, sanitized description, slots not below booked, dates locked once booked); photos (type, size, content check, count, order, file deleted with the photo); bookable rules at the edges (the day before the start in Nairobi time, the last slot, inactive); booking validation (names per traveller, phone, count limits) and the 409s; two bookings racing for the last slot (only one succeeds); customer and admin cancellation windows and slots freed; the completion task with frozen time; events and every email (and none on customer cancel); visibility (only bookable tours in the public list; a customer's booked tour stays visible to them; other customers' bookings never); admin permissions; `has_tours`; isolation between agencies; UUID keys on the new models.
+- Frontend: type-check, lint, format check, web export. Browser check at 1280 and 390 px: Explore's Tours switch and cards, filters and sort, tour detail with photos, booking as a guest through the auth gate, a fully booked tour, the customer's tour booking and cancel; Admin › Tours: create with photos, edit, the bookings list and cancel with a reason.
