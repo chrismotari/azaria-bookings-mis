@@ -228,6 +228,10 @@ All delivered; each was one commit.
 42. Third provider: Sabre (see §22).
 43. Fourth provider: Amadeus (see §23).
 
+Pending (not yet built):
+
+44. Agency themes (see §24).
+
 ## 14. Step 34: Return trips and flight details
 
 Goal: offers describe real itineraries the way airlines and GDSs do: one-way or return, each direction made of flight segments with flight numbers and local times, plus the baggage allowance and fare conditions. This works for offers the admin enters by hand and is the shape GDS results will later be mapped into. Prices stay USD.
@@ -488,3 +492,39 @@ Goal: an agency with an Amadeus API contract can search its routes through it. A
 - README: obtaining Amadeus API access.
 - Tests: as for Sabre: token and search requests, mapping from recorded responses, errors, and an Amadeus integration in a run, a re-check and the admin API.
 
+## 24. Step 44: Agency themes
+
+Goal: each agency can give its site, app and emails its own look by choosing one of a fixed set of preset themes. A theme sets two brand colours and the shades that go with them. Agencies cannot type in their own colours: every preset is checked for readable contrast once, here. This replaces "per-agency branding" in the out-of-scope list (§1), and §19's "Branding stays shared": the shared mobile app takes the colours of the agency it is set to.
+
+Presets
+- A theme sets **primary** (top bar, links, selected states; white text on it) and **accent** (prices and main calls to action; dark text #252525 on it), plus the primary's tint (chat bubbles, highlights; the primary blended about 9% over white) and its hover shade. Everything else stays the same in every theme: the slate-green tertiary, the neutrals, the background and surface, the status colours and their chip tints, the type scale.
+- The presets, by key (name; primary / accent). Every primary gives at least 4.5:1 with white text, on its tint and on the background, and every accent at least 4.5:1 with #252525:
+  - `indigo-amber` (Indigo & Amber; #1800d2 / #ffb400), the default and today's colours
+  - `navy-gold` (Navy & Gold; #1b3a6b / #f2c14e)
+  - `teal-coral` (Teal & Coral; #00676b / #ff8a65)
+  - `forest-lime` (Forest & Lime; #1e5631 / #a4de02)
+  - `burgundy-sand` (Burgundy & Sand; #7b1e3a / #f4d58d)
+  - `plum-peach` (Plum & Peach; #5b2a86 / #ffb38a)
+  - `charcoal-sky` (Charcoal & Sky; #2b2d42 / #8ecae6)
+  - `ocean-sunflower` (Ocean & Sunflower; #0057b8 / #ffd100)
+- The presets are defined once, in the backend (`tenants/themes.py`): key, name and each colour. The app gets them from the API and holds no copy. Adding a preset later is a code change only.
+
+Model and backend
+- **Tenant** gains `theme` (a preset key, default `indigo-amber`). The migration gives existing agencies the default. An unknown key is refused with 400.
+- `create_agency` takes the theme (default `indigo-amber`); `manage.py create_agency` gains `--theme`; `/django-admin/` shows it as a choice.
+- `GET /api/agency` adds `theme`: `{key, name, colors: {primary, primary_text, primary_tint, primary_hover, accent, accent_text}}`.
+- `GET /api/admin/themes` and `GET /api/platform/themes`: every preset in that shape, in the order above.
+- `GET/PATCH /api/admin/settings` returns and accepts `theme` (the key) and saves it on the agency.
+- Platform `tenants` returns `theme` and accepts it on create and PATCH.
+- Emails: the agency's emails use its theme in the base layout (the header bar and anything else that uses the primary or accent today). Platform emails (invoices, suspension, platform desk) keep the default theme.
+
+App
+- Web: the agency app loads `GET /api/agency` before its first screen (a plain loading state in neutral colours until then) and applies the theme. Every screen uses the theme's colours, including styles built when a file loads. No screen may keep the default colours once a theme is applied.
+- Native: the stored agency (§19) keeps its theme. On launch the app applies the stored theme at once and refreshes it from `GET /api/agency`. Find your agency, before an agency is chosen, uses the default theme. Switching agency applies the new agency's theme.
+- The platform app always uses the default theme.
+- Admin › Settings gains a **Theme** card: a dropdown of the presets by name, a preview of the selected pair beside it (a strip of the top bar in the primary with the agency's name, and an accent "Book" button with a price), and Save. Saving applies the theme to the admin's own app at once (the screens re-render with the new colours; on web the page reloads). Other users get it the next time they load the app.
+- Platform › New agency dialog gains a Theme dropdown (default Indigo & Amber) with the same preview. The agency's detail page shows its theme in the Agency section and can change it.
+
+Tests
+- Backend: every preset meets the contrast rules above (computed in the test); the default on creation and on existing agencies; `create_agency` and the command with a theme; unknown keys refused (admin settings, platform create and PATCH); `GET /api/agency` and both themes lists; an admin can change only their own agency's theme; agency emails render with the agency's colours, platform emails with the default.
+- Frontend: type-check, lint, format check, web export. Browser check at 1280 and 390 px on two agencies with different themes: Explore, offer detail, a booking, Dashboard and Settings, with no default-coloured leftovers; changing the theme in Settings; the platform New agency dialog. Device check (the user's): the native app takes the agency's theme and changes it on Switch agency.
