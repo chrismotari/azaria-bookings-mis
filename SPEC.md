@@ -233,6 +233,7 @@ All delivered; each was one commit.
 Pending (not yet built):
 
 45. Tours (see §25).
+46. Flight passenger details (see §26).
 
 ## 14. Step 34: Return trips and flight details
 
@@ -544,7 +545,7 @@ Tests
 
 Goal: an agency also sells tours, for example "Maasai Mara, 3 days" on fixed dates with a fixed number of slots. Its admin creates tours, each with one or more price options (Regular, VIP, Child, Couple, Group of 6 and so on). Tours show as cards on Explore, and a signed-in customer books on their own: as long as slots are left, choosing options books them at once, with no admin step. The booker is the account holder; traveller details are optional and can be added later, since people often buy for others or as gifts. Admins can also book for a customer, as for flights. Plans change, so an admin can change or cancel a tour after people have booked, and tell them by email in their own words. Payment stays outside the system; when payments are added later, a tour booking will be confirmed on payment, and this step does not prepare for that. Prices are USD. Hotels are a later step, and the admin dashboard is revised once, after hotels are specified; this step leaves it unchanged.
 
-From this step the system is for travel agencies, not only flight ticketing: the opening paragraph of this document says so when the step is built. §1's "passenger details" exclusion stays for flights; tour bookings can hold traveller details (below).
+From this step the system is for travel agencies, not only flight ticketing: the opening paragraph of this document says so when the step is built. §1's "passenger details" exclusion is removed when step 46 is built; from this step tour bookings can hold traveller details in the shared Traveller table (below).
 
 Model (per agency)
 - **Tour**: title (≤ 120), destination (≤ 120, free text, e.g. "Maasai Mara, Kenya"), start_date, end_date (≥ start_date), slots (1–500, the tour's capacity in people), booking_deadline (the last day customers can book; ≤ start_date; the form proposes the day before the start), cancellation_deadline (the last day customers can cancel; ≤ start_date; the form proposes the day before the start), cancellation_policy (plain text ≤ 2,000, required), summary (≤ 300, plain text, shown on cards), description (sanitized rich HTML ≤ 10,000 characters, as plan descriptions), included and not_included (lists of short lines, ≤ 30 each of ≤ 200 characters), meeting_point (≤ 200, blank allowed), is_active, cancelled_at and cancelled_by (null unless cancelled), created_at, updated_at. Never deleted.
@@ -556,7 +557,9 @@ Model (per agency)
 - **TourPhoto**: tour, image (PNG/JPEG/WebP ≤ 2 MB, content-checked, public storage `tours/<schema>/<tour>/`, random UUID names), position, created_at. At most 8 per tour; the first is the cover. Deleting a photo deletes its file. Public storage (§2) now holds airline logos and tour photos.
 - **TourBooking**: tour, user (customer), created_by (the admin when booked for the customer, null otherwise), people (the sum of the lines' people, 1–40), group_name (≤ 80, optional, e.g. "Otieno family"), notes (≤ 1,000), status (confirmed / cancelled / completed), cancelled_by (customer / admin, null otherwise), cancel_reason (≤ 2,000, the admin's message, blank otherwise), created_at. Total = the sum of its lines.
 - **TourBookingLine**: booking, option, and copied at booking: option_name, unit_price, people_per_unit; quantity (≥ 1). Line total = unit_price × quantity; its people = people_per_unit × quantity. One line per option per booking.
-- **TourTraveller**: line (related_name "travellers", cascade), full_name (2–100, required), gender (female / male / blank), date_of_birth, nationality (ISO alpha-2), document_type (passport / national_id / blank), document_number (≤ 30), document_expiry, email, phone, checked_bags (0–5, default 0), cabin_bags (0–2, default 1), special_requests (≤ 500: diet, medical, accessibility), created_at, updated_at. Every field but full_name may be blank. A line holds at most its people in travellers (a Couple line of quantity 2 holds up to 4; a Group of 6, up to 6); fewer, or none, is fine. Document number and expiry go together. Travellers are personal data: only the booker and the agency's admins ever see them.
+- **Traveller** (shared with flight bookings from step 46, `bookings` app): exactly one of tour_line (a TourBookingLine) or booking (a flight Booking, step 46), enforced by a database check; related_name "travellers" on both, cascade. Fields: full_name (2–100, as on the travel document, required), gender (female / male / blank), date_of_birth, nationality (ISO alpha-2), document_type (passport / national_id / blank), document_number (≤ 30), document_expiry, email, phone, checked_bags (0–5, default 0), checked_bag_kg (per bag, null = not stated), cabin_bag_kg (null = not stated), special_requests (≤ 500: diet, medical, accessibility), created_at, updated_at. Baggage uses the same names and units as an offer's allowance (§14), but is what this traveller is bringing. Document number and expiry go together (expiry optional for a national ID). Travellers are personal data: only the booker and the agency's admins ever see them.
+  - On a tour line every field but full_name may be blank. A line holds at most its people in travellers (a Couple line of quantity 2 holds up to 4; a Group of 6, up to 6); fewer, or none, is fine.
+  - The shared traveller form (one component in the app) is used by tours here and by flight bookings in step 46.
 - **TourBookingEvent**: booking, from_status (null on creation), to_status, actor (null = system), created_at.
 - **TourNotice**: tour, kind (change / cancellation), message (≤ 2,000), sent_by, recipients (how many bookings it was emailed to), created_at. The record of every message the admin sent about the tour.
 
@@ -613,10 +616,37 @@ Tests
   - Cancellation: the customer window at the cancellation_deadline edge; admin cancel with and without a message; slots and units freed.
   - Notices: a save with a message emails each confirmed booking's customer once and records the notice; a save without one emails nobody; photo changes send nothing. Cancel tour cancels every confirmed booking, records the notice and emails each, and requires a message.
   - The completion task with frozen time. Events and every email, including none on customer cancel and no admin email for admin-made bookings.
-  - Visibility: only bookable tours in the public list; a customer's booked tour stays visible to them; other customers' bookings never. Admin permissions. `has_tours`. Isolation between agencies. UUID keys on the new models.
+  - Visibility: only bookable tours in the public list; a customer's booked tour stays visible to them; other customers' bookings never. Admin permissions. `has_tours`. Isolation between agencies. UUID keys on the new models. The Traveller check (exactly one owner).
 - Frontend: type-check, lint, format check, web export. Browser check at 1280 and 390 px:
   - Explore's Tours switch and cards, filters and sort; tour detail with photos and options.
   - Booking several options as a guest through the auth gate, a fully booked tour, a limited option running out.
   - Adding travellers at booking up to an option's people, and adding, editing and removing them afterwards.
   - The customer's tour booking and cancel.
   - Admin › Tours: create with options and photos, edit with and without a notice, book for a customer, cancel a booking with a message, and cancel a tour.
+
+## 26. Step 46: Flight passenger details
+
+Goal: every flight booking records who is flying. The customer gives each passenger's details when booking, as the airline will need them, so the admin no longer collects names, dates of birth and passports by phone, email or chat. Passengers use the shared Traveller table and traveller form from step 45. §1's "passenger details" exclusion is removed.
+
+Rules
+- A flight booking has exactly `passenger_count` travellers (Traveller.booking). Creating a booking, by the customer or by an admin for a customer, needs them all: 400 when the number differs or a passenger is incomplete.
+- **Required for each passenger**: full_name, gender, date_of_birth (not in the future, at most 120 years ago), nationality, document_type, document_number, and document_expiry for a passport (after the last flight's date; a passport expiring sooner is refused with "Passport expires before the trip"). Optional: email, phone, baggage, special_requests.
+- **Changes after booking**: the customer edits passengers while the booking is requested; once availability is confirmed only an admin can, until the booking is completed. The number of passengers never changes after booking (as today). No email is sent for passenger changes.
+- Bookings made before this step keep no passengers; they show "No passenger details recorded" and are never blocked by these rules.
+- Requests for options (Query) do not take passengers.
+
+API
+- Booking create (customer `bookings` and admin `admin/bookings`) takes `travellers`, a list of passenger objects.
+- Bookings (customer and admin) return `travellers` and `can_edit_travellers`; `bookings/{id}/travellers/{traveller_id}` and `admin/bookings/{id}/travellers/{traveller_id}` (PATCH) edit one passenger. There is no add or delete: the count is fixed.
+
+Emails
+- The admin's "new booking" email and every customer email about a booking list the passengers' names (never documents).
+
+App
+- **Book** (offer detail's booking page) and the admin's New booking dialog: one passenger form per passenger as the stepper changes (the first prefilled with the customer's name, email and phone), with the required fields marked. The passenger stepper is still limited to 1–9.
+- **Booking detail** (customer and admin): a Passengers card with each passenger's name, gender, date of birth, nationality and document (number masked to the last 4 for customers, in full for admins), baggage and requests; Edit on each while `can_edit_travellers`, with the same form in a dialog.
+- Admin booking detail shows a Copy button on the Passengers card that copies each passenger as "SURNAME/GIVEN NAMES, gender, date of birth, document, expiry, nationality" lines, for pasting into the GDS.
+
+Tests
+- Backend: create refused without passengers, with the wrong number, or with a missing required field; passport expiry against the last flight's date; date of birth limits; edits allowed by the customer while requested and by admins until completed, and refused otherwise; old bookings without passengers keep working through every transition; passengers in the emails (names only); visibility (only the customer and admins); admin-made bookings; isolation between agencies.
+- Frontend: type-check, lint, format check, web export. Browser check at 1280 and 390 px: booking with 3 passengers (validation messages, a passport expiring too soon), the admin's New booking with passengers, editing a passenger as customer and admin, the masked document for customers, Copy for GDS.
