@@ -232,8 +232,10 @@ All delivered; each was one commit.
 
 Pending (not yet built):
 
-45. Tours (see §25).
-46. Flight passenger details (see §26).
+45. Modules: flights, tours and hotels per agency (see §25).
+46. Tours (see §26).
+47. Flight passenger details (see §27).
+48. Hotels (see §28).
 
 ## 14. Step 34: Return trips and flight details
 
@@ -541,11 +543,46 @@ Tests
 - Backend: the migration's eight themes pass every rule, the default is Indigo & Amber, and existing agencies get it; every contrast rule refuses a failing colour with its ratio on create and on change; colours stored lowercase and the tint and hover derived; exactly one default (make-default moves it; the default cannot be deactivated; an inactive theme cannot be made default); an inactive theme is refused for an agency except the one it already has, and is missing from the admin list; `create_agency` and the command with and without a theme; `GET /api/agency`, admin settings (an admin changes only their own agency's theme), the platform themes and tenants endpoints and their permissions; agency emails render with the agency's colours, platform emails with Azaria's.
 - Frontend: type-check, lint, format check, web export. Browser check at 1280 and 390 px on two agencies with different themes: Explore, offer detail, a booking, Dashboard and Settings, with no leftovers in Azaria's colours; changing the theme in Settings; the platform Themes section (create a theme, a failing pair with Save disabled, edit, make default, deactivate) and the New agency dialog. Device check (the user's): the native app takes the agency's theme and changes it on Switch agency.
 
-## 25. Step 45: Tours
+## 25. Step 45: Modules
 
-Goal: an agency also sells tours, for example "Maasai Mara, 3 days" on fixed dates with a fixed number of slots. Its admin creates tours, each with one or more price options (Regular, VIP, Child, Couple, Group of 6 and so on). Tours show as cards on Explore, and a signed-in customer books on their own: as long as slots are left, choosing options books them at once, with no admin step. The booker is the account holder; traveller details are optional and can be added later, since people often buy for others or as gifts. Admins can also book for a customer, as for flights. Plans change, so an admin can change or cancel a tour after people have booked, and tell them by email in their own words. Payment stays outside the system; when payments are added later, a tour booking will be confirmed on payment, and this step does not prepare for that. Prices are USD. Hotels are a later step, and the admin dashboard is revised once, after hotels are specified; this step leaves it unchanged.
+Goal: an agency buys flights, tours and hotels as separate modules: any one, any two or all three. The owner switches them on per agency. Whatever belongs to a module that is off is hidden from the agency's app and refused by its API, and its data is kept. Flights, the system as built so far, becomes the first module; tours (step 46) and hotels (step 48) are the others. Modules are not tied to plans: billing stays manual, so the owner sets an agency's modules to match what it pays for, as with its search allowance, and plan descriptions say what each plan includes.
 
-From this step the system is for travel agencies, not only flight ticketing: the opening paragraph of this document says so when the step is built. §1's "passenger details" exclusion is removed when step 46 is built; from this step tour bookings can hold traveller details in the shared Traveller table (below).
+From this step the system is for travel agencies, not only flight ticketing: when the step is built, the opening paragraph of this document describes an agency platform with three modules.
+
+Model
+- **Tenant** gains flights_enabled, tours_enabled and hotels_enabled; at least one is on (database check). Existing agencies get flights only. `create_agency` takes the modules (flights only when left out). The tours and hotels switches exist from this step; what they turn on arrives with steps 46 and 48.
+
+What each module covers
+- **Flights**: offers, requests for options, flight bookings and boarding passes, flight passengers (step 47), fare providers, routes, fares and fare searches (the search allowance), with their emails and scheduled tasks.
+- **Tours**: everything in §26. **Hotels**: everything in §28.
+- Always on: accounts and users, support chat, app settings (payment instructions, hold and reminder hours, notification email), theme, billing and plans.
+
+Rules
+- A module that is off: its endpoints (public, customer and admin) return 404 `{"code": "module_off"}`; its scheduled tasks skip the agency; a queued email re-checks and is dropped. Its data stays and is all back when the module is turned on again.
+- Turning a module off is refused (409, e.g. "3 open flight bookings") while it has open bookings: flight bookings requested, availability confirmed or paid; tour bookings confirmed on a tour that has not ended; hotel bookings requested, availability confirmed or paid. Turning the last module off is refused (400). Turning one on is always allowed.
+
+API
+- `agency` returns `modules`, the ones on, in the order flights, tours, hotels (e.g. `["flights", "tours"]`). Admin `settings` returns them, read-only.
+- Platform `tenants` return and accept `modules` (create: `["flights"]` when left out; PATCH applies the rules above).
+- The admin `dashboard` leaves out its flight figures when flights is off.
+
+App
+- The agency app reads `modules` with the agency, before the first screen (as the theme), and shows only what they include:
+  - **Explore**: a switch at the top with a tab per module on (Flights, Tours, Hotels), shown only with more than one; the first is the default. With one module, Explore is that module's page.
+  - **Customers**: Requests only with flights; Bookings with a switch like Explore's when more than one module is on.
+  - **Admins**: Offers, Routes, Requests and Bookings only with flights, Tours with tours, Hotels with hotels; the Integrations card in Settings only with flights; until the dashboard step (after hotels) the dashboard shows its flight sections only with flights.
+  - A `module_off` answer (an old link, or a module turned off while the app is open) shows "This part of the site isn't available" with a link home.
+- **Platform**: the New agency dialog has Modules checkboxes (Flights checked; at least one). The agency page gets a Modules card with three switches, each saved at once, showing the server's message when refused. The Agencies table gains a Modules column. The agency's fare searches section shows only with flights.
+
+Tests
+- Backend: the database check; defaults for existing and new agencies; flight endpoints refused with `module_off` when flights is off (one per endpoint group, public, customer and admin; steps 46 and 48 add the same for theirs); flight scheduled tasks and queued emails skipped; turning off refused with open flight bookings (steps 46 and 48 add theirs) and with no module left; data back when turned on; `agency` and platform `tenants` fields; the dashboard without flights.
+- Frontend: type-check, lint, format check, web export. Browser check at 1280 and 390 px: an agency with flights only (no switch, as today) and one with flights off (no flight screens or nav); a `module_off` link; the platform's Modules card and a refused switch.
+
+## 26. Step 46: Tours
+
+Goal: an agency also sells tours, for example "Maasai Mara, 3 days" on fixed dates with a fixed number of slots. Its admin creates tours, each with one or more price options (Regular, VIP, Child, Couple, Group of 6 and so on). Tours show as cards on Explore, and a signed-in customer books on their own: as long as slots are left, choosing options books them at once, with no admin step. The booker is the account holder; traveller details are optional and can be added later, since people often buy for others or as gifts. Admins can also book for a customer, as for flights. Plans change, so an admin can change or cancel a tour after people have booked, and tell them by email in their own words. Payment stays outside the system; when payments are added later, a tour booking will be confirmed on payment, and this step does not prepare for that. Prices are USD. Tours are a module (§25): everything here is on only when the agency has tours. Hotels are step 48, and the admin dashboard is revised once, after hotels; this step leaves it unchanged.
+
+§1's "passenger details" exclusion is removed when step 47 is built; from this step tour bookings can hold traveller details in the shared Traveller table (below).
 
 Model (per agency)
 - **Tour**: title (≤ 120), destination (≤ 120, free text, e.g. "Maasai Mara, Kenya"), start_date, end_date (≥ start_date), slots (1–500, the tour's capacity in people), booking_deadline (the last day customers can book; ≤ start_date; the form proposes the day before the start), cancellation_deadline (the last day customers can cancel; ≤ start_date; the form proposes the day before the start), cancellation_policy (plain text ≤ 2,000, required), summary (≤ 300, plain text, shown on cards), description (sanitized rich HTML ≤ 10,000 characters, as plan descriptions), included and not_included (lists of short lines, ≤ 30 each of ≤ 200 characters), meeting_point (≤ 200, blank allowed), is_active, cancelled_at and cancelled_by (null unless cancelled), created_at, updated_at. Never deleted.
@@ -557,9 +594,9 @@ Model (per agency)
 - **TourPhoto**: tour, image (PNG/JPEG/WebP ≤ 2 MB, content-checked, public storage `tours/<schema>/<tour>/`, random UUID names), position, created_at. At most 8 per tour; the first is the cover. Deleting a photo deletes its file. Public storage (§2) now holds airline logos and tour photos.
 - **TourBooking**: tour, user (customer), created_by (the admin when booked for the customer, null otherwise), people (the sum of the lines' people, 1–40), group_name (≤ 80, optional, e.g. "Otieno family"), notes (≤ 1,000), status (confirmed / cancelled / completed), cancelled_by (customer / admin, null otherwise), cancel_reason (≤ 2,000, the admin's message, blank otherwise), created_at. Total = the sum of its lines.
 - **TourBookingLine**: booking, option, and copied at booking: option_name, unit_price, people_per_unit; quantity (≥ 1). Line total = unit_price × quantity; its people = people_per_unit × quantity. One line per option per booking.
-- **Traveller** (shared with flight bookings from step 46, `bookings` app): exactly one of tour_line (a TourBookingLine) or booking (a flight Booking, step 46), enforced by a database check; related_name "travellers" on both, cascade. Fields: full_name (2–100, as on the travel document, required), gender (female / male / blank), date_of_birth, nationality (ISO alpha-2), document_type (passport / national_id / blank), document_number (≤ 30), document_expiry, email, phone, checked_bags (0–5, default 0), checked_bag_kg (per bag, null = not stated), cabin_bag_kg (null = not stated), special_requests (≤ 500: diet, medical, accessibility), created_at, updated_at. Baggage uses the same names and units as an offer's allowance (§14), but is what this traveller is bringing. Document number and expiry go together (expiry optional for a national ID). Travellers are personal data: only the booker and the agency's admins ever see them.
+- **Traveller** (shared with flight bookings from step 47 and hotel rooms from step 48, `bookings` app): exactly one of tour_line (a TourBookingLine) or booking (a flight Booking, step 47), enforced by a database check; related_name "travellers" on both, cascade. Fields: full_name (2–100, as on the travel document, required), gender (female / male / blank), date_of_birth, nationality (ISO alpha-2), document_type (passport / national_id / blank), document_number (≤ 30), document_expiry, email, phone, checked_bags (0–5, default 0), checked_bag_kg (per bag, null = not stated), cabin_bag_kg (null = not stated), special_requests (≤ 500: diet, medical, accessibility), created_at, updated_at. Baggage uses the same names and units as an offer's allowance (§14), but is what this traveller is bringing. Document number and expiry go together (expiry optional for a national ID). Travellers are personal data: only the booker and the agency's admins ever see them.
   - On a tour line every field but full_name may be blank. A line holds at most its people in travellers (a Couple line of quantity 2 holds up to 4; a Group of 6, up to 6); fewer, or none, is fine.
-  - The shared traveller form (one component in the app) is used by tours here and by flight bookings in step 46.
+  - The shared traveller form (one component in the app) is used by tours here, by flight bookings in step 47 and by hotel guests in step 48.
 - **TourBookingEvent**: booking, from_status (null on creation), to_status, actor (null = system), created_at.
 - **TourNotice**: tour, kind (change / cancellation), message (≤ 2,000), sent_by, recipients (how many bookings it was emailed to), created_at. The record of every message the admin sent about the tour.
 
@@ -586,16 +623,16 @@ Scheduled task
 - `complete_finished_tour_bookings`, daily, each agency.
 
 API (agency host)
-- Public: `tours` (bookable tours; filters: `search` over title and destination, start date range, price range on the from price; ordering by start date (default) or from price) and `tours/{id}` (a bookable tour, or any tour the signed-in customer has booked). Each tour returns its fields, `slots_left`, `duration_days` (end − start + 1), `from_price`, `options` (active ones in order, each with `units_left`), `photos` (`[{id, url}]` in order), `bookable` and, when not bookable, `not_bookable_reason` (fully_booked / closed / cancelled). `agency` gains `has_tours` (any bookable tour), so the app shows the Tours switch only when there is something to book.
+- Public: `tours` (bookable tours; filters: `search` over title and destination, start date range, price range on the from price; ordering by start date (default) or from price) and `tours/{id}` (a bookable tour, or any tour the signed-in customer has booked). Each tour returns its fields, `slots_left`, `duration_days` (end − start + 1), `from_price`, `options` (active ones in order, each with `units_left`), `photos` (`[{id, url}]` in order), `bookable` and, when not bookable, `not_bookable_reason` (fully_booked / closed / cancelled).
 - Signed in (customers): `tour-bookings` (own; create with lines and their travellers; `{id}`; `cancel`), each with its tour, lines with their travellers, status timeline, `can_cancel` and `can_edit_travellers`; `tour-bookings/{id}/travellers` (POST with the line) and `tour-bookings/{id}/travellers/{traveller_id}` (PATCH, DELETE).
 - Admin: `admin/tours` (all tours with `booked` and `slots_left`; filters upcoming / past / inactive / cancelled; create with options; PATCH with options, the whole list replacing the old one: an omitted booked option is refused (400), and an optional `notice` message; no delete), `admin/tours/{id}/cancel {message}`, `admin/tours/{id}/notices`, `admin/tours/{id}/photos` (upload, one image per request), `admin/tours/{id}/photos/{photo_id}` (delete; PATCH `{position}` to reorder), `admin/tours/{id}/bookings`, and `admin/tour-bookings` (status and tour filters; create for a customer; `{id}`; `cancel {message}`; `travellers` as for customers).
 
 App
-- **Explore** gains a Flights / Tours switch at the top, shown only when `has_tours`. Flights is the default and is unchanged.
+- **Explore** shows Tours as its tab in the module switch (§25); with tours as the only module, Explore is the tours list.
 - **Tours list**: a search box (destination or name), start date range and price range filters (sidebar on wide screens, panel on phones, as for flights), and sort by date or price. Results are cards: cover photo (a neutral placeholder with an icon when there is none), title, destination, dates and number of days, "From $X per person", and an "N slots left" chip from 5 down. Two to three columns on wide screens, one on phones. Empty state: "No tours right now".
 - **Tour detail** (own URL): a photo gallery (cover large, the rest as thumbnails; tapping opens the photo large), title, destination, dates and days, the summary, the description, Included and Not included lists, meeting point, the cancellation policy with "Free to cancel until <date>", and a price card listing the options (name, description, price and what it covers, e.g. "$900 for 2 people", and "N left" when limited) with slots left, booking deadline and Book. When not bookable, the card says why: fully booked, bookings closed, or cancelled.
 - **Book tour** (full page, behind the auth gate): a quantity stepper per option (limited by its units left and the slots left), per option an "Add traveller" button that adds a traveller form (full name required, then the optional fields above, with baggage) up to the option's people (it disappears at the limit, showing "4 of 6 travellers added"), and a note that travellers can be added later; group name; phone when the account has none; notes; the cancellation policy, live lines and total, and Confirm booking. On success it opens the booking with a "You're booked" banner. A 409 shows its message and refreshes the tour.
-- **Customer Bookings** gains a Flights / Tours switch (shown when the customer has any tour booking or the agency has tours). Tour booking cards show the cover, title, dates, group name, people and total. Tour booking detail: tour summary with a link to the tour, lines with their travellers ("4 of 6 added"; Add, Edit and Remove while confirmed, using the same traveller form in a dialog), group name, notes, total, status with its timeline, the agency's payment instructions while confirmed, the cancellation policy and deadline, the agency's message when it cancelled, and Cancel booking (confirm dialog) while `can_cancel`.
+- **Customer Bookings** shows tour bookings under its Tours tab (§25). Tour booking cards show the cover, title, dates, group name, people and total. Tour booking detail: tour summary with a link to the tour, lines with their travellers ("4 of 6 added"; Add, Edit and Remove while confirmed, using the same traveller form in a dialog), group name, notes, total, status with its timeline, the agency's payment instructions while confirmed, the cancellation policy and deadline, the agency's message when it cancelled, and Cancel booking (confirm dialog) while `can_cancel`.
 - **Admin › Tours** (a nav item; on phones it joins the "More" menu as the rules for tabs already say):
   - A table with title, dates, booked / slots, from price and status (Upcoming, Fully booked, Closed, Past, Inactive, Cancelled), with the upcoming / past / inactive / cancelled filter. A tour opens beside the slim rail (§20).
   - The tour detail shows its fields, options (with units sold), photos, its bookings (group name or booker, booker's phone, options, people, travellers added of people, status, created) and its notices (kind, message, sent by, when, recipients). Actions: Edit, Activate or Deactivate, Book for a customer, and Cancel tour.
@@ -616,7 +653,7 @@ Tests
   - Cancellation: the customer window at the cancellation_deadline edge; admin cancel with and without a message; slots and units freed.
   - Notices: a save with a message emails each confirmed booking's customer once and records the notice; a save without one emails nobody; photo changes send nothing. Cancel tour cancels every confirmed booking, records the notice and emails each, and requires a message.
   - The completion task with frozen time. Events and every email, including none on customer cancel and no admin email for admin-made bookings.
-  - Visibility: only bookable tours in the public list; a customer's booked tour stays visible to them; other customers' bookings never. Admin permissions. `has_tours`. Isolation between agencies. UUID keys on the new models. The Traveller check (exactly one owner).
+  - Visibility: only bookable tours in the public list; a customer's booked tour stays visible to them; other customers' bookings never. Admin permissions. `module_off` when tours is off, and turning tours off refused with confirmed bookings on a tour not ended. Isolation between agencies. UUID keys on the new models. The Traveller check (exactly one owner).
 - Frontend: type-check, lint, format check, web export. Browser check at 1280 and 390 px:
   - Explore's Tours switch and cards, filters and sort; tour detail with photos and options.
   - Booking several options as a guest through the auth gate, a fully booked tour, a limited option running out.
@@ -624,9 +661,9 @@ Tests
   - The customer's tour booking and cancel.
   - Admin › Tours: create with options and photos, edit with and without a notice, book for a customer, cancel a booking with a message, and cancel a tour.
 
-## 26. Step 46: Flight passenger details
+## 27. Step 47: Flight passenger details
 
-Goal: every flight booking records who is flying. The customer gives each passenger's details when booking, as the airline will need them, so the admin no longer collects names, dates of birth and passports by phone, email or chat. Passengers use the shared Traveller table and traveller form from step 45. §1's "passenger details" exclusion is removed.
+Goal: every flight booking records who is flying. The customer gives each passenger's details when booking, as the airline will need them, so the admin no longer collects names, dates of birth and passports by phone, email or chat. Passengers use the shared Traveller table and traveller form from step 46. §1's "passenger details" exclusion is removed.
 
 Rules
 - A flight booking has exactly `passenger_count` travellers (Traveller.booking). Creating a booking, by the customer or by an admin for a customer, needs them all: 400 when the number differs or a passenger is incomplete.
@@ -650,3 +687,66 @@ App
 Tests
 - Backend: create refused without passengers, with the wrong number, or with a missing required field; passport expiry against the last flight's date; date of birth limits; edits allowed by the customer while requested and by admins until completed, and refused otherwise; old bookings without passengers keep working through every transition; passengers in the emails (names only); visibility (only the customer and admins); admin-made bookings; isolation between agencies.
 - Frontend: type-check, lint, format check, web export. Browser check at 1280 and 390 px: booking with 3 passengers (validation messages, a passport expiring too soon), the admin's New booking with passengers, editing a passenger as customer and admin, the masked document for customers, Copy for GDS.
+
+## 28. Step 48: Hotels
+
+Goal: an agency with the hotels module sells stays at the hotels, lodges and camps it works with. Its admin lists each hotel with its room types and rates, priced per night by season. Customers browse hotels on Explore, choose dates, rooms and a rate, and send a booking request. The agency cannot see the hotel's free rooms, so booking works as for flights: the admin checks availability with the hotel and confirms, possibly at a different price; the customer pays outside the system before the deadline; the admin marks the booking paid; then the admin uploads the hotel's voucher with its confirmation number and sends it. Connections to hotel suppliers (bed banks, channel managers) are out of scope until specified. Prices are USD per room and include taxes. The admin dashboard is revised in the next step.
+
+Model (per agency, app `hotels`)
+- **Hotel**: name (≤ 120), destination (≤ 120, free text, e.g. "Diani Beach, Kenya"), address (≤ 200), star_rating (1–5, null = not rated), summary (≤ 300, plain text, shown on cards), description (sanitized rich HTML ≤ 10,000, as tours), amenities (a list of ≤ 30 short lines of ≤ 100), check_in_time, check_out_time, cancellation_policy (plain text ≤ 2,000, required), is_active, created_at, updated_at. Never deleted.
+- **HotelPhoto**: as TourPhoto (§26), at most 12 per hotel, public storage `hotels/<schema>/<hotel>/`; the first is the cover.
+- **RoomType**: hotel, name (≤ 80, unique within the hotel, e.g. "Deluxe Double", "Family Tent"), description (≤ 300), max_adults (1–10), max_children (0–6), position, is_active. A room type that has been booked cannot be deleted, only deactivated.
+- **RoomRate**: room_type, name (≤ 60, unique within the room type, e.g. "Bed & breakfast", "Full board, East Africa resident"), description (≤ 200), position, is_active. A booked rate cannot be deleted, only deactivated.
+- **RatePeriod**: rate, start_date, end_date (≥ start_date), price_per_night (> 0, for the room at any occupancy up to its maximum). A rate's periods never overlap. A night is priced by the period that contains it.
+  - A stay (check-in to check-out, 1–30 nights) is **offered** at a rate when the hotel, room type and rate are active and every night falls in one of the rate's periods; its price is the sum of the nights' prices.
+  - A hotel's **from price**, without dates, is the lowest price_per_night among periods of its offered rates that have not ended; with dates, it is the lowest stay price.
+- **HotelBooking**: hotel, user (customer), created_by (the admin when booked for the customer, null otherwise), check_in, check_out (1–30 nights; check-in today or later, Nairobi), status (see below), total (the rooms' sum, copied at booking), changes (old and new total and the admin's note, null when none), changes_accepted, payment_deadline, reminder_sent_at, unavailable_message (≤ 2,000, blank allowed), hotel_confirmation (≤ 40, set on completion), special_requests (≤ 1,000, passed to the hotel), notes (≤ 1,000), created_at.
+- **HotelBookingRoom**: booking, room_type, rate, and copied at booking: room_name, rate_name, price (this room's stay price); adults (1 to the room's max_adults), children (0 to its max_children). 1–9 rooms per booking; the same room type and rate may appear more than once, each its own room.
+- **Traveller** (§26) gains a third owner, hotel_room (a HotelBookingRoom); the database check becomes exactly one of tour_line, booking and hotel_room. Each room has its lead guest (full name required, the rest optional), and may hold more guests, up to its adults plus children.
+- **HotelVoucher**: booking, file (private, `hotel_vouchers/<schema>/<booking>/`), original_name, uploaded_at; as boarding passes: PDF/PNG/JPEG ≤ 5 MB, content-checked, ≤ 10 per booking, upload and delete only while paid.
+- **HotelBookingEvent**: booking, from_status, to_status, actor (null = system), created_at.
+
+Booking (`hotels/services.py`: atomic, `select_for_update`, validates move and actor, writes an event, queues email on commit; views never set status)
+
+| From | To | Who | Notes |
+| --- | --- | --- | --- |
+| requested | availability_confirmed | admin | Needs payment instructions. Deadline = now + hold hours. Optional new total with a note (≤ 500), recorded in `changes`. |
+| requested / availability_confirmed | unavailable | admin | Optional message to the customer. |
+| requested / availability_confirmed | cancelled | customer | No email. |
+| requested / availability_confirmed | expired | system | Deadline passed, or still requested on the check-in day. |
+| availability_confirmed | paid | admin | Refused after the deadline or while changes await acceptance. |
+| availability_confirmed | declined | customer | Only while changes await acceptance. No email. |
+| paid | completed | admin | "Send voucher": needs the hotel's confirmation number and at least one voucher. |
+
+- **Creating**: the customer (signed in) or an admin for an active customer sends the dates, rooms (room type, rate, adults, children, lead guest and any more guests), special requests and notes. Every room must be offered for the dates (409 "Deluxe Double is not available for these dates" otherwise) and the occupancy within the room's limits (400). The booker's account must have a phone (asked for and saved when missing). Prices are worked out by the server and copied; later rate changes never touch a booking. Admin-made bookings start requested too, with no "new booking" email to the admins.
+- Customers accept changes with `accept-changes` (the total becomes the new one) or decline them.
+- **Guests**: the customer edits them while requested; after that only an admin, until completed. Each room keeps its lead guest.
+- The scheduled tasks `expire_unpaid_bookings`, `send_payment_reminders` (`reminder_hours_before`) and `expire_stale_requests` (check-in day reached) also cover hotel bookings.
+
+Emails (HTML plus text, as §6; each shows the hotel, address, dates, nights, check-in and check-out times, each room with its rate, adults and children and lead guest, special requests and the total)
+- Agency admin: new hotel booking (customer-made only).
+- Customer: availability confirmed (payment instructions, deadline, any new total with the note), unavailable (the admin's message), payment received, booking expired, payment reminder, voucher (the confirmation number, every voucher attached, the cancellation policy).
+
+API (agency host)
+- Public: `hotels` (active hotels with at least one offered rate; filters: `search` over name and destination, `check_in` and `check_out` (together: only hotels offered for those dates), `adults` and `children` (some room fits them), `stars` (minimum), price range on the from price; ordering by from price (default), stars or name) and `hotels/{id}` (with `check_in` and `check_out`: each room type's rates with `stay_price` and `nights`, or `available: false`). Each hotel returns its fields, `from_price` (per night without dates, for the stay with them), `photos` and room types with their offered rates.
+- Signed in (customers): `hotel-bookings` (own; create; `{id}`; `cancel`, `accept-changes`, `decline-changes`), each with its hotel, rooms and guests, status timeline, vouchers, `can_cancel` and `can_edit_guests`; `hotel-bookings/{id}/rooms/{room_id}/guests` (POST) and `hotel-bookings/{id}/guests/{traveller_id}` (PATCH, DELETE; never the lead guest); `hotel-vouchers/{id}/download` (admin, or the customer once completed).
+- Admin: `admin/hotels` (all, with room types, rates and periods; filters active / inactive; create; PATCH with room types, rates and periods, the whole list replacing the old one, an omitted booked room type or rate refused (400); no delete), `admin/hotels/{id}/photos` and `admin/hotels/{id}/photos/{photo_id}` (as tours), `admin/hotel-bookings` (status and hotel filters; create for a customer; `{id}`; `confirm-availability {new_total?, note?}`, `mark-unavailable {message?}`, `mark-paid`, `vouchers` (upload), `complete {hotel_confirmation}`; guests as for customers), `admin/hotel-vouchers/{id}` (delete).
+
+App
+- **Explore › Hotels**: a search bar with destination, check-in and check-out, and guests (adults, children); stars and price filters (sidebar on wide screens, panel on phones) and sort by price, stars or name. Cards: cover (or a placeholder), name, stars, destination and "From $X per night", or with dates "$Y for N nights". Two to three columns on wide screens, one on phones. Empty state: "No hotels match" or "No hotels right now".
+- **Hotel detail** (own URL): gallery as tours, name, stars, destination and address, summary, description, amenities, check-in and check-out times, cancellation policy, and the rooms: each room type with its description, "Sleeps 2 adults, 1 child", and its rates with the stay price for the chosen dates ("Choose dates to see prices" without; "Not available for these dates" when not offered), each with Add room. A summary card lists the rooms added, nights and total, with Request booking.
+- **Request booking** (full page, behind the auth gate): dates, per room its adults and children (within the limits) and the lead guest (the first prefilled with the customer's name, email and phone), "Add guest" with the shared traveller form up to the room's guests; phone when the account has none; special requests; notes; the cancellation policy; total; and Request booking, with "The agency will confirm availability with the hotel". On success it opens the booking.
+- **Customer Bookings › Hotels**: cards with the cover, hotel, dates, rooms and total. Detail: the hotel and stay, rooms with their guests (edit while `can_edit_guests`), progress tracker or end banner, payment box with countdown, changes box (accept or decline), the agency's message when unavailable, the voucher and confirmation number once completed (preview first), and Cancel while `can_cancel`.
+- **Admin › Hotels** (a nav item; on phones it joins "More" as the tab rules say) with two tabs:
+  - **Bookings** (default): status tabs and a table (hotel, guest, dates, rooms, total, status); a booking opens beside the slim rail with booker, stay, rooms and guests (edit while allowed), timeline and the action bar: Confirm availability (a dialog with an optional new total and note), Mark unavailable (a dialog with an optional message), Mark paid, voucher upload, and Send voucher (a dialog asking the confirmation number). New booking for a customer (pick an active customer, then the Request booking page filled in for them).
+  - **Hotels**: a table with name, destination, stars, room types, from price and Active; a hotel opens beside the rail with its fields, rooms, rates and periods, photos and its bookings; Edit, Activate or Deactivate. **New hotel** and **Edit hotel** are full pages: the fields, rich-text description, amenities lines, check-in and check-out times, cancellation policy, a room type editor (add, edit, reorder, deactivate; delete only when never booked), per room type a rate editor, per rate a period table (start, end, price per night) that refuses overlaps, and photos (web only, as tours).
+
+Tests
+- Backend:
+  - Hotel validation: fields, lists, sanitized description, occupancy limits, unique names, overlapping periods refused, booked room types and rates only deactivated.
+  - Pricing: nights across two periods, a night not covered (not offered), from price with and without dates, inactive hotel, room type or rate.
+  - Booking: create by customer and admin, occupancy, 1–9 rooms, 1–30 nights, check-in in the past, the phone, the 409 when a rate stopped covering the dates, prices copied and unchanged by later edits.
+  - Every transition and actor, changes accepted and declined, the deadline and stale-request expiry with frozen time, reminders, voucher upload rules and completion needing a confirmation number and a voucher.
+  - Guests: lead guest required per room, the limit per room, edits by the customer while requested and admins until completed, never visible to other customers; the Traveller check with three owners.
+  - Every email (and none on customer cancel or decline, no admin email for admin-made bookings). Photos as tours. Filters and ordering. `module_off` when hotels is off, and turning hotels off refused with open hotel bookings. Isolation between agencies. UUID keys on the new models.
+- Frontend: type-check, lint, format check, web export. Browser check at 1280 and 390 px: Explore Hotels with and without dates, filters and sort; hotel detail prices across a season change; requesting two rooms as a guest through the auth gate; the admin confirming with a new total and the customer accepting; mark paid, voucher upload and send; the customer opening the voucher; unavailable with a message; creating a hotel with rooms, rates, periods (an overlap refused) and photos.
