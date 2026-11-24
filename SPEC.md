@@ -494,37 +494,46 @@ Goal: an agency with an Amadeus API contract can search its routes through it. A
 
 ## 24. Step 44: Agency themes
 
-Goal: each agency can give its site, app and emails its own look by choosing one of a fixed set of preset themes. A theme sets two brand colours and the shades that go with them. Agencies cannot type in their own colours: every preset is checked for readable contrast once, here. This replaces "per-agency branding" in the out-of-scope list (§1), and §19's "Branding stays shared": the shared mobile app takes the colours of the agency it is set to.
+Goal: each agency can give its site, app and emails its own look by choosing a theme from a list the system owner manages. A theme sets two brand colours and the shades that go with them. Agencies cannot type in their own colours, and the owner cannot save a theme whose text would be hard to read: the server checks contrast on every save. This replaces "per-agency branding" in the out-of-scope list (§1), and §19's "Branding stays shared": the shared mobile app takes the colours of the agency it is set to.
 
-Presets
-- A theme sets **primary** (top bar, links, selected states; white text on it) and **accent** (prices and main calls to action; dark text #252525 on it), plus the primary's tint (chat bubbles, highlights; the primary blended about 9% over white) and its hover shade. Everything else stays the same in every theme: the slate-green tertiary, the neutrals, the background and surface, the status colours and their chip tints, the type scale.
-- The presets, by key (name; primary / accent). Every primary gives at least 4.5:1 with white text, on its tint and on the background, and every accent at least 4.5:1 with #252525:
-  - `indigo-amber` (Indigo & Amber; #1800d2 / #ffb400), the default and today's colours
-  - `navy-gold` (Navy & Gold; #1b3a6b / #f2c14e)
-  - `teal-coral` (Teal & Coral; #00676b / #ff8a65)
-  - `forest-lime` (Forest & Lime; #1e5631 / #a4de02)
-  - `burgundy-sand` (Burgundy & Sand; #7b1e3a / #f4d58d)
-  - `plum-peach` (Plum & Peach; #5b2a86 / #ffb38a)
-  - `charcoal-sky` (Charcoal & Sky; #2b2d42 / #8ecae6)
-  - `ocean-sunflower` (Ocean & Sunflower; #0057b8 / #ffd100)
-- The presets are defined once, in the backend (`tenants/themes.py`): key, name and each colour. The app gets them from the API and holds no copy. Adding a preset later is a code change only.
+Colours
+- A theme sets **primary** (top bar, links, selected states; white text on it) and **accent** (prices and main calls to action; dark text #252525 on it). The server derives the primary's **tint** (chat bubbles, highlights; the primary blended 9% over white) and its **hover** shade, so the owner enters only the two colours.
+- Everything else is the same in every theme: the slate-green tertiary, the neutrals, the background and surface, the status colours and their chip tints, the type scale.
+- **Azaria's own colours** (today's `theme.ts` values) stay in the code. They are used wherever there is no agency: the platform app, platform emails, the web app's loading state and the mobile Find your agency screen.
 
-Model and backend
-- **Tenant** gains `theme` (a preset key, default `indigo-amber`). The migration gives existing agencies the default. An unknown key is refused with 400.
-- `create_agency` takes the theme (default `indigo-amber`); `manage.py create_agency` gains `--theme`; `/django-admin/` shows it as a choice.
-- `GET /api/agency` adds `theme`: `{key, name, colors: {primary, primary_text, primary_tint, primary_hover, accent, accent_text}}`.
-- `GET /api/admin/themes` and `GET /api/platform/themes`: every preset in that shape, in the order above.
-- `GET/PATCH /api/admin/settings` returns and accepts `theme` (the key) and saves it on the agency.
-- Platform `tenants` returns `theme` and accepts it on create and PATCH.
-- Emails: the agency's emails use its theme in the base layout (the header bar and anything else that uses the primary or accent today). Platform emails (invoices, suspension, platform desk) keep the default theme.
+Model (public schema)
+- **Theme**: name (unique, ≤ 40 characters), primary and accent (`#rrggbb`, stored lowercase), is_active, is_default, created_at. Exactly one theme is the default, and it is active. Themes are never deleted.
+- Contrast rules, checked on create and on every change, with the WCAG contrast ratio: the primary at least 4.5:1 against white, against its tint and against the background #f2f4f7; the accent at least 4.5:1 against #252525. A failing save is refused with 400 naming the rule and the ratio (for example "White text on this primary is 3.1:1; it needs 4.5:1.").
+- **Tenant** gains `theme` (FK Theme, protected, required).
+- The migration creates the eight starting themes below (all of which pass the rules), makes Indigo & Amber the default, and gives every existing agency the default:
+  - Indigo & Amber (#1800d2 / #ffb400), the default and today's colours
+  - Navy & Gold (#1b3a6b / #f2c14e)
+  - Teal & Coral (#00676b / #ff8a65)
+  - Forest & Lime (#1e5631 / #a4de02)
+  - Burgundy & Sand (#7b1e3a / #f4d58d)
+  - Plum & Peach (#5b2a86 / #ffb38a)
+  - Charcoal & Sky (#2b2d42 / #8ecae6)
+  - Ocean & Sunflower (#0057b8 / #ffd100)
+- Editing a theme's colours changes every agency that uses it (from their next load). An inactive theme is no longer offered, but agencies already using it keep it until they choose another. The default cannot be deactivated.
+
+Backend
+- `create_agency` takes a theme (default: the default theme); `manage.py create_agency` gains `--theme <name>`. `/django-admin/` lists themes read-only and shows the agency's theme as a choice.
+- Choosing a theme for an agency: an active theme, or the one it already has. Anything else is refused with 400.
+- A theme in the API: `{id, name, colors: {primary, primary_text, primary_tint, primary_hover, accent, accent_text}}`, with `is_active`, `is_default` and `agency_count` added in the platform API.
+- `GET /api/agency` adds `theme`.
+- `GET /api/admin/themes`: the active themes, default first, then by name. `GET/PATCH /api/admin/settings` returns and accepts `theme` (its id) and saves it on the agency.
+- Platform: `themes` (list with inactive ones; create; PATCH name, primary, accent, is_active) and `themes/{id}/make-default` (active themes only). `tenants` returns `theme` and accepts it on create and PATCH.
+- Emails: an agency's emails use its theme in the base layout (the header bar and anything else that uses the primary or accent today). Platform emails (invoices, suspension, platform desk) use Azaria's own colours.
 
 App
-- Web: the agency app loads `GET /api/agency` before its first screen (a plain loading state in neutral colours until then) and applies the theme. Every screen uses the theme's colours, including styles built when a file loads. No screen may keep the default colours once a theme is applied.
-- Native: the stored agency (§19) keeps its theme. On launch the app applies the stored theme at once and refreshes it from `GET /api/agency`. Find your agency, before an agency is chosen, uses the default theme. Switching agency applies the new agency's theme.
-- The platform app always uses the default theme.
-- Admin › Settings gains a **Theme** card: a dropdown of the presets by name, a preview of the selected pair beside it (a strip of the top bar in the primary with the agency's name, and an accent "Book" button with a price), and Save. Saving applies the theme to the admin's own app at once (the screens re-render with the new colours; on web the page reloads). Other users get it the next time they load the app.
-- Platform › New agency dialog gains a Theme dropdown (default Indigo & Amber) with the same preview. The agency's detail page shows its theme in the Agency section and can change it.
+- Web: the agency app loads `GET /api/agency` before its first screen and applies the theme; until then a plain loading state in Azaria's colours. Every screen uses the theme's colours, including styles built when a file loads; no screen may keep Azaria's colours once a theme is applied.
+- Native: the stored agency (§19) keeps its theme. On launch the app applies the stored theme at once and refreshes it from `GET /api/agency`. Switching agency applies the new agency's theme.
+- The platform app always uses Azaria's colours.
+- A shared **theme preview**: a strip of the top bar in the primary with the agency's name (or "Your agency"), a line of text and a link on the tint, and an accent "Book" button beside a price.
+- Agency Admin › Settings gains a **Theme** card: a dropdown of the active themes by name, the preview of the selected one, and Save. Saving applies the theme to the admin's own app at once (the screens re-render with the new colours; on web the page reloads). Other users get it the next time they load the app.
+- Platform › New agency dialog gains a Theme dropdown (active themes, the default preselected) with the preview. The agency's detail page shows its theme in the Agency section and can change it.
+- Platform › Settings gains a **Themes** section: a table of themes (the two colours as swatches, name, agencies using it, a Default chip, Active or Inactive), New theme, and a dialog to create or edit one. The dialog has the name, each colour as a hex field with the browser's colour picker beside it (web only), the live preview, and the four contrast checks with their ratios, each passing or failing as the colours change. Save is disabled while a check fails, and the server checks again. Rows also offer Make default (active themes) and Deactivate or Activate (not on the default).
 
 Tests
-- Backend: every preset meets the contrast rules above (computed in the test); the default on creation and on existing agencies; `create_agency` and the command with a theme; unknown keys refused (admin settings, platform create and PATCH); `GET /api/agency` and both themes lists; an admin can change only their own agency's theme; agency emails render with the agency's colours, platform emails with the default.
-- Frontend: type-check, lint, format check, web export. Browser check at 1280 and 390 px on two agencies with different themes: Explore, offer detail, a booking, Dashboard and Settings, with no default-coloured leftovers; changing the theme in Settings; the platform New agency dialog. Device check (the user's): the native app takes the agency's theme and changes it on Switch agency.
+- Backend: the migration's eight themes pass every rule, the default is Indigo & Amber, and existing agencies get it; every contrast rule refuses a failing colour with its ratio on create and on change; colours stored lowercase and the tint and hover derived; exactly one default (make-default moves it; the default cannot be deactivated; an inactive theme cannot be made default); an inactive theme is refused for an agency except the one it already has, and is missing from the admin list; `create_agency` and the command with and without a theme; `GET /api/agency`, admin settings (an admin changes only their own agency's theme), the platform themes and tenants endpoints and their permissions; agency emails render with the agency's colours, platform emails with Azaria's.
+- Frontend: type-check, lint, format check, web export. Browser check at 1280 and 390 px on two agencies with different themes: Explore, offer detail, a booking, Dashboard and Settings, with no leftovers in Azaria's colours; changing the theme in Settings; the platform Themes section (create a theme, a failing pair with Save disabled, edit, make default, deactivate) and the New agency dialog. Device check (the user's): the native app takes the agency's theme and changes it on Switch agency.
