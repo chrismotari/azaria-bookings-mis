@@ -1,6 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { colors, font, radius, space, weight } from '../theme';
+import { colors, createStyles, font, radius, space, weight } from '../theme';
 import { PressState } from './pressState';
 
 type Option<T extends string> = { value: T; label: string };
@@ -42,7 +42,7 @@ export function SegmentedControl<T extends string>({ label, options, value, onCh
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   track: {
     flexDirection: 'row',
     padding: 3,
@@ -68,4 +68,4 @@ const styles = StyleSheet.create({
   focused: { outlineColor: colors.primary, outlineStyle: 'solid', outlineWidth: 2, outlineOffset: 2 },
   text: { fontSize: font.small, fontWeight: weight.semibold, color: colors.text, textAlign: 'center' },
   selectedText: { color: colors.primaryText },
-});
+}));

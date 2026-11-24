@@ -1,7 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { BookingChanges } from '../api/types';
-import { colors, font, space, weight } from '../theme';
+import { colors, createStyles, font, space, weight } from '../theme';
 import { describeChanges } from '../utils/bookings';
 import { Icon } from './Icon';
 
@@ -23,11 +23,11 @@ export function ChangeList({ changes }: { changes: BookingChanges }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   list: { gap: space.sm },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   label: { color: colors.muted, minWidth: 130 },
   values: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.xs, flexShrink: 1 },
   old: { color: colors.muted, textDecorationLine: 'line-through' },
   new: { color: colors.text, fontWeight: weight.bold, fontSize: font.body },
-});
+}));

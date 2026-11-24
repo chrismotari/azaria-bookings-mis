@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { z } from 'zod';
 
 import { api } from '../../api/client';
@@ -29,7 +29,7 @@ import { SegmentedControl } from '../../components/SegmentedControl';
 import { SelectField } from '../../components/SelectField';
 import { TextField } from '../../components/TextField';
 import { Toggle } from '../../components/Toggle';
-import { colors, font, radius, space, weight } from '../../theme';
+import { colors, createStyles, font, radius, space, weight } from '../../theme';
 import { FARES_KEY, ROUTES_KEY, SCHEDULES, WEEKDAYS } from './gds';
 
 const TRIP_TYPES: { value: TripType; label: string }[] = [
@@ -636,7 +636,7 @@ function AirlineList({ value, onChange }: { value: Airline[]; onChange: (value: 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   form: { gap: space.lg },
   saved: { color: colors.successText, fontWeight: weight.semibold },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', gap: space.sm },
@@ -664,4 +664,4 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   airlineName: { flex: 1, minWidth: 0, color: colors.text },
-});
+}));

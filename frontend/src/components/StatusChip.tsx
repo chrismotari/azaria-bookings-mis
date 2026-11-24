@@ -1,6 +1,6 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { colors, font, radius, weight } from '../theme';
+import { colors, createStyles, font, radius, weight } from '../theme';
 
 export type Tone = 'info' | 'success' | 'warning' | 'neutral' | 'danger';
 
@@ -23,7 +23,7 @@ export function StatusChip({ label, tone }: { label: string; tone: Tone }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   chip: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
@@ -35,4 +35,4 @@ const styles = StyleSheet.create({
   },
   dot: { width: 6, height: 6, borderRadius: 3 },
   text: { fontSize: font.caption, fontWeight: weight.bold },
-});
+}));

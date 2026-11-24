@@ -1,7 +1,7 @@
 import { Children, ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { colors, font, radius, weight } from '../theme';
+import { colors, createStyles, font, radius, weight } from '../theme';
 
 export function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
   return (
@@ -41,7 +41,7 @@ export const inputStyle = {
   minHeight: 38,
 } as const;
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   field: { gap: 4, minWidth: 0 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   gridItem: { flexGrow: 1, flexBasis: 180, minWidth: 0 },
@@ -49,4 +49,4 @@ const styles = StyleSheet.create({
   label: { fontSize: font.small, fontWeight: weight.semibold, color: colors.muted },
   error: { fontSize: font.small, color: colors.danger },
   formError: { fontSize: font.small },
-});
+}));

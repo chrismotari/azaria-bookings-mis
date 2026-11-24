@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
-import { colors, radius, shadow, space } from '../theme';
+import { colors, createStyles, radius, shadow, space } from '../theme';
 
 export function Card({ children, selected }: { children: ReactNode; selected?: boolean }) {
   return (
@@ -11,7 +11,7 @@ export function Card({ children, selected }: { children: ReactNode; selected?: b
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
@@ -22,4 +22,4 @@ const styles = StyleSheet.create({
     ...shadow,
   },
   selected: { borderColor: colors.primary, backgroundColor: colors.primaryTint },
-});
+}));

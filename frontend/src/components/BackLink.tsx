@@ -1,6 +1,7 @@
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Button } from './Button';
+import { createStyles } from '../theme';
 
 /** For pages opened from a list, which have no back arrow. */
 export function BackLink({ label, onPress }: { label: string; onPress: () => void }) {
@@ -11,6 +12,6 @@ export function BackLink({ label, onPress }: { label: string; onPress: () => voi
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   back: { alignSelf: 'flex-start' },
-});
+}));

@@ -3,7 +3,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { firstMessage } from '../../api/errors';
@@ -22,7 +22,7 @@ import {
 } from '../../components/OfferFilterFields';
 import { Pagination } from '../../components/Pagination';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
-import { colors, font, weight } from '../../theme';
+import { colors, createStyles, font, weight } from '../../theme';
 import { formatDate, formatPrice, stopsLabel, ticketClassLabel, tripDates } from '../../utils/format';
 import { OfferFields } from './OfferFields';
 import { OfferFormValues, offerSchema, toOfferBody } from './offerSchema';
@@ -289,7 +289,7 @@ export function SelectableOffer({ offer, selected, onToggle, kind = 'checkbox' }
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   actions: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   option: {
     flexDirection: 'row',
@@ -322,4 +322,4 @@ const styles = StyleSheet.create({
   text: { color: colors.text },
   muted: { color: colors.muted },
   error: { color: colors.danger, fontSize: font.small },
-});
+}));

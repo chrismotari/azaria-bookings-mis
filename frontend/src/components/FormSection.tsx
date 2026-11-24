@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
-import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Text, View, ViewStyle } from 'react-native';
 
-import { colors, font, radius, shadow, space, weight } from '../theme';
+import { colors, createStyles, font, radius, shadow, space, weight } from '../theme';
 import { Card } from './Card';
 
 type SectionProps = {
@@ -30,7 +30,7 @@ export function FormFooter({ children }: { children: ReactNode }) {
   return <View style={styles.footer}>{children}</View>;
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   heading: { gap: 2, paddingBottom: space.xs },
   title: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text },
   titlePlain: { fontSize: font.body },
@@ -51,4 +51,4 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     ...shadow,
   } as unknown as ViewStyle,
-});
+}));

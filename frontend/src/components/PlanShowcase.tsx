@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { BillingCycle, PlanTag, PublicPlan } from '../api/types';
-import { colors, font, radius, shadow, shadowRaised, space, useIsWide, weight } from '../theme';
+import { colors, createStyles, font, radius, shadow, shadowRaised, space, useIsWide, weight } from '../theme';
 import { formatMoney } from '../utils/format';
 import { Button } from './Button';
 import { RichText } from './rich/RichText';
@@ -174,7 +174,7 @@ function PlanCard({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   showcase: { gap: space.xl },
   switch: { alignSelf: 'center', minWidth: 260 },
   grid: { gap: space.lg },
@@ -219,4 +219,4 @@ const styles = StyleSheet.create({
   support: { gap: space.md },
   section: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text },
   muted: { color: colors.muted },
-});
+}));

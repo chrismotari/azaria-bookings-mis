@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
@@ -20,7 +20,7 @@ import { Icon } from '../../components/Icon';
 import { StatusChip } from '../../components/StatusChip';
 import { DetailError } from '../../components/DetailLayout';
 import { LoadingState } from '../../components/StatusViews';
-import { colors, font, radius, space, weight } from '../../theme';
+import { colors, createStyles, font, radius, space, weight } from '../../theme';
 import { BOOKING_STATUS, TERMINAL_STATUSES, changesAwaitingAcceptance, timeLeft } from '../../utils/bookings';
 import { formatDateTime } from '../../utils/format';
 
@@ -225,7 +225,7 @@ function PaymentBox({ deadline, instructions }: { deadline: string | null; instr
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   payment: {
     gap: space.md,
     padding: space.lg,
@@ -274,4 +274,4 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row' },
   text: { color: colors.text },
   muted: { color: colors.muted },
-});
+}));

@@ -4,7 +4,7 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { z } from 'zod';
 
 import { api } from '../../api/client';
@@ -22,7 +22,7 @@ import { Screen } from '../../components/Screen';
 import { LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
 import { MainTabParamList, QueryPrefill } from '../../navigation/types';
-import { colors, font, weight } from '../../theme';
+import { colors, createStyles, font, weight } from '../../theme';
 import { todayInNairobi } from '../../utils/format';
 
 type FormValues = {
@@ -277,8 +277,8 @@ function QueryForm({ prefill, origin, destination }: FormProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   help: { color: colors.muted },
   actions: { flexDirection: 'row', gap: 8 },
-});
+}));

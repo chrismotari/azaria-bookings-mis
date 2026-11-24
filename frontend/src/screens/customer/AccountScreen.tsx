@@ -1,12 +1,12 @@
 import { useNavigation } from '@react-navigation/native';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { useAuth } from '../../auth/AuthContext';
 import { useSignOut } from '../../auth/useSignOut';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Screen } from '../../components/Screen';
-import { colors, font, weight } from '../../theme';
+import { colors, createStyles, font, weight } from '../../theme';
 
 export function AccountScreen() {
   const { user } = useAuth();
@@ -42,8 +42,8 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   row: { gap: 2 },
   label: { fontSize: font.small, fontWeight: weight.semibold, color: colors.muted },
   value: { fontSize: font.body, color: colors.text },
-});
+}));

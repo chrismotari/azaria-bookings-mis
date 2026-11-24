@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { z } from 'zod';
 
 import { api } from '../../api/client';
@@ -17,7 +17,7 @@ import { SelectField } from '../../components/SelectField';
 import { StatusChip } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
-import { colors, font, radius, space, weight } from '../../theme';
+import { colors, createStyles, font, radius, space, weight } from '../../theme';
 import { timeAgo } from '../../utils/format';
 import { INTEGRATIONS_KEY, PROVIDERS, providerLabel, useIntegrations } from './gds';
 
@@ -334,7 +334,7 @@ function IntegrationDialog({ integration, onClose }: { integration?: Integration
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   list: { gap: space.sm },
   row: {
     gap: space.sm,
@@ -358,4 +358,4 @@ const styles = StyleSheet.create({
   failed: { color: colors.dangerText },
   actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space.sm },
   start: { alignItems: 'flex-start' },
-});
+}));

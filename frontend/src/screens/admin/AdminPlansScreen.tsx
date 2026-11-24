@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { useAuth } from '../../auth/AuthContext';
@@ -14,7 +14,7 @@ import { ChatPrefill } from '../../support/launcher';
 import { NewChatForm } from '../../support/NewChatForm';
 import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
-import { colors, font, space, weight } from '../../theme';
+import { colors, createStyles, font, space, weight } from '../../theme';
 
 /** The plans the agency can be on, with its own marked; switching is arranged with the platform by email. */
 export function AdminPlansScreen() {
@@ -79,9 +79,9 @@ export function AdminPlansScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   header: { gap: space.xs },
   back: { alignSelf: 'flex-start' },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   muted: { color: colors.muted },
-});
+}));

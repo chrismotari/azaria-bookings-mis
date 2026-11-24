@@ -10,7 +10,7 @@ from django_tenants.utils import get_public_schema_name, schema_context, schema_
 from accounts.models import User
 from core.models import AppSettings
 
-from .models import Domain, Tenant
+from .models import Domain, Tenant, Theme
 
 # What the system owner types: also the first label of the tenant's hostname.
 SLUG = re.compile(r"^[a-z][a-z0-9-]{2,29}$")
@@ -61,8 +61,16 @@ def validate_first_admin(email, password, full_name):
         raise ValidationError(errors)
 
 
-def create_agency(*, slug, name, admin_email, admin_password, admin_name):
-    """Creates a tenant with its schema (migrated), primary domain, settings and first admin.
+def validate_theme_choice(theme, current=None):
+    """An agency may choose an active theme, or keep the one it already has."""
+    if not theme.is_active and theme != current:
+        raise ValidationError({"theme": ["Choose an active theme."]})
+    return theme
+
+
+def create_agency(*, slug, name, admin_email, admin_password, admin_name, theme=None):
+    """Creates a tenant with its schema (migrated), primary domain, settings and first admin. Its theme is the
+    default one unless given.
 
     Raises ValidationError for bad input. It is one transaction (PostgreSQL rolls back schema changes too),
     so if any part fails nothing is left behind.
@@ -74,7 +82,8 @@ def create_agency(*, slug, name, admin_email, admin_password, admin_name):
     validate_first_admin(admin_email, admin_password, admin_name)
 
     with schema_context(get_public_schema_name()), transaction.atomic():
-        tenant = Tenant(schema_name=schema_name_for(slug), name=name.strip())
+        theme = Theme.default() if theme is None else validate_theme_choice(theme)
+        tenant = Tenant(schema_name=schema_name_for(slug), name=name.strip(), theme=theme)
         # Creates and migrates the schema.
         tenant.save(verbosity=0)
         Domain.objects.create(domain=domain_for(slug), tenant=tenant, is_primary=True)

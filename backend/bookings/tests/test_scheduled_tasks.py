@@ -265,6 +265,9 @@ def test_settings_endpoint_rejects_customers_and_guests(api, customer_api):
 
 @pytest.mark.django_db
 def test_admin_reads_and_updates_settings(admin_api, settings):
+    from tenants.models import Theme
+
+    theme = str(Theme.default().pk)
     response = admin_api.get("/api/admin/settings")
     assert response.status_code == 200
     assert response.data == {
@@ -272,6 +275,7 @@ def test_admin_reads_and_updates_settings(admin_api, settings):
         "payment_hold_hours": 24,
         "reminder_hours_before": 4,
         "admin_notification_email": settings.ADMIN_EMAIL,
+        "theme": theme,
     }
     payload = {
         "payment_instructions": "Bank transfer to Azaria Ltd.",
@@ -281,7 +285,7 @@ def test_admin_reads_and_updates_settings(admin_api, settings):
     }
     response = admin_api.patch("/api/admin/settings", payload, format="json")
     assert response.status_code == 200
-    assert response.data == payload
+    assert response.data == {**payload, "theme": theme}
     app_settings = AppSettings.get()
     assert (app_settings.payment_hold_hours, app_settings.admin_notification_email) == (
         48,

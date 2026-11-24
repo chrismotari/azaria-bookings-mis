@@ -2,7 +2,7 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useQuery } from '@tanstack/react-query';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { PlatformDashboard } from '../../api/types';
@@ -24,7 +24,7 @@ import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { PlatformTabParamList } from '../../navigation/types';
-import { space } from '../../theme';
+import { createStyles, space } from '../../theme';
 import { formatDate, formatMoney } from '../../utils/format';
 
 type Props = BottomTabScreenProps<PlatformTabParamList, 'PlatformDashboard'>;
@@ -227,8 +227,8 @@ function PlanRow({ plan, most }: { plan: PlatformDashboard['plans'][number]; mos
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   ...dashboardStyles,
   center: { alignItems: 'center' },
   planRow: { gap: space.xs },
-});
+}));

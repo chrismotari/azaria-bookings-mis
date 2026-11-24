@@ -1,7 +1,7 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { Booking, Paginated } from '../../api/types';
@@ -16,7 +16,7 @@ import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { TripCard } from '../../components/TripCard';
 import { MainTabParamList } from '../../navigation/types';
-import { colors, font, space, weight } from '../../theme';
+import { colors, createStyles, font, space, weight } from '../../theme';
 import { BOOKING_STATUS, bookingDates, bookingRoute, passengersLabel } from '../../utils/bookings';
 import { formatDate, routeCodes, tripDates } from '../../utils/format';
 import { BookingDetailView } from './BookingDetailView';
@@ -130,7 +130,7 @@ function Fact({ icon, text }: { icon: IconName; text: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   list: { gap: space.md },
   between: {
@@ -145,4 +145,4 @@ const styles = StyleSheet.create({
   facts: { flexDirection: 'row', flexWrap: 'wrap', gap: space.lg },
   fact: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   text: { fontSize: font.body, color: colors.text },
-});
+}));

@@ -1,9 +1,9 @@
 import { Editor, EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
-import { colors, font, radius, space } from '../../theme';
+import { colors, createStyles, font, radius, space } from '../../theme';
 import { Field } from '../Field';
 import { Icon, IconName } from '../Icon';
 import { injectCss } from './css';
@@ -17,7 +17,8 @@ type Props = {
   error?: string;
 };
 
-const EDITOR_CSS = `
+/** Built when first used, with the theme's colours. */
+const editorCss = () => `
 ${richTextCss('.az-editor .ProseMirror')}
 .az-editor .ProseMirror { min-height: 200px; padding: 10px 12px; outline: none; }
 .az-editor .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: ${colors.muted}; float: left; height: 0; pointer-events: none; }
@@ -25,7 +26,7 @@ ${richTextCss('.az-editor .ProseMirror')}
 
 /** Web: TipTap, with a toolbar for the formatting descriptions allow. */
 export function RichTextEditor({ label, value, onChange, error }: Props) {
-  useEffect(() => injectCss('az-editor', EDITOR_CSS), []);
+  useEffect(() => injectCss('az-editor', editorCss()), []);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -69,7 +70,7 @@ type Tool = {
   run: () => void;
 };
 
-const TOOLBAR_CSS = `
+const toolbarCss = () => `
 .az-toolbar { display: flex; flex-wrap: wrap; gap: ${space.sm}px; padding: ${space.xs}px; border-bottom: 1px solid ${colors.border}; background: ${colors.background}; border-radius: ${radius.sm}px ${radius.sm}px 0 0; }
 .az-toolbar-group { display: flex; gap: 2px; }
 .az-tool { min-width: 32px; height: 32px; padding: 0 6px; border: 0; border-radius: ${radius.sm}px; background: transparent; color: ${colors.text}; font-family: ${SYSTEM_FONT}; font-size: ${font.body}px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
@@ -86,7 +87,7 @@ const TOOLBAR_CSS = `
 
 /** Buttons cancel mousedown so the editor keeps focus and its selection, as in any word processor. */
 function Toolbar({ editor }: { editor: Editor }) {
-  useEffect(() => injectCss('az-toolbar', TOOLBAR_CSS), []);
+  useEffect(() => injectCss('az-toolbar', toolbarCss()), []);
   const chain = () => editor.chain().focus();
   const editLink = () => {
     const current = editor.getAttributes('link').href as string | undefined;
@@ -197,8 +198,8 @@ function Toolbar({ editor }: { editor: Editor }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   box: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, backgroundColor: colors.surface },
   boxError: { borderColor: colors.danger },
   content: { minHeight: 200 },
-});
+}));

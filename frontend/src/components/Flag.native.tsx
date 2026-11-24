@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { colors } from '../theme';
+import { colors, createStyles } from '../theme';
 import { FLAGS } from './flags.native';
 
 const FLAG_WIDTH = 16;
@@ -19,7 +19,7 @@ export function Flag({ code }: { code: string | null | undefined }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   flag: {
     width: FLAG_WIDTH,
     height: FLAG_HEIGHT,
@@ -28,4 +28,4 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
-});
+}));

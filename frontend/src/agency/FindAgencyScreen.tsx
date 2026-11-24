@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { z } from 'zod';
 
@@ -12,7 +12,7 @@ import { FormError } from '../components/Field';
 import { Icon } from '../components/Icon';
 import { Screen } from '../components/Screen';
 import { TextField } from '../components/TextField';
-import { colors, font, radius, space, weight } from '../theme';
+import { colors, createStyles, font, radius, space, weight } from '../theme';
 import { AGENCY_CODE, chooseAgency, findAgency } from './agency';
 
 const schema = z.object({
@@ -109,7 +109,7 @@ export function FindAgencyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   page: { flex: 1, backgroundColor: colors.background },
   bar: { backgroundColor: colors.primary, paddingHorizontal: space.lg, paddingBottom: space.md },
   brand: { color: colors.primaryText, fontSize: font.heading, fontWeight: weight.heavy },
@@ -128,4 +128,4 @@ const styles = StyleSheet.create({
   agencyName: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text },
   agencyCode: { fontSize: font.small, color: colors.muted },
   hint: { fontSize: font.body, color: colors.muted, textAlign: 'center' },
-});
+}));

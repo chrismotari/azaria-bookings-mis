@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm, useFormState, useWatch } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { z } from 'zod';
 
 import { api } from '../../api/client';
@@ -25,7 +25,7 @@ import { FormSection } from '../../components/FormSection';
 import { DirectionLine, directionsOf } from '../../components/Itinerary';
 import { StatusChip } from '../../components/StatusChip';
 import { TextField } from '../../components/TextField';
-import { colors, font, radius, space, weight } from '../../theme';
+import { colors, createStyles, font, radius, space, weight } from '../../theme';
 import { flightNumber, formatDate, formatMoney, formatPrice } from '../../utils/format';
 import {
   ItineraryFormValues,
@@ -366,7 +366,7 @@ function Line({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   recheckBar: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -404,4 +404,4 @@ const styles = StyleSheet.create({
   text: { color: colors.text, fontSize: font.body },
   muted: { color: colors.muted },
   error: { color: colors.dangerText, fontSize: font.small },
-});
+}));

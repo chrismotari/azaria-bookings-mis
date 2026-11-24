@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 
 import { Airline } from '../api/types';
-import { colors, font, radius, weight } from '../theme';
+import { colors, createStyles, font, radius, weight } from '../theme';
 
 function initials(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
@@ -34,7 +34,7 @@ export function AirlineBadge({ airline, size = 40 }: { airline: Airline; size?: 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   frame: {
     borderRadius: radius.md,
     // Keeps the frame visible on a selected (tinted) card.
@@ -49,4 +49,4 @@ const styles = StyleSheet.create({
   initialsFrame: { backgroundColor: colors.primaryTint },
   initials: { fontSize: font.small, fontWeight: weight.heavy, color: colors.primary },
   initialsSmall: { fontSize: font.caption },
-});
+}));

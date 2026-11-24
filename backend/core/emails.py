@@ -3,7 +3,8 @@ from django.core.mail import EmailMultiAlternatives
 from django.template import engines
 from django.utils import timezone
 
-# Brand colours for the HTML emails (the app's theme.ts), passed to every template as `brand`.
+# Azaria's own colours for the HTML emails (the app's theme.ts), passed to every template as `brand`. Platform
+# emails use them as they are; an agency's emails use its theme's colours instead (email_brand).
 BRAND = {
     "primary": "#1800d2",
     "primary_text": "#ffffff",
@@ -24,14 +25,35 @@ EMAIL_TASK_OPTIONS = {
 }
 
 
-def send_email(template, subject, to, context, attachments=()):
+def email_brand(platform=False):
+    """Azaria's colours for the platform's emails; the agency's theme for an agency's own."""
+    from django.db import connection
+    from django_tenants.utils import get_public_schema_name
+
+    from core.tenancy import current_tenant
+
+    if platform or connection.schema_name == get_public_schema_name():
+        return BRAND
+    colors = current_tenant().theme.colors
+    return {
+        **BRAND,
+        "primary": colors["primary"],
+        "primary_text": colors["primary_text"],
+        "accent": colors["accent"],
+        "accent_text": colors["accent_text"],
+        "highlight": colors["primary_tint"],
+    }
+
+
+def send_email(template, subject, to, context, attachments=(), platform=False):
     """Render core/templates/emails/<template>.txt and .html and send them as text plus an HTML alternative.
 
-    attachments: (filename, content, mimetype) tuples.
+    attachments: (filename, content, mimetype) tuples. platform: the platform's own email (Azaria's colours), even
+    when sent in an agency's schema for its links.
     """
     from core.tenancy import frontend_url
 
-    context = {**context, "frontend_url": frontend_url(), "brand": BRAND}
+    context = {**context, "frontend_url": frontend_url(), "brand": email_brand(platform)}
     body = engines["emails"].get_template(f"emails/{template}.txt").render(context)
     html = engines["django"].get_template(f"emails/{template}.html").render(context)
     message = EmailMultiAlternatives(subject=subject, body=body, to=[to])

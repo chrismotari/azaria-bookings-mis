@@ -1,6 +1,6 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Pressable, Text } from 'react-native';
 
-import { colors, font, radius, space, weight } from '../theme';
+import { colors, createStyles, font, radius, space, weight } from '../theme';
 import { Icon, IconName } from './Icon';
 import { PressState } from './pressState';
 
@@ -16,13 +16,16 @@ type Props = {
   icon?: IconName;
 };
 
-const TEXT_COLOR: Record<Variant, string> = {
-  primary: colors.primaryText,
-  accent: colors.accentText,
-  secondary: colors.tertiary,
-  danger: colors.primaryText,
-  link: colors.primary,
-};
+/** Read while rendering: the brand colours follow the agency's theme. */
+function textColor(variant: Variant): string {
+  return {
+    primary: colors.primaryText,
+    accent: colors.accentText,
+    secondary: colors.tertiary,
+    danger: colors.primaryText,
+    link: colors.primary,
+  }[variant];
+}
 
 export function Button({ title, onPress, variant = 'primary', disabled, loading, icon }: Props) {
   const inactive = disabled || loading;
@@ -41,18 +44,18 @@ export function Button({ title, onPress, variant = 'primary', disabled, loading,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={TEXT_COLOR[variant]} />
+        <ActivityIndicator color={textColor(variant)} />
       ) : (
         <>
-          {icon ? <Icon name={icon} size={17} color={TEXT_COLOR[variant]} /> : null}
-          <Text style={[styles.text, { color: TEXT_COLOR[variant] }]}>{title}</Text>
+          {icon ? <Icon name={icon} size={17} color={textColor(variant)} /> : null}
+          <Text style={[styles.text, { color: textColor(variant) }]}>{title}</Text>
         </>
       )}
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   base: {
     borderRadius: radius.sm,
     paddingVertical: 10,
@@ -73,4 +76,4 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.8 },
   focused: { outlineColor: colors.primary, outlineStyle: 'solid', outlineWidth: 2, outlineOffset: 2 },
   text: { fontSize: font.body, fontWeight: weight.semibold },
-});
+}));

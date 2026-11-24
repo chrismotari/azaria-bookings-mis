@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Linking, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Linking, Text, TextInput, View } from 'react-native';
 import { z } from 'zod';
 
 import { api } from '../../api/client';
@@ -14,7 +14,7 @@ import { FormSection } from '../../components/FormSection';
 import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
-import { colors, font, radius, space, weight } from '../../theme';
+import { colors, createStyles, font, radius, space, weight } from '../../theme';
 import { formatDate } from '../../utils/format';
 
 const RATES_KEY = ['platform', 'exchange-rates'];
@@ -192,7 +192,7 @@ function ManualRateForm() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   form: {
     gap: space.sm,
     padding: space.md,
@@ -223,4 +223,4 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', gap: space.xs },
   credit: { fontSize: font.caption, color: colors.muted },
   link: { color: colors.primary, textDecorationLine: 'underline' },
-});
+}));

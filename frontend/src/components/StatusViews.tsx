@@ -1,7 +1,7 @@
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 
 import { errorMessage } from '../api/errors';
-import { colors, font, space, weight } from '../theme';
+import { colors, createStyles, font, space, weight } from '../theme';
 import { Button } from './Button';
 import { Icon, IconName } from './Icon';
 
@@ -43,7 +43,7 @@ export function EmptyState({ icon, title, message, action }: EmptyProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   box: { padding: space.xxl, alignItems: 'center', gap: space.md },
   error: { color: colors.danger, textAlign: 'center' },
   iconCircle: {
@@ -56,4 +56,4 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text, textAlign: 'center' },
   muted: { color: colors.muted, textAlign: 'center', maxWidth: 420 },
-});
+}));

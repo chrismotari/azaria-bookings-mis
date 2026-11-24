@@ -1,11 +1,13 @@
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
+import type { ThemeColors } from '../theme';
+
 // localStorage on web, expo-secure-store on native.
 
 const ACCESS_KEY = 'azaria.access';
 const REFRESH_KEY = 'azaria.refresh';
-// Native only: the agency the shared app serves, as JSON {code, name}.
+// Native only: the agency the shared app serves, as JSON {code, name, theme}.
 const AGENCY_KEY = 'azaria.agency';
 
 async function getItem(key: string): Promise<string | null> {
@@ -45,7 +47,8 @@ export const tokenStorage = {
   },
 };
 
-export type StoredAgency = { code: string; name: string };
+/** The agency the native app serves, with its theme's colours so the app opens in them at once. */
+export type StoredAgency = { code: string; name: string; theme: ThemeColors | null };
 
 export const agencyStorage = {
   async get(): Promise<StoredAgency | null> {
@@ -56,7 +59,7 @@ export const agencyStorage = {
     try {
       const parsed = JSON.parse(value) as Partial<StoredAgency>;
       return typeof parsed.code === 'string' && typeof parsed.name === 'string'
-        ? { code: parsed.code, name: parsed.name }
+        ? { code: parsed.code, name: parsed.name, theme: parsed.theme ?? null }
         : null;
     } catch {
       return null;

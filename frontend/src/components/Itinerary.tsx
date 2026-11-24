@@ -1,8 +1,8 @@
 import { Fragment } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { Connection, Direction, Itinerary, ItineraryDirection, Segment, Trip } from '../api/types';
-import { colors, font, radius, space, weight } from '../theme';
+import { colors, createStyles, font, radius, space, weight } from '../theme';
 import {
   baggageDetails,
   changeLabel,
@@ -193,7 +193,7 @@ function Row({ label, value }: { label: string; value: string }) {
 
 const DOT = 10;
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   line: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   end: { minWidth: 0 },
   endRight: { alignItems: 'flex-end' },
@@ -258,4 +258,4 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   label: { color: colors.muted, minWidth: 130 },
   value: { color: colors.text, fontWeight: weight.semibold, flexShrink: 1 },
-});
+}));

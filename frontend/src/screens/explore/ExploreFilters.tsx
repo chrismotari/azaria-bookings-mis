@@ -1,10 +1,10 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { Button } from '../../components/Button';
 import { OfferFilterErrors, OfferFilterValues } from '../../components/OfferFilterFields';
 import { OptionChips } from '../../components/OptionChips';
 import { TextField } from '../../components/TextField';
-import { colors, font, space, weight } from '../../theme';
+import { colors, createStyles, font, space, weight } from '../../theme';
 
 const STOPOVER_OPTIONS = [
   { value: '', label: 'Any' },
@@ -67,7 +67,7 @@ export function ExploreFilters({ value, onChange, errors, onApply, onClear }: Pr
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   box: { gap: space.lg },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text },
@@ -75,4 +75,4 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: font.small, fontWeight: weight.bold, color: colors.text },
   prices: { flexDirection: 'row', gap: space.sm },
   price: { flex: 1, minWidth: 0 },
-});
+}));

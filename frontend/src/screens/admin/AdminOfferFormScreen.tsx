@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { applyServerErrors } from '../../api/errors';
@@ -15,7 +15,7 @@ import { FormFooter } from '../../components/FormSection';
 import { Screen } from '../../components/Screen';
 import { DetailError } from '../../components/DetailLayout';
 import { LoadingState } from '../../components/StatusViews';
-import { colors, font, radius, space, weight } from '../../theme';
+import { colors, createStyles, font, radius, space, weight } from '../../theme';
 import { formatDateTime } from '../../utils/format';
 import { OfferFields } from './OfferFields';
 import {
@@ -141,7 +141,7 @@ function OfferForm({ id, initial, onDone }: FormProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   missing: {
     gap: space.xs,
@@ -153,4 +153,4 @@ const styles = StyleSheet.create({
   },
   missingTitle: { fontWeight: weight.bold, color: colors.dangerText },
   missingText: { color: colors.text },
-});
+}));

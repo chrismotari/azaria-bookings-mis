@@ -7,3 +7,6 @@ export const AGENCIES_KEY = ['platform', 'tenants'];
 export const INVOICES_KEY = ['platform', 'invoices'];
 
 export const PLANS_KEY = ['platform', 'plans'];
+
+/** Themes: the Settings list, the New agency dialog and each agency's theme. */
+export const THEMES_KEY = ['platform', 'themes'];

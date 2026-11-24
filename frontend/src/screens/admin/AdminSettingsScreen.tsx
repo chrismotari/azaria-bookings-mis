@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { z } from 'zod';
 
 import { api } from '../../api/client';
@@ -15,8 +15,9 @@ import { FormFooter, FormSection } from '../../components/FormSection';
 import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
-import { colors, font, weight } from '../../theme';
+import { colors, createStyles, font, weight } from '../../theme';
 import { IntegrationsSection } from './IntegrationsSection';
+import { ThemeSection } from './ThemeSection';
 
 const HOURS = /^[1-9]\d{0,4}$/;
 
@@ -187,6 +188,7 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
         {saved ? <Text style={styles.saved}>Settings saved.</Text> : null}
         <Button title="Save settings" onPress={onSubmit} loading={formState.isSubmitting} />
       </FormFooter>
+      <ThemeSection current={settings.theme} settingsKey={SETTINGS_KEY} />
       <IntegrationsSection />
       <FormSection title="Billing" description="Your agency's plans with Azaria Bookings and their invoices.">
         <View style={styles.billing}>
@@ -215,9 +217,9 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   billing: { alignItems: 'flex-start' },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   warning: { color: colors.danger },
   saved: { color: colors.success, fontWeight: weight.semibold },
-});
+}));

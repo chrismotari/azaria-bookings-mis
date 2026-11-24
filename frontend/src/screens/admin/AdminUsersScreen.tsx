@@ -1,7 +1,7 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { AdminCustomer, Paginated } from '../../api/types';
@@ -15,7 +15,7 @@ import { Column, Table, TableRow } from '../../components/Table';
 import { TextField } from '../../components/TextField';
 import { TripCard } from '../../components/TripCard';
 import { AdminTabParamList } from '../../navigation/types';
-import { colors, font, space, useIsWide, weight } from '../../theme';
+import { colors, createStyles, font, space, useIsWide, weight } from '../../theme';
 import { useDebounced } from '../../utils/useDebounced';
 import { AdminUserDetailView, NewUserDialog, USER_STATUS } from './AdminUserDetailView';
 
@@ -202,7 +202,7 @@ function UserCard({ user, selected, onPress }: { user: AdminCustomer; selected: 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   notice: { color: colors.successText, fontWeight: weight.semibold },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   header: {
@@ -218,4 +218,4 @@ const styles = StyleSheet.create({
   name: { fontSize: font.body, fontWeight: weight.bold, color: colors.text, flexShrink: 1 },
   text: { color: colors.text },
   muted: { color: colors.muted },
-});
+}));

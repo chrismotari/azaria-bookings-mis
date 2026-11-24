@@ -5,6 +5,42 @@ from django_tenants.models import DomainMixin, TenantMixin
 
 from core.storage import private_storage
 
+from .themes import derived_colors
+
+
+class Theme(models.Model):
+    """An agency's look: two brand colours, with the shades derived from them (tenants.themes). Managed by the system
+    owner; agencies choose one. Exactly one theme is the default, and it is active. Never deleted."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=40, unique=True)
+    # #rrggbb, stored lowercase; every save passes the contrast rules (checked by the serializer).
+    primary = models.CharField(max_length=7)
+    accent = models.CharField(max_length=7)
+    # An inactive theme is no longer offered; agencies already using it keep it.
+    is_active = models.BooleanField(default=True)
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["is_default"], condition=models.Q(is_default=True), name="one_default_theme"
+            ),
+        ]
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def colors(self):
+        return derived_colors(self.primary, self.accent)
+
+    @classmethod
+    def default(cls):
+        return cls.objects.get(is_default=True)
+
 
 class Tenant(TenantMixin):
     """A travel agency with its own PostgreSQL schema. The public schema's row is the platform itself (app_admin).
@@ -28,6 +64,8 @@ class Tenant(TenantMixin):
     suspended_at = models.DateTimeField(null=True, blank=True)
     # Fare searches the agency may run per calendar month (Nairobi time), across all its routes and integrations.
     monthly_search_allowance = models.PositiveIntegerField(default=1500)
+    # The agency's site, app and emails use its colours; choosing one goes through services.validate_theme_choice.
+    theme = models.ForeignKey(Theme, on_delete=models.PROTECT, related_name="tenants")
 
     auto_create_schema = True
     auto_drop_schema = False

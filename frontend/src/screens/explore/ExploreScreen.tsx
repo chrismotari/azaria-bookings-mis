@@ -1,7 +1,7 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
 import { GetAppFooter } from '../../agency/GetAppFooter';
 import { api } from '../../api/client';
@@ -22,7 +22,7 @@ import { Pagination } from '../../components/Pagination';
 import { SegmentedControl } from '../../components/SegmentedControl';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { MainTabParamList, QueryPrefill } from '../../navigation/types';
-import { colors, font, radius, space, useIsWide } from '../../theme';
+import { colors, createStyles, font, radius, space, useIsWide } from '../../theme';
 import { formatDate, routeCodes } from '../../utils/format';
 import { ExploreFilters } from './ExploreFilters';
 import { ExploreSearchBar } from './ExploreSearchBar';
@@ -224,7 +224,7 @@ export function ExploreScreen({ navigation, route }: BottomTabScreenProps<MainTa
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   scroll: { flex: 1, backgroundColor: colors.background },
   body: { width: '100%', maxWidth: 1100 + 2 * space.lg, alignSelf: 'center', padding: space.lg, gap: space.lg },
   columns: { flexDirection: 'row', alignItems: 'flex-start' },
@@ -236,4 +236,4 @@ const styles = StyleSheet.create({
   panel: { padding: space.lg, borderRadius: radius.md, backgroundColor: colors.background },
   rows: { gap: space.md },
   footer: { width: '100%', maxWidth: 1100 + 2 * space.lg, alignSelf: 'center', padding: space.lg, paddingTop: 0 },
-});
+}));

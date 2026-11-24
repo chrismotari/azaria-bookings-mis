@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
 
+from tenants.models import Theme
 from tenants.services import create_agency, domain_for
 
 
@@ -15,8 +16,14 @@ class Command(BaseCommand):
         parser.add_argument("--admin-email", required=True)
         parser.add_argument("--admin-password", required=True)
         parser.add_argument("--admin-name", required=True)
+        parser.add_argument("--theme", help="The theme's name (default: the default theme).")
 
     def handle(self, *args, **options):
+        theme = None
+        if options["theme"]:
+            theme = Theme.objects.filter(name=options["theme"]).first()
+            if theme is None:
+                raise CommandError(f"There is no theme named {options['theme']}.")
         try:
             tenant = create_agency(
                 slug=options["schema"],
@@ -24,6 +31,7 @@ class Command(BaseCommand):
                 admin_email=options["admin_email"],
                 admin_password=options["admin_password"],
                 admin_name=options["admin_name"],
+                theme=theme,
             )
         except ValidationError as exc:
             raise CommandError(" ".join(exc.messages)) from exc

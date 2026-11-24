@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { colors, font, radius, shadow, space, weight } from '../theme';
+import { colors, createStyles, font, radius, shadow, space, weight } from '../theme';
 
 export function ActionBar({ label = 'Actions', children }: { label?: string; children: ReactNode }) {
   return (
@@ -12,7 +12,7 @@ export function ActionBar({ label = 'Actions', children }: { label?: string; chi
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   bar: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -29,4 +29,4 @@ const styles = StyleSheet.create({
   },
   label: { fontSize: font.small, fontWeight: weight.bold, color: colors.muted, textTransform: 'uppercase' },
   buttons: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-});
+}));

@@ -8,7 +8,8 @@ from rest_framework.exceptions import AuthenticationFailed
 from accounts.models import User
 from accounts.serializers import LoginSerializer
 
-from .models import Domain, Tenant
+from . import themes
+from .models import Domain, Tenant, Theme
 
 NO_PLATFORM_ACCOUNT = "No platform account found with the given credentials."
 
@@ -42,6 +43,65 @@ class PlatformLoginSerializer(LoginSerializer):
         return data
 
 
+class ThemeSerializer(serializers.ModelSerializer):
+    """A theme as agencies and their apps see it: its name and every colour the app uses."""
+
+    colors = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Theme
+        fields = ["id", "name", "colors"]
+        read_only_fields = fields
+
+    def get_colors(self, theme):
+        return theme.colors
+
+
+class PlatformThemeSerializer(ThemeSerializer):
+    """The owner's view: create and change themes. Every save passes the contrast rules (tenants.themes)."""
+
+    # Declared so validate_name's message (and its case-insensitive check) replaces the model's unique check.
+    name = serializers.CharField(max_length=40)
+    primary = serializers.CharField(write_only=True)
+    accent = serializers.CharField(write_only=True)
+    agency_count = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Theme
+        fields = ["id", "name", "colors", "primary", "accent", "is_active", "is_default", "agency_count"]
+        read_only_fields = ["id", "colors", "is_default", "agency_count"]
+
+    def validate_name(self, value):
+        name = value.strip()
+        if not name:
+            raise serializers.ValidationError("Enter the theme's name.")
+        if Theme.objects.filter(name__iexact=name).exclude(pk=getattr(self.instance, "pk", None)).exists():
+            raise serializers.ValidationError("A theme with this name already exists.")
+        return name
+
+    def _color(self, value):
+        if not themes.HEX.match(value.strip()):
+            raise serializers.ValidationError("Enter a colour as #rrggbb.")
+        return value.strip().lower()
+
+    def validate_primary(self, value):
+        value = self._color(value)
+        if problems := themes.primary_problems(value):
+            raise serializers.ValidationError(problems)
+        return value
+
+    def validate_accent(self, value):
+        value = self._color(value)
+        if problems := themes.accent_problems(value):
+            raise serializers.ValidationError(problems)
+        return value
+
+    def validate_is_active(self, value):
+        if not value and self.instance is not None and self.instance.is_default:
+            raise serializers.ValidationError("The default theme cannot be deactivated.")
+        return value
+
+
 def slug_of(tenant):
     """The address the owner typed: the schema name with its hyphens back."""
     return tenant.schema_name.replace("_", "-")
@@ -65,6 +125,7 @@ class TenantSerializer(serializers.ModelSerializer):
             "billing_email",
             "monthly_search_allowance",
             "searches_this_month",
+            "theme",
             "created_at",
         ]
         read_only_fields = [
@@ -95,6 +156,14 @@ class TenantSerializer(serializers.ModelSerializer):
         if not value.strip():
             raise serializers.ValidationError("Enter the agency's name.")
         return value.strip()
+
+    def validate_theme(self, value):
+        from .services import validate_theme_choice
+
+        try:
+            return validate_theme_choice(value, getattr(self.instance, "theme", None))
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(exc.message_dict["theme"]) from exc
 
 
 class DomainSerializer(serializers.ModelSerializer):
@@ -133,6 +202,8 @@ class TenantCreateSerializer(serializers.Serializer):
     admin_name = serializers.CharField(max_length=150, trim_whitespace=False)
     admin_email = serializers.CharField(max_length=254)
     admin_password = serializers.CharField(write_only=True, trim_whitespace=False)
+    # The default theme when left out.
+    theme = serializers.PrimaryKeyRelatedField(queryset=Theme.objects.all(), required=False)
 
     def validate_slug(self, value):
         return value.strip().lower()

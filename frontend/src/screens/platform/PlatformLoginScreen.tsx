@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { isAxiosError } from 'axios';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 import { z } from 'zod';
 
 import { errorMessage } from '../../api/errors';
@@ -12,7 +12,7 @@ import { Card } from '../../components/Card';
 import { FormError } from '../../components/Field';
 import { Screen } from '../../components/Screen';
 import { TextField } from '../../components/TextField';
-import { colors, font, space, weight } from '../../theme';
+import { colors, createStyles, font, space, weight } from '../../theme';
 
 const schema = z.object({
   email: z.email('Enter a valid email address.'),
@@ -86,7 +86,7 @@ export function PlatformLoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   muted: { color: colors.muted, marginBottom: space.xs },
-});
+}));

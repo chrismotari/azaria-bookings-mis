@@ -2,7 +2,7 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { Dashboard } from '../../api/types';
@@ -25,7 +25,7 @@ import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { AdminTabParamList } from '../../navigation/types';
-import { colors, font, space, weight } from '../../theme';
+import { colors, createStyles, font, space, weight } from '../../theme';
 import { timeLeft, passengersLabel } from '../../utils/bookings';
 import { formatDate, formatMoney, formatPrice, routeCodes } from '../../utils/format';
 
@@ -343,7 +343,7 @@ export function AdminDashboardScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   ...dashboardStyles,
   greeting: { fontSize: font.body, color: colors.muted, marginTop: space.xs },
   subheading: { fontSize: font.small, fontWeight: weight.bold, color: colors.muted, textTransform: 'uppercase' },
@@ -353,4 +353,4 @@ const styles = StyleSheet.create({
   routeRow: { gap: space.xs, paddingVertical: space.xs },
   figures: { alignItems: 'flex-end' },
   chip: { alignSelf: 'flex-start', marginTop: 2 },
-});
+}));

@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 import { z } from 'zod';
 
 import { api } from '../../api/client';
@@ -11,7 +11,7 @@ import { Button } from '../../components/Button';
 import { FormError } from '../../components/Field';
 import { TextField } from '../../components/TextField';
 import { RootStackParamList } from '../../navigation/types';
-import { colors } from '../../theme';
+import { colors, createStyles } from '../../theme';
 import { AuthLayout } from './AuthLayout';
 import { passwordSchema } from './passwordSchema';
 
@@ -95,6 +95,6 @@ export function ResetPasswordScreen({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   error: { color: colors.danger },
-});
+}));

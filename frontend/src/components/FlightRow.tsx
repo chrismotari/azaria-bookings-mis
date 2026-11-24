@@ -1,7 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { Offer } from '../api/types';
-import { colors, font, radius, shadow, space, weight } from '../theme';
+import { colors, createStyles, font, radius, shadow, space, weight } from '../theme';
 import { baggageSummary, formatDate, ticketClassLabel } from '../utils/format';
 import { AirlineBadge } from './AirlineBadge';
 import { PressState } from './pressState';
@@ -108,7 +108,7 @@ export function FlightRow({ offer, selected, compact, onPress }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -149,4 +149,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.md,
   },
   viewDealText: { fontSize: font.small, fontWeight: weight.semibold, color: colors.primaryText },
-});
+}));

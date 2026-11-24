@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
-import { colors, space } from '../theme';
+import { colors, createStyles, space } from '../theme';
 import { Card } from './Card';
 
 /** Scrollable page with content centred at a readable max width; `card` wraps the content in one card. */
@@ -21,8 +21,8 @@ export function Screen({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   scroll: { flex: 1, backgroundColor: colors.background },
   container: { padding: space.lg, alignItems: 'center' },
   content: { width: '100%', gap: space.lg },
-});
+}));

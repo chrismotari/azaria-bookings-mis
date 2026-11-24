@@ -2,7 +2,7 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
@@ -18,7 +18,7 @@ import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { Column, RouteCell, Table, TableRow, TwoLineCell } from '../../components/Table';
 import { AdminTabParamList } from '../../navigation/types';
-import { colors, font, radius, space, useIsWide, weight } from '../../theme';
+import { colors, createStyles, font, radius, space, useIsWide, weight } from '../../theme';
 import { formatDateTime, routeCodes, ticketClassLabel, todayInNairobi } from '../../utils/format';
 import { useListPage, useMissingPageReset } from '../../utils/listPage';
 import {
@@ -465,7 +465,7 @@ function SummaryLine({ label, value, strong }: { label: string; value: string; s
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -510,4 +510,4 @@ const styles = StyleSheet.create({
     backgroundColor: colors.warningTint,
   },
   bannerText: { color: colors.warningText },
-});
+}));

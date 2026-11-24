@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
@@ -17,7 +17,7 @@ import { SegmentedControl } from '../../components/SegmentedControl';
 import { SelectField } from '../../components/SelectField';
 import { EmptyState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
-import { colors, font, radius, space, weight } from '../../theme';
+import { colors, createStyles, font, radius, space, weight } from '../../theme';
 import { formatDate, formatMoney, todayInNairobi } from '../../utils/format';
 import { InvoiceCard } from './InvoicesScreen';
 import { INVOICES_KEY, PLANS_KEY } from './keys';
@@ -361,7 +361,7 @@ function AgencyInvoices({ tenant }: { tenant: TenantDetail }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   section: {
     fontSize: font.heading,
     fontWeight: weight.bold,
@@ -397,4 +397,4 @@ const styles = StyleSheet.create({
   muted: { color: colors.muted },
   warning: { color: colors.warningText, fontWeight: weight.semibold },
   saved: { color: colors.successText, fontWeight: weight.semibold },
-});
+}));

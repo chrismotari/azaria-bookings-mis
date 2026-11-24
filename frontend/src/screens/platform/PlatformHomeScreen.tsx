@@ -1,11 +1,11 @@
 import { useNavigation } from '@react-navigation/native';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { useAuth } from '../../auth/AuthContext';
 import { Button } from '../../components/Button';
 import { Icon, IconName } from '../../components/Icon';
 import { Screen } from '../../components/Screen';
-import { colors, font, radius, shadow, space, useIsWide, weight } from '../../theme';
+import { colors, createStyles, font, radius, shadow, space, useIsWide, weight } from '../../theme';
 
 const POINTS: { icon: IconName; title: string; text: string }[] = [
   {
@@ -71,7 +71,7 @@ export function PlatformHomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   hero: {
     backgroundColor: colors.primary,
     borderRadius: radius.lg,
@@ -106,4 +106,4 @@ const styles = StyleSheet.create({
   },
   pointTitle: { fontSize: font.body, fontWeight: weight.bold, color: colors.text },
   pointText: { fontSize: font.body, color: colors.muted, lineHeight: 22 },
-});
+}));

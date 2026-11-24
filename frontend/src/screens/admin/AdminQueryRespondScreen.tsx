@@ -1,7 +1,7 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
@@ -15,7 +15,7 @@ import { QuerySummary } from '../../components/QuerySummary';
 import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { AdminTabParamList } from '../../navigation/types';
-import { colors, font, weight } from '../../theme';
+import { colors, createStyles, font, weight } from '../../theme';
 import { todayInNairobi } from '../../utils/format';
 import { useAdminQuery } from './AdminQueryDetailView';
 import { ChosenOffers, MessageField, OfferOptionsSections, useOfferOptions } from './OfferOptions';
@@ -119,6 +119,6 @@ function RespondForm({ query, onSent, onBack }: { query: AdminQueryDetail; onSen
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
-});
+}));

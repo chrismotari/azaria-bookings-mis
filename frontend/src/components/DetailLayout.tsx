@@ -1,9 +1,9 @@
 import { useIsFocused } from '@react-navigation/native';
 import { isAxiosError } from 'axios';
 import { createContext, ReactNode, useContext, useEffect, useSyncExternalStore } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 
-import { colors, font, radius, space, useIsWide, weight } from '../theme';
+import { colors, createStyles, font, radius, space, useIsWide, weight } from '../theme';
 import { Button } from './Button';
 import { Icon } from './Icon';
 import { PAGE_SIZE } from './Pagination';
@@ -263,7 +263,7 @@ function useCloseOnEscape(open: boolean, onClose: () => void) {
   }, [open, focused, onClose]);
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   row: { flexDirection: 'row', backgroundColor: colors.background },
   fill: { flex: 1, minWidth: 0 },
   hidden: { display: 'none' },
@@ -335,4 +335,4 @@ const styles = StyleSheet.create({
   close: { paddingHorizontal: space.sm, paddingVertical: space.xs },
   closeText: { fontSize: font.heading, color: colors.muted },
   detailBody: { padding: space.lg, gap: space.lg },
-});
+}));

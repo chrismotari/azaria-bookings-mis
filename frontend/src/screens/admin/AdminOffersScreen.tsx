@@ -2,7 +2,7 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
@@ -30,7 +30,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/StatusVie
 import { Column, RouteCell, Table, TableRow, TwoLineCell } from '../../components/Table';
 import { Toggle } from '../../components/Toggle';
 import { AdminTabParamList } from '../../navigation/types';
-import { colors, font, space, useIsWide, weight } from '../../theme';
+import { colors, createStyles, font, space, useIsWide, weight } from '../../theme';
 import { formatDate, routeCodes, ticketClassLabel, tripDates } from '../../utils/format';
 import { AdminOfferEditView } from './AdminOfferFormScreen';
 
@@ -294,7 +294,7 @@ function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: R
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -324,4 +324,4 @@ const styles = StyleSheet.create({
     gap: space.sm,
     flexWrap: 'wrap',
   },
-});
+}));

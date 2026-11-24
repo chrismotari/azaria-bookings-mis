@@ -1,18 +1,38 @@
-import { useWindowDimensions } from 'react-native';
+import { useSyncExternalStore } from 'react';
+import { StyleSheet, useWindowDimensions } from 'react-native';
+
+/** What a theme sets, as the API sends it (GET /agency, the theme lists). */
+export type ThemeColors = {
+  primary: string;
+  primary_text: string;
+  primary_tint: string;
+  primary_hover: string;
+  accent: string;
+  accent_text: string;
+};
 
 /**
- * Brand colours from azariabookings.com (assets/css/sections/variables.css).
- * Status text shades are darker than the brand status colours so text on
- * their tints meets WCAG AA (4.5:1).
+ * Azaria's own colours (from azariabookings.com, assets/css/sections/variables.css): wherever there is no agency
+ * (the platform app, the web app's loading state, the mobile Find your agency screen). An agency's theme replaces
+ * exactly these.
  */
-export const colors = {
+const AZARIA = {
   primary: '#1800d2',
   primaryText: '#ffffff',
   primaryTint: '#ebe8fd',
-  /** Hover on the indigo bar. */
+  /** Hover on the primary bar. */
   primaryHover: 'rgba(255, 255, 255, 0.12)',
   accent: '#ffb400',
   accentText: '#252525',
+};
+
+/**
+ * The app's colours. The six brand ones follow the agency's theme (applyTheme); the rest are the same everywhere.
+ * Status text shades are darker than the brand status colours so text on their tints meets WCAG AA (4.5:1).
+ * Read them while rendering, or in createStyles, never into a constant when a file loads: they change with the theme.
+ */
+export const colors = {
+  ...AZARIA,
   tertiary: '#4a6660',
   text: '#252525',
   dark: '#2d3434',
@@ -37,6 +57,66 @@ export const colors = {
   /** Dims the page behind a dialog. */
   overlay: 'rgba(37, 37, 37, 0.5)',
 };
+
+// Bumped whenever the colours change: styles rebuild, and the app below the theme re-mounts (App.tsx).
+let themeVersion = 0;
+const listeners = new Set<() => void>();
+
+/** Applies an agency's theme, or Azaria's own colours with null. Nothing happens when the colours are the same. */
+export function applyTheme(theme: ThemeColors | null) {
+  const next = theme
+    ? {
+        primary: theme.primary,
+        primaryText: theme.primary_text,
+        primaryTint: theme.primary_tint,
+        primaryHover: theme.primary_hover,
+        accent: theme.accent,
+        accentText: theme.accent_text,
+      }
+    : AZARIA;
+  if ((Object.keys(next) as (keyof typeof next)[]).every((key) => colors[key] === next[key])) {
+    return;
+  }
+  Object.assign(colors, next);
+  themeVersion += 1;
+  listeners.forEach((listener) => listener());
+}
+
+/** Calls listener after every theme change; returns the unsubscribe function. */
+export function onThemeChange(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+/** Changes whenever the theme does: the app keys its screens on it so they render again with the new colours. */
+export function useThemeVersion(): number {
+  return useSyncExternalStore(onThemeChange, () => themeVersion);
+}
+
+type StyleSheetInput = Parameters<typeof StyleSheet.create>[0];
+
+/**
+ * StyleSheet.create for styles that use the theme's colours: build runs again after the theme changes, so styles
+ * made when a file loads still follow the agency's theme. Every style sheet in the app is made with this.
+ */
+export function createStyles<S extends StyleSheetInput>(build: () => S & StyleSheetInput): Readonly<S> {
+  let built: Readonly<S> | null = null;
+  let builtFor = -1;
+  const current = (): Readonly<S> => {
+    if (built === null || builtFor !== themeVersion) {
+      built = StyleSheet.create(build());
+      builtFor = themeVersion;
+    }
+    return built;
+  };
+  const styles = {} as Readonly<S>;
+  for (const key of Object.keys(build())) {
+    Object.defineProperty(styles, key, { enumerable: true, get: () => current()[key as keyof S] });
+  }
+  return styles;
+}
 
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 };
 

@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useCallback, useContext, useRef, useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 
-import { colors, font } from '../theme';
+import { colors, createStyles, font } from '../theme';
 import { Button } from './Button';
 import { Dialog } from './Dialog';
 
@@ -70,6 +70,6 @@ export function useConfirm(): Confirm {
   return confirm;
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   message: { fontSize: font.body, color: colors.text },
-});
+}));

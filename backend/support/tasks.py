@@ -96,6 +96,7 @@ def notify_platform_desk(conversation_id, message_id):
             to,
             {**_context(conversation, message), "first": first, "desk_path": f"/chats/{conversation.pk}"},
             _attachments(message),
+            platform=True,
         )
 
 
@@ -112,7 +113,9 @@ def notify_platform_requester(conversation_id, message_id):
         agency = conversation.agency
     # Links point at the agency's site for its admins, at the root host for guests.
     with schema_context(agency.schema_name if agency else get_public_schema_name()):
-        send_email("support_reply", f"Re: {conversation.subject}", conversation.email, context, attachments)
+        send_email(
+            "support_reply", f"Re: {conversation.subject}", conversation.email, context, attachments, platform=True
+        )
 
 
 @shared_task

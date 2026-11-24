@@ -1,7 +1,7 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { Chat } from '../../api/types';
@@ -27,7 +27,7 @@ import {
 } from '../../support/api';
 import { ChatThread, chatTime } from '../../support/ChatThread';
 import { NewChatForm } from '../../support/NewChatForm';
-import { colors, font, space, weight } from '../../theme';
+import { colors, createStyles, font, space, weight } from '../../theme';
 
 /** Account > Support: the customer's chats with their agency. */
 export function SupportScreen({ navigation, route }: BottomTabScreenProps<MainTabParamList, 'Support'>) {
@@ -195,7 +195,7 @@ function ChatDetailView({ endpoints, id }: { endpoints: ChatEndpoints; id: strin
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -210,4 +210,4 @@ const styles = StyleSheet.create({
   subject: { fontSize: font.body, fontWeight: weight.semibold, color: colors.text, flexShrink: 1 },
   unread: { fontWeight: weight.heavy },
   muted: { color: colors.muted },
-});
+}));

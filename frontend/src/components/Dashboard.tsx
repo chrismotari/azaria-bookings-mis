@@ -1,7 +1,7 @@
 import { ReactNode, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { colors, font, radius, shadow, shadowRaised, space, useIsWide, weight } from '../theme';
+import { colors, createStyles, font, radius, shadow, shadowRaised, space, useIsWide, weight } from '../theme';
 import { Card } from './Card';
 import { Icon, IconName } from './Icon';
 import { PressState } from './pressState';
@@ -205,16 +205,16 @@ export function ShareBar({ share }: { share: number }) {
   );
 }
 
-export const dashboardStyles = StyleSheet.create({
+export const dashboardStyles = createStyles(() => ({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   strong: { fontSize: font.body, fontWeight: weight.bold, color: colors.text },
   text: { fontSize: font.body, color: colors.text },
   muted: { color: colors.muted },
   shrink: { flexShrink: 1, flexGrow: 1 },
   between: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
-});
+}));
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   section: { fontSize: font.heading, fontWeight: weight.bold, color: colors.tertiary },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
   tile: {
@@ -281,4 +281,4 @@ const styles = StyleSheet.create({
   track: { height: 6, borderRadius: 3, backgroundColor: colors.background },
   fillBar: { height: 6, borderRadius: 3, backgroundColor: colors.primary },
   usageHigh: { backgroundColor: colors.warningText },
-});
+}));

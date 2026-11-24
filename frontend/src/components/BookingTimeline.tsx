@@ -1,7 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { BookingEvent } from '../api/types';
-import { colors, font, weight } from '../theme';
+import { colors, createStyles, font, weight } from '../theme';
 import { BOOKING_EVENT_LABELS } from '../utils/bookings';
 import { formatDateTime } from '../utils/format';
 
@@ -21,11 +21,11 @@ export function BookingTimeline({ events }: { events: BookingEvent[] }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   list: { gap: 10 },
   item: { flexDirection: 'row', gap: 10, alignItems: 'flex-start' },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary, marginTop: 5 },
   body: { flexShrink: 1 },
   label: { color: colors.text, fontWeight: weight.semibold },
   muted: { color: colors.muted, fontSize: font.small },
-});
+}));

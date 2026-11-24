@@ -1,5 +1,5 @@
 import { Control, Controller, useFormState, useWatch } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { TICKET_CLASSES, TripType } from '../../api/types';
 import { AirlinePicker } from '../../components/AirlinePicker';
@@ -10,7 +10,7 @@ import { OptionChips } from '../../components/OptionChips';
 import { SegmentedControl } from '../../components/SegmentedControl';
 import { TextField } from '../../components/TextField';
 import { Toggle } from '../../components/Toggle';
-import { colors, font, space } from '../../theme';
+import { colors, createStyles, font, space } from '../../theme';
 import { POLICIES } from '../../utils/format';
 import { OfferFormValues } from './offerSchema';
 import { SegmentFields } from './SegmentFields';
@@ -204,9 +204,9 @@ export function OfferFields({ control, showPublicToggle = true, plain }: Props) 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   trip: { maxWidth: 320 },
   toggle: { gap: space.xs },
   help: { color: colors.muted, fontSize: font.small },
   error: { color: colors.dangerText, fontSize: font.small },
-});
+}));

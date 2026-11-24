@@ -1,7 +1,7 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { Paginated, Tenant } from '../../api/types';
@@ -16,7 +16,7 @@ import { Column, Table, TableRow } from '../../components/Table';
 import { TextField } from '../../components/TextField';
 import { TripCard } from '../../components/TripCard';
 import { AgencyStatusFilter, PlatformTabParamList } from '../../navigation/types';
-import { colors, font, space, useIsWide, weight } from '../../theme';
+import { colors, createStyles, font, space, useIsWide, weight } from '../../theme';
 import { useListPage } from '../../utils/listPage';
 import { useDebounced } from '../../utils/useDebounced';
 import { AGENCIES_KEY, AgencyPage, createdOn, NewAgencyDialog, tenantStatus } from './AgencyPage';
@@ -194,7 +194,7 @@ function AgencyCard({ tenant, selected, onPress }: { tenant: Tenant; selected: b
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -208,4 +208,4 @@ const styles = StyleSheet.create({
   name: { fontSize: font.body, fontWeight: weight.bold, color: colors.text, flexShrink: 1 },
   text: { color: colors.text },
   muted: { color: colors.muted },
-});
+}));

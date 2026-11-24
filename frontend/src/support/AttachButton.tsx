@@ -1,9 +1,9 @@
 import { createElement, useRef } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, Text, View } from 'react-native';
 
 import { Icon } from '../components/Icon';
 import { PressState } from '../components/pressState';
-import { colors, font, radius, space, weight } from '../theme';
+import { colors, createStyles, font, radius, space, weight } from '../theme';
 
 const ATTACH_ACCEPT = '.pdf,.png,.jpg,.jpeg';
 
@@ -57,7 +57,7 @@ export function AttachButton({ file, onChange }: { file: File | null; onChange: 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   row: { flexDirection: 'row', alignItems: 'center' },
   attach: {
     flexDirection: 'row',
@@ -81,4 +81,4 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   name: { color: colors.text, fontSize: font.small, flexShrink: 1 },
-});
+}));

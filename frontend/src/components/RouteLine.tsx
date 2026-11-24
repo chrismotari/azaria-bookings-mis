@@ -1,7 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { Airport } from '../api/types';
-import { colors, font, radius, space, weight } from '../theme';
+import { colors, createStyles, font, radius, space, weight } from '../theme';
 import { stopsLabel } from '../utils/format';
 import { Flag } from './Flag';
 import { Icon } from './Icon';
@@ -95,7 +95,7 @@ function End({ airport, large, alignEnd }: { airport: Airport | null; large: boo
 
 const DOT = 10;
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   end: { flexShrink: 1, minWidth: 0, maxWidth: '35%' },
   endLarge: { flexBasis: '40%', maxWidth: '40%' },
@@ -138,4 +138,4 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
     backgroundColor: colors.surface,
   },
-});
+}));

@@ -1,6 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { colors, font, space, weight } from '../theme';
+import { colors, createStyles, font, space, weight } from '../theme';
 import { Field } from './Field';
 import { Icon, IconName } from './Icon';
 import { PressState } from './pressState';
@@ -54,7 +54,7 @@ function StepButton({ icon, label, disabled, onPress }: StepButtonProps) {
 
 const SIZE = 40;
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   row: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   button: {
     width: SIZE,
@@ -70,4 +70,4 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.35 },
   focused: { outlineColor: colors.primary, outlineStyle: 'solid', outlineWidth: 2, outlineOffset: 2 },
   value: { minWidth: 32, textAlign: 'center', fontSize: font.title, fontWeight: weight.bold, color: colors.text },
-});
+}));

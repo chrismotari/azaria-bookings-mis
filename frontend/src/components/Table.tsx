@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { Airport } from '../api/types';
-import { colors, font, radius, shadow, space, weight } from '../theme';
+import { colors, createStyles, font, radius, shadow, space, weight } from '../theme';
 import { PressState } from './pressState';
 
 /** A column's heading and its share of the row width. */
@@ -96,7 +96,7 @@ export function TwoLineCell({ primary, secondary }: { primary: string; secondary
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   table: {
     borderWidth: 1,
     borderColor: colors.border,
@@ -128,4 +128,4 @@ const styles = StyleSheet.create({
   text: { fontSize: font.body, color: colors.text },
   strong: { fontSize: font.body, fontWeight: weight.bold, color: colors.text },
   muted: { fontSize: font.small, color: colors.muted },
-});
+}));

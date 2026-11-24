@@ -1,7 +1,7 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { AdminQuery, Paginated, QueryStatus } from '../../api/types';
@@ -16,7 +16,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/StatusVie
 import { Column, RouteCell, Table, TableRow, TwoLineCell } from '../../components/Table';
 import { TripCard } from '../../components/TripCard';
 import { AdminTabParamList } from '../../navigation/types';
-import { colors, font, space, useIsWide, weight } from '../../theme';
+import { colors, createStyles, font, space, useIsWide, weight } from '../../theme';
 import { formatDateTime } from '../../utils/format';
 import { QUERY_STATUS, describeQuery } from '../../utils/queries';
 import { AdminQueryDetailView } from './AdminQueryDetailView';
@@ -193,7 +193,7 @@ function AdminQueryCard({ query, selected, onPress }: { query: AdminQuery; selec
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   cards: { gap: space.md },
   between: {
@@ -207,4 +207,4 @@ const styles = StyleSheet.create({
   fact: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   text: { fontSize: font.body, color: colors.text, flexShrink: 1 },
   small: { fontSize: font.small, color: colors.muted },
-});
+}));

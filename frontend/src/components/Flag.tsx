@@ -1,6 +1,6 @@
 import { Image, StyleSheet } from 'react-native';
 
-import { colors } from '../theme';
+import { colors, createStyles } from '../theme';
 import { FLAG_CODES } from './flagCodes';
 
 type Props = {
@@ -22,7 +22,7 @@ export function Flag({ code }: Props) {
 const FLAG_WIDTH = 16;
 const FLAG_HEIGHT = 12;
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   // A hairline border keeps white flags (e.g. Japan) visible.
   flag: {
     width: FLAG_WIDTH,
@@ -31,4 +31,4 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
-});
+}));

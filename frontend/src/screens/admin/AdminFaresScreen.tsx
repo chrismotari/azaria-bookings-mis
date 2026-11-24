@@ -2,7 +2,7 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
@@ -24,7 +24,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/StatusVie
 import { TextField } from '../../components/TextField';
 import { Toggle } from '../../components/Toggle';
 import { AdminTabParamList } from '../../navigation/types';
-import { colors, font, radius, space, useIsWide, weight } from '../../theme';
+import { colors, createStyles, font, radius, space, useIsWide, weight } from '../../theme';
 import {
   baggageSummary,
   formatDate,
@@ -432,7 +432,7 @@ function Line({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   muted: { color: colors.muted },
   small: { fontSize: font.small, color: colors.muted },
@@ -494,4 +494,4 @@ const styles = StyleSheet.create({
   selling: { alignItems: 'flex-end', gap: 2 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', gap: space.sm },
   summary: { gap: space.xs, padding: space.md, borderRadius: radius.md, backgroundColor: colors.background },
-});
+}));

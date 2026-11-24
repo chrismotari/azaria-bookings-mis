@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, font, radius, shadowDialog, space, useIsWide, weight } from '../theme';
+import { colors, createStyles, font, radius, shadowDialog, space, useIsWide, weight } from '../theme';
 import { Icon } from './Icon';
 
 type Props = {
@@ -72,7 +72,7 @@ export function Dialog({ open, title, onClose, size = 'small', busy, footer, err
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   backdrop: {
     flex: 1,
     alignItems: 'center',
@@ -121,4 +121,4 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
     backgroundColor: colors.background,
   },
-});
+}));

@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
@@ -16,7 +16,7 @@ import { QuerySummary } from '../../components/QuerySummary';
 import { StatusChip } from '../../components/StatusChip';
 import { DetailError } from '../../components/DetailLayout';
 import { LoadingState } from '../../components/StatusViews';
-import { colors, font, radius, space, weight } from '../../theme';
+import { colors, createStyles, font, radius, space, weight } from '../../theme';
 import { formatDateTime } from '../../utils/format';
 import { QUERY_STATUS } from '../../utils/queries';
 
@@ -112,7 +112,7 @@ export function QueryDetailView({ id }: { id: string }) {
 /** Narrowest width that fits a flight row on one line. */
 const ROW_WIDTH = 720;
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   actions: { flexDirection: 'row' },
   section: { fontSize: font.title, fontWeight: weight.heavy, color: colors.tertiary },
@@ -130,4 +130,4 @@ const styles = StyleSheet.create({
   rows: { gap: space.md },
   small: { color: colors.muted, fontSize: font.small },
   muted: { color: colors.muted },
-});
+}));

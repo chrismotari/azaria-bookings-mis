@@ -1,7 +1,7 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ReactNode, useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
@@ -22,7 +22,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/StatusVie
 import { Column, Table, TableRow } from '../../components/Table';
 import { TripCard } from '../../components/TripCard';
 import { InvoiceStatusFilter, PlatformTabParamList } from '../../navigation/types';
-import { colors, font, radius, space, useIsWide, weight } from '../../theme';
+import { colors, createStyles, font, radius, space, useIsWide, weight } from '../../theme';
 import { openFile } from '../../utils/download';
 import { useListPage } from '../../utils/listPage';
 import { formatDate, formatMoney, todayInNairobi } from '../../utils/format';
@@ -418,7 +418,7 @@ function Detail({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   staticCard: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
@@ -455,4 +455,4 @@ const styles = StyleSheet.create({
   saved: { color: colors.successText, fontWeight: weight.semibold },
   detail: { gap: 2 },
   detailLabel: { fontSize: font.small, color: colors.muted },
-});
+}));

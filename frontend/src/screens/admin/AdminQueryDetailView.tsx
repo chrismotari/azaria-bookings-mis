@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { AdminQueryDetail } from '../../api/types';
@@ -12,7 +12,7 @@ import { QuerySummary } from '../../components/QuerySummary';
 import { StatusChip } from '../../components/StatusChip';
 import { DetailError } from '../../components/DetailLayout';
 import { LoadingState } from '../../components/StatusViews';
-import { colors, font, weight } from '../../theme';
+import { colors, createStyles, font, weight } from '../../theme';
 import { formatDateTime, formatPrice, ticketClassLabel, tripDates } from '../../utils/format';
 import { QUERY_STATUS } from '../../utils/queries';
 
@@ -86,9 +86,9 @@ export function AdminQueryDetailView({ id }: { id: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   section: { fontSize: font.heading, fontWeight: weight.bold, color: colors.tertiary },
   text: { color: colors.text },
   muted: { color: colors.muted },
-});
+}));

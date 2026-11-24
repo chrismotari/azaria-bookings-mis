@@ -1,7 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { Booking } from '../api/types';
-import { colors, font, space, weight } from '../theme';
+import { colors, createStyles, font, space, weight } from '../theme';
 import { bookingDates, passengersLabel } from '../utils/bookings';
 import { formatPrice, ticketClassLabel, tripDates } from '../utils/format';
 import { AirlineBadge } from './AirlineBadge';
@@ -48,7 +48,7 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   box: { gap: space.md },
   airline: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   shrink: { flexShrink: 1 },
@@ -66,4 +66,4 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   totalLabel: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text },
-});
+}));

@@ -3,7 +3,7 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { z } from 'zod';
 
 import { api } from '../../api/client';
@@ -22,7 +22,7 @@ import { Stepper } from '../../components/Stepper';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
 import { MainTabParamList } from '../../navigation/types';
-import { colors, font, space, weight } from '../../theme';
+import { colors, createStyles, font, space, weight } from '../../theme';
 import { baggageSummary, formatDate, formatPrice, ticketClassLabel } from '../../utils/format';
 
 // Mirrors the server's rules: 1 to 9 passengers.
@@ -161,7 +161,7 @@ export function BookingNewScreen({ navigation, route }: BottomTabScreenProps<Mai
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   summary: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: space.md },
   summaryItem: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
@@ -179,4 +179,4 @@ const styles = StyleSheet.create({
   },
   totalLabel: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text },
   muted: { fontSize: font.small, color: colors.muted },
-});
+}));

@@ -1,6 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { colors, font, radius } from '../theme';
+import { colors, createStyles, font, radius } from '../theme';
 import { Field } from './Field';
 import { PressState } from './pressState';
 
@@ -38,7 +38,7 @@ export function OptionChips<T extends string>({ label, options, value, onChange,
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: {
     borderWidth: 1,
@@ -52,4 +52,4 @@ const styles = StyleSheet.create({
   selected: { backgroundColor: colors.primary, borderColor: colors.primary },
   text: { fontSize: font.small, color: colors.text },
   selectedText: { color: colors.primaryText },
-});
+}));

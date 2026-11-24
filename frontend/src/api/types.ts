@@ -1,3 +1,5 @@
+import type { ThemeColors } from '../theme';
+
 /** 'owner' is the system owner signed in on the platform (the platform API itself has no roles). */
 export type Role = 'customer' | 'admin' | 'owner';
 
@@ -330,6 +332,8 @@ export type AppSettings = {
   payment_hold_hours: number;
   reminder_hours_before: number;
   admin_notification_email: string;
+  /** The agency's theme (its id). */
+  theme: string;
 };
 
 export type AdminCustomer = {
@@ -363,6 +367,8 @@ export type Tenant = {
   /** Fare searches allowed per calendar month. */
   monthly_search_allowance: number;
   searches_this_month: number;
+  /** Its theme's id. */
+  theme: string;
   created_at: string;
 };
 
@@ -675,4 +681,20 @@ export type AgencyInfo = {
   code: string;
   name: string;
   app_address: string;
+  theme: Theme;
+};
+
+/** A theme an agency can choose: its name and the colours it sets. */
+export type Theme = {
+  id: string;
+  name: string;
+  colors: ThemeColors;
+};
+
+/** The system owner's view of a theme. */
+export type PlatformTheme = Theme & {
+  is_active: boolean;
+  is_default: boolean;
+  /** Agencies using it. */
+  agency_count: number;
 };

@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 import { z } from 'zod';
 
 import { api } from '../../api/client';
@@ -14,8 +14,9 @@ import { FormFooter, FormSection } from '../../components/FormSection';
 import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
-import { colors, font, weight } from '../../theme';
+import { colors, createStyles, font, weight } from '../../theme';
 import { ExchangeRates } from './ExchangeRates';
+import { ThemesSection } from './ThemesSection';
 
 const DAYS = /^\d{1,3}$/;
 
@@ -183,14 +184,15 @@ function SettingsForm({ settings }: { settings: PlatformSettings }) {
           disabled={!formState.isDirty}
         />
       </FormFooter>
+      <ThemesSection />
       <ExchangeRates />
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   muted: { color: colors.muted },
   warning: { color: colors.warningText, fontWeight: weight.semibold },
   saved: { color: colors.successText, fontWeight: weight.semibold },
-});
+}));

@@ -2,7 +2,7 @@ import { BottomTabScreenProps, createBottomTabNavigator } from '@react-navigatio
 import { StackActions, useFocusEffect, useIsFocused, useLinkTo, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Fragment, ReactNode, useCallback, useEffect, useRef } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, View } from 'react-native';
 
 import { GetAppScreen } from '../agency/GetAppScreen';
 import { useAuth } from '../auth/AuthContext';
@@ -46,7 +46,7 @@ import { IS_NATIVE, IS_PLATFORM } from '../config';
 import { ExploreScreen } from '../screens/explore/ExploreScreen';
 import { QueryNewScreen } from '../screens/requests/QueryNewScreen';
 import { RequestsScreen } from '../screens/requests/RequestsScreen';
-import { colors, useIsWide } from '../theme';
+import { colors, createStyles, useIsWide } from '../theme';
 import { AppBar } from './AppBar';
 import { PlatformPublicBar } from './PlatformPublicBar';
 import { ResponsiveTabBar } from './ResponsiveTabBar';
@@ -86,7 +86,7 @@ function AdminStack() {
   return (
     <View style={styles.fill}>
       <OverdueBanner />
-      <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
+      <Stack.Navigator screenOptions={stackScreenOptions()}>
         <Stack.Screen name="AdminTabs" component={AdminTabsNavigator} options={{ headerShown: false }} />
         {GET_APP_SCREEN}
       </Stack.Navigator>
@@ -201,10 +201,13 @@ const GET_APP_SCREEN = IS_NATIVE ? null : (
   <Stack.Screen name="GetApp" component={GetAppScreen} options={{ title: 'Get the app', header: () => <AppBar /> }} />
 );
 
-const STACK_SCREEN_OPTIONS = {
-  headerStyle: { backgroundColor: colors.primary },
-  headerTintColor: colors.primaryText,
-};
+/** Read while rendering: the header follows the agency's theme. */
+function stackScreenOptions() {
+  return {
+    headerStyle: { backgroundColor: colors.primary },
+    headerTintColor: colors.primaryText,
+  };
+}
 
 function MainTabsNavigator() {
   const isWide = useIsWide();
@@ -413,7 +416,7 @@ function PlatformStack() {
   const publicPage = { header: () => <PlatformPublicBar /> };
   return (
     <View style={styles.fill}>
-      <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
+      <Stack.Navigator screenOptions={stackScreenOptions()}>
         {user ? (
           <>
             <Stack.Screen name="PlatformTabs" component={PlatformTabsNavigator} options={{ headerShown: false }} />
@@ -472,7 +475,7 @@ export function RootNavigator() {
 
   return (
     <View style={styles.fill}>
-      <Stack.Navigator screenOptions={STACK_SCREEN_OPTIONS}>
+      <Stack.Navigator screenOptions={stackScreenOptions()}>
         <Stack.Screen name="Main" component={MainTabsNavigator} options={{ headerShown: false }} />
         {GET_APP_SCREEN}
         {/* Signed-in customers: these URLs match no screen and open Explore. */}
@@ -495,6 +498,6 @@ export function RootNavigator() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   fill: { flex: 1 },
-});
+}));

@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { TICKET_CLASSES, TicketClass } from '../../api/types';
 import { AirportSearchField } from '../../components/AirportPicker';
@@ -10,7 +10,7 @@ import { OfferFilterErrors, OfferFilterValues, TRIP_TYPE_OPTIONS } from '../../c
 import { PressState } from '../../components/pressState';
 import { SegmentedControl } from '../../components/SegmentedControl';
 import { SelectField } from '../../components/SelectField';
-import { colors, font, radius, shadow, space, weight } from '../../theme';
+import { colors, createStyles, font, radius, shadow, space, weight } from '../../theme';
 
 const CLASS_OPTIONS: { value: '' | TicketClass; label: string }[] = [{ value: '', label: 'Any' }, ...TICKET_CLASSES];
 
@@ -167,7 +167,7 @@ function SwapButton({ onPress, vertical }: { onPress: () => void; vertical?: boo
 
 const SWAP = 36;
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   band: {
     backgroundColor: colors.primary,
     paddingHorizontal: space.lg,
@@ -206,4 +206,4 @@ const styles = StyleSheet.create({
   },
   swapHovered: { borderColor: colors.primary, backgroundColor: colors.primaryTint },
   focused: { outlineColor: colors.primary, outlineStyle: 'solid', outlineWidth: 2, outlineOffset: 2 },
-});
+}));

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { PublicPlans } from '../../api/types';
@@ -7,7 +7,7 @@ import { billed, enquirySubject, PlanShowcase } from '../../components/PlanShowc
 import { openChat } from '../../support/launcher';
 import { Screen } from '../../components/Screen';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
-import { colors, font, space, weight } from '../../theme';
+import { colors, createStyles, font, space, weight } from '../../theme';
 
 /** The public pricing page on the root host, for agencies that are not customers yet. */
 export function PlatformPricingScreen() {
@@ -43,8 +43,8 @@ export function PlatformPricingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   header: { alignItems: 'center', gap: space.sm, marginTop: space.lg },
   title: { fontSize: font.display, fontWeight: weight.heavy, color: colors.text, textAlign: 'center' },
   lead: { fontSize: font.heading, color: colors.muted, textAlign: 'center', maxWidth: 640 },
-});
+}));

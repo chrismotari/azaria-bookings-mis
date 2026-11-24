@@ -3,7 +3,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { isAxiosError } from 'axios';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { z } from 'zod';
 
 import { currentAgency, switchAgency } from '../../agency/agency';
@@ -15,7 +15,7 @@ import { FormError } from '../../components/Field';
 import { TextField } from '../../components/TextField';
 import { IS_NATIVE } from '../../config';
 import { RootStackParamList } from '../../navigation/types';
-import { colors, font, space } from '../../theme';
+import { colors, createStyles, font, space } from '../../theme';
 import { AuthLayout } from './AuthLayout';
 
 const schema = z.object({
@@ -101,8 +101,8 @@ function AgencyLine() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   notice: { color: colors.success },
   agency: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: space.md, alignItems: 'center' },
   agencyText: { fontSize: font.small, color: colors.muted },
-});
+}));

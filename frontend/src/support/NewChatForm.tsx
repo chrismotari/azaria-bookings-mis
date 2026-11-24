@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../api/client';
 import { errorMessage, firstMessage } from '../api/errors';
@@ -8,7 +8,7 @@ import { ChatDetail } from '../api/types';
 import { Button } from '../components/Button';
 import { FormError } from '../components/Field';
 import { TextField } from '../components/TextField';
-import { colors, font, space } from '../theme';
+import { colors, createStyles, font, space } from '../theme';
 import { AttachButton } from './AttachButton';
 import { messageBody } from './api';
 
@@ -101,7 +101,7 @@ export function NewChatForm({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   form: { gap: space.md },
   error: { color: colors.dangerText, fontSize: font.small },
-});
+}));

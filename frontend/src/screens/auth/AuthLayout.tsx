@@ -1,11 +1,11 @@
 import { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { GetAppFooter } from '../../agency/GetAppFooter';
 import { Card } from '../../components/Card';
 import { Icon, IconName } from '../../components/Icon';
 import { Screen } from '../../components/Screen';
-import { colors, font, radius, space, useIsWide, weight } from '../../theme';
+import { colors, createStyles, font, radius, space, useIsWide, weight } from '../../theme';
 
 const BENEFITS: { icon: IconName; text: string }[] = [
   { icon: 'airplane-outline', text: 'Hand-picked flight deals' },
@@ -54,7 +54,7 @@ export function AuthLayout({ title, children }: { title: string; children: React
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   split: { flexDirection: 'row', gap: space.xl, marginTop: space.xl, alignItems: 'stretch' },
   panel: {
     flex: 1,
@@ -79,4 +79,4 @@ const styles = StyleSheet.create({
   benefitText: { flexShrink: 1, fontSize: font.body, color: colors.primaryText },
   formColumn: { flex: 1, justifyContent: 'center' },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
-});
+}));

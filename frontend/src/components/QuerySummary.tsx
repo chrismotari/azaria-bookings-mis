@@ -1,7 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { Query } from '../api/types';
-import { colors, font, radius, space, weight } from '../theme';
+import { colors, createStyles, font, radius, space, weight } from '../theme';
 import { describeQuery } from '../utils/queries';
 import { Icon, IconName } from './Icon';
 import { RouteLine } from './RouteLine';
@@ -40,7 +40,7 @@ function Criterion({ icon, label, value }: { icon: IconName; label: string; valu
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   box: { gap: space.md },
   grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: space.md, columnGap: space.lg },
   criterion: {
@@ -63,4 +63,4 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   messageText: { flexShrink: 1, fontSize: font.body, color: colors.text },
-});
+}));

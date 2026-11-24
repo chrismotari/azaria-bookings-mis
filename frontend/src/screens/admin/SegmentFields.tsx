@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Control, Controller, useFieldArray, useFormState, useWatch } from 'react-hook-form';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { Direction } from '../../api/types';
 import { AirlinePicker } from '../../components/AirlinePicker';
@@ -15,7 +15,7 @@ import { PressState } from '../../components/pressState';
 import { TONES } from '../../components/StatusChip';
 import { TextField } from '../../components/TextField';
 import { TimeField } from '../../components/TimeField';
-import { colors, font, radius, space, weight } from '../../theme';
+import { colors, createStyles, font, radius, space, weight } from '../../theme';
 import { formatDuration } from '../../utils/format';
 import { ItineraryFormValues, MAX_FLIGHTS, SegmentFormValues, newSegment } from './offerSchema';
 
@@ -268,7 +268,7 @@ function IconButton({ icon, label, onPress, disabled }: IconButtonProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   editor: { gap: space.md },
   group: { gap: space.md },
   segment: {
@@ -308,4 +308,4 @@ const styles = StyleSheet.create({
   },
   iconButtonHovered: { backgroundColor: colors.neutralTint },
   iconButtonDisabled: { opacity: 0.4 },
-});
+}));

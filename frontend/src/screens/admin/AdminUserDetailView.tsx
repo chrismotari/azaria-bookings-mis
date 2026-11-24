@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Control, Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { z } from 'zod';
 
 import { api } from '../../api/client';
@@ -20,7 +20,7 @@ import { DetailError } from '../../components/DetailLayout';
 import { LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
 import { useAuth } from '../../auth/AuthContext';
-import { colors, font, space, weight } from '../../theme';
+import { colors, createStyles, font, space, weight } from '../../theme';
 
 /** Keyed by String(is_active). */
 export const USER_STATUS: Record<string, { label: string; tone: Tone }> = {
@@ -306,10 +306,10 @@ function NewUserForm({ onClose, onCreated }: Omit<NewUserProps, 'open'>) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: space.sm },
   section: { fontSize: font.heading, fontWeight: weight.bold, color: colors.tertiary },
   text: { color: colors.text, fontSize: font.body },
   muted: { color: colors.muted },
   saved: { color: colors.successText, fontWeight: weight.semibold },
-});
+}));

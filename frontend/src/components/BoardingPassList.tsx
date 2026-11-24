@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 
 import { errorMessage } from '../api/errors';
 import { BoardingPass } from '../api/types';
-import { colors, font, radius, space, weight } from '../theme';
+import { colors, createStyles, font, radius, space, weight } from '../theme';
 import { openBoardingPass } from '../utils/download';
 import { formatDateTime } from '../utils/format';
 import { Button } from './Button';
@@ -82,7 +82,7 @@ export function BoardingPassList({ passes, onDelete, deletingId }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   list: { gap: space.sm },
   row: {
     flexDirection: 'row',
@@ -107,4 +107,4 @@ const styles = StyleSheet.create({
   name: { color: colors.text, fontWeight: weight.semibold },
   muted: { color: colors.muted, fontSize: font.small },
   actions: { flexDirection: 'row', gap: 8 },
-});
+}));

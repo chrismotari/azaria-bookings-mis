@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Text, View, ViewStyle } from 'react-native';
 
 import { api } from '../../api/client';
 import { Offer } from '../../api/types';
@@ -14,7 +14,7 @@ import { PriceTag } from '../../components/PriceTag';
 import { RouteLine } from '../../components/RouteLine';
 import { DetailError } from '../../components/DetailLayout';
 import { LoadingState } from '../../components/StatusViews';
-import { colors, font, space, weight } from '../../theme';
+import { colors, createStyles, font, space, weight } from '../../theme';
 import { formatDate, ticketClassLabel, timeAgo } from '../../utils/format';
 
 /** Width from which the price summary sits beside the details instead of below them. */
@@ -127,7 +127,7 @@ function Detail({ icon, label, value }: { icon: IconName; label: string; value: 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   layout: { gap: space.lg },
   layoutRow: { flexDirection: 'row', alignItems: 'flex-start' },
   main: { flex: 1, minWidth: 0, gap: space.lg },
@@ -151,4 +151,4 @@ const styles = StyleSheet.create({
   value: { fontSize: font.body, fontWeight: weight.semibold, color: colors.text },
   muted: { fontSize: font.small, color: colors.muted },
   notice: { color: colors.danger },
-});
+}));

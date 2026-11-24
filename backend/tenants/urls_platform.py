@@ -23,6 +23,9 @@ urlpatterns = [
         "tenants/<uuid:pk>/admins/<uuid:admin_id>/password-reset", views.PlatformAgencyAdminPasswordResetView.as_view()
     ),
     path("tenants/<uuid:pk>/subscriptions", billing.TenantSubscriptionListView.as_view()),
+    path("themes", views.PlatformThemeListView.as_view()),
+    path("themes/<uuid:pk>", views.PlatformThemeDetailView.as_view()),
+    path("themes/<uuid:pk>/make-default", views.PlatformThemeMakeDefaultView.as_view()),
     path("plans", billing.PlanListView.as_view()),
     path("plans/<uuid:pk>", billing.PlanDetailView.as_view()),
     path("subscriptions/<uuid:pk>", billing.SubscriptionDetailView.as_view()),

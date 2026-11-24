@@ -6,6 +6,8 @@ import { resetTenantProblem } from '../api/tenant';
 import { AgencyInfo } from '../api/types';
 import { clearPendingAction } from '../auth/pendingAction';
 import { API_URL, apiUrlFor, IS_NATIVE, TENANT_BASE_DOMAIN } from '../config';
+import { rememberPlaceForThemeChange } from '../navigation/navigationRef';
+import { applyTheme, ThemeColors } from '../theme';
 
 /**
  * The agency the shared native app serves, stored with the sign-in tokens. On the web the address decides the
@@ -51,8 +53,48 @@ export function currentApiUrl(): string {
   return IS_NATIVE && state.agency ? apiUrlFor(agencyAddress(state.agency.code)) : API_URL;
 }
 
+/** Native launch: the stored agency, in its stored theme at once (refreshAgencyTheme then checks it). */
 export async function loadStoredAgency(): Promise<void> {
-  update({ agency: await agencyStorage.get() });
+  const agency = await agencyStorage.get();
+  applyTheme(agency?.theme ?? null);
+  update({ agency });
+}
+
+function sameColors(first: ThemeColors | null, second: ThemeColors | null): boolean {
+  return JSON.stringify(first) === JSON.stringify(second);
+}
+
+/** Native: stores the agency's new theme and re-renders the app in it, where the user was. */
+async function changeAgencyTheme(theme: ThemeColors) {
+  if (!state.agency || sameColors(state.agency.theme, theme)) {
+    return;
+  }
+  const agency = { ...state.agency, theme };
+  await agencyStorage.set(agency);
+  update({ agency });
+  rememberPlaceForThemeChange();
+  applyTheme(theme);
+}
+
+/** Native launch: the stored theme may have changed since; a failed check keeps it. */
+export async function refreshAgencyTheme(code: string) {
+  try {
+    const info = await findAgency(code);
+    if (state.agency?.code === code) {
+      await changeAgencyTheme(info.theme.colors);
+    }
+  } catch {
+    // Offline or unavailable: the app's own requests report it.
+  }
+}
+
+/** The admin saved a new theme: their app takes it at once (the web page reloads; native re-renders). */
+export async function themeSaved(theme: ThemeColors) {
+  if (IS_NATIVE) {
+    await changeAgencyTheme(theme);
+  } else {
+    window.location.reload();
+  }
 }
 
 export function markLoaded() {
@@ -121,9 +163,10 @@ async function signOutEverywhere() {
 /** Stores an agency (signing out of any other) and starts the app on it, opening url's screen if given. */
 export async function chooseAgency(agency: AgencyInfo, url: string | null = null) {
   await signOutEverywhere();
-  const stored = { code: agency.code, name: agency.name };
+  const stored = { code: agency.code, name: agency.name, theme: agency.theme.colors };
   await agencyStorage.set(stored);
   pendingUrl = url;
+  applyTheme(stored.theme);
   update({ agency: stored, session: state.session + 1 });
 }
 
@@ -139,5 +182,7 @@ export async function switchAgency() {
   await signOutEverywhere();
   await agencyStorage.clear();
   pendingUrl = null;
+  // Find your agency is in Azaria's own colours.
+  applyTheme(null);
   update({ agency: null, session: state.session + 1 });
 }

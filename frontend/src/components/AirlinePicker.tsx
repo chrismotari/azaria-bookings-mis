@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
 
 import { api } from '../api/client';
 import { Airline } from '../api/types';
-import { colors, font, space, weight } from '../theme';
+import { colors, createStyles, font, space, weight } from '../theme';
 import { useDebounced } from '../utils/useDebounced';
 import { AirlineBadge } from './AirlineBadge';
 import { Field, inputStyle } from './Field';
@@ -97,7 +97,7 @@ function AirlineSuggestions({ text, onSelect }: { text: string; onSelect: (airli
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   selected: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: 4 },
   selectedText: { flex: 1, color: colors.text, fontSize: font.body },
   change: { color: colors.primary, fontWeight: weight.semibold },
@@ -114,4 +114,4 @@ const styles = StyleSheet.create({
   code: { fontWeight: weight.bold, color: colors.text, width: 28 },
   optionText: { flexShrink: 1, color: colors.text },
   message: { padding: 10, color: colors.muted },
-});
+}));

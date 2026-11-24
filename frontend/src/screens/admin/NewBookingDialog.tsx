@@ -1,7 +1,7 @@
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { errorMessage, firstMessage } from '../../api/errors';
@@ -23,7 +23,7 @@ import { PriceTag } from '../../components/PriceTag';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { Stepper } from '../../components/Stepper';
 import { TextField } from '../../components/TextField';
-import { colors, font, space, weight } from '../../theme';
+import { colors, createStyles, font, space, weight } from '../../theme';
 import { formatPrice } from '../../utils/format';
 import { useDebounced } from '../../utils/useDebounced';
 import { SelectableOffer } from './OfferOptions';
@@ -316,7 +316,7 @@ function OfferPicker({ value, onChange, error }: OfferPickerProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   text: { color: colors.text, fontSize: font.body },
   muted: { color: colors.muted },
   error: { color: colors.dangerText, fontSize: font.small },
@@ -345,4 +345,4 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   totalLabel: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text },
-});
+}));

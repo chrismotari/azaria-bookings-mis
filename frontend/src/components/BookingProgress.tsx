@@ -1,7 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { BookingStatus } from '../api/types';
-import { colors, font, radius, space, weight } from '../theme';
+import { colors, createStyles, font, radius, space, weight } from '../theme';
 import { BOOKING_STATUS } from '../utils/bookings';
 import { Icon, IconName } from './Icon';
 import { TONES } from './StatusChip';
@@ -81,7 +81,7 @@ export function BookingProgress({ status, message }: { status: BookingStatus; me
 
 const MARKER = 28;
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   tracker: { flexDirection: 'row' },
   step: { flex: 1, alignItems: 'center', gap: space.xs, minWidth: 0 },
   markerRow: { flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch' },
@@ -115,4 +115,4 @@ const styles = StyleSheet.create({
   bannerText: { flexShrink: 1, gap: space.xs },
   bannerTitle: { fontSize: font.heading, fontWeight: weight.bold },
   bannerMessage: { fontSize: font.body, color: colors.text },
-});
+}));

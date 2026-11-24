@@ -11,7 +11,7 @@ from core.tests.helpers import OTHER_DOMAIN, OTHER_SCHEMA, TEST_DOMAIN, TEST_SCH
 @pytest.fixture(scope="session")
 def django_db_setup(django_db_setup, django_db_blocker):
     """Two agencies for the whole session: every test runs in the first; the second is for isolation tests."""
-    from tenants.models import Domain, Tenant
+    from tenants.models import Domain, Tenant, Theme
 
     with django_db_blocker.unblock():
         connection.set_schema_to_public()
@@ -19,7 +19,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
             (TEST_SCHEMA, TEST_DOMAIN, "Test Agency"),
             (OTHER_SCHEMA, OTHER_DOMAIN, "Other Agency"),
         ]:
-            tenant = Tenant(schema_name=schema_name, name=name)
+            tenant = Tenant(schema_name=schema_name, name=name, theme=Theme.default())
             tenant.save(verbosity=0)
             Domain.objects.create(domain=domain, tenant=tenant, is_primary=True)
             # Every agency is also reachable at its app address; the test agency's primary domain is a custom one.

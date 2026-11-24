@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable } from 'react-native';
 
-import { colors, radius, shadow, space } from '../theme';
+import { colors, createStyles, radius, shadow, space } from '../theme';
 import { PressState } from './pressState';
 import { TONES, Tone } from './StatusChip';
 
@@ -33,7 +33,7 @@ export function TripCard({ tone, selected, onPress, accessibilityLabel, children
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
@@ -46,4 +46,4 @@ const styles = StyleSheet.create({
   },
   pressed: { borderTopColor: colors.primary, borderRightColor: colors.primary, borderBottomColor: colors.primary },
   selected: { backgroundColor: colors.primaryTint },
-});
+}));

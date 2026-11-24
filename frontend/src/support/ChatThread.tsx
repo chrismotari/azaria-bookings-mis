@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, ScrollViewInstance, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, ScrollViewInstance, Text, View } from 'react-native';
 
 import { errorMessage } from '../api/errors';
 import { ChatMessage } from '../api/types';
@@ -9,7 +9,7 @@ import { FormError } from '../components/Field';
 import { Icon } from '../components/Icon';
 import { PressState } from '../components/pressState';
 import { TextField } from '../components/TextField';
-import { colors, font, radius, space, weight } from '../theme';
+import { colors, createStyles, font, radius, space, weight } from '../theme';
 import { openFile } from '../utils/download';
 import { AttachButton } from './AttachButton';
 
@@ -134,7 +134,7 @@ function ReplyBox({ onSend }: { onSend: (body: string, attachment: File | null) 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   thread: { gap: space.md },
   fill: { flex: 1, minHeight: 0 },
   messages: { gap: space.md, paddingVertical: space.xs },
@@ -167,4 +167,4 @@ const styles = StyleSheet.create({
   reply: { gap: space.sm, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: space.md },
   sendRow: { alignItems: 'flex-end' },
   closed: { color: colors.muted, fontSize: font.small, textAlign: 'center', paddingVertical: space.sm },
-});
+}));

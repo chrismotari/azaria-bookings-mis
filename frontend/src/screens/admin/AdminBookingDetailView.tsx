@@ -1,6 +1,6 @@
 import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
@@ -20,7 +20,7 @@ import { ItineraryCards, TripConditions } from '../../components/Itinerary';
 import { StatusChip } from '../../components/StatusChip';
 import { DetailError } from '../../components/DetailLayout';
 import { LoadingState } from '../../components/StatusViews';
-import { colors, font, weight } from '../../theme';
+import { colors, createStyles, font, weight } from '../../theme';
 import { BOOKING_STATUS, TERMINAL_STATUSES, changesAwaitingAcceptance } from '../../utils/bookings';
 import { formatDateTime } from '../../utils/format';
 import { ConfirmAvailabilityDialog } from './ConfirmAvailabilityDialog';
@@ -328,10 +328,10 @@ function BoardingPassUploads({ booking }: { booking: AdminBookingDetail }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   section: { fontSize: font.heading, fontWeight: weight.bold, color: colors.tertiary },
   deadline: { color: colors.text, fontWeight: weight.bold },
   text: { color: colors.text },
   muted: { color: colors.muted },
-});
+}));

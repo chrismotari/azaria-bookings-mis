@@ -1,6 +1,6 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { colors } from '../theme';
+import { colors, createStyles } from '../theme';
 import { Button } from './Button';
 
 export const PAGE_SIZE = 20;
@@ -23,7 +23,7 @@ export function Pagination({ page, count, onChange }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
   text: { color: colors.muted },
-});
+}));

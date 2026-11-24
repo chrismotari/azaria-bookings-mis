@@ -6,6 +6,8 @@ from rest_framework.views import APIView
 
 from core.tenancy import agency_code, app_address
 
+from .serializers import ThemeSerializer
+
 NO_TENANT = {"detail": "There is no agency at this address.", "code": "no_tenant"}
 SUSPENDED = {"detail": "This agency is not available at the moment.", "code": "tenant_suspended"}
 
@@ -39,6 +41,7 @@ class AgencyView(APIView):
                 "code": agency_code(tenant.schema_name),
                 "name": tenant.name,
                 "app_address": app_address(tenant.schema_name),
+                "theme": ThemeSerializer(tenant.theme).data,
             }
         )
 

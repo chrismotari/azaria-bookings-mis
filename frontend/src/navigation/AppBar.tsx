@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { ReactNode, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../auth/AuthContext';
@@ -8,7 +8,7 @@ import { useSignOut } from '../auth/useSignOut';
 import { switchAgency } from '../agency/agency';
 import { IS_NATIVE, IS_PLATFORM } from '../config';
 import { Icon, IconName } from '../components/Icon';
-import { colors, font, radius, shadow, space, useIsWide, weight } from '../theme';
+import { colors, createStyles, font, radius, shadow, space, useIsWide, weight } from '../theme';
 import { PressState } from '../components/pressState';
 
 export const APP_BAR_HEIGHT = 56;
@@ -204,7 +204,7 @@ function MenuItem({ label, icon, onPress }: { label: string; icon: IconName; onP
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   bar: { backgroundColor: colors.primary },
   inner: {
     height: APP_BAR_HEIGHT,
@@ -302,4 +302,4 @@ const styles = StyleSheet.create({
   },
   menuItemPressed: { backgroundColor: colors.primaryTint },
   menuItemText: { color: colors.text, fontSize: font.body },
-});
+}));

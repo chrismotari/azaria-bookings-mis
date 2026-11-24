@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
@@ -8,7 +8,7 @@ import { Button } from '../../components/Button';
 import { Dialog } from '../../components/Dialog';
 import { FormSection } from '../../components/FormSection';
 import { OfferFilterValues } from '../../components/OfferFilterFields';
-import { colors, font } from '../../theme';
+import { colors, createStyles, font } from '../../theme';
 import { todayInNairobi } from '../../utils/format';
 import { ChosenOffers, MessageField, OfferOptionsSections, useOfferOptions } from './OfferOptions';
 import { OfferFormValues, itineraryDefaults, offerDefaults } from './offerSchema';
@@ -119,7 +119,7 @@ function MarkUnavailableForm({ booking, onClose, onDone }: Omit<Props, 'open'>) 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   text: { color: colors.text, fontSize: font.body },
   muted: { color: colors.muted },
-});
+}));

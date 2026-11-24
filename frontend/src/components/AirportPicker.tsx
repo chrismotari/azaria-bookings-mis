@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
 
 import { api } from '../api/client';
 import { Airport } from '../api/types';
-import { colors, font, weight } from '../theme';
+import { colors, createStyles, font, weight } from '../theme';
 import { useDebounced } from '../utils/useDebounced';
 import { Field, inputStyle } from './Field';
 import { Flag } from './Flag';
@@ -155,7 +155,7 @@ export function AirportSearchField({ label, value, onChange, onSubmitEditing }: 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   selected: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   selectedText: { flexShrink: 1, color: colors.text, fontSize: font.body },
   change: { color: colors.primary, fontWeight: weight.semibold },
@@ -175,4 +175,4 @@ const styles = StyleSheet.create({
   code: { fontWeight: weight.bold, color: colors.text, width: 40 },
   optionText: { flexShrink: 1, color: colors.text },
   message: { padding: 10, color: colors.muted },
-});
+}));

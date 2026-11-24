@@ -1,11 +1,11 @@
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { ReactNode, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '../components/Icon';
 import { PressState } from '../components/pressState';
-import { colors, font, radius, shadow, space, useIsWide, weight } from '../theme';
+import { colors, createStyles, font, radius, shadow, space, useIsWide, weight } from '../theme';
 import { AppBar, AppBarItem } from './AppBar';
 
 type Props = BottomTabBarProps & {
@@ -181,7 +181,7 @@ function TabBadge({ value }: { value: string | number }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   badge: {
     position: 'absolute',
     top: -6,
@@ -246,4 +246,4 @@ const styles = StyleSheet.create({
   focused: { borderTopColor: colors.primary },
   label: { fontSize: font.caption, color: colors.muted },
   focusedLabel: { color: colors.primary, fontWeight: weight.bold },
-});
+}));

@@ -1,10 +1,10 @@
 import { useNavigation } from '@react-navigation/native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../auth/AuthContext';
 import { PressState } from '../components/pressState';
-import { colors, font, radius, space, useIsWide, weight } from '../theme';
+import { colors, createStyles, font, radius, space, useIsWide, weight } from '../theme';
 import { APP_BAR_HEIGHT } from './AppBar';
 
 /** Header for the root host's public pages. */
@@ -44,7 +44,7 @@ export function PlatformPublicBar() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   bar: { backgroundColor: colors.primary },
   inner: {
     height: APP_BAR_HEIGHT,
@@ -61,4 +61,4 @@ const styles = StyleSheet.create({
   linkHovered: { backgroundColor: colors.primaryHover },
   linkText: { color: colors.primaryText, fontWeight: weight.semibold, fontSize: font.body },
   linkTextNarrow: { fontSize: font.small },
-});
+}));

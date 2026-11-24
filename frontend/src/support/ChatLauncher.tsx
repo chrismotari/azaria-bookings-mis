@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { api } from '../api/client';
@@ -10,7 +10,7 @@ import { Button } from '../components/Button';
 import { Icon } from '../components/Icon';
 import { PressState } from '../components/pressState';
 import { EmptyState, ErrorState, LoadingState } from '../components/StatusViews';
-import { colors, font, radius, shadowRaised, space, useIsWide, weight } from '../theme';
+import { colors, createStyles, font, radius, shadowRaised, space, useIsWide, weight } from '../theme';
 import { ChatEndpoints, CHATS_KEY, messageBody, useMyChat, useMyChats, useMyUnread } from './api';
 import { ChatThread, chatTime } from './ChatThread';
 import { ChatPrefill, closeChat, openChat, useChatLauncher } from './launcher';
@@ -242,7 +242,7 @@ function Thread({ endpoints, id }: { endpoints: ChatEndpoints; id: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   button: {
     position: 'absolute',
     right: space.lg,
@@ -312,4 +312,4 @@ const styles = StyleSheet.create({
   subject: { fontSize: font.body, fontWeight: weight.semibold, color: colors.text },
   subjectUnread: { fontWeight: weight.heavy },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent },
-});
+}));

@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 import { z } from 'zod';
 
 import { api } from '../../api/client';
@@ -11,7 +11,7 @@ import { Button } from '../../components/Button';
 import { FormError } from '../../components/Field';
 import { TextField } from '../../components/TextField';
 import { RootStackParamList } from '../../navigation/types';
-import { colors } from '../../theme';
+import { colors, createStyles } from '../../theme';
 import { AuthLayout } from './AuthLayout';
 
 const schema = z.object({ email: z.email('Enter a valid email address.') });
@@ -69,7 +69,7 @@ export function ForgotPasswordScreen({ navigation }: NativeStackScreenProps<Root
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   help: { color: colors.muted },
   notice: { color: colors.success },
-});
+}));

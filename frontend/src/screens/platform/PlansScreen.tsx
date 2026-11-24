@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { z } from 'zod';
 
 import { api } from '../../api/client';
@@ -24,7 +24,7 @@ import { Column, Table, TableRow } from '../../components/Table';
 import { TextField } from '../../components/TextField';
 import { Toggle } from '../../components/Toggle';
 import { TripCard } from '../../components/TripCard';
-import { colors, font, space, useIsWide, weight } from '../../theme';
+import { colors, createStyles, font, space, useIsWide, weight } from '../../theme';
 import { formatMoney } from '../../utils/format';
 import { PLANS_KEY } from './keys';
 
@@ -350,7 +350,7 @@ function PlanDialog({ plan, kind, onClose }: { plan: Plan | null; kind: PlanKind
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   headerActions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   chips: { flexDirection: 'row', gap: space.xs, alignItems: 'center' },
   error: { color: colors.dangerText, fontSize: font.small },
@@ -378,4 +378,4 @@ const styles = StyleSheet.create({
   },
   text: { color: colors.text },
   muted: { color: colors.muted },
-});
+}));

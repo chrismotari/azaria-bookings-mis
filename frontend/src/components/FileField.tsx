@@ -1,7 +1,7 @@
 import { createElement, useRef } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, Text, View } from 'react-native';
 
-import { colors, font, radius, space, weight } from '../theme';
+import { colors, createStyles, font, radius, space, weight } from '../theme';
 import { FormError } from './Field';
 import { Icon } from './Icon';
 import { PressState } from './pressState';
@@ -67,7 +67,7 @@ export function FileField({ label, hint, accept, onSelect, disabled, error }: Pr
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   field: { gap: space.xs },
   area: {
     alignItems: 'center',
@@ -93,4 +93,4 @@ const styles = StyleSheet.create({
   label: { fontSize: font.body, fontWeight: weight.bold, color: colors.primary },
   hint: { fontSize: font.small, color: colors.muted, textAlign: 'center' },
   notice: { color: colors.muted },
-});
+}));

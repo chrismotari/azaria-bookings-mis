@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 from accounts import tasks
 from accounts.models import User
 from core.tests.helpers import OTHER_DOMAIN, OTHER_SCHEMA, TEST_SCHEMA, html_part
-from tenants.models import Tenant
+from tenants.models import Tenant, Theme
 
 pytestmark = pytest.mark.django_db
 
@@ -41,7 +41,13 @@ def no_app_settings(settings):
 def test_agency_returns_code_name_and_app_address(host):
     response = APIClient(HTTP_HOST=host).get("/api/agency")
     assert response.status_code == 200
-    assert response.json() == {"code": "test", "name": "Test Agency", "app_address": "test.localhost"}
+    theme = Theme.default()
+    assert response.json() == {
+        "code": "test",
+        "name": "Test Agency",
+        "app_address": "test.localhost",
+        "theme": {"id": str(theme.pk), "name": "Indigo & Amber", "colors": theme.colors},
+    }
 
 
 def test_agency_code_keeps_hyphens_of_the_address():
@@ -51,7 +57,8 @@ def test_agency_code_keeps_hyphens_of_the_address():
         slug="sky-high", name="Sky High", admin_email="a@sky.test", admin_password="Str0ng-pass!", admin_name="A"
     )
     response = APIClient(HTTP_HOST="sky-high.localhost").get("/api/agency")
-    assert response.json() == {"code": "sky-high", "name": "Sky High", "app_address": "sky-high.localhost"}
+    body = response.json()
+    assert (body["code"], body["name"], body["app_address"]) == ("sky-high", "Sky High", "sky-high.localhost")
 
 
 def test_agency_ignores_a_bad_token():

@@ -1,7 +1,7 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { AdminBooking, BookingStatus, Paginated } from '../../api/types';
@@ -18,7 +18,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/StatusVie
 import { Column, RouteCell, Table, TableRow, TwoLineCell } from '../../components/Table';
 import { TripCard } from '../../components/TripCard';
 import { AdminTabParamList } from '../../navigation/types';
-import { colors, font, space, useIsWide, weight } from '../../theme';
+import { colors, createStyles, font, space, useIsWide, weight } from '../../theme';
 import { BOOKING_STATUS, bookingDates, bookingRoute, passengersLabel } from '../../utils/bookings';
 import { formatDateTime, tripDates } from '../../utils/format';
 import { AdminBookingDetailView } from './AdminBookingDetailView';
@@ -221,7 +221,7 @@ function AdminBookingCard({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -243,4 +243,4 @@ const styles = StyleSheet.create({
   fact: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   text: { fontSize: font.body, color: colors.text },
   small: { fontSize: font.small, color: colors.muted },
-});
+}));

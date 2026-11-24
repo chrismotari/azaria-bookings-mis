@@ -2,7 +2,7 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { Paginated, Query } from '../../api/types';
@@ -16,7 +16,7 @@ import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { TripCard } from '../../components/TripCard';
 import { MainTabParamList } from '../../navigation/types';
-import { colors, font, space, weight } from '../../theme';
+import { colors, createStyles, font, space, weight } from '../../theme';
 import { formatDateTime, routeCodes } from '../../utils/format';
 import { QUERY_STATUS, describeQuery } from '../../utils/queries';
 import { QueryDetailView } from './QueryDetailView';
@@ -126,7 +126,7 @@ function QueryRow({ query, selected, onPress }: { query: Query; selected: boolea
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -146,4 +146,4 @@ const styles = StyleSheet.create({
   fact: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
   text: { fontSize: font.body, color: colors.text, flexShrink: 1 },
   muted: { color: colors.muted, fontSize: font.small },
-});
+}));

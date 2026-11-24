@@ -1,7 +1,7 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
@@ -29,7 +29,7 @@ import {
   useDeskChats,
 } from '../../support/api';
 import { ChatThread, chatTime } from '../../support/ChatThread';
-import { colors, font, space, weight } from '../../theme';
+import { colors, createStyles, font, space, weight } from '../../theme';
 
 type Status = 'open' | 'closed';
 
@@ -246,7 +246,7 @@ function DeskChatView({ endpoints, id }: { endpoints: DeskEndpoints; id: string 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   section: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text, flexShrink: 1 },
   cards: { gap: space.md },
@@ -255,4 +255,4 @@ const styles = StyleSheet.create({
   unread: { fontWeight: weight.heavy },
   text: { color: colors.text },
   muted: { color: colors.muted },
-});
+}));

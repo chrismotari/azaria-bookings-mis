@@ -1,6 +1,6 @@
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { Switch, Text, View } from 'react-native';
 
-import { colors, font } from '../theme';
+import { colors, createStyles, font } from '../theme';
 
 type Props = {
   label: string;
@@ -27,7 +27,7 @@ export function Toggle({ label, value, onChange, disabled }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   label: { fontSize: font.small, color: colors.text },
-});
+}));

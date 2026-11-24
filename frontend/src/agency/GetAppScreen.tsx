@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Linking, Platform, StyleSheet, Text, View } from 'react-native';
+import { Linking, Platform, Text, View } from 'react-native';
 
 import { api } from '../api/client';
 import { AgencyInfo } from '../api/types';
@@ -9,7 +9,7 @@ import { Icon } from '../components/Icon';
 import { Screen } from '../components/Screen';
 import { ErrorState, LoadingState } from '../components/StatusViews';
 import { APP_SCHEME, APP_STORE_URL, PLAY_STORE_URL } from '../config';
-import { colors, font, radius, space, weight } from '../theme';
+import { colors, createStyles, font, radius, space, weight } from '../theme';
 
 export function useAgencyInfo() {
   return useQuery({
@@ -80,7 +80,7 @@ export function GetAppScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   header: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   icon: {
     width: 48,
@@ -106,4 +106,4 @@ const styles = StyleSheet.create({
   stores: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   note: { fontSize: font.body, color: colors.text },
   installed: { gap: space.sm, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: space.lg },
-});
+}));

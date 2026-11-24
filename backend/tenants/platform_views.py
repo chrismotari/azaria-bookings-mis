@@ -2,7 +2,7 @@
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from django_tenants.utils import get_public_schema_name, schema_context
 from rest_framework import generics, serializers, status
@@ -15,12 +15,13 @@ from accounts.tasks import send_password_reset_email
 from core.throttling import IPScopedRateThrottle
 
 from . import billing, services
-from .models import Domain, Tenant
+from .models import Domain, Tenant, Theme
 from .permissions import IsPlatformOwner
 from .serializers import (
     DomainSerializer,
     PlatformAgencyAdminSerializer,
     PlatformLoginSerializer,
+    PlatformThemeSerializer,
     PlatformUserSerializer,
     TenantCreateSerializer,
     TenantDetailSerializer,
@@ -73,6 +74,7 @@ class PlatformTenantListView(generics.ListCreateAPIView):
                 admin_email=data["admin_email"],
                 admin_password=data["admin_password"],
                 admin_name=data["admin_name"],
+                theme=data.get("theme"),
             )
         except DjangoValidationError as exc:
             # The address checks raise plain errors; the others name their fields.
@@ -103,6 +105,58 @@ class PlatformTenantDetailView(generics.RetrieveUpdateAPIView):
             billing.set_active(tenant, active)
         # The response lists the domains as they are now.
         serializer.instance = agencies().get(pk=tenant.pk)
+
+
+# Themes: the owner manages the list agencies choose from. Never deleted; the default is always active.
+
+
+def themes():
+    """Default first, then by name, each with the number of agencies using it."""
+    agency_count = Count("tenants", filter=~Q(tenants__schema_name=get_public_schema_name()))
+    return Theme.objects.annotate(agency_count=agency_count).order_by("-is_default", "name")
+
+
+class PlatformThemeListView(generics.ListCreateAPIView):
+    permission_classes = [IsPlatformOwner]
+    serializer_class = PlatformThemeSerializer
+    pagination_class = None
+
+    def get_queryset(self):
+        return themes()
+
+    def perform_create(self, serializer):
+        theme = serializer.save()
+        serializer.instance = themes().get(pk=theme.pk)
+
+
+class PlatformThemeDetailView(generics.RetrieveUpdateAPIView):
+    permission_classes = [IsPlatformOwner]
+    serializer_class = PlatformThemeSerializer
+    http_method_names = ["get", "patch", "head", "options"]
+
+    def get_queryset(self):
+        return themes()
+
+    def perform_update(self, serializer):
+        theme = serializer.save()
+        serializer.instance = themes().get(pk=theme.pk)
+
+
+class PlatformThemeMakeDefaultView(APIView):
+    permission_classes = [IsPlatformOwner]
+
+    def post(self, request, pk):
+        with transaction.atomic():
+            theme = get_object_or_404(Theme.objects.select_for_update(), pk=pk)
+            if not theme.is_active:
+                return Response(
+                    {"detail": "Activate this theme before making it the default."}, status=status.HTTP_409_CONFLICT
+                )
+            Theme.objects.filter(is_default=True).exclude(pk=theme.pk).update(is_default=False)
+            if not theme.is_default:
+                theme.is_default = True
+                theme.save(update_fields=["is_default"])
+        return Response(PlatformThemeSerializer(themes().get(pk=theme.pk)).data)
 
 
 class PlatformDomainListView(APIView):

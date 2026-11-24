@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
@@ -13,7 +13,7 @@ import { Icon } from '../../components/Icon';
 import { Pagination } from '../../components/Pagination';
 import { Screen } from '../../components/Screen';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
-import { colors, font, space, weight } from '../../theme';
+import { colors, createStyles, font, space, weight } from '../../theme';
 import { formatDate, formatMoney } from '../../utils/format';
 import { InvoiceCard, openInvoice } from '../platform/InvoicesScreen';
 
@@ -148,7 +148,7 @@ export function OverdueBanner() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   back: { alignSelf: 'flex-start' },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   section: {
@@ -187,4 +187,4 @@ const styles = StyleSheet.create({
     fontWeight: weight.semibold,
     fontSize: font.small,
   },
-});
+}));

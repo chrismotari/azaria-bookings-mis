@@ -2,12 +2,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ComponentProps, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { z } from 'zod';
 
 import { api } from '../../api/client';
 import { applyServerErrors, errorMessage } from '../../api/errors';
-import { AgencyAdmin, Tenant, TenantDetail, TenantDomain } from '../../api/types';
+import { AgencyAdmin, PlatformTheme, Tenant, TenantDetail, TenantDomain } from '../../api/types';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { useConfirm } from '../../components/ConfirmDialog';
@@ -19,9 +19,10 @@ import { StatusChip, Tone } from '../../components/StatusChip';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
 import { PLATFORM_HOST } from '../../config';
-import { colors, font, radius, space, useIsWide, weight } from '../../theme';
+import { colors, createStyles, font, radius, space, useIsWide, weight } from '../../theme';
 import { formatDate, formatDateTime } from '../../utils/format';
 import { AgencyBilling } from './AgencyBilling';
+import { AgencyTheme, ThemePicker, themeChoices, usePlatformThemes } from './AgencyTheme';
 import { AGENCIES_KEY } from './keys';
 
 /** Keyed by String(is_active). */
@@ -112,6 +113,7 @@ function Agency({ tenant }: { tenant: TenantDetail }) {
         <NameForm tenant={tenant} />
         <Detail label="Address" value={tenant.primary_domain ?? '—'} />
         <Detail label="Created" value={createdOn(tenant)} />
+        <AgencyTheme key={tenant.id} tenant={tenant} onSaved={refresh} />
       </Card>
       <Admins tenant={tenant} />
       <Domains tenant={tenant} />
@@ -527,11 +529,12 @@ const newSchema = z.object({
   admin_name: z.string().trim().min(1, "Enter the admin's name.").max(150),
   admin_email: z.email('Enter a valid email address.'),
   admin_password: z.string().min(1, 'Enter a password for the admin.'),
+  theme: z.string(),
 });
 
 type NewValues = z.infer<typeof newSchema>;
 
-const NEW_FIELDS = ['name', 'slug', 'admin_name', 'admin_email', 'admin_password'] as const;
+const NEW_FIELDS = ['name', 'slug', 'admin_name', 'admin_email', 'admin_password', 'theme'] as const;
 
 type NewAgencyProps = {
   open: boolean;
@@ -541,18 +544,37 @@ type NewAgencyProps = {
 
 /** Creates an agency with its address and first admin. */
 export function NewAgencyDialog({ open, onClose, onCreated }: NewAgencyProps) {
-  // A fresh form each time the dialog opens.
-  return open ? <NewAgencyForm onClose={onClose} onCreated={onCreated} /> : null;
+  const themes = usePlatformThemes();
+  if (!open) {
+    return null;
+  }
+  // A fresh form each time the dialog opens, once the themes are in.
+  if (!themes.data) {
+    return (
+      <Dialog open title="New agency" size="large" onClose={onClose} footer={null}>
+        {themes.isError ? <ErrorState error={themes.error} onRetry={() => themes.refetch()} /> : <LoadingState />}
+      </Dialog>
+    );
+  }
+  return <NewAgencyForm themes={themeChoices(themes.data)} onClose={onClose} onCreated={onCreated} />;
 }
 
-function NewAgencyForm({ onClose, onCreated }: Omit<NewAgencyProps, 'open'>) {
+function NewAgencyForm({ themes, onClose, onCreated }: Omit<NewAgencyProps, 'open'> & { themes: PlatformTheme[] }) {
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
   const { control, handleSubmit, setError, watch, formState } = useForm<NewValues>({
     resolver: zodResolver(newSchema),
-    defaultValues: { name: '', slug: '', admin_name: '', admin_email: '', admin_password: '' },
+    defaultValues: {
+      name: '',
+      slug: '',
+      admin_name: '',
+      admin_email: '',
+      admin_password: '',
+      theme: (themes.find((theme) => theme.is_default) ?? themes[0]).id,
+    },
   });
   const slug = watch('slug').trim();
+  const name = watch('name');
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
@@ -618,11 +640,19 @@ function NewAgencyForm({ onClose, onCreated }: Omit<NewAgencyProps, 'open'>) {
       {field('admin_name', 'Full name', { autoCapitalize: 'words' })}
       {field('admin_email', 'Email', { autoCapitalize: 'none', keyboardType: 'email-address' })}
       {field('admin_password', 'Password', { secureTextEntry: true, autoComplete: 'new-password' })}
+      <Text style={styles.subsection}>Look</Text>
+      <Controller
+        control={control}
+        name="theme"
+        render={({ field: input }) => (
+          <ThemePicker themes={themes} value={input.value} onChange={input.onChange} name={name} />
+        )}
+      />
     </Dialog>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createStyles(() => ({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -674,4 +704,4 @@ const styles = StyleSheet.create({
   hint: { marginTop: -space.xs },
   hintText: { fontSize: font.small, color: colors.muted },
   hintStrong: { fontWeight: weight.semibold, color: colors.text },
-});
+}));
