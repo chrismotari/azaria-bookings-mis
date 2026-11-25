@@ -33,7 +33,7 @@ def _booking_in(booking_id, status):
     return (
         Booking.objects.select_related("user", "airline", "offer__origin", "offer__destination")
         .prefetch_related(
-            *(f"segments__{field}" for field in ("airline", "operating_airline", "origin", "destination"))
+            "travellers", *(f"segments__{field}" for field in ("airline", "operating_airline", "origin", "destination"))
         )
         .filter(pk=booking_id, status=status)
         .first()
@@ -56,6 +56,7 @@ def describe_booking(booking):
         "conditions": format_conditions(booking),
         "ticket_class": offer.get_ticket_class_display(),
         "total": format_price(booking.total_price),
+        "passengers": ", ".join(traveller.full_name for traveller in booking.travellers.all()),
     }
 
 

@@ -17,6 +17,7 @@ urlpatterns = [
         path("bookings/<uuid:pk>/cancel", views.BookingCancelView.as_view()),
         path("bookings/<uuid:pk>/accept-changes", views.BookingAcceptChangesView.as_view()),
         path("bookings/<uuid:pk>/decline-changes", views.BookingDeclineChangesView.as_view()),
+        path("bookings/<uuid:pk>/travellers/<uuid:traveller_id>", views.PassengerView.as_view()),
         path("boarding-passes/<uuid:pk>/download", views.BoardingPassDownloadView.as_view()),
         path("admin/bookings", views.AdminBookingListView.as_view()),
         path("admin/bookings/<uuid:pk>", views.AdminBookingDetailView.as_view()),
@@ -27,6 +28,7 @@ urlpatterns = [
         # "Send boarding passes".
         path("admin/bookings/<uuid:pk>/complete", views.AdminBookingTransitionView.as_view(to_status=Status.COMPLETED)),
         path("admin/bookings/<uuid:pk>/boarding-passes", views.AdminBoardingPassUploadView.as_view()),
+        path("admin/bookings/<uuid:pk>/travellers/<uuid:traveller_id>", views.PassengerView.as_view(admin=True)),
         path("admin/boarding-passes/<uuid:pk>", views.AdminBoardingPassDeleteView.as_view()),
     ],
 )

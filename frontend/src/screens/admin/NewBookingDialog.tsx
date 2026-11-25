@@ -18,11 +18,21 @@ import {
   validateOfferFilters,
 } from '../../components/OfferFilterFields';
 import { Pagination } from '../../components/Pagination';
+import { lastFlightDate, PassengerForms, resizePassengers } from '../../components/Passengers';
 import { PressState } from '../../components/pressState';
 import { PriceTag } from '../../components/PriceTag';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { Stepper } from '../../components/Stepper';
 import { TextField } from '../../components/TextField';
+import {
+  emptyTraveller,
+  passengerFrom,
+  TravellerDraft,
+  TravellerErrors,
+  travellerInput,
+  travellerServerErrors,
+  validatePassenger,
+} from '../../components/TravellerForm';
 import { colors, createStyles, font, space, weight } from '../../theme';
 import { formatPrice } from '../../utils/format';
 import { useDebounced } from '../../utils/useDebounced';
@@ -66,6 +76,8 @@ function NewBookingForm({ onClose, onCreated }: Omit<Props, 'open'>) {
   const [customer, setCustomer] = useState<AdminCustomer | null>(null);
   const [offer, setOffer] = useState<AdminOffer | null>(null);
   const [passengers, setPassengers] = useState(1);
+  const [drafts, setDrafts] = useState<TravellerDraft[]>(() => [emptyTraveller()]);
+  const [passengerErrors, setPassengerErrors] = useState<TravellerErrors[]>([]);
   const [notes, setNotes] = useState('');
   const [errors, setErrors] = useState<Errors>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -81,7 +93,13 @@ function NewBookingForm({ onClose, onCreated }: Omit<Props, 'open'>) {
     }
     setErrors(missing);
     setFormError(null);
-    if (!customer || !offer) {
+    const found = drafts.map((draft) => validatePassenger(draft, offer ? lastFlightDate(offer.itinerary) : undefined));
+    setPassengerErrors(found);
+    const invalid = found.some((item) => Object.keys(item).length);
+    if (invalid) {
+      setFormError('Check the passengers’ details.');
+    }
+    if (!customer || !offer || invalid) {
       return;
     }
     setSaving(true);
@@ -91,6 +109,7 @@ function NewBookingForm({ onClose, onCreated }: Omit<Props, 'open'>) {
         offer: offer.id,
         passenger_count: passengers,
         notes: notes.trim(),
+        travellers: drafts.map(travellerInput),
       });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['admin', 'bookings'] }),
@@ -98,10 +117,15 @@ function NewBookingForm({ onClose, onCreated }: Omit<Props, 'open'>) {
       ]);
       onCreated(data);
     } catch (error) {
+      const fromServer = drafts.map((_, index) => travellerServerErrors(error, ['travellers', index]) ?? {});
+      setPassengerErrors(fromServer);
       const found = fieldErrors(error);
       if (found) {
         setErrors(found);
-      } else {
+      }
+      if (fromServer.some((item) => Object.keys(item).length)) {
+        setFormError('Check the passengers’ details.');
+      } else if (!found) {
         setFormError(errorMessage(error));
       }
     } finally {
@@ -134,6 +158,10 @@ function NewBookingForm({ onClose, onCreated }: Omit<Props, 'open'>) {
           onChange={(chosen) => {
             setCustomer(chosen);
             setErrors(({ user: _, ...rest }) => rest);
+            const [first, ...others] = drafts;
+            if (chosen && !first.full_name.trim() && !first.email.trim() && !first.phone.trim()) {
+              setDrafts([passengerFrom(chosen), ...others]);
+            }
           }}
           error={errors.user}
         />
@@ -154,11 +182,16 @@ function NewBookingForm({ onClose, onCreated }: Omit<Props, 'open'>) {
           value={passengers}
           min={MIN_PASSENGERS}
           max={MAX_PASSENGERS}
-          onChange={setPassengers}
+          onChange={(next) => {
+            setPassengers(next);
+            setDrafts(resizePassengers(drafts, next));
+            setPassengerErrors(passengerErrors.slice(0, next));
+          }}
           decreaseLabel="Remove a passenger"
           increaseLabel="Add a passenger"
           error={errors.passenger_count}
         />
+        <PassengerForms drafts={drafts} onChange={setDrafts} errors={passengerErrors} />
         <TextField
           label="Notes (optional)"
           placeholder="e.g. seating or meal preferences"

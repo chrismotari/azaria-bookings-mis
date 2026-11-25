@@ -69,3 +69,25 @@ def direct(origin, destination, departure_date, airline=None):
         departure_date = date.fromisoformat(departure_date)
     when = (departure_date, "10:00"), (departure_date, "18:00")
     return [flight("outbound", airline or airline_named(), "100", origin, destination, *when)]
+
+
+def passengers(count, **overrides):
+    """count complete flight passengers as the API takes them, with a passport valid for years."""
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    expiry = (timezone.localdate() + timedelta(days=5 * 365)).isoformat()
+    return [
+        {
+            "full_name": f"Passenger Number {number}",
+            "gender": "female",
+            "date_of_birth": "1990-05-17",
+            "nationality": "KE",
+            "document_type": "passport",
+            "document_number": f"AK{number:07d}",
+            "document_expiry": expiry,
+            **overrides,
+        }
+        for number in range(1, count + 1)
+    ]

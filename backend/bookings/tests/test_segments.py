@@ -11,7 +11,7 @@ from bookings.models import Booking
 from bookings.services import transition
 from core.emails import format_baggage, format_duration
 from core.models import AppSettings
-from core.tests.helpers import TEST_SCHEMA, airline_named, flight, html_part
+from core.tests.helpers import TEST_SCHEMA, airline_named, flight, html_part, passengers
 
 pytestmark = pytest.mark.django_db
 
@@ -53,7 +53,7 @@ def return_offer(admin_api, airports):
 
 
 def book(customer_api, offer_id, capture=None):
-    data = {"offer": str(offer_id), "passenger_count": 1}
+    data = {"offer": str(offer_id), "passenger_count": 1, "travellers": passengers(1)}
     if capture is None:
         response = customer_api.post("/api/bookings", data, format="json")
     else:

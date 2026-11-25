@@ -232,6 +232,9 @@ export type BoardingPass = {
 
 export type BookingDetail = Booking & {
   events: BookingEvent[];
+  /** Empty for bookings made before passenger details were taken. */
+  travellers: Traveller[];
+  can_edit_travellers: boolean;
   /** Set only while the booking is availability_confirmed. */
   payment_instructions: string | null;
   /** Present only once the booking is completed. */
@@ -282,7 +285,12 @@ export type CheckedFare = {
 /** found: the booked flights' current price in fare; otherwise the cheapest others on the same dates. */
 export type FareRecheck = { found: boolean; fare: CheckedFare | null; alternatives: CheckedFare[] };
 
-export type AdminBookingDetail = AdminBooking & { events: BookingEvent[]; boarding_passes: BoardingPass[] };
+export type AdminBookingDetail = AdminBooking & {
+  events: BookingEvent[];
+  boarding_passes: BoardingPass[];
+  travellers: Traveller[];
+  can_edit_travellers: boolean;
+};
 
 export type FlightFigures = {
   open_queries: number;

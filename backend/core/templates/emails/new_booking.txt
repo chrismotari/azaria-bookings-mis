@@ -14,7 +14,7 @@ Baggage: {{ baggage }}
 Fare conditions: {{ conditions }}
 Class: {{ ticket_class }}
 Airline: {{ booking.airline }}
-Passengers: {{ booking.passenger_count }}
+Passengers: {{ booking.passenger_count }}{% if passengers %} ({{ passengers }}){% endif %}
 Total price: {{ total }}
 Notes: {{ booking.notes|default:"(none)" }}
 

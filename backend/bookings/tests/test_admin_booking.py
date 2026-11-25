@@ -10,6 +10,7 @@ from django.utils import timezone
 from accounts.models import User
 from bookings.models import Booking, BookingEvent
 from core.models import AppSettings
+from core.tests.helpers import passengers
 
 pytestmark = pytest.mark.django_db
 
@@ -17,7 +18,15 @@ Status = Booking.Status
 
 
 def book(admin_api, customer, offer, capture=None, **overrides):
-    body = {"user": str(customer.id), "offer": str(offer.id), "passenger_count": 3, "notes": "By phone", **overrides}
+    count = overrides.get("passenger_count", 3)
+    body = {
+        "user": str(customer.id),
+        "offer": str(offer.id),
+        "passenger_count": 3,
+        "notes": "By phone",
+        "travellers": passengers(count if 0 < count < 10 else 1),
+        **overrides,
+    }
     if capture is None:
         return admin_api.post("/api/admin/bookings", body, format="json")
     with capture(execute=True) as callbacks:

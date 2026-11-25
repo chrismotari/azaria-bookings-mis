@@ -17,6 +17,7 @@ import { useConfirm } from '../../components/ConfirmDialog';
 import { FormError } from '../../components/Field';
 import { ItineraryCards, TripConditions } from '../../components/Itinerary';
 import { Icon } from '../../components/Icon';
+import { PassengersCard } from '../../components/Passengers';
 import { StatusChip } from '../../components/StatusChip';
 import { DetailError } from '../../components/DetailLayout';
 import { LoadingState } from '../../components/StatusViews';
@@ -165,6 +166,7 @@ export function BookingDetailView({ id }: { id: string }) {
       <Card>
         <TripConditions trip={data} />
       </Card>
+      <PassengersCard booking={data} base={`/bookings/${id}`} queryKey={['bookings', 'detail', id]} />
 
       {data.status === 'completed' && data.boarding_passes ? (
         <Card>

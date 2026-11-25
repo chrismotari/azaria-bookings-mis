@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from bookings.models import Booking
 from catalog.models import Offer
-from core.tests.helpers import airline_named, direct, flight, html_part
+from core.tests.helpers import airline_named, direct, flight, html_part, passengers
 from customer_requests.models import Query
 
 pytestmark = pytest.mark.django_db
@@ -143,7 +143,9 @@ def test_customer_sees_the_suggestions(admin_api, customer_api, booking, make_of
     # A private offer sent this way can be opened and booked.
     assert customer_api.get(f"/api/offers/{private.id}").status_code == 200
     booked = customer_api.post(
-        "/api/bookings", {"offer": str(private.id), "passenger_count": 1, "query": query_id}, format="json"
+        "/api/bookings",
+        {"offer": str(private.id), "passenger_count": 1, "query": query_id, "travellers": passengers(1)},
+        format="json",
     )
     assert booked.status_code == 201, booked.data
 

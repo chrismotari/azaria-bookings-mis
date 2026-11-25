@@ -9,18 +9,29 @@ import { z } from 'zod';
 import { api } from '../../api/client';
 import { applyServerErrors } from '../../api/errors';
 import { BookingDetail, Offer } from '../../api/types';
+import { useAuth } from '../../auth/AuthContext';
 import { AirlineBadge } from '../../components/AirlineBadge';
 import { BackLink } from '../../components/BackLink';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { FormError } from '../../components/Field';
 import { Icon } from '../../components/Icon';
+import { lastFlightDate, PassengerForms, resizePassengers } from '../../components/Passengers';
 import { PriceTag } from '../../components/PriceTag';
 import { DirectionLine, directionsOf } from '../../components/Itinerary';
 import { Screen } from '../../components/Screen';
 import { Stepper } from '../../components/Stepper';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
+import {
+  emptyTraveller,
+  passengerFrom,
+  TravellerDraft,
+  TravellerErrors,
+  travellerInput,
+  travellerServerErrors,
+  validatePassenger,
+} from '../../components/TravellerForm';
 import { MainTabParamList } from '../../navigation/types';
 import { colors, createStyles, font, space, weight } from '../../theme';
 import { baggageSummary, formatDate, formatPrice, ticketClassLabel } from '../../utils/format';
@@ -42,6 +53,9 @@ export function BookingNewScreen({ navigation, route }: BottomTabScreenProps<Mai
   const { offer: offerId, query } = route.params;
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const [drafts, setDrafts] = useState<TravellerDraft[]>(() => [user ? passengerFrom(user) : emptyTraveller()]);
+  const [passengerErrors, setPassengerErrors] = useState<TravellerErrors[]>([]);
   const offer = useQuery({
     queryKey: ['offers', offerId],
     queryFn: async () => (await api.get<Offer>(`/offers/${offerId}`)).data,
@@ -62,17 +76,28 @@ export function BookingNewScreen({ navigation, route }: BottomTabScreenProps<Mai
   const data = offer.data;
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
+    const found = drafts.map((draft) => validatePassenger(draft, lastFlightDate(data.itinerary)));
+    setPassengerErrors(found);
+    if (found.some((item) => Object.keys(item).length)) {
+      setFormError('Check the passengers’ details.');
+      return;
+    }
     try {
       const { data: booking } = await api.post<BookingDetail>('/bookings', {
         offer: offerId,
         passenger_count: values.passenger_count,
         notes: values.notes.trim(),
         query: query ?? null,
+        travellers: drafts.map(travellerInput),
       });
       await queryClient.invalidateQueries({ queryKey: ['bookings'] });
       navigation.navigate('Bookings', { id: booking.id });
     } catch (error) {
-      setFormError(applyServerErrors(error, setError, FIELDS));
+      const fromServer = drafts.map((_, index) => travellerServerErrors(error, ['travellers', index]) ?? {});
+      setPassengerErrors(fromServer);
+      const placed = fromServer.some((item) => Object.keys(item).length);
+      const message = applyServerErrors(error, setError, FIELDS);
+      setFormError(placed ? 'Check the passengers’ details.' : message);
     }
   });
 
@@ -119,13 +144,18 @@ export function BookingNewScreen({ navigation, route }: BottomTabScreenProps<Mai
               value={field.value}
               min={MIN_PASSENGERS}
               max={MAX_PASSENGERS}
-              onChange={field.onChange}
+              onChange={(next) => {
+                field.onChange(next);
+                setDrafts(resizePassengers(drafts, next));
+                setPassengerErrors(passengerErrors.slice(0, next));
+              }}
               decreaseLabel="Remove a passenger"
               increaseLabel="Add a passenger"
               error={fieldState.error?.message}
             />
           )}
         />
+        <PassengerForms drafts={drafts} onChange={setDrafts} errors={passengerErrors} />
         <Controller
           control={control}
           name="notes"

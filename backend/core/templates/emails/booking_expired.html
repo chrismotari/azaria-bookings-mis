@@ -9,6 +9,7 @@
   {% if return_flights %}{% include "emails/_row.html" with label="Return" value=return_flights %}{% endif %}
   {% include "emails/_row.html" with label="Baggage" value=baggage %}
   {% include "emails/_row.html" with label="Fare conditions" value=conditions %}
+  {% if passengers %}{% include "emails/_row.html" with label="Passengers" value=passengers %}{% endif %}
 </table>
 <p style="margin:0 0 16px 0;">If the offer is still available, you can book it again in the app.</p>
 {% with booking_offer_id=booking.offer_id|stringformat:"s" %}{% include "emails/_button.html" with url=frontend_url|add:"/offers/"|add:booking_offer_id label="View the offer" %}{% endwith %}

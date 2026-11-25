@@ -11,7 +11,7 @@ from integrations.serializers import recheck_data
 from integrations.services import recheck_fare
 
 from . import dashboard
-from .models import BoardingPass, Booking
+from .models import BoardingPass, Booking, Traveller
 from .serializers import (
     AdminBookingCreateSerializer,
     AdminBookingDetailSerializer,
@@ -22,10 +22,14 @@ from .serializers import (
     BookingDetailSerializer,
     BookingSerializer,
     ConfirmAvailabilitySerializer,
+    PassengerSerializer,
+    TravellerSerializer,
+    last_flight_date,
 )
 from .services import (
     accept_changes,
     add_boarding_pass,
+    change_passenger,
     check_transition,
     confirm_availability,
     create_booking,
@@ -70,7 +74,7 @@ class BookingDetailView(generics.RetrieveAPIView):
         return (
             Booking.objects.filter(user=self.request.user)
             .select_related(*BOOKING_RELATED)
-            .prefetch_related("events", *BOOKING_SEGMENTS)
+            .prefetch_related("events", "travellers", *BOOKING_SEGMENTS)
         )
 
 
@@ -95,6 +99,25 @@ class BookingDeclineChangesView(APIView):
         return Response(BookingDetailSerializer(booking, context={"request": request}).data)
 
 
+class PassengerView(APIView):
+    """PATCH one passenger of the customer's own booking (or, with admin, any booking)."""
+
+    admin = False
+
+    def get_permissions(self):
+        return [IsAdminRole()] if self.admin else super().get_permissions()
+
+    def patch(self, request, pk, traveller_id):
+        bookings = Booking.objects.all() if self.admin else Booking.objects.filter(user=request.user)
+        booking = generics.get_object_or_404(bookings, pk=pk)
+        traveller = generics.get_object_or_404(Traveller, pk=traveller_id, booking=booking)
+        context = {"last_flight_date": last_flight_date(booking.segments.all())}
+        serializer = PassengerSerializer(traveller, data=request.data, partial=True, context=context)
+        serializer.is_valid(raise_exception=True)
+        traveller = change_passenger(traveller, serializer.validated_data, self.admin)
+        return Response(TravellerSerializer(traveller).data)
+
+
 class AdminBookingListView(generics.ListAPIView):
     """Also POST: the admin books for a customer; the booking then follows the normal flow from requested."""
 
@@ -117,7 +140,7 @@ class AdminBookingDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAdminRole]
     serializer_class = AdminBookingDetailSerializer
     queryset = Booking.objects.select_related("user", *BOOKING_RELATED).prefetch_related(
-        "events", "boarding_passes", *BOOKING_SEGMENTS
+        "events", "boarding_passes", "travellers", *BOOKING_SEGMENTS
     )
 
 

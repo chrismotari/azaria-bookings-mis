@@ -10,7 +10,8 @@ Return:
 {% endif %}
 Baggage: {{ baggage }}
 Fare conditions: {{ conditions }}
-
+{% if passengers %}Passengers: {{ passengers }}
+{% endif %}
 You can also download {{ pass_count|pluralize:"it,them" }} from your booking in the app:
 {{ frontend_url }}/bookings/{{ booking.id }}
 

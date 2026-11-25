@@ -10,7 +10,8 @@ Return:
 {% endif %}
 Baggage: {{ baggage }}
 Fare conditions: {{ conditions }}
-{% if alternatives %}
+{% if passengers %}Passengers: {{ passengers }}
+{% endif %}{% if alternatives %}
 We have found {{ option_count }} other option{{ option_count|pluralize }} for you.{% if message %}
 
 {{ message }}{% endif %}

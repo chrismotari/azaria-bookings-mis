@@ -133,6 +133,51 @@ export function validateTraveller(draft: TravellerDraft): TravellerErrors {
   return errors;
 }
 
+const PASSENGER_REQUIRED: [keyof TravellerDraft, string][] = [
+  ['gender', 'Choose the gender.'],
+  ['date_of_birth', 'Enter the date of birth.'],
+  ['nationality', 'Choose the nationality.'],
+  ['document_type', 'Choose the document type.'],
+  ['document_number', 'Enter the document number.'],
+];
+
+function isoToday(): string {
+  const now = new Date();
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+/** A flight passenger also needs identity and document, and a passport valid after lastFlightDate (YYYY-MM-DD). */
+export function validatePassenger(draft: TravellerDraft, lastFlightDate?: string): TravellerErrors {
+  const errors = validateTraveller(draft);
+  for (const [field, message] of PASSENGER_REQUIRED) {
+    if (!String(draft[field]).trim() && !errors[field]) {
+      errors[field] = message;
+    }
+  }
+  const today = isoToday();
+  const earliest = `${Number(today.slice(0, 4)) - 120}${today.slice(4)}`;
+  if (draft.date_of_birth && draft.date_of_birth > today) {
+    errors.date_of_birth = 'The date of birth cannot be in the future.';
+  } else if (draft.date_of_birth && draft.date_of_birth < earliest) {
+    errors.date_of_birth = 'Enter a date of birth within the last 120 years.';
+  }
+  if (
+    lastFlightDate &&
+    draft.document_type === 'passport' &&
+    draft.document_expiry &&
+    draft.document_expiry <= lastFlightDate
+  ) {
+    errors.document_expiry = 'Passport expires before the trip.';
+  }
+  return errors;
+}
+
+/** The first passenger's draft, filled from the customer's account. */
+export function passengerFrom(contact: { full_name: string; email: string; phone: string }): TravellerDraft {
+  return { ...emptyTraveller(), full_name: contact.full_name, email: contact.email, phone: contact.phone };
+}
+
 /** Field errors from a refused save; nested is the path into the error body, e.g. ["lines", 0, "travellers", 1]. */
 export function travellerServerErrors(error: unknown, nested: (string | number)[] = []): TravellerErrors | null {
   let body: unknown = isAxiosError(error) ? error.response?.data : undefined;
@@ -183,17 +228,21 @@ type FieldsProps = {
   errors: TravellerErrors;
   /** Names this traveller in the inputs' accessible labels when a page has several, e.g. "Traveller 2". */
   name?: string;
+  /** A flight passenger: identity and document fields are required and marked. */
+  passenger?: boolean;
 };
 
-/** The shared traveller form: full name required, everything else optional. */
-export function TravellerFields({ value, onChange, errors, name }: FieldsProps) {
+/** The shared traveller form: full name required, everything else optional unless passenger. */
+export function TravellerFields({ value, onChange, errors, name, passenger }: FieldsProps) {
   const set = <K extends keyof TravellerDraft>(field: K, next: TravellerDraft[K]) =>
     onChange({ ...value, [field]: next });
   const a11y = (label: string) => (name ? `${name} ${label.toLowerCase()}` : label);
+  const mark = (label: string) => (passenger ? `${label} *` : label);
+  const blank = passenger ? 'Choose' : null;
   return (
     <View style={styles.fields}>
       <TextField
-        label="Full name (as on the travel document)"
+        label={mark('Full name (as on the travel document)')}
         accessibilityLabel={a11y('Full name')}
         value={value.full_name}
         onChangeText={(text) => set('full_name', text)}
@@ -202,24 +251,24 @@ export function TravellerFields({ value, onChange, errors, name }: FieldsProps) 
       />
       <FieldGrid>
         <SelectField
-          label="Gender"
+          label={mark('Gender')}
           accessibilityLabel={a11y('Gender')}
-          options={GENDERS}
+          options={blank ? [{ value: '', label: blank }, ...GENDERS.slice(1)] : GENDERS}
           value={value.gender}
           onChange={(next) => set('gender', next)}
           error={errors.gender}
         />
         <DateField
-          label="Date of birth"
+          label={mark('Date of birth')}
           accessibilityLabel={a11y('Date of birth')}
           value={value.date_of_birth}
           onChange={(next) => set('date_of_birth', next)}
           error={errors.date_of_birth}
         />
         <SelectField
-          label="Nationality"
+          label={mark('Nationality')}
           accessibilityLabel={a11y('Nationality')}
-          options={[{ value: '', label: 'Not stated' }, ...COUNTRIES]}
+          options={[{ value: '', label: blank ?? 'Not stated' }, ...COUNTRIES]}
           value={value.nationality}
           onChange={(next) => set('nationality', next)}
           error={errors.nationality}
@@ -227,15 +276,15 @@ export function TravellerFields({ value, onChange, errors, name }: FieldsProps) 
       </FieldGrid>
       <FieldGrid>
         <SelectField
-          label="Document"
+          label={mark('Document')}
           accessibilityLabel={a11y('Document type')}
-          options={DOCUMENT_TYPES}
+          options={blank ? [{ value: '', label: blank }, ...DOCUMENT_TYPES.slice(1)] : DOCUMENT_TYPES}
           value={value.document_type}
           onChange={(next) => set('document_type', next)}
           error={errors.document_type}
         />
         <TextField
-          label="Document number"
+          label={mark('Document number')}
           accessibilityLabel={a11y('Document number')}
           value={value.document_number}
           onChangeText={(text) => set('document_number', text)}
@@ -244,7 +293,13 @@ export function TravellerFields({ value, onChange, errors, name }: FieldsProps) 
           maxLength={30}
         />
         <DateField
-          label={value.document_type === 'national_id' ? 'Expiry (optional)' : 'Expiry'}
+          label={
+            value.document_type === 'national_id'
+              ? 'Expiry (optional)'
+              : passenger && value.document_type === 'passport'
+                ? 'Expiry *'
+                : 'Expiry'
+          }
           accessibilityLabel={a11y('Document expiry')}
           value={value.document_expiry}
           onChange={(next) => set('document_expiry', next)}
@@ -320,17 +375,19 @@ type DialogProps = {
   initial: TravellerDraft;
   onSave: (input: TravellerInput) => Promise<unknown>;
   onClose: () => void;
+  /** Edits a flight passenger, whose passport must be valid after this date. */
+  passenger?: { lastFlightDate: string };
 };
 
 /** Adds or edits one traveller; open it by rendering it. */
-export function TravellerDialog({ title, initial, onSave, onClose }: DialogProps) {
+export function TravellerDialog({ title, initial, onSave, onClose, passenger }: DialogProps) {
   const [draft, setDraft] = useState(initial);
   const [errors, setErrors] = useState<TravellerErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
-    const found = validateTraveller(draft);
+    const found = passenger ? validatePassenger(draft, passenger.lastFlightDate) : validateTraveller(draft);
     setErrors(found);
     setFormError(null);
     if (Object.keys(found).length) {
@@ -363,23 +420,30 @@ export function TravellerDialog({ title, initial, onSave, onClose }: DialogProps
       footer={
         <>
           <Button title="Cancel" variant="secondary" onPress={onClose} disabled={saving} />
-          <Button title="Save traveller" onPress={save} loading={saving} />
+          <Button title={passenger ? 'Save passenger' : 'Save traveller'} onPress={save} loading={saving} />
         </>
       }
     >
-      <TravellerFields value={draft} onChange={setDraft} errors={errors} />
+      {passenger ? <Text style={styles.muted}>* Required</Text> : null}
+      <TravellerFields value={draft} onChange={setDraft} errors={errors} passenger={Boolean(passenger)} />
     </Dialog>
   );
 }
 
-/** One traveller's details as a short summary; full adds documents and contact details (admins and the booker). */
-export function TravellerSummary({ traveller }: { traveller: Traveller }) {
+/** "•••• 4567": a document number masked to its last 4 characters. */
+export function maskedNumber(number: string): string {
+  return number.length > 4 ? `•••• ${number.slice(-4)}` : number;
+}
+
+/** One traveller's details as a short summary; masked shows only the document number's last 4 characters. */
+export function TravellerSummary({ traveller, masked }: { traveller: Traveller; masked?: boolean }) {
   const facts = [
     traveller.gender === 'female' ? 'Female' : traveller.gender === 'male' ? 'Male' : '',
     traveller.date_of_birth ? `Born ${formatDate(traveller.date_of_birth)}` : '',
     traveller.nationality ? countryName(traveller.nationality) : '',
     traveller.document_number
-      ? `${traveller.document_type === 'passport' ? 'Passport' : 'National ID'} ${traveller.document_number}` +
+      ? `${traveller.document_type === 'passport' ? 'Passport' : 'National ID'} ` +
+        (masked ? maskedNumber(traveller.document_number) : traveller.document_number) +
         (traveller.document_expiry ? `, expires ${formatDate(traveller.document_expiry)}` : '')
       : '',
     traveller.email,

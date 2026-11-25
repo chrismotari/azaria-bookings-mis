@@ -11,7 +11,7 @@ from bookings import tasks
 from bookings.models import BoardingPass, Booking, BookingEvent
 from bookings.services import TRANSITIONS, InvalidTransition, create_booking, transition
 from core.models import AppSettings
-from core.tests.helpers import TEST_SCHEMA, html_part
+from core.tests.helpers import TEST_SCHEMA, html_part, passengers
 from customer_requests.models import Query, QueryResponse
 
 pytestmark = pytest.mark.django_db
@@ -70,7 +70,11 @@ def test_admin_booking_endpoints_reject_customers_and_guests(api, customer_api, 
 
 
 def test_admins_book_through_the_admin_endpoint_only(admin_api, make_offer):
-    response = admin_api.post("/api/bookings", {"offer": str(make_offer().id), "passenger_count": 1}, format="json")
+    response = admin_api.post(
+        "/api/bookings",
+        {"offer": str(make_offer().id), "passenger_count": 1, "travellers": passengers(1)},
+        format="json",
+    )
     assert response.status_code == 403
     assert not Booking.objects.exists()
 
@@ -88,7 +92,7 @@ def test_customers_cannot_read_or_cancel_other_customers_bookings(other_customer
 
 
 def test_customer_books_and_admin_is_emailed(customer_api, customer, offer, django_capture_on_commit_callbacks):
-    payload = {"offer": offer.id, "passenger_count": 3, "notes": "Window seats please."}
+    payload = {"offer": offer.id, "passenger_count": 3, "notes": "Window seats please.", "travellers": passengers(3)}
     with django_capture_on_commit_callbacks(execute=True):
         response = customer_api.post("/api/bookings", payload, format="json")
     assert response.status_code == 201, response.data
@@ -143,14 +147,18 @@ def test_unit_price_is_copied_at_creation(customer, offer):
 
 @pytest.mark.parametrize("count", [0, 10])
 def test_passenger_count_bounds(customer_api, offer, count):
-    response = customer_api.post("/api/bookings", {"offer": offer.id, "passenger_count": count}, format="json")
+    response = customer_api.post(
+        "/api/bookings", {"offer": offer.id, "passenger_count": count, "travellers": passengers(count)}, format="json"
+    )
     assert response.status_code == 400
     assert "passenger_count" in response.data
 
 
 @pytest.mark.parametrize("count", [1, 9])
 def test_passenger_count_limits_are_inclusive(customer_api, offer, count):
-    response = customer_api.post("/api/bookings", {"offer": offer.id, "passenger_count": count}, format="json")
+    response = customer_api.post(
+        "/api/bookings", {"offer": offer.id, "passenger_count": count, "travellers": passengers(count)}, format="json"
+    )
     assert response.status_code == 201
 
 
@@ -167,7 +175,9 @@ def test_passenger_count_limits_are_inclusive(customer_api, offer, count):
 )
 def test_cannot_book_unbookable_or_hidden_offer(customer_api, make_offer, overrides):
     offer = make_offer(**overrides)
-    response = customer_api.post("/api/bookings", {"offer": offer.id, "passenger_count": 1}, format="json")
+    response = customer_api.post(
+        "/api/bookings", {"offer": offer.id, "passenger_count": 1, "travellers": passengers(1)}, format="json"
+    )
     assert response.status_code == 400
     assert "offer" in response.data
     assert Booking.objects.count() == 0
@@ -175,13 +185,17 @@ def test_cannot_book_unbookable_or_hidden_offer(customer_api, make_offer, overri
 
 def test_cannot_book_once_valid_until_has_passed(customer_api, offer):
     with freeze_time(timezone.localdate() + timedelta(days=11)):
-        response = customer_api.post("/api/bookings", {"offer": offer.id, "passenger_count": 1}, format="json")
+        response = customer_api.post(
+            "/api/bookings", {"offer": offer.id, "passenger_count": 1, "travellers": passengers(1)}, format="json"
+        )
     assert response.status_code == 400
 
 
 def test_cannot_book_unknown_offer(customer_api):
     response = customer_api.post(
-        "/api/bookings", {"offer": "00000000-0000-4000-8000-000000000000", "passenger_count": 1}, format="json"
+        "/api/bookings",
+        {"offer": "00000000-0000-4000-8000-000000000000", "passenger_count": 1, "travellers": passengers(1)},
+        format="json",
     )
     assert response.status_code == 400
     assert "offer" in response.data
@@ -192,7 +206,7 @@ def test_customer_can_book_private_offer_sent_to_them(customer_api, other_custom
     query = Query.objects.create(user=customer, destination=private.destination, date_from=timezone.localdate())
     QueryResponse.objects.create(query=query).offers.set([private])
 
-    payload = {"offer": private.id, "passenger_count": 1, "query": query.id}
+    payload = {"offer": private.id, "passenger_count": 1, "query": query.id, "travellers": passengers(1)}
     assert other_customer_api.post("/api/bookings", {**payload, "query": None}, format="json").status_code == 400
     response = customer_api.post("/api/bookings", payload, format="json")
     assert response.status_code == 201, response.data
@@ -211,7 +225,9 @@ def test_cannot_link_another_customers_query(customer_api, other_customer, offer
 @pytest.mark.parametrize("status", Booking.ACTIVE_STATUSES)
 def test_duplicate_active_booking_is_refused(customer_api, offer, make_booking, status):
     make_booking(status=status)
-    response = customer_api.post("/api/bookings", {"offer": offer.id, "passenger_count": 1}, format="json")
+    response = customer_api.post(
+        "/api/bookings", {"offer": offer.id, "passenger_count": 1, "travellers": passengers(1)}, format="json"
+    )
     assert response.status_code == 409
     assert Booking.objects.count() == 1
 
@@ -219,13 +235,17 @@ def test_duplicate_active_booking_is_refused(customer_api, offer, make_booking, 
 @pytest.mark.parametrize("status", [Status.COMPLETED, Status.UNAVAILABLE, Status.CANCELLED, Status.EXPIRED])
 def test_can_book_again_after_a_finished_booking(customer_api, offer, make_booking, status):
     make_booking(status=status)
-    response = customer_api.post("/api/bookings", {"offer": offer.id, "passenger_count": 1}, format="json")
+    response = customer_api.post(
+        "/api/bookings", {"offer": offer.id, "passenger_count": 1, "travellers": passengers(1)}, format="json"
+    )
     assert response.status_code == 201
 
 
 def test_another_customer_may_book_the_same_offer(other_customer_api, offer, make_booking):
     make_booking()
-    response = other_customer_api.post("/api/bookings", {"offer": offer.id, "passenger_count": 1}, format="json")
+    response = other_customer_api.post(
+        "/api/bookings", {"offer": offer.id, "passenger_count": 1, "travellers": passengers(1)}, format="json"
+    )
     assert response.status_code == 201
 
 
@@ -385,7 +405,9 @@ def test_unknown_or_malformed_booking_id_returns_404(admin_api, customer_api, bo
 
 
 def test_malformed_offer_id_in_booking_body_returns_400(customer_api):
-    response = customer_api.post("/api/bookings", {"offer": "123", "passenger_count": 1}, format="json")
+    response = customer_api.post(
+        "/api/bookings", {"offer": "123", "passenger_count": 1, "travellers": passengers(1)}, format="json"
+    )
     assert response.status_code == 400
     assert "offer" in response.data
 

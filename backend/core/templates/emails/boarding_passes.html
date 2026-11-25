@@ -9,6 +9,7 @@
   {% if return_flights %}{% include "emails/_row.html" with label="Return" value=return_flights %}{% endif %}
   {% include "emails/_row.html" with label="Baggage" value=baggage %}
   {% include "emails/_row.html" with label="Fare conditions" value=conditions %}
+  {% if passengers %}{% include "emails/_row.html" with label="Passengers" value=passengers %}{% endif %}
 </table>
 <p style="margin:0 0 16px 0;">You can also download {{ pass_count|pluralize:"it,them" }} from your booking in the app.</p>
 {% with booking_id=booking.id|stringformat:"s" %}{% include "emails/_button.html" with url=frontend_url|add:"/bookings/"|add:booking_id label="Open your booking" %}{% endwith %}

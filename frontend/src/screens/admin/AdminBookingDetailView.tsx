@@ -17,6 +17,7 @@ import { useConfirm } from '../../components/ConfirmDialog';
 import { FileField } from '../../components/FileField';
 import { FormError } from '../../components/Field';
 import { ItineraryCards, TripConditions } from '../../components/Itinerary';
+import { PassengersCard } from '../../components/Passengers';
 import { StatusChip } from '../../components/StatusChip';
 import { DetailError } from '../../components/DetailLayout';
 import { LoadingState } from '../../components/StatusViews';
@@ -224,6 +225,12 @@ export function AdminBookingDetailView({ id }: { id: string }) {
         <Text style={styles.text}>{data.user.email}</Text>
         {data.user.phone ? <Text style={styles.text}>{data.user.phone}</Text> : null}
       </Card>
+      <PassengersCard
+        booking={data}
+        base={`/admin/bookings/${id}`}
+        queryKey={['admin', 'bookings', 'detail', id]}
+        admin
+      />
 
       {data.status === 'paid' ? <BoardingPassUploads booking={data} /> : null}
       {data.status === 'completed' ? (

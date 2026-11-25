@@ -22,7 +22,7 @@
   {% if return_flights %}{% include "emails/_row.html" with label="Return" value=return_flights %}{% endif %}
   {% include "emails/_row.html" with label="Baggage" value=baggage %}
   {% include "emails/_row.html" with label="Fare conditions" value=conditions %}
-  {% include "emails/_row.html" with label="Passengers" value=booking.passenger_count %}
+  {% if passengers %}{% include "emails/_row.html" with label="Passengers" value=passengers %}{% else %}{% include "emails/_row.html" with label="Passengers" value=booking.passenger_count %}{% endif %}
   {% include "emails/_row.html" with label="Total price" value=total price=True %}
 </table>
 {% include "emails/_box.html" with title="How to pay" text=payment_instructions %}

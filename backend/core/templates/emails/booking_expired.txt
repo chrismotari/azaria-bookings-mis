@@ -10,7 +10,8 @@ Return:
 {% endif %}
 Baggage: {{ baggage }}
 Fare conditions: {{ conditions }}
-
+{% if passengers %}Passengers: {{ passengers }}
+{% endif %}
 If the offer is still available, you can book it again in the app:
 {{ frontend_url }}/offers/{{ booking.offer_id }}
 

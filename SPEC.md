@@ -15,7 +15,7 @@ This document describes the system as it stands. Work is delivered in the number
 
 - PostgreSQL only (development, tests, production). No Docker; PostgreSQL and Redis run locally.
 - No TODOs, stubs, placeholder code, mock data, or unused fields, endpoints, models or dependencies.
-- Out of scope until specified in a step: payment processing, and booking or ticketing through GDS or airline APIs (providers are used for fare searches only). Out of scope: passenger details, push notifications, email verification, re-sending passes after completion, multi-currency for bookings, multi-language, social login, reviews, packages, blog.
+- Out of scope until specified in a step: payment processing, and booking or ticketing through GDS or airline APIs (providers are used for fare searches only). Out of scope: push notifications, email verification, re-sending passes after completion, multi-currency for bookings, multi-language, social login, reviews, packages, blog.
 - Agency prices (offers, bookings) are USD, defined once as `CURRENCY`; no currency column on them. Platform prices use `PLATFORM_CURRENCY`. Fares from providers keep their original currency and are converted to USD for every calculation and comparison; customers only ever see USD.
 - Time zone Africa/Nairobi, `USE_TZ = True`; all user-facing times are Nairobi time, except flight times, which are the local times of the airport concerned (stored as date and time with no time zone).
 - "Admin" is the agency owner's in-app role (`User.role == "admin"`). Django's admin site is technical support only, mounted at `/django-admin/` for superusers. Never mix the two.
@@ -231,10 +231,10 @@ All delivered; each was one commit.
 44. Agency themes (see §24).
 45. Modules: flights, tours and hotels per agency (see §25).
 46. Tours (see §26).
+47. Flight passenger details (see §27).
 
 Pending (not yet built):
 
-47. Flight passenger details (see §27).
 48. Hotels (see §28).
 49. Dashboard and Explore across modules (see §29).
 

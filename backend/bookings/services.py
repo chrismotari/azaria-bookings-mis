@@ -15,7 +15,7 @@ from customer_requests.models import Query
 from customer_requests.services import add_response
 
 from . import tasks
-from .models import BoardingPass, Booking, BookingEvent, BookingSegment
+from .models import BoardingPass, Booking, BookingEvent, BookingSegment, Traveller
 
 Status = Booking.Status
 
@@ -35,6 +35,10 @@ TRANSITIONS = {
     (Status.AVAILABILITY_CONFIRMED, Status.DECLINED): CUSTOMER,
     (Status.PAID, Status.COMPLETED): ADMIN,
 }
+
+# The statuses in which passengers can still be changed, by the booking's customer and by admins.
+CUSTOMER_EDITS_PASSENGERS = [Status.REQUESTED]
+ADMIN_EDITS_PASSENGERS = Booking.ACTIVE_STATUSES
 
 # The email each new status queues; cancelled and declined queue none.
 EMAILS = {
@@ -68,7 +72,7 @@ def _queue_email(task, booking_id):
 
 
 def create_booking(user, data, admin=None):
-    """data: offer (id), passenger_count, notes and optionally query, already validated by the serializer.
+    """data: offer (id), passenger_count, notes, travellers and optionally query, validated by the serializer.
 
     admin: set when the admin books on the customer's behalf. Then any bookable offer may be booked (public or
     private), the admin is the creation event's actor, and the admin is not notified.
@@ -102,6 +106,9 @@ def create_booking(user, data, admin=None):
             BookingSegment.build(
                 [segment.as_data() for segment in offer.segments.select_related(*SEGMENT_RELATED)], booking=booking
             )
+        )
+        Traveller.objects.bulk_create(
+            Traveller(booking=booking, **traveller) for traveller in data.get("travellers", [])
         )
         BookingEvent.objects.create(booking=booking, to_status=Status.REQUESTED, actor=admin or user)
         if admin is None:
@@ -260,3 +267,17 @@ def delete_boarding_pass(boarding_pass):
         boarding_pass.delete()
         # Remove the file only once the row is gone for good.
         transaction.on_commit(lambda: storage.delete(name))
+
+
+def change_passenger(traveller, data, admin):
+    """Edits one passenger: the customer while the booking is requested, admins until it is completed."""
+    with transaction.atomic():
+        booking = Booking.objects.select_for_update().get(pk=traveller.booking_id)
+        if booking.status not in (ADMIN_EDITS_PASSENGERS if admin else CUSTOMER_EDITS_PASSENGERS):
+            if not admin and booking.status in ADMIN_EDITS_PASSENGERS:
+                raise Conflict("Only the agency can change passengers once availability is confirmed.")
+            raise Conflict(f"Passengers cannot be changed on a booking that is {Status(booking.status).label.lower()}.")
+        for name, value in data.items():
+            setattr(traveller, name, value)
+        traveller.save()
+        return traveller

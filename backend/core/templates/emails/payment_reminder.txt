@@ -13,7 +13,8 @@ Return:
 {% endif %}
 Baggage: {{ baggage }}
 Fare conditions: {{ conditions }}
-Total price: {{ total }}
+{% if passengers %}Passengers: {{ passengers }}
+{% endif %}Total price: {{ total }}
 
 How to pay:
 {{ payment_instructions }}

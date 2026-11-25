@@ -14,7 +14,7 @@
   {% include "emails/_row.html" with label="Fare conditions" value=conditions %}
   {% include "emails/_row.html" with label="Class" value=ticket_class %}
   {% include "emails/_row.html" with label="Airline" value=booking.airline %}
-  {% include "emails/_row.html" with label="Passengers" value=booking.passenger_count %}
+  {% if passengers %}{% include "emails/_row.html" with label="Passengers" value=passengers %}{% else %}{% include "emails/_row.html" with label="Passengers" value=booking.passenger_count %}{% endif %}
   {% include "emails/_row.html" with label="Total price" value=total price=True %}
   {% include "emails/_row.html" with label="Notes" value=booking.notes|default:"(none)" %}
 </table>
