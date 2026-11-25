@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def _send_to_agency(tenant, template, subject, context, attachments=()):
-    # Links in the email point at the agency's own primary domain.
+    # Links in the email point at the agency's app address.
     with schema_context(tenant.schema_name):
         send_email(template, subject, tenant.billing_email, context, attachments, platform=True)
 

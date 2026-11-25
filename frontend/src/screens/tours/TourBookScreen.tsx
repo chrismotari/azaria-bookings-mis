@@ -48,7 +48,7 @@ export function TourBookScreen({ navigation, route }: BottomTabScreenProps<MainT
               error={tour.error}
               onRetry={() => tour.refetch()}
               notFound="Tour not found"
-              message="It may be fully booked or no longer offered."
+              message="It may no longer be offered."
             />
           )}
         </Card>

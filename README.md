@@ -1,6 +1,6 @@
 # Azaria Bookings
 
-A multitenant SaaS for small and medium-sized travel agencies ([azariabookings.com](https://azariabookings.com)). Each agency gets its own site, app and data, and sells any of three modules (flights, tours, hotels), which the platform owner switches on per agency.
+A multitenant SaaS for tours and travel agencies ([azariabookings.com](https://azariabookings.com)). Each agency gets its own site, app and data, and sells any of three modules (flights, tours, hotels), which the platform owner switches on per agency.
 
 The full specification is in [SPEC.md](SPEC.md); choices made where it is silent are in [DECISIONS.md](DECISIONS.md).
 

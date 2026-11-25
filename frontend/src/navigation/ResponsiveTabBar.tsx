@@ -13,7 +13,7 @@ type Props = BottomTabBarProps & {
   hiddenRoutes?: string[];
   /** Hidden route -> the tab that stays highlighted on it, e.g. Billing -> Settings. */
   parentRoutes?: Record<string, string>;
-  /** On narrow screens with more than five tabs, the four kept in the bar; the rest go under More. */
+  /** On narrow screens with more than five tabs, the ones preferred for the bar (filled to four in order); the rest go under More. */
   narrowTabs?: string[];
 };
 
@@ -90,10 +90,11 @@ export function ResponsiveTabBar({
   }
 
   const overflowing = routes.length > MAX_NARROW_TABS;
+  const preferred = routes.filter((route) => narrowTabs?.includes(route.name));
   const kept = overflowing
-    ? narrowTabs
-      ? routes.filter((route) => narrowTabs.includes(route.name))
-      : routes.slice(0, MAX_NARROW_TABS - 1)
+    ? [...preferred, ...routes.filter((route) => !preferred.includes(route))]
+        .slice(0, MAX_NARROW_TABS - 1)
+        .sort((x, y) => routes.indexOf(x) - routes.indexOf(y))
     : routes;
   const more = overflowing ? routes.filter((route) => !kept.includes(route)) : [];
   const moreItem: TabItem | null = more.length

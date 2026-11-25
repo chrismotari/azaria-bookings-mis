@@ -1,6 +1,6 @@
 # Azaria Bookings — Specification
 
-A multitenant SaaS for small and medium-sized travel agencies. Each agency (tenant) gets its own site, app and data, and sells any of three modules, which the system owner switches on per agency (§4):
+A multitenant SaaS for tours & travel agencies. Each agency (tenant) gets its own site, app and data, and sells any of three modules, which the system owner switches on per agency (§4):
 - **Flights**: the admin lists flight offers, entered by hand or found through the agency's fare providers; anyone can browse them, and registered customers request options or book with their passengers' details; the admin confirms availability, the customer pays outside the system, the admin marks the booking paid, uploads boarding passes and sends them by email, and the customer can also open them in the app.
 - **Tours**: scheduled tours with fixed dates, slots and price options, which customers book at once.
 - **Hotels**: the hotels, lodges and camps the agency works with, priced per night by season; customers request a stay, the admin confirms it with the hotel, marks it paid and sends the hotel's voucher.
@@ -292,7 +292,7 @@ Definitions
 - `this_week`: what starts in the next 7 days, soonest first (ties: flights, tours, hotels), at most 8: flight departures (Paid and Completed, with `passenger_count` and `boarding_passes_sent`), tour starts (tours not cancelled with confirmed bookings: `booked`, `slots`, `travellers_missing`) and hotel check-ins (Paid and Completed: `customer`, `nights`, `rooms`, `voucher_sent`); each `{kind, id, date, title, ...}`.
 - `top_sellers`: this year's sales grouped by route (origin, destination, trip type), tour and hotel, highest total first (a tour or hotel booking holds several people), at most 5: `{kind, id (tour or hotel; null for routes), title, count, total}`.
 - `customers`: `{total, new_this_month}`: active customers; new = registered or added this month.
-- `on_sale`, per module on: flights `{bookable, public_bookable, expiring_soon, featured}` and `searches` (`{used, allowance}`, or null without an integration); tours `{upcoming (bookable), fully_booked (listed tours not bookable for want of slots or units), seats_sold, seats_total (upcoming tours), featured}`; hotels `{listed, prices_ending (listed hotels with no rate covering any night beyond 30 days from today), featured}`.
+- `on_sale`, per module on: flights `{bookable, public_bookable, expiring_soon, featured}` and `searches` (`{used, allowance}`, or null without an integration); tours `{upcoming (bookable), fully_booked (listed tours not bookable for want of slots or units), seats_sold, seats_total (active, not cancelled tours starting after today, including closed and fully booked ones), featured}`; hotels `{listed, prices_ending (listed hotels with no rate covering any night beyond 30 days from today), featured}`.
 
 Screen (Admins › Dashboard), top to bottom; two columns from 900 px where noted, one column on phones
 - Title and greeting.
