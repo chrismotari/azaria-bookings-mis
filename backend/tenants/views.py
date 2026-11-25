@@ -42,6 +42,7 @@ class AgencyView(APIView):
                 "name": tenant.name,
                 "app_address": app_address(tenant.schema_name),
                 "theme": ThemeSerializer(tenant.theme).data,
+                "modules": tenant.modules,
             }
         )
 

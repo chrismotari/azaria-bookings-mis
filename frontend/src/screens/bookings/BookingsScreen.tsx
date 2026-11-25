@@ -8,6 +8,7 @@ import { Booking, Paginated } from '../../api/types';
 import { AirlineBadge } from '../../components/AirlineBadge';
 import { DetailLayout } from '../../components/DetailLayout';
 import { Icon, IconName } from '../../components/Icon';
+import { ModulePages, NotYet } from '../../components/ModulePages';
 import { Pagination } from '../../components/Pagination';
 import { PriceTag } from '../../components/PriceTag';
 import { RouteLine } from '../../components/RouteLine';
@@ -21,7 +22,27 @@ import { BOOKING_STATUS, bookingDates, bookingRoute, passengersLabel } from '../
 import { formatDate, routeCodes, tripDates } from '../../utils/format';
 import { BookingDetailView } from './BookingDetailView';
 
-export function BookingsScreen({ navigation, route }: BottomTabScreenProps<MainTabParamList, 'Bookings'>) {
+type Props = BottomTabScreenProps<MainTabParamList, 'Bookings'>;
+
+export function BookingsScreen(props: Props) {
+  return (
+    <ModulePages
+      label="Bookings"
+      only={props.route.params?.id ? 'flights' : undefined}
+      pages={{
+        flights: () => <FlightBookings {...props} />,
+        tours: () => (
+          <NotYet icon="map-outline" title="No tour bookings yet" message="Your tour bookings will appear here." />
+        ),
+        hotels: () => (
+          <NotYet icon="bed-outline" title="No hotel bookings yet" message="Your hotel bookings will appear here." />
+        ),
+      }}
+    />
+  );
+}
+
+function FlightBookings({ navigation, route }: Props) {
   const selected = route.params?.id;
   const close = useCallback(() => navigation.setParams({ id: undefined }), [navigation]);
   const [page, setPage] = useState(1);

@@ -74,7 +74,7 @@ def describe_changes(booking):
     return described
 
 
-@tenant_task(**EMAIL_TASK_OPTIONS)
+@tenant_task("flights", **EMAIL_TASK_OPTIONS)
 def notify_admin_new_booking(booking_id):
     booking = _booking_in(booking_id, Booking.Status.REQUESTED)
     if booking is None:
@@ -88,7 +88,7 @@ def notify_admin_new_booking(booking_id):
     )
 
 
-@tenant_task(**EMAIL_TASK_OPTIONS)
+@tenant_task("flights", **EMAIL_TASK_OPTIONS)
 def notify_customer_availability_confirmed(booking_id):
     booking = _booking_in(booking_id, Booking.Status.AVAILABILITY_CONFIRMED)
     if booking is None:
@@ -106,7 +106,7 @@ def notify_customer_availability_confirmed(booking_id):
     )
 
 
-@tenant_task(**EMAIL_TASK_OPTIONS)
+@tenant_task("flights", **EMAIL_TASK_OPTIONS)
 def notify_customer_unavailable(booking_id):
     booking = _booking_in(booking_id, Booking.Status.UNAVAILABLE)
     if booking is None:
@@ -121,7 +121,7 @@ def notify_customer_unavailable(booking_id):
     send_email("unavailable", "Your booking could not be confirmed", booking.user.email, context)
 
 
-@tenant_task(**EMAIL_TASK_OPTIONS)
+@tenant_task("flights", **EMAIL_TASK_OPTIONS)
 def notify_customer_payment_received(booking_id):
     booking = _booking_in(booking_id, Booking.Status.PAID)
     if booking is None:
@@ -129,7 +129,7 @@ def notify_customer_payment_received(booking_id):
     send_email("payment_received", "Payment received", booking.user.email, describe_booking(booking))
 
 
-@tenant_task(**EMAIL_TASK_OPTIONS)
+@tenant_task("flights", **EMAIL_TASK_OPTIONS)
 def notify_customer_booking_expired(booking_id):
     booking = _booking_in(booking_id, Booking.Status.EXPIRED)
     if booking is None:
@@ -137,7 +137,7 @@ def notify_customer_booking_expired(booking_id):
     send_email("booking_expired", "Your booking has expired", booking.user.email, describe_booking(booking))
 
 
-@tenant_task(**EMAIL_TASK_OPTIONS)
+@tenant_task("flights", **EMAIL_TASK_OPTIONS)
 def notify_customer_boarding_passes(booking_id):
     booking = _booking_in(booking_id, Booking.Status.COMPLETED)
     if booking is None:
@@ -157,7 +157,7 @@ def notify_customer_boarding_passes(booking_id):
     )
 
 
-@tenant_task(**EMAIL_TASK_OPTIONS)
+@tenant_task("flights", **EMAIL_TASK_OPTIONS)
 def notify_customer_payment_reminder(booking_id):
     booking = _booking_in(booking_id, Booking.Status.AVAILABILITY_CONFIRMED)
     if booking is None or booking.payment_deadline <= timezone.now():
@@ -194,7 +194,7 @@ def _expire(booking_ids, from_status):
 @shared_task
 def expire_unpaid_bookings():
     """Confirmed bookings whose payment deadline has passed, in every active tenant."""
-    return for_each_tenant(_expire_unpaid_bookings, "expire_unpaid_bookings")
+    return for_each_tenant(_expire_unpaid_bookings, "expire_unpaid_bookings", "flights")
 
 
 def _expire_unpaid_bookings():
@@ -209,7 +209,7 @@ def _expire_unpaid_bookings():
 @shared_task
 def expire_stale_requests():
     """Requested bookings whose flight has already departed, in every active tenant."""
-    return for_each_tenant(_expire_stale_requests, "expire_stale_requests")
+    return for_each_tenant(_expire_stale_requests, "expire_stale_requests", "flights")
 
 
 def _expire_stale_requests():
@@ -234,7 +234,7 @@ def _reminder_due(now, hours_before):
 @shared_task
 def send_payment_reminders():
     """Reminders for confirmed bookings near their payment deadline, in every active tenant."""
-    return for_each_tenant(_send_payment_reminders, "send_payment_reminders")
+    return for_each_tenant(_send_payment_reminders, "send_payment_reminders", "flights")
 
 
 def _send_payment_reminders():

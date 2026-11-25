@@ -18,6 +18,7 @@ import {
   offerFilterParams,
   validateOfferFilters,
 } from '../../components/OfferFilterFields';
+import { ModulePages, NotYet } from '../../components/ModulePages';
 import { Pagination } from '../../components/Pagination';
 import { SegmentedControl } from '../../components/SegmentedControl';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
@@ -56,7 +57,23 @@ const ORDERING_OPTIONS: { value: Ordering; label: string }[] = [
   { value: '-price', label: 'Highest price' },
 ];
 
-export function ExploreScreen({ navigation, route }: BottomTabScreenProps<MainTabParamList, 'Explore'>) {
+type Props = BottomTabScreenProps<MainTabParamList, 'Explore'>;
+
+export function ExploreScreen(props: Props) {
+  return (
+    <ModulePages
+      label="Explore"
+      only={props.route.params?.id ? 'flights' : undefined}
+      pages={{
+        flights: () => <FlightDeals {...props} />,
+        tours: () => <NotYet icon="map-outline" title="No tours yet" message="Tours will appear here." />,
+        hotels: () => <NotYet icon="bed-outline" title="No hotels yet" message="Hotels will appear here." />,
+      }}
+    />
+  );
+}
+
+function FlightDeals({ navigation, route }: Props) {
   const selected = route.params?.id;
   const close = useCallback(() => navigation.setParams({ id: undefined, query: undefined }), [navigation]);
   const compact = !useIsWide();

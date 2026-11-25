@@ -28,7 +28,11 @@ class AppSettingsSerializer(serializers.ModelSerializer):
         return self.context["request"].tenant
 
     def to_representation(self, instance):
-        return {**super().to_representation(instance), "theme": str(self.tenant.theme_id)}
+        return {
+            **super().to_representation(instance),
+            "theme": str(self.tenant.theme_id),
+            "modules": self.tenant.modules,
+        }
 
     def validate_theme(self, value):
         try:

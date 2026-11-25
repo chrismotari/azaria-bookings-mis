@@ -189,7 +189,7 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
         <Button title="Save settings" onPress={onSubmit} loading={formState.isSubmitting} />
       </FormFooter>
       <ThemeSection current={settings.theme} settingsKey={SETTINGS_KEY} />
-      <IntegrationsSection />
+      {settings.modules.includes('flights') ? <IntegrationsSection /> : null}
       <FormSection title="Billing" description="Your agency's plans with Azaria Bookings and their invoices.">
         <View style={styles.billing}>
           <Button

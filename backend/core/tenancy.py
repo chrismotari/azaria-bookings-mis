@@ -12,27 +12,28 @@ from tenants.models import Tenant
 logger = logging.getLogger(__name__)
 
 
-def active_tenants():
-    """Every active agency (the public schema is the platform, not an agency)."""
+def active_tenants(module=None):
+    """Every active agency (not the platform's public schema), with the module on if one is given."""
     with schema_context(get_public_schema_name()):
-        return list(Tenant.objects.filter(is_active=True).exclude(schema_name=get_public_schema_name()))
+        tenants = Tenant.objects.filter(is_active=True).exclude(schema_name=get_public_schema_name())
+        if module:
+            tenants = tenants.filter(**{f"{module}_enabled": True})
+        return list(tenants)
 
 
-def tenant_task(**options):
-    """A Celery task over one tenant's data, called as task.delay(schema_name, *args).
-
-    It runs inside that tenant's schema, and does nothing if the tenant is gone or suspended.
-    """
+def tenant_task(module=None, **options):
+    """A Celery task over one tenant's data, called as task.delay(schema_name, *args), run in its schema.
+    It does nothing if the tenant is gone or suspended, or has the task's module off."""
 
     def decorator(func):
         def run(schema_name, *args, **kwargs):
             with schema_context(get_public_schema_name()):
-                active = (
-                    schema_name != get_public_schema_name()
-                    and Tenant.objects.filter(schema_name=schema_name, is_active=True).exists()
-                )
+                tenants = Tenant.objects.filter(schema_name=schema_name, is_active=True)
+                if module:
+                    tenants = tenants.filter(**{f"{module}_enabled": True})
+                active = schema_name != get_public_schema_name() and tenants.exists()
             if not active:
-                logger.info("Skipped %s: tenant %s is missing or suspended.", func.__name__, schema_name)
+                logger.info("Skipped %s: tenant %s is missing, suspended or without it.", func.__name__, schema_name)
                 return None
             with schema_context(schema_name):
                 return func(*args, **kwargs)
@@ -55,13 +56,11 @@ def queue(task, *args):
     transaction.on_commit(lambda: task.delay(schema_name, *args))
 
 
-def for_each_tenant(job, name):
-    """Runs job() in every active tenant's schema in turn and returns the sum of the results.
-
-    An error in one tenant is logged and does not stop the others.
-    """
+def for_each_tenant(job, name, module=None):
+    """Runs job() in every active tenant's schema (with the module on, if given) and returns the sum of the results.
+    An error in one tenant is logged and does not stop the others."""
     total = 0
-    for tenant in active_tenants():
+    for tenant in active_tenants(module):
         try:
             with schema_context(tenant.schema_name):
                 total += job()

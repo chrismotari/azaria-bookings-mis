@@ -2,6 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
 import type { ThemeColors } from '../theme';
+import type { Module } from './types';
 
 // localStorage on web, expo-secure-store on native.
 
@@ -47,8 +48,8 @@ export const tokenStorage = {
   },
 };
 
-/** The agency the native app serves, with its theme's colours so the app opens in them at once. */
-export type StoredAgency = { code: string; name: string; theme: ThemeColors | null };
+/** The agency the native app serves, with its theme's colours and modules so the app opens with them at once. */
+export type StoredAgency = { code: string; name: string; theme: ThemeColors | null; modules: Module[] };
 
 export const agencyStorage = {
   async get(): Promise<StoredAgency | null> {
@@ -59,7 +60,7 @@ export const agencyStorage = {
     try {
       const parsed = JSON.parse(value) as Partial<StoredAgency>;
       return typeof parsed.code === 'string' && typeof parsed.name === 'string'
-        ? { code: parsed.code, name: parsed.name, theme: parsed.theme ?? null }
+        ? { code: parsed.code, name: parsed.name, theme: parsed.theme ?? null, modules: parsed.modules ?? ['flights'] }
         : null;
     } catch {
       return null;

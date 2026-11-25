@@ -3,11 +3,12 @@ import { useSyncExternalStore } from 'react';
 
 import { agencyStorage, StoredAgency, tokenStorage } from '../api/storage';
 import { resetTenantProblem } from '../api/tenant';
-import { AgencyInfo } from '../api/types';
+import { AgencyInfo, Module } from '../api/types';
 import { clearPendingAction } from '../auth/pendingAction';
 import { API_URL, apiUrlFor, IS_NATIVE, TENANT_BASE_DOMAIN } from '../config';
 import { rememberPlaceForThemeChange } from '../navigation/navigationRef';
 import { applyTheme, ThemeColors } from '../theme';
+import { setModules } from './modules';
 
 /**
  * The agency the shared native app serves, stored with the sign-in tokens. On the web the address decides the
@@ -53,10 +54,11 @@ export function currentApiUrl(): string {
   return IS_NATIVE && state.agency ? apiUrlFor(agencyAddress(state.agency.code)) : API_URL;
 }
 
-/** Native launch: the stored agency, in its stored theme at once (refreshAgencyTheme then checks it). */
+/** Native launch: the stored agency, in its stored theme and modules at once (refreshAgency then checks them). */
 export async function loadStoredAgency(): Promise<void> {
   const agency = await agencyStorage.get();
   applyTheme(agency?.theme ?? null);
+  setModules(agency?.modules);
   update({ agency });
 }
 
@@ -76,15 +78,35 @@ async function changeAgencyTheme(theme: ThemeColors) {
   applyTheme(theme);
 }
 
-/** Native launch: the stored theme may have changed since; a failed check keeps it. */
-export async function refreshAgencyTheme(code: string) {
+/** Native launch: the stored theme and modules may have changed since; a failed check keeps them. */
+export async function refreshAgency(code: string) {
   try {
     const info = await findAgency(code);
     if (state.agency?.code === code) {
+      await changeAgencyModules(info.modules);
       await changeAgencyTheme(info.theme.colors);
     }
   } catch {
     // Offline or unavailable: the app's own requests report it.
+  }
+}
+
+async function changeAgencyModules(modules: Module[]) {
+  setModules(modules);
+  if (state.agency && JSON.stringify(state.agency.modules) !== JSON.stringify(modules)) {
+    const agency = { ...state.agency, modules };
+    await agencyStorage.set(agency);
+    update({ agency });
+  }
+}
+
+/** Re-reads the agency's modules, e.g. after the API said one is off. */
+export async function refreshModules() {
+  try {
+    const { data } = await axios.get<AgencyInfo>(`${currentApiUrl()}/agency`, { timeout: 15000 });
+    await (IS_NATIVE ? changeAgencyModules(data.modules) : setModules(data.modules));
+  } catch {
+    // The app's own requests report it.
   }
 }
 
@@ -163,10 +185,11 @@ async function signOutEverywhere() {
 /** Stores an agency (signing out of any other) and starts the app on it, opening url's screen if given. */
 export async function chooseAgency(agency: AgencyInfo, url: string | null = null) {
   await signOutEverywhere();
-  const stored = { code: agency.code, name: agency.name, theme: agency.theme.colors };
+  const stored = { code: agency.code, name: agency.name, theme: agency.theme.colors, modules: agency.modules };
   await agencyStorage.set(stored);
   pendingUrl = url;
   applyTheme(stored.theme);
+  setModules(stored.modules);
   update({ agency: stored, session: state.session + 1 });
 }
 

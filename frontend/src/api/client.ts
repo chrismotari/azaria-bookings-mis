@@ -1,8 +1,9 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-import { currentApiUrl } from '../agency/agency';
+import { currentApiUrl, refreshModules } from '../agency/agency';
 import { AUTH_PATH } from '../config';
 import { tokenStorage } from './storage';
+import { isModuleOff } from './errors';
 import { reportTenantProblem } from './tenant';
 
 export const api = axios.create();
@@ -50,6 +51,10 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     // No agency here, or it is suspended: the app shows a full-page message instead.
     if (reportTenantProblem(error.response?.data)) {
+      throw error;
+    }
+    if (isModuleOff(error)) {
+      void refreshModules();
       throw error;
     }
     const config = error.config as RetriableConfig | undefined;

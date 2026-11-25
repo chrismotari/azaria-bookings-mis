@@ -61,10 +61,29 @@ def sales():
     )
 
 
+def start_of_month():
+    today = timezone.localdate()
+    return timezone.make_aware(datetime(today.year, today.month, 1))
+
+
 def summary():
+    """Every figure, leaving out the flight ones when the agency has flights off."""
+    tenant = this_tenant()
+    customers = get_user_model().objects.filter(role="customer", is_active=True)
+    return {
+        **(flight_figures() if tenant.has_module("flights") else {}),
+        "customers": {
+            "total": customers.count(),
+            "new_this_month": customers.filter(date_joined__gte=start_of_month()).count(),
+        },
+        "overdue_invoice": overdue_notice(tenant),
+    }
+
+
+def flight_figures():
     now = timezone.now()
     today = timezone.localdate()
-    month_start = timezone.make_aware(datetime(today.year, today.month, 1))
+    month_start = start_of_month()
     year_start = timezone.make_aware(datetime(today.year, 1, 1))
     first_month = month_start - relativedelta(months=MONTHS_SHOWN - 1)
 
@@ -129,7 +148,6 @@ def summary():
         usage = search_usage()
         searches = {"used": usage["used"], "allowance": usage["allowance"]}
 
-    customers = get_user_model().objects.filter(role="customer", is_active=True)
     bookable = Offer.objects.bookable()
 
     return {
@@ -183,15 +201,10 @@ def summary():
             }
             for row in top_routes
         ],
-        "customers": {
-            "total": customers.count(),
-            "new_this_month": customers.filter(date_joined__gte=month_start).count(),
-        },
         "offers": {
             "bookable": bookable.count(),
             "public_bookable": bookable.filter(is_public=True).count(),
             "expiring_soon": bookable.filter(valid_until__lte=today + timedelta(days=EXPIRING_WITHIN_DAYS)).count(),
         },
         "searches": searches,
-        "overdue_invoice": overdue_notice(this_tenant()),
     }

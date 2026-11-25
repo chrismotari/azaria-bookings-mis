@@ -1,6 +1,7 @@
 import { ActivityIndicator, Text, View } from 'react-native';
 
-import { errorMessage } from '../api/errors';
+import { errorMessage, isModuleOff } from '../api/errors';
+import { goHome } from '../navigation/navigationRef';
 import { colors, createStyles, font, space, weight } from '../theme';
 import { Button } from './Button';
 import { Icon, IconName } from './Icon';
@@ -14,10 +15,23 @@ export function LoadingState() {
 }
 
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry: () => void }) {
+  if (isModuleOff(error)) {
+    return <ModuleOffState />;
+  }
   return (
     <View style={styles.box}>
       <Text style={styles.error}>{errorMessage(error)}</Text>
       <Button title="Try again" variant="secondary" onPress={onRetry} />
+    </View>
+  );
+}
+
+/** For an old link, or a module turned off while the app is open. */
+export function ModuleOffState() {
+  return (
+    <View style={styles.box}>
+      <Text style={styles.title}>This part of the site isn't available</Text>
+      <Button title="Go to the home page" variant="link" onPress={goHome} />
     </View>
   );
 }

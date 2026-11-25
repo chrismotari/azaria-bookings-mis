@@ -42,6 +42,9 @@ class Theme(models.Model):
         return cls.objects.get(is_default=True)
 
 
+MODULES = ("flights", "tours", "hotels")
+
+
 class Tenant(TenantMixin):
     """A travel agency with its own PostgreSQL schema. The public schema's row is the platform itself (app_admin).
 
@@ -66,15 +69,37 @@ class Tenant(TenantMixin):
     monthly_search_allowance = models.PositiveIntegerField(default=1500)
     # The agency's site, app and emails use its colours; choosing one goes through services.validate_theme_choice.
     theme = models.ForeignKey(Theme, on_delete=models.PROTECT, related_name="tenants")
+    flights_enabled = models.BooleanField(default=True)
+    tours_enabled = models.BooleanField(default=False)
+    hotels_enabled = models.BooleanField(default=False)
 
     auto_create_schema = True
     auto_drop_schema = False
 
     class Meta:
         ordering = ["name"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(flights_enabled=True) | models.Q(tours_enabled=True) | models.Q(hotels_enabled=True),
+                name="at_least_one_module",
+            ),
+        ]
 
     def __str__(self):
         return self.name
+
+    @property
+    def modules(self):
+        """The modules on, in the order flights, tours, hotels."""
+        return [module for module in MODULES if getattr(self, f"{module}_enabled")]
+
+    @modules.setter
+    def modules(self, modules):
+        for module in MODULES:
+            setattr(self, f"{module}_enabled", module in modules)
+
+    def has_module(self, module):
+        return getattr(self, f"{module}_enabled")
 
     @property
     def primary_domain(self):

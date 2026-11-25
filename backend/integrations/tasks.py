@@ -10,7 +10,7 @@ from .models import SearchRun
 logger = logging.getLogger(__name__)
 
 
-@tenant_task()
+@tenant_task("flights")
 def run_search(run_id):
     """Runs a queued search run; a run already started or finished is left alone."""
     run = SearchRun.objects.select_related("route__origin", "route__destination").filter(pk=run_id).first()
@@ -24,10 +24,10 @@ def run_search(run_id):
 @shared_task
 def delete_old_fares():
     """Daily, in every active agency: fares older than 30 days, except published ones."""
-    return for_each_tenant(services.delete_old_fares, "delete_old_fares")
+    return for_each_tenant(services.delete_old_fares, "delete_old_fares", "flights")
 
 
 @shared_task
 def run_due_route_searches():
     """Hourly, in every active agency: starts the scheduled searches that are due."""
-    return for_each_tenant(services.run_due_route_searches, "run_due_route_searches")
+    return for_each_tenant(services.run_due_route_searches, "run_due_route_searches", "flights")

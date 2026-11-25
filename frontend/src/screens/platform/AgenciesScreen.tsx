@@ -19,11 +19,13 @@ import { AgencyStatusFilter, PlatformTabParamList } from '../../navigation/types
 import { colors, createStyles, font, space, useIsWide, weight } from '../../theme';
 import { useListPage } from '../../utils/listPage';
 import { useDebounced } from '../../utils/useDebounced';
+import { modulesLabel } from './AgencyModules';
 import { AGENCIES_KEY, AgencyPage, createdOn, NewAgencyDialog, tenantStatus } from './AgencyPage';
 
 const COLUMNS: Column[] = [
   { label: 'Name', flex: 2 },
   { label: 'Address', flex: 2.4 },
+  { label: 'Modules', flex: 1.8 },
   { label: 'Status', flex: 1.2 },
   { label: 'Created', flex: 1.6 },
 ];
@@ -167,6 +169,9 @@ function AgencyTableRow({ tenant, onPress }: { tenant: Tenant; onPress: () => vo
         <Text key="address" style={styles.text} numberOfLines={1}>
           {tenant.primary_domain ?? '—'}
         </Text>,
+        <Text key="modules" style={styles.text} numberOfLines={1}>
+          {modulesLabel(tenant.modules)}
+        </Text>,
         <StatusChip key="status" label={status.label} tone={status.tone} />,
         <Text key="created" style={styles.text}>
           {createdOn(tenant)}
@@ -189,7 +194,9 @@ function AgencyCard({ tenant, selected, onPress }: { tenant: Tenant; selected: b
       <Text style={styles.text} numberOfLines={1}>
         {tenant.primary_domain ?? '—'}
       </Text>
-      <Text style={styles.muted}>Created {createdOn(tenant)}</Text>
+      <Text style={styles.muted}>
+        {modulesLabel(tenant.modules)} · Created {createdOn(tenant)}
+      </Text>
     </TripCard>
   );
 }

@@ -259,6 +259,21 @@ def test_suspended_agencies_are_not_searched(due, route, integration, duffel_api
     assert not SearchRun.objects.exists()
 
 
+def test_agencies_with_flights_off_are_not_searched(due, route, integration, duffel_api):
+    scheduled(route)
+    Tenant.objects.filter(schema_name=connection.schema_name).update(flights_enabled=False, tours_enabled=True)
+    assert due(MONDAY_0200) == 0
+    assert not SearchRun.objects.exists()
+
+
+def test_a_queued_run_is_left_alone_once_flights_is_off(route, integration, duffel_api):
+    run = SearchRun.objects.create(route=route, date_from=DEC_1, date_to=DEC_1)
+    Tenant.objects.filter(schema_name=connection.schema_name).update(flights_enabled=False, tours_enabled=True)
+    assert tasks.run_search.delay(connection.schema_name, str(run.pk)).get() is None
+    run.refresh_from_db()
+    assert run.status == SearchRun.Status.QUEUED
+
+
 # Refreshing published offers
 
 

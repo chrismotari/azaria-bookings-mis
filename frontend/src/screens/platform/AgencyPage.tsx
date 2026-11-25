@@ -22,6 +22,7 @@ import { PLATFORM_HOST } from '../../config';
 import { colors, createStyles, font, radius, space, useIsWide, weight } from '../../theme';
 import { formatDate, formatDateTime } from '../../utils/format';
 import { AgencyBilling } from './AgencyBilling';
+import { AgencyModules, ModuleCheckboxes } from './AgencyModules';
 import { AgencyTheme, ThemePicker, themeChoices, usePlatformThemes } from './AgencyTheme';
 import { AGENCIES_KEY } from './keys';
 
@@ -115,6 +116,7 @@ function Agency({ tenant }: { tenant: TenantDetail }) {
         <Detail label="Created" value={createdOn(tenant)} />
         <AgencyTheme key={tenant.id} tenant={tenant} onSaved={refresh} />
       </Card>
+      <AgencyModules tenant={tenant} onSaved={refresh} />
       <Admins tenant={tenant} />
       <Domains tenant={tenant} />
     </>
@@ -122,7 +124,7 @@ function Agency({ tenant }: { tenant: TenantDetail }) {
   const side = (
     <>
       <AgencyBilling tenant={tenant} onSaved={refresh} />
-      <SearchAllowance tenant={tenant} />
+      {tenant.modules.includes('flights') ? <SearchAllowance tenant={tenant} /> : null}
     </>
   );
   return (
@@ -530,11 +532,12 @@ const newSchema = z.object({
   admin_email: z.email('Enter a valid email address.'),
   admin_password: z.string().min(1, 'Enter a password for the admin.'),
   theme: z.string(),
+  modules: z.array(z.enum(['flights', 'tours', 'hotels'])).min(1, 'Choose at least one module.'),
 });
 
 type NewValues = z.infer<typeof newSchema>;
 
-const NEW_FIELDS = ['name', 'slug', 'admin_name', 'admin_email', 'admin_password', 'theme'] as const;
+const NEW_FIELDS = ['name', 'slug', 'admin_name', 'admin_email', 'admin_password', 'theme', 'modules'] as const;
 
 type NewAgencyProps = {
   open: boolean;
@@ -571,6 +574,7 @@ function NewAgencyForm({ themes, onClose, onCreated }: Omit<NewAgencyProps, 'ope
       admin_email: '',
       admin_password: '',
       theme: (themes.find((theme) => theme.is_default) ?? themes[0]).id,
+      modules: ['flights'],
     },
   });
   const slug = watch('slug').trim();
@@ -588,7 +592,7 @@ function NewAgencyForm({ themes, onClose, onCreated }: Omit<NewAgencyProps, 'ope
   });
 
   const field = (
-    name: (typeof NEW_FIELDS)[number],
+    name: Exclude<(typeof NEW_FIELDS)[number], 'modules'>,
     label: string,
     options: Partial<ComponentProps<typeof TextField>> = {},
   ) => (
@@ -640,6 +644,13 @@ function NewAgencyForm({ themes, onClose, onCreated }: Omit<NewAgencyProps, 'ope
       {field('admin_name', 'Full name', { autoCapitalize: 'words' })}
       {field('admin_email', 'Email', { autoCapitalize: 'none', keyboardType: 'email-address' })}
       {field('admin_password', 'Password', { secureTextEntry: true, autoComplete: 'new-password' })}
+      <Controller
+        control={control}
+        name="modules"
+        render={({ field: input, fieldState }) => (
+          <ModuleCheckboxes value={input.value} onChange={input.onChange} error={fieldState.error?.message} />
+        )}
+      />
       <Text style={styles.subsection}>Look</Text>
       <Controller
         control={control}

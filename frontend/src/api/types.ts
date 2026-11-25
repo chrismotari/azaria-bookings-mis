@@ -284,7 +284,7 @@ export type FareRecheck = { found: boolean; fare: CheckedFare | null; alternativ
 
 export type AdminBookingDetail = AdminBooking & { events: BookingEvent[]; boarding_passes: BoardingPass[] };
 
-export type Dashboard = {
+export type FlightFigures = {
   open_queries: number;
   bookings_requested: number;
   bookings_awaiting_payment: number;
@@ -310,10 +310,13 @@ export type Dashboard = {
     boarding_passes_sent: boolean;
   }[];
   top_routes: (DashboardRoute & { count: number; total: string })[];
-  customers: { total: number; new_this_month: number };
   offers: { bookable: number; public_bookable: number; expiring_soon: number };
   /** Null until the agency has an integration. */
   searches: { used: number; allowance: number } | null;
+};
+
+export type Dashboard = Partial<FlightFigures> & {
+  customers: { total: number; new_this_month: number };
   overdue_invoice: OverdueInvoice | null;
 };
 
@@ -334,6 +337,7 @@ export type AppSettings = {
   admin_notification_email: string;
   /** The agency's theme (its id). */
   theme: string;
+  modules: Module[];
 };
 
 export type AdminCustomer = {
@@ -369,6 +373,7 @@ export type Tenant = {
   searches_this_month: number;
   /** Its theme's id. */
   theme: string;
+  modules: Module[];
   created_at: string;
 };
 
@@ -682,7 +687,10 @@ export type AgencyInfo = {
   name: string;
   app_address: string;
   theme: Theme;
+  modules: Module[];
 };
+
+export type Module = 'flights' | 'tours' | 'hotels';
 
 /** A theme an agency can choose: its name and the colours it sets. */
 export type Theme = {

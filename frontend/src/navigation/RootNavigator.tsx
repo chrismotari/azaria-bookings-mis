@@ -5,6 +5,7 @@ import { Fragment, ReactNode, useCallback, useEffect, useRef } from 'react';
 import { Platform, View } from 'react-native';
 
 import { GetAppScreen } from '../agency/GetAppScreen';
+import { useHasModule } from '../agency/modules';
 import { useAuth } from '../auth/AuthContext';
 import { RequireAuth, toLogin } from '../auth/gate';
 import { useLoginAfterSignOut } from '../auth/useSignOut';
@@ -212,8 +213,13 @@ function stackScreenOptions() {
 function MainTabsNavigator() {
   const isWide = useIsWide();
   const { user } = useAuth();
+  const flights = useHasModule('flights');
   // Signed in on a wide screen, Account sits in the bar's account menu instead.
-  const hiddenRoutes = [...MAIN_FORM_PAGES, ...(!user ? GATED_TABS : isWide ? ['Account'] : [])];
+  const hiddenRoutes = [
+    ...MAIN_FORM_PAGES,
+    ...(!user ? GATED_TABS : isWide ? ['Account'] : []),
+    ...(flights ? [] : ['Requests']),
+  ];
   return (
     <MainTabs.Navigator
       tabBar={(props) => <ResponsiveTabBar {...props} hiddenRoutes={hiddenRoutes} parentRoutes={MAIN_PARENT_ROUTES} />}
@@ -264,15 +270,20 @@ const ADMIN_PARENT_ROUTES: Record<string, string> = {
   AdminSupport: 'AdminSettings',
 };
 
+const ADMIN_FLIGHT_TABS = ['AdminOffers', 'AdminRoutes', 'AdminRequests', 'AdminBookings'];
 const ADMIN_NARROW_TABS = ['AdminDashboard', 'AdminOffers', 'AdminRequests', 'AdminBookings'];
 const PLATFORM_NARROW_TABS = ['PlatformDashboard', 'PlatformAgencies', 'PlatformInvoices', 'PlatformChats'];
 
 function AdminTabsNavigator() {
   const isWide = useIsWide();
   const unreadChats = useDeskUnread(AGENCY_DESK);
+  const flights = useHasModule('flights');
   // Routes only matter once the agency has connected a fare provider.
-  const integrations = useIntegrations();
-  const hiddenRoutes = integrations.data?.length ? ADMIN_SETTINGS_PAGES : [...ADMIN_SETTINGS_PAGES, 'AdminRoutes'];
+  const integrations = useIntegrations(flights);
+  const hiddenRoutes = [
+    ...ADMIN_SETTINGS_PAGES,
+    ...(flights ? (integrations.data?.length ? [] : ['AdminRoutes']) : ADMIN_FLIGHT_TABS),
+  ];
   return (
     <AdminTabs.Navigator
       tabBar={(props) => (

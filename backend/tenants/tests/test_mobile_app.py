@@ -47,6 +47,7 @@ def test_agency_returns_code_name_and_app_address(host):
         "name": "Test Agency",
         "app_address": "test.localhost",
         "theme": {"id": str(theme.pk), "name": "Indigo & Amber", "colors": theme.colors},
+        "modules": ["flights"],
     }
 
 

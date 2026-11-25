@@ -1,6 +1,6 @@
 # Azaria Bookings — Specification
 
-A multitenant SaaS for small and medium-sized flight ticketing agencies. Each agency (tenant) gets its own site and data: its admin lists flight deals, anyone can browse them, and registered customers request options or book. The admin confirms availability, the customer pays outside the system, the admin marks the booking paid, uploads boarding passes and sends them by email; the customer can also open them in the app. The platform's system owner manages agencies, plans and invoices on the root host.
+A multitenant SaaS for small and medium-sized travel agencies. Each agency (tenant) gets its own site and data, and buys any of three modules, which the system owner switches on per agency (§25): **flights** (its admin lists flight deals, anyone can browse them, and registered customers request options or book; the admin confirms availability, the customer pays outside the system, the admin marks the booking paid, uploads boarding passes and sends them by email, and the customer can also open them in the app), **tours** and **hotels**. The platform's system owner manages agencies, their modules, plans and invoices on the root host.
 
 Many integrations are still to come, so much of the work is done by hand for now: bookings and invoices are paid outside the system and marked paid manually, and booking and ticketing happen in the agent's own GDS. Offers are entered by the admin, or found by searching the agency's routes (by hand or on a schedule) through its fare providers and published after review or automatically; later searches keep published offers' prices up to date.
 
@@ -229,10 +229,10 @@ All delivered; each was one commit.
 42. Third provider: Sabre (see §22).
 43. Fourth provider: Amadeus (see §23).
 44. Agency themes (see §24).
+45. Modules: flights, tours and hotels per agency (see §25).
 
 Pending (not yet built):
 
-45. Modules: flights, tours and hotels per agency (see §25).
 46. Tours (see §26).
 47. Flight passenger details (see §27).
 48. Hotels (see §28).

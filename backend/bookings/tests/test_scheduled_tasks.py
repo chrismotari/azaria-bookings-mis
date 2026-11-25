@@ -276,6 +276,7 @@ def test_admin_reads_and_updates_settings(admin_api, settings):
         "reminder_hours_before": 4,
         "admin_notification_email": settings.ADMIN_EMAIL,
         "theme": theme,
+        "modules": ["flights"],
     }
     payload = {
         "payment_instructions": "Bank transfer to Azaria Ltd.",
@@ -285,7 +286,7 @@ def test_admin_reads_and_updates_settings(admin_api, settings):
     }
     response = admin_api.patch("/api/admin/settings", payload, format="json")
     assert response.status_code == 200
-    assert response.data == {**payload, "theme": theme}
+    assert response.data == {**payload, "theme": theme, "modules": ["flights"]}
     app_settings = AppSettings.get()
     assert (app_settings.payment_hold_hours, app_settings.admin_notification_email) == (
         48,

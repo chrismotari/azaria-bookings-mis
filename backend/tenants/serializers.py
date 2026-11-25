@@ -9,7 +9,7 @@ from accounts.models import User
 from accounts.serializers import LoginSerializer
 
 from . import themes
-from .models import Domain, Tenant, Theme
+from .models import MODULES, Domain, Tenant, Theme
 
 NO_PLATFORM_ACCOUNT = "No platform account found with the given credentials."
 
@@ -107,8 +107,22 @@ def slug_of(tenant):
     return tenant.schema_name.replace("_", "-")
 
 
+def validate_modules(value):
+    from .services import validate_modules
+
+    try:
+        return validate_modules(value)
+    except DjangoValidationError as exc:
+        raise serializers.ValidationError(exc.message_dict["modules"]) from exc
+
+
+def modules_field():
+    return serializers.ListField(child=serializers.ChoiceField(choices=MODULES), required=False)
+
+
 class TenantSerializer(serializers.ModelSerializer):
     slug = serializers.SerializerMethodField()
+    modules = modules_field()
     primary_domain = serializers.SerializerMethodField()
     searches_this_month = serializers.SerializerMethodField()
 
@@ -126,6 +140,7 @@ class TenantSerializer(serializers.ModelSerializer):
             "monthly_search_allowance",
             "searches_this_month",
             "theme",
+            "modules",
             "created_at",
         ]
         read_only_fields = [
@@ -156,6 +171,9 @@ class TenantSerializer(serializers.ModelSerializer):
         if not value.strip():
             raise serializers.ValidationError("Enter the agency's name.")
         return value.strip()
+
+    def validate_modules(self, value):
+        return validate_modules(value)
 
     def validate_theme(self, value):
         from .services import validate_theme_choice
@@ -204,6 +222,10 @@ class TenantCreateSerializer(serializers.Serializer):
     admin_password = serializers.CharField(write_only=True, trim_whitespace=False)
     # The default theme when left out.
     theme = serializers.PrimaryKeyRelatedField(queryset=Theme.objects.all(), required=False)
+    modules = modules_field()
+
+    def validate_modules(self, value):
+        return validate_modules(value)
 
     def validate_slug(self, value):
         return value.strip().lower()

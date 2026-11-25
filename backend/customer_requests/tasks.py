@@ -38,7 +38,7 @@ def describe_query(query):
     }
 
 
-@tenant_task(**EMAIL_TASK_OPTIONS)
+@tenant_task("flights", **EMAIL_TASK_OPTIONS)
 def notify_admin_new_query(query_id):
     query = Query.objects.select_related("user", "origin", "destination").filter(pk=query_id).first()
     if query is None or query.status != Query.Status.OPEN:
@@ -52,7 +52,7 @@ def notify_admin_new_query(query_id):
     )
 
 
-@tenant_task(**EMAIL_TASK_OPTIONS)
+@tenant_task("flights", **EMAIL_TASK_OPTIONS)
 def notify_customer_query_responded(query_response_id):
     response = (
         QueryResponse.objects.select_related("query__user", "query__origin", "query__destination")

@@ -181,3 +181,9 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Step 44: making an inactive theme the default answers 409; the platform themes list is not paginated and is sorted default first, then by name, like the admins' list.
 - Step 44: platform emails sent in an agency's schema for its links (invoice, suspension, the platform desk's reply) are marked as platform emails and keep Azaria's colours; the email header text stays "Azaria Bookings" (only colours are themed).
 - Step 44: on web, when GET /api/agency fails, the app starts in Azaria's colours (and shows the no-agency or suspended page as before); on native a failed theme refresh keeps the stored theme.
+- Step 45: tours and hotels have no screens until steps 46 and 48, so their Explore and customer Bookings tabs show an empty "No tours yet" / "No hotels yet" page, and admins get no Tours or Hotels nav entry yet.
+- Step 45: airport and airline lookups stay on for every agency (shared reference data, not part of the flights module).
+- Step 45: an admin or customer screen of a module that is off stays reachable by its link and shows "This part of the site isn't available"; a `module_off` answer also makes the app re-read the agency's modules, so its nav follows at once.
+- Step 45: a link to a flight item (`/offers/<id>`, `/bookings/<id>`) always opens the flights page, without the module switch.
+- Step 45: when flights is off the admin dashboard leaves out every flight key (the API returns only `customers` and `overdue_invoice`); `manage.py create_agency` is unchanged (flights only).
+- Step 45: the last module is checked before open bookings, so turning off the only module answers 400 even when it has open bookings.

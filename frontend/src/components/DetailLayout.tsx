@@ -3,6 +3,7 @@ import { isAxiosError } from 'axios';
 import { createContext, ReactNode, useContext, useEffect, useSyncExternalStore } from 'react';
 import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 
+import { isModuleOff } from '../api/errors';
 import { colors, createStyles, font, radius, space, useIsWide, weight } from '../theme';
 import { Button } from './Button';
 import { Icon } from './Icon';
@@ -107,7 +108,7 @@ export function DetailError({
   message?: string;
 }) {
   const context = useContext(DetailContext);
-  if (isAxiosError(error) && error.response?.status === 404) {
+  if (isAxiosError(error) && error.response?.status === 404 && !isModuleOff(error)) {
     return (
       <EmptyState
         icon="search-outline"

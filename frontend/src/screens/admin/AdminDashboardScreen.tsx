@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
-import { Dashboard } from '../../api/types';
+import { Dashboard, FlightFigures } from '../../api/types';
 import { useAuth } from '../../auth/AuthContext';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
@@ -30,7 +30,7 @@ import { timeLeft, passengersLabel } from '../../utils/bookings';
 import { formatDate, formatMoney, formatPrice, routeCodes } from '../../utils/format';
 
 type Props = BottomTabScreenProps<AdminTabParamList, 'AdminDashboard'>;
-type Route = Dashboard['top_routes'][number];
+type Route = FlightFigures['top_routes'][number];
 
 /** "Good morning" etc. by the time of day in Nairobi. */
 function greeting(): string {
@@ -42,6 +42,7 @@ function greeting(): string {
   return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 }
 
+const count = (value: number) => value.toLocaleString('en-US');
 const plural = (count: number, word: string) => `${count.toLocaleString('en-US')} ${word}${count === 1 ? '' : 's'}`;
 const routeLine = (route: Pick<Route, 'origin' | 'destination' | 'trip_type'>) =>
   routeCodes(route.origin, route.destination, route.trip_type === 'return');
@@ -75,27 +76,67 @@ export function AdminDashboardScreen({ navigation }: Props) {
 
   const data = dashboard.data;
   const firstName = user?.full_name.trim().split(/\s+/)[0];
-  const count = (value: number) => value.toLocaleString('en-US');
   const overdue = data.overdue_invoice;
 
+  const overdueTiles: Tile[] = overdue
+    ? [
+        {
+          label: 'Overdue invoice',
+          value: formatMoney(overdue.amount, overdue.currency),
+          detail: [
+            `${overdue.number}, due ${formatDate(overdue.due_on)}`,
+            `Suspended on ${formatDate(overdue.suspends_on)} if unpaid`,
+          ],
+          icon: 'alert-circle-outline' as const,
+          tone: 'danger' as const,
+          emphasised: true,
+          onPress: () => navigation.navigate('AdminBilling'),
+          action: 'View billing',
+        },
+      ]
+    : [];
+  const flights = data.sales ? (data as FlightFigures) : null;
+
+  return (
+    <Screen>
+      <View>
+        <Text style={styles.title}>Dashboard</Text>
+        <Text style={styles.greeting}>
+          {greeting()}
+          {firstName ? `, ${firstName}` : ''}.
+        </Text>
+      </View>
+      {flights ? (
+        <FlightSections data={flights} overdueTiles={overdueTiles} navigation={navigation} now={now} />
+      ) : overdueTiles.length ? (
+        <>
+          <SectionTitle>Needs action</SectionTitle>
+          <TileGrid tiles={overdueTiles} />
+        </>
+      ) : null}
+
+      <Columns>
+        <Column>
+          <Card>
+            <SectionTitle>Customers</SectionTitle>
+            <Text style={styles.big}>{count(data.customers.total)}</Text>
+            <Text style={styles.muted}>{count(data.customers.new_this_month)} new this month</Text>
+            <View style={styles.actions}>
+              <Button title="View users" variant="link" onPress={() => navigation.navigate('AdminUsers')} />
+            </View>
+          </Card>
+        </Column>
+        {flights ? <OffersCard data={flights} navigation={navigation} /> : null}
+      </Columns>
+    </Screen>
+  );
+}
+
+type SectionProps = { data: FlightFigures; navigation: Props['navigation'] };
+
+function FlightSections({ data, overdueTiles, navigation, now }: SectionProps & { overdueTiles: Tile[]; now: number }) {
   const needsAction: Tile[] = [
-    ...(overdue
-      ? [
-          {
-            label: 'Overdue invoice',
-            value: formatMoney(overdue.amount, overdue.currency),
-            detail: [
-              `${overdue.number}, due ${formatDate(overdue.due_on)}`,
-              `Suspended on ${formatDate(overdue.suspends_on)} if unpaid`,
-            ],
-            icon: 'alert-circle-outline' as const,
-            tone: 'danger' as const,
-            emphasised: true,
-            onPress: () => navigation.navigate('AdminBilling'),
-            action: 'View billing',
-          },
-        ]
-      : []),
+    ...overdueTiles,
     {
       label: 'Bookings to confirm',
       value: count(data.bookings_requested),
@@ -189,15 +230,7 @@ export function AdminDashboardScreen({ navigation }: Props) {
   const mostSold = data.top_routes[0]?.count ?? 0;
 
   return (
-    <Screen>
-      <View>
-        <Text style={styles.title}>Dashboard</Text>
-        <Text style={styles.greeting}>
-          {greeting()}
-          {firstName ? `, ${firstName}` : ''}.
-        </Text>
-      </View>
-
+    <>
       <SectionTitle>Needs action</SectionTitle>
       <TileGrid tiles={needsAction} />
 
@@ -293,53 +326,45 @@ export function AdminDashboardScreen({ navigation }: Props) {
           </Card>
         </Column>
       </Columns>
+    </>
+  );
+}
 
-      <Columns>
-        <Column>
-          <Card>
-            <SectionTitle>Customers</SectionTitle>
-            <Text style={styles.big}>{count(data.customers.total)}</Text>
-            <Text style={styles.muted}>{count(data.customers.new_this_month)} new this month</Text>
-            <View style={styles.actions}>
-              <Button title="View users" variant="link" onPress={() => navigation.navigate('AdminUsers')} />
-            </View>
-          </Card>
-        </Column>
-        <Column>
-          <Card>
-            <SectionTitle>Offers and searches</SectionTitle>
-            <Text style={styles.big}>{count(data.offers.bookable)}</Text>
-            <Text style={styles.muted}>
-              {data.offers.bookable === 1 ? 'offer open for booking' : 'offers open for booking'},{' '}
-              {count(data.offers.public_bookable)} public
-            </Text>
-            <LinkRow
-              label={`${plural(data.offers.expiring_soon, 'offer')} expire within 7 days`}
-              onPress={() => navigation.navigate('AdminOffers')}
-            >
-              <Text style={data.offers.expiring_soon ? styles.warning : styles.text}>
-                {plural(data.offers.expiring_soon, 'offer')} expire{data.offers.expiring_soon === 1 ? 's' : ''} within 7
-                days
+function OffersCard({ data, navigation }: SectionProps) {
+  return (
+    <Column>
+      <Card>
+        <SectionTitle>Offers and searches</SectionTitle>
+        <Text style={styles.big}>{count(data.offers.bookable)}</Text>
+        <Text style={styles.muted}>
+          {data.offers.bookable === 1 ? 'offer open for booking' : 'offers open for booking'},{' '}
+          {count(data.offers.public_bookable)} public
+        </Text>
+        <LinkRow
+          label={`${plural(data.offers.expiring_soon, 'offer')} expire within 7 days`}
+          onPress={() => navigation.navigate('AdminOffers')}
+        >
+          <Text style={data.offers.expiring_soon ? styles.warning : styles.text}>
+            {plural(data.offers.expiring_soon, 'offer')} expire{data.offers.expiring_soon === 1 ? 's' : ''} within 7
+            days
+          </Text>
+        </LinkRow>
+        {data.searches ? (
+          <LinkRow
+            label={`Fare searches this month: ${data.searches.used} of ${data.searches.allowance}`}
+            onPress={() => navigation.navigate('AdminRoutes')}
+          >
+            <View style={styles.between}>
+              <Text style={[styles.text, styles.shrink]}>Fare searches this month</Text>
+              <Text style={styles.strong}>
+                {count(data.searches.used)} of {count(data.searches.allowance)}
               </Text>
-            </LinkRow>
-            {data.searches ? (
-              <LinkRow
-                label={`Fare searches this month: ${data.searches.used} of ${data.searches.allowance}`}
-                onPress={() => navigation.navigate('AdminRoutes')}
-              >
-                <View style={styles.between}>
-                  <Text style={[styles.text, styles.shrink]}>Fare searches this month</Text>
-                  <Text style={styles.strong}>
-                    {count(data.searches.used)} of {count(data.searches.allowance)}
-                  </Text>
-                </View>
-                <UsageBar used={data.searches.used} allowance={data.searches.allowance} />
-              </LinkRow>
-            ) : null}
-          </Card>
-        </Column>
-      </Columns>
-    </Screen>
+            </View>
+            <UsageBar used={data.searches.used} allowance={data.searches.allowance} />
+          </LinkRow>
+        ) : null}
+      </Card>
+    </Column>
   );
 }
 

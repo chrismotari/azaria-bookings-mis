@@ -25,6 +25,11 @@ function errorBody(error: unknown): ErrorBody | null {
   return null;
 }
 
+/** Whether the API refused the request because the agency has that module off. */
+export function isModuleOff(error: unknown): boolean {
+  return errorBody(error)?.code === 'module_off';
+}
+
 /** A single readable message for any API or network error. */
 export function errorMessage(error: unknown): string {
   if (isAxiosError(error) && !error.response) {

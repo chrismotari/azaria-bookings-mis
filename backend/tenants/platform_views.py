@@ -75,6 +75,7 @@ class PlatformTenantListView(generics.ListCreateAPIView):
                 admin_password=data["admin_password"],
                 admin_name=data["admin_name"],
                 theme=data.get("theme"),
+                modules=data.get("modules"),
             )
         except DjangoValidationError as exc:
             # The address checks raise plain errors; the others name their fields.
@@ -85,7 +86,7 @@ class PlatformTenantListView(generics.ListCreateAPIView):
 
 
 class PlatformTenantDetailView(generics.RetrieveUpdateAPIView):
-    """Rename, suspend and reactivate; tenants are never deleted."""
+    """Rename, suspend and reactivate, choose the theme and modules; tenants are never deleted."""
 
     permission_classes = [IsPlatformOwner]
     serializer_class = TenantDetailSerializer
@@ -100,6 +101,8 @@ class PlatformTenantDetailView(generics.RetrieveUpdateAPIView):
 
     def perform_update(self, serializer):
         active = serializer.validated_data.pop("is_active", None)
+        if "modules" in serializer.validated_data:
+            services.check_modules_change(serializer.instance, serializer.validated_data["modules"])
         tenant = serializer.save()
         if active is not None:
             billing.set_active(tenant, active)

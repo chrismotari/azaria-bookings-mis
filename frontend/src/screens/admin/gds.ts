@@ -10,10 +10,11 @@ export const ROUTES_KEY = ['admin', 'routes'];
 export const FARES_KEY = ['admin', 'fares'];
 export const USAGE_KEY = ['admin', 'search-usage'];
 
-export function useIntegrations() {
+export function useIntegrations(enabled = true) {
   return useQuery({
     queryKey: INTEGRATIONS_KEY,
     queryFn: async () => (await api.get<Integration[]>('/admin/integrations')).data,
+    enabled,
   });
 }
 
