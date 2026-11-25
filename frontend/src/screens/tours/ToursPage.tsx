@@ -1,12 +1,10 @@
 import { useNavigation } from '@react-navigation/native';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
 import { GetAppFooter } from '../../agency/GetAppFooter';
 import { useModules } from '../../agency/modules';
-import { api } from '../../api/client';
-import { Paginated, Tour } from '../../api/types';
+import { Tour } from '../../api/types';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { CoverImage } from '../../components/CoverImage';
@@ -19,14 +17,13 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/StatusVie
 import { TextField } from '../../components/TextField';
 import { colors, createStyles, font, space, useIsWide, weight } from '../../theme';
 import { slotsLeftLabel, tourDates } from '../../utils/tours';
+import { EMPTY_TOUR_FILTERS, TourFilters, TourOrdering, useTourList } from '../explore/exploreLists';
 import { FeaturedRow } from '../explore/Featured';
 
-type Filters = { search: string; date_from: string; date_to: string; price_min: string; price_max: string };
-type Ordering = 'start_date' | 'from_price';
+type Filters = TourFilters;
+const EMPTY = EMPTY_TOUR_FILTERS;
 
-const EMPTY: Filters = { search: '', date_from: '', date_to: '', price_min: '', price_max: '' };
-
-const ORDERING_OPTIONS: { value: Ordering; label: string }[] = [
+const ORDERING_OPTIONS: { value: TourOrdering; label: string }[] = [
   { value: 'start_date', label: 'Soonest' },
   { value: 'from_price', label: 'Lowest price' },
 ];
@@ -50,39 +47,25 @@ function validate(filters: Filters): Partial<Filters> {
 export function ToursPage() {
   const navigation = useNavigation();
   const compact = !useIsWide();
-  const [draft, setDraft] = useState<Filters>(EMPTY);
-  const [filters, setFilters] = useState<Filters>(EMPTY);
+  const { list, update, results: tours } = useTourList();
+  const { filters, ordering, page } = list;
+  const [draft, setDraft] = useState<Filters>(filters);
   const [errors, setErrors] = useState<Partial<Filters>>({});
-  const [ordering, setOrdering] = useState<Ordering>('start_date');
-  const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [width, setWidth] = useState(0);
   const single = useModules().length === 1;
-
-  const tours = useQuery({
-    queryKey: ['tours', filters, ordering, page],
-    queryFn: async () => {
-      const params = Object.fromEntries(
-        Object.entries({ ...filters, ordering, page }).filter(([, value]) => String(value).trim()),
-      );
-      return (await api.get<Paginated<Tour>>('/tours', { params })).data;
-    },
-    placeholderData: keepPreviousData,
-  });
 
   const apply = (next: Filters = draft) => {
     const found = validate(next);
     setErrors(found);
     if (Object.keys(found).length === 0) {
-      setFilters({ ...next, search: next.search.trim() });
-      setPage(1);
+      update({ filters: { ...next, search: next.search.trim() }, page: 1 });
     }
   };
   const clear = () => {
     setDraft(EMPTY);
     setErrors({});
-    setFilters(EMPTY);
-    setPage(1);
+    update({ filters: EMPTY, page: 1 });
   };
 
   const sidebar = (
@@ -170,10 +153,7 @@ export function ToursPage() {
                   label="Sort by"
                   options={ORDERING_OPTIONS}
                   value={ordering}
-                  onChange={(value) => {
-                    setOrdering(value);
-                    setPage(1);
-                  }}
+                  onChange={(value) => update({ ordering: value, page: 1 })}
                 />
               </View>
               {tours.data ? (
@@ -209,7 +189,9 @@ export function ToursPage() {
                 </View>
               )}
             </View>
-            {tours.data ? <Pagination page={page} count={tours.data.count} onChange={setPage} /> : null}
+            {tours.data ? (
+              <Pagination page={page} count={tours.data.count} onChange={(next) => update({ page: next })} />
+            ) : null}
           </View>
         </View>
         <GetAppFooter />
@@ -219,11 +201,12 @@ export function ToursPage() {
 }
 
 /** A tour in a list: cover, title, destination, dates and its from price. */
-export function TourCard({ tour, onPress }: { tour: Tour; onPress: () => void }) {
+export function TourCard({ tour, onPress, selected }: { tour: Tour; onPress: () => void; selected?: boolean }) {
   return (
     <ItemCard
       accessibilityLabel={`${tour.title}, ${tour.destination}`}
       onPress={onPress}
+      selected={selected}
       featured={tour.is_featured}
       rating={tour.rating}
       image={<CoverImage url={tour.photos[0]?.url} height={CARD_IMAGE_HEIGHT} />}

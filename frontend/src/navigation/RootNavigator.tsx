@@ -30,6 +30,7 @@ import { AdminTourBookScreen } from '../screens/admin/AdminTourBookScreen';
 import { AdminTourEditScreen, AdminTourNewScreen } from '../screens/admin/AdminTourFormScreen';
 import { AdminToursScreen } from '../screens/admin/AdminToursScreen';
 import { HotelBookScreen } from '../screens/hotels/HotelBookScreen';
+import { ExploreListsProvider } from '../screens/explore/exploreLists';
 import { HotelDetailScreen } from '../screens/hotels/HotelDetailScreen';
 import { TourBookScreen } from '../screens/tours/TourBookScreen';
 import { TourDetailScreen } from '../screens/tours/TourDetailScreen';
@@ -316,38 +317,42 @@ function MainTabsNavigator() {
     ...(flights ? [] : ['Requests']),
   ];
   return (
-    <MainTabs.Navigator
-      tabBar={(props) => <ResponsiveTabBar {...props} hiddenRoutes={hiddenRoutes} parentRoutes={MAIN_PARENT_ROUTES} />}
-      screenOptions={tabScreenOptions(isWide)}
-    >
-      <MainTabs.Screen
-        name="Explore"
-        component={ExploreScreen}
-        options={tab('Explore', 'compass-outline', 'compass')}
-      />
-      <MainTabs.Screen
-        name="Requests"
-        component={GatedRequests}
-        options={tab('Requests', 'chatbubbles-outline', 'chatbubbles')}
-      />
-      <MainTabs.Screen
-        name="Bookings"
-        component={GatedBookings}
-        options={tab('Bookings', 'ticket-outline', 'ticket')}
-      />
-      <MainTabs.Screen
-        name="Account"
-        component={GatedAccount}
-        options={tab('Account', 'person-circle-outline', 'person-circle')}
-      />
-      <MainTabs.Screen name="QueryNew" component={GatedQueryNew} options={{ title: 'Request options' }} />
-      <MainTabs.Screen name="BookingNew" component={GatedBookingNew} options={{ title: 'Book' }} />
-      <MainTabs.Screen name="Support" component={GatedSupport} options={{ title: 'Support' }} />
-      <MainTabs.Screen name="TourDetail" component={TourDetailScreen} options={{ title: 'Tour' }} />
-      <MainTabs.Screen name="TourBook" component={GatedTourBook} options={{ title: 'Book tour' }} />
-      <MainTabs.Screen name="HotelDetail" component={HotelDetailScreen} options={{ title: 'Hotel' }} />
-      <MainTabs.Screen name="HotelBook" component={GatedHotelBook} options={{ title: 'Request booking' }} />
-    </MainTabs.Navigator>
+    <ExploreListsProvider>
+      <MainTabs.Navigator
+        tabBar={(props) => (
+          <ResponsiveTabBar {...props} hiddenRoutes={hiddenRoutes} parentRoutes={MAIN_PARENT_ROUTES} />
+        )}
+        screenOptions={tabScreenOptions(isWide)}
+      >
+        <MainTabs.Screen
+          name="Explore"
+          component={ExploreScreen}
+          options={tab('Explore', 'compass-outline', 'compass')}
+        />
+        <MainTabs.Screen
+          name="Requests"
+          component={GatedRequests}
+          options={tab('Requests', 'chatbubbles-outline', 'chatbubbles')}
+        />
+        <MainTabs.Screen
+          name="Bookings"
+          component={GatedBookings}
+          options={tab('Bookings', 'ticket-outline', 'ticket')}
+        />
+        <MainTabs.Screen
+          name="Account"
+          component={GatedAccount}
+          options={tab('Account', 'person-circle-outline', 'person-circle')}
+        />
+        <MainTabs.Screen name="QueryNew" component={GatedQueryNew} options={{ title: 'Request options' }} />
+        <MainTabs.Screen name="BookingNew" component={GatedBookingNew} options={{ title: 'Book' }} />
+        <MainTabs.Screen name="Support" component={GatedSupport} options={{ title: 'Support' }} />
+        <MainTabs.Screen name="TourDetail" component={TourDetailScreen} options={{ title: 'Tour' }} />
+        <MainTabs.Screen name="TourBook" component={GatedTourBook} options={{ title: 'Book tour' }} />
+        <MainTabs.Screen name="HotelDetail" component={HotelDetailScreen} options={{ title: 'Hotel' }} />
+        <MainTabs.Screen name="HotelBook" component={GatedHotelBook} options={{ title: 'Request booking' }} />
+      </MainTabs.Navigator>
+    </ExploreListsProvider>
   );
 }
 

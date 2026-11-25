@@ -1,12 +1,9 @@
 import { useNavigation } from '@react-navigation/native';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
 import { GetAppFooter } from '../../agency/GetAppFooter';
 import { useModules } from '../../agency/modules';
-import { api } from '../../api/client';
-import { Hotel, Paginated } from '../../api/types';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { Pagination } from '../../components/Pagination';
@@ -15,15 +12,14 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/StatusVie
 import { TextField } from '../../components/TextField';
 import { colors, createStyles, font, space, useIsWide, weight } from '../../theme';
 import { nightsBetween } from '../../utils/hotels';
+import { EMPTY_HOTEL_FILTERS, HotelFilters, HotelOrdering, useHotelList } from '../explore/exploreLists';
 import { FeaturedRow } from '../explore/Featured';
-import { EMPTY_STAY, HotelCard, Stay, StayErrors, StayFields, stayParams, validateStay } from './HotelParts';
+import { HotelCard, Stay, StayErrors, StayFields, stayParams, validateStay } from './HotelParts';
 
-type Filters = { stars: string; price_min: string; price_max: string };
-type Ordering = 'from_price' | '-star_rating' | 'name';
+type Filters = HotelFilters;
+const EMPTY_FILTERS = EMPTY_HOTEL_FILTERS;
 
-const EMPTY_FILTERS: Filters = { stars: '', price_min: '', price_max: '' };
-
-const ORDERING_OPTIONS: { value: Ordering; label: string }[] = [
+const ORDERING_OPTIONS: { value: HotelOrdering; label: string }[] = [
   { value: 'from_price', label: 'Lowest price' },
   { value: '-star_rating', label: 'Stars' },
   { value: 'name', label: 'Name' },
@@ -42,38 +38,23 @@ const PRICE = /^\d+(\.\d{1,2})?$/;
 export function HotelsPage() {
   const navigation = useNavigation();
   const compact = !useIsWide();
-  const [search, setSearch] = useState('');
-  const [draft, setDraft] = useState<Stay>(EMPTY_STAY);
+  const { list, update, results: hotels } = useHotelList();
+  const { filters, ordering, page } = list;
+  const [search, setSearch] = useState(list.search);
+  const [draft, setDraft] = useState<Stay>(list.stay);
   const [stayErrors, setStayErrors] = useState<StayErrors>({});
-  const [applied, setApplied] = useState<{ search: string; stay: Stay }>({ search: '', stay: EMPTY_STAY });
-  const [filterDraft, setFilterDraft] = useState<Filters>(EMPTY_FILTERS);
-  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [filterDraft, setFilterDraft] = useState<Filters>(filters);
   const [priceErrors, setPriceErrors] = useState<Partial<Filters>>({});
-  const [ordering, setOrdering] = useState<Ordering>('from_price');
-  const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [width, setWidth] = useState(0);
 
-  const params = stayParams(applied.stay);
-  const hotels = useQuery({
-    queryKey: ['hotels', applied, filters, ordering, page],
-    queryFn: async () => {
-      const query = Object.fromEntries(
-        Object.entries({ search: applied.search, ...params, ...filters, ordering, page }).filter(([, value]) =>
-          String(value ?? '').trim(),
-        ),
-      );
-      return (await api.get<Paginated<Hotel>>('/hotels', { params: query })).data;
-    },
-    placeholderData: keepPreviousData,
-  });
+  const params = stayParams(list.stay);
 
   const runSearch = () => {
     const found = validateStay(draft);
     setStayErrors(found);
     if (Object.keys(found).length === 0) {
-      setApplied({ search: search.trim(), stay: draft });
-      setPage(1);
+      update({ search: search.trim(), stay: draft, page: 1 });
     }
   };
   const applyFilters = (next: Filters = filterDraft) => {
@@ -85,15 +66,13 @@ export function HotelsPage() {
     }
     setPriceErrors(found);
     if (Object.keys(found).length === 0) {
-      setFilters({ ...next, price_min: next.price_min.trim(), price_max: next.price_max.trim() });
-      setPage(1);
+      update({ filters: { ...next, price_min: next.price_min.trim(), price_max: next.price_max.trim() }, page: 1 });
     }
   };
   const clearFilters = () => {
     setFilterDraft(EMPTY_FILTERS);
     setPriceErrors({});
-    setFilters(EMPTY_FILTERS);
-    setPage(1);
+    update({ filters: EMPTY_FILTERS, page: 1 });
   };
 
   const nights = params.check_in ? nightsBetween(params.check_in, params.check_out ?? '') : 0;
@@ -137,7 +116,7 @@ export function HotelsPage() {
   const cardWidth = columns > 1 ? (width - space.lg * (columns - 1)) / columns : undefined;
   const active = Object.values(filters).filter(Boolean).length;
   const single = useModules().length === 1;
-  const searching = Boolean(applied.search || Object.keys(params).length || active);
+  const searching = Boolean(list.search || Object.keys(params).length || active);
 
   return (
     <ScrollView style={styles.scroll}>
@@ -178,10 +157,7 @@ export function HotelsPage() {
                   label="Sort by"
                   options={ORDERING_OPTIONS}
                   value={ordering}
-                  onChange={(value) => {
-                    setOrdering(value);
-                    setPage(1);
-                  }}
+                  onChange={(value) => update({ ordering: value, page: 1 })}
                 />
               </View>
               {hotels.data ? (
@@ -224,7 +200,9 @@ export function HotelsPage() {
                 </View>
               )}
             </View>
-            {hotels.data ? <Pagination page={page} count={hotels.data.count} onChange={setPage} /> : null}
+            {hotels.data ? (
+              <Pagination page={page} count={hotels.data.count} onChange={(next) => update({ page: next })} />
+            ) : null}
           </View>
         </View>
         <GetAppFooter />

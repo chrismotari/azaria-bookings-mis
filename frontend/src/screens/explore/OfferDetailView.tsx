@@ -21,14 +21,20 @@ import { formatDate, ticketClassLabel, timeAgo } from '../../utils/format';
 /** Width from which the price summary sits beside the details instead of below them. */
 const TWO_COLUMNS = 640;
 
+/** The offer at /offers/<id>; nothing is fetched without an id. */
+export function useOffer(id: string | undefined) {
+  return useQuery({
+    queryKey: ['offers', id],
+    queryFn: async () => (await api.get<OfferDetail>(`/offers/${id}`)).data,
+    enabled: Boolean(id),
+  });
+}
+
 /** query: the request whose response led here; passed on to the booking. */
 export function OfferDetailView({ id, query }: { id: string; query?: string }) {
   const requireAuth = useAuthGate();
   const [width, setWidth] = useState(0);
-  const offer = useQuery({
-    queryKey: ['offers', id],
-    queryFn: async () => (await api.get<OfferDetail>(`/offers/${id}`)).data,
-  });
+  const offer = useOffer(id);
 
   if (offer.isPending) {
     return <LoadingState />;

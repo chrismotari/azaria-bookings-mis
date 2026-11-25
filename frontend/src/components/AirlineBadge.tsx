@@ -4,13 +4,7 @@ import { Image, Text, View } from 'react-native';
 import { Airline } from '../api/types';
 import { colors, createStyles, font, radius, weight } from '../theme';
 
-function initials(name: string): string {
-  const words = name.trim().split(/\s+/).filter(Boolean);
-  const letters = words.length > 1 ? words[0][0] + words[1][0] : (words[0] ?? '').slice(0, 2);
-  return letters.toUpperCase();
-}
-
-/** Logo, or initials when there is none or it fails to load; both share one frame so mixed lists line up. */
+/** Logo, or the IATA code when there is none or it fails to load; both share one frame so mixed lists line up. */
 export function AirlineBadge({ airline, size = 40 }: { airline: Airline; size?: number }) {
   const [failed, setFailed] = useState(false);
   const frame = [styles.frame, { width: size, height: size }];
@@ -28,8 +22,8 @@ export function AirlineBadge({ airline, size = 40 }: { airline: Airline; size?: 
     );
   }
   return (
-    <View style={[frame, styles.initialsFrame]} aria-hidden>
-      <Text style={[styles.initials, size < 36 && styles.initialsSmall]}>{initials(airline.name)}</Text>
+    <View style={[frame, styles.codeFrame]} aria-hidden>
+      <Text style={[styles.code, size < 36 && styles.codeSmall]}>{airline.iata_code}</Text>
     </View>
   );
 }
@@ -46,7 +40,7 @@ const styles = createStyles(() => ({
   },
   logoFrame: { backgroundColor: colors.surface, padding: 3 },
   logo: { width: '100%', height: '100%' },
-  initialsFrame: { backgroundColor: colors.primaryTint },
-  initials: { fontSize: font.small, fontWeight: weight.heavy, color: colors.primary },
-  initialsSmall: { fontSize: font.caption },
+  codeFrame: { backgroundColor: colors.primaryTint },
+  code: { fontSize: font.small, fontWeight: weight.heavy, color: colors.primary },
+  codeSmall: { fontSize: font.caption },
 }));

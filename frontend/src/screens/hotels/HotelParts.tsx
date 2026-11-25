@@ -118,11 +118,22 @@ export function StarRating({ stars, size = 14 }: { stars: number | null; size?: 
 }
 
 /** A hotel in a list: cover, name, stars, destination and its from price. */
-export function HotelCard({ hotel, nights, onPress }: { hotel: Hotel; nights: number; onPress: () => void }) {
+export function HotelCard({
+  hotel,
+  nights,
+  onPress,
+  selected,
+}: {
+  hotel: Hotel;
+  nights: number;
+  onPress: () => void;
+  selected?: boolean;
+}) {
   return (
     <ItemCard
       accessibilityLabel={`${hotel.name}, ${hotel.destination}`}
       onPress={onPress}
+      selected={selected}
       featured={hotel.is_featured}
       rating={hotel.rating}
       image={<CoverImage url={hotel.photos[0]?.url} height={CARD_IMAGE_HEIGHT} />}

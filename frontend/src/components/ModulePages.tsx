@@ -17,10 +17,12 @@ type Props = {
   /** The tab, when the caller keeps it (e.g. in the URL). */
   tab?: ModuleTab;
   onTab?: (tab: ModuleTab) => void;
+  /** Hides the switch while the page shows an item; the pages stay mounted. */
+  hideSwitch?: boolean;
 };
 
 /** A page per module on, with a switch between them when there is more than one. */
-export function ModulePages({ label, pages, only, all, tab, onTab }: Props) {
+export function ModulePages({ label, pages, only, all, tab, onTab, hideSwitch }: Props) {
   const modules = useModules();
   const [own, setOwn] = useState<ModuleTab | undefined>(undefined);
   const chosen = tab ?? own;
@@ -31,7 +33,7 @@ export function ModulePages({ label, pages, only, all, tab, onTab }: Props) {
   }
   return (
     <View style={styles.fill}>
-      <View style={styles.bar}>
+      <View style={[styles.bar, hideSwitch && styles.hidden]}>
         <View style={styles.switch}>
           <SegmentedControl
             label={label}
@@ -48,6 +50,7 @@ export function ModulePages({ label, pages, only, all, tab, onTab }: Props) {
 
 const styles = createStyles(() => ({
   fill: { flex: 1 },
+  hidden: { display: 'none' },
   bar: { backgroundColor: colors.background, paddingHorizontal: space.lg, paddingTop: space.lg },
   switch: { width: '100%', maxWidth: 480, alignSelf: 'center' },
 }));

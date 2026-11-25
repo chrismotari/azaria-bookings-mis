@@ -52,7 +52,7 @@ type Props = {
   onClose: () => void;
 };
 
-const DetailContext = createContext<{ close: () => void; backLabel: string } | null>(null);
+export const DetailContext = createContext<{ close: () => void; backLabel: string } | null>(null);
 
 /**
  * Wide: with an item open, the list becomes a slim rail on the left (collapsible) and the detail fills the rest.
@@ -151,8 +151,6 @@ function RailView({ rail, selected }: { rail: Rail; selected: string | undefined
       </View>
     );
   }
-  const pages = rail.count === undefined ? 1 : Math.max(1, Math.ceil(rail.count / PAGE_SIZE));
-  const page = rail.page ?? 1;
   return (
     <View style={styles.rail} role="navigation" aria-label={rail.title}>
       <View style={styles.railHeader}>
@@ -198,25 +196,32 @@ function RailView({ rail, selected }: { rail: Rail; selected: string | undefined
           })
         )}
       </ScrollView>
-      {pages > 1 && rail.onPage ? (
-        <View style={styles.pager}>
-          <PagerButton
-            label="Previous page"
-            icon="chevron-back"
-            disabled={page <= 1}
-            onPress={() => rail.onPage?.(page - 1)}
-          />
-          <Text style={styles.secondary}>
-            Page {page} of {pages}
-          </Text>
-          <PagerButton
-            label="Next page"
-            icon="chevron-forward"
-            disabled={page >= pages}
-            onPress={() => rail.onPage?.(page + 1)}
-          />
-        </View>
-      ) : null}
+      <CompactPager page={rail.page} count={rail.count} onPage={rail.onPage} />
+    </View>
+  );
+}
+
+/** "‹ Page n of m ›" under a slim list; nothing with a single page. */
+export function CompactPager({
+  page = 1,
+  count,
+  onPage,
+}: {
+  page?: number;
+  count?: number;
+  onPage?: (page: number) => void;
+}) {
+  const pages = count === undefined ? 1 : Math.max(1, Math.ceil(count / PAGE_SIZE));
+  if (pages <= 1 || !onPage) {
+    return null;
+  }
+  return (
+    <View style={styles.pager}>
+      <PagerButton label="Previous page" icon="chevron-back" disabled={page <= 1} onPress={() => onPage(page - 1)} />
+      <Text style={styles.secondary}>
+        Page {page} of {pages}
+      </Text>
+      <PagerButton label="Next page" icon="chevron-forward" disabled={page >= pages} onPress={() => onPage(page + 1)} />
     </View>
   );
 }
@@ -246,7 +251,7 @@ function PagerButton({
 }
 
 /** Escape closes the open detail of the screen in view (web only). */
-function useCloseOnEscape(open: boolean, onClose: () => void) {
+export function useCloseOnEscape(open: boolean, onClose: () => void) {
   const focused = useIsFocused();
   useEffect(() => {
     if (Platform.OS !== 'web' || !open || !focused) {

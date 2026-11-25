@@ -1,12 +1,11 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { Hotel, HotelRate, HotelRoomType } from '../../api/types';
 import { useAuthGate } from '../../auth/gate';
-import { BackLink } from '../../components/BackLink';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { DetailError } from '../../components/DetailLayout';
@@ -16,22 +15,24 @@ import { PhotoGallery } from '../../components/PhotoGallery';
 import { PriceTag } from '../../components/PriceTag';
 import { ReviewsCard } from '../../components/Reviews';
 import { RichText } from '../../components/rich/RichText';
-import { Screen } from '../../components/Screen';
 import { SelectField } from '../../components/SelectField';
+import { ColumnResults, SplitView } from '../../components/SplitView';
 import { LoadingState } from '../../components/StatusViews';
 import { HotelStay, MainTabParamList } from '../../navigation/types';
-import { colors, createStyles, font, radius, space, useIsWide, weight } from '../../theme';
+import { colors, createStyles, font, radius, space, weight } from '../../theme';
 import { formatPrice } from '../../utils/format';
 import {
   adultsPriced,
   fitsGuests,
   guestsLabel,
   MAX_ROOMS,
+  nightsBetween,
   nightsLabel,
   roomStayPrice,
   timeLabel,
 } from '../../utils/hotels';
-import { Stay, StayErrors, StayFields, StarRating, stayFrom, stayParams, validateStay } from './HotelParts';
+import { useHotelList } from '../explore/exploreLists';
+import { HotelCard, Stay, StayErrors, StayFields, StarRating, stayFrom, stayParams, validateStay } from './HotelParts';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'HotelDetail'>;
 
@@ -49,32 +50,77 @@ export function useHotel(id: string, stay: HotelStay) {
   });
 }
 
+const NO_STAY = { check_in: undefined, check_out: undefined, adults: undefined, children: undefined };
+
+/** Width from which the rooms show as a table. */
+const TABLE = 640;
+/** Width from which the rooms summary sits beside the table. */
+const TWO_COLUMNS = 1000;
+
+/** The hotel at /hotels/<id>, beside the hotels results. */
 export function HotelDetailScreen({ navigation, route }: Props) {
   const { id, ...stay } = route.params;
-  const isWide = useIsWide();
+  const { list, update, results } = useHotelList();
+  const hotel = useHotel(id, stayParams(stayFrom(stay)));
+  const listStay = stayParams(list.stay);
+  const nights = listStay.check_in ? nightsBetween(listStay.check_in, listStay.check_out ?? '') : 0;
+  const close = useCallback(() => navigation.navigate('Explore', { tab: 'hotels' }), [navigation]);
+  return (
+    <SplitView
+      open
+      column={
+        <ColumnResults
+          query={results}
+          render={(item) => (
+            <HotelCard
+              key={item.id}
+              hotel={item}
+              nights={nights}
+              selected={item.id === id}
+              onPress={() => navigation.setParams({ ...NO_STAY, ...listStay, id: item.id })}
+            />
+          )}
+        />
+      }
+      page={list.page}
+      count={results.data?.count}
+      onPage={(page) => update({ page })}
+      title={hotel.data?.name ?? 'Hotel'}
+      backLabel="All hotels"
+      onClose={close}
+      detail={
+        <HotelDetailView
+          key={id}
+          id={id}
+          stay={stay}
+          onStay={(next) => navigation.setParams({ ...NO_STAY, ...next })}
+        />
+      }
+    />
+  );
+}
+
+function HotelDetailView({ id, stay, onStay }: { id: string; stay: HotelStay; onStay: (stay: HotelStay) => void }) {
   const requireAuth = useAuthGate();
+  const [width, setWidth] = useState(0);
   const [draft, setDraft] = useState<Stay>(() => stayFrom(stay));
   const [errors, setErrors] = useState<StayErrors>({});
   const [picked, setPicked] = useState<Record<string, number>>({});
   const hotel = useHotel(id, stayParams(stayFrom(stay)));
-  const back = <BackLink label="All hotels" onPress={() => navigation.navigate('Explore')} />;
 
   if (hotel.isPending) {
     return <LoadingState />;
   }
   if (hotel.isError) {
     return (
-      <Screen maxWidth={900}>
-        {back}
-        <Card>
-          <DetailError
-            error={hotel.error}
-            onRetry={() => hotel.refetch()}
-            notFound="Hotel not found"
-            message="It may no longer be offered."
-          />
-        </Card>
-      </Screen>
+      <Card>
+        <DetailError
+          error={hotel.error}
+          onRetry={() => hotel.refetch()}
+          notFound="Hotel not found"
+          message="It may no longer be offered."
+        />
+      </Card>
     );
   }
 
@@ -85,8 +131,7 @@ export function HotelDetailScreen({ navigation, route }: Props) {
     const found = validateStay(draft);
     setErrors(found);
     if (Object.keys(found).length === 0) {
-      const cleared = { check_in: undefined, check_out: undefined, adults: undefined, children: undefined };
-      navigation.setParams({ ...cleared, ...stayParams(draft) });
+      onStay(stayParams(draft));
     }
   };
   const rates = data.room_types.flatMap((roomType) => roomType.rates.map((rate) => ({ roomType, rate })));
@@ -145,9 +190,10 @@ export function HotelDetailScreen({ navigation, route }: Props) {
     </Card>
   );
 
+  const isWide = width >= TWO_COLUMNS;
+
   return (
-    <Screen maxWidth={1100}>
-      {back}
+    <View style={styles.view} onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
       <PhotoGallery title={data.name} photos={data.photos} />
       <Card>
         <Text style={styles.title}>{data.name}</Text>
@@ -184,7 +230,7 @@ export function HotelDetailScreen({ navigation, route }: Props) {
             <Text style={styles.heading}>Rooms</Text>
             {data.room_types.length === 0 ? (
               <Text style={styles.muted}>No rooms are offered right now.</Text>
-            ) : isWide ? (
+            ) : width >= TABLE ? (
               <RoomTable
                 roomTypes={data.room_types}
                 adults={adults}
@@ -228,7 +274,7 @@ export function HotelDetailScreen({ navigation, route }: Props) {
         </View>
         <View style={isWide ? styles.side : undefined}>{summary}</View>
       </View>
-    </Screen>
+    </View>
   );
 }
 
@@ -401,6 +447,7 @@ function Fact({ icon, text }: { icon: IconName; text: string }) {
 }
 
 const styles = createStyles(() => ({
+  view: { gap: space.lg },
   columns: { flexDirection: 'row', alignItems: 'flex-start', gap: space.lg },
   stacked: { flexDirection: 'column', alignItems: 'stretch' },
   main: { flex: 1, minWidth: 0, gap: space.lg },

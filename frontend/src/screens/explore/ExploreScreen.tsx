@@ -9,7 +9,6 @@ import { OfferList } from '../../api/types';
 import { useAuthGate } from '../../auth/gate';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
-import { DetailLayout } from '../../components/DetailLayout';
 import { FlightRow } from '../../components/FlightRow';
 import {
   EMPTY_OFFER_FILTERS,
@@ -23,17 +22,18 @@ import { useModules } from '../../agency/modules';
 import { Pagination } from '../../components/Pagination';
 import { FlightServiceRating } from '../../components/Reviews';
 import { SegmentedControl } from '../../components/SegmentedControl';
+import { ColumnResults, SplitView } from '../../components/SplitView';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { MainTabParamList, QueryPrefill } from '../../navigation/types';
 import { colors, createStyles, font, radius, space, useIsWide } from '../../theme';
-import { formatDate, routeCodes } from '../../utils/format';
+import { routeCodes } from '../../utils/format';
 import { ExploreFilters } from './ExploreFilters';
 import { ExploreSearchBar } from './ExploreSearchBar';
 import { HotelsPage } from '../hotels/HotelsPage';
 import { ToursPage } from '../tours/ToursPage';
 import { ExploreAll } from './ExploreAll';
 import { FeaturedRow } from './Featured';
-import { OfferDetailView } from './OfferDetailView';
+import { OfferDetailView, useOffer } from './OfferDetailView';
 
 type Ordering = 'departure_date' | 'price' | '-price';
 
@@ -70,9 +70,9 @@ export function ExploreScreen(props: Props) {
   return (
     <ModulePages
       label="Explore"
-      only={route.params?.id ? 'flights' : undefined}
       all={() => <ExploreAll onOpen={(tab) => navigation.setParams({ tab })} />}
-      tab={route.params?.tab}
+      tab={route.params?.id ? 'flights' : route.params?.tab}
+      hideSwitch={Boolean(route.params?.id)}
       onTab={(tab) => navigation.setParams({ tab })}
       pages={{
         flights: () => <FlightDeals {...props} />,
@@ -85,7 +85,12 @@ export function ExploreScreen(props: Props) {
 
 function FlightDeals({ navigation, route }: Props) {
   const selected = route.params?.id;
-  const close = useCallback(() => navigation.setParams({ id: undefined, query: undefined }), [navigation]);
+  const single = useModules().length === 1;
+  const close = useCallback(
+    () => navigation.setParams({ id: undefined, query: undefined, ...(single ? {} : { tab: 'flights' as const }) }),
+    [navigation, single],
+  );
+  const offer = useOffer(selected);
   const compact = !useIsWide();
   const [draft, setDraft] = useState<OfferFilterValues>(EMPTY_OFFER_FILTERS);
   const [errors, setErrors] = useState<OfferFilterErrors>({});
@@ -94,7 +99,6 @@ function FlightDeals({ navigation, route }: Props) {
   const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const requireAuth = useAuthGate();
-  const single = useModules().length === 1;
 
   const offers = useQuery({
     queryKey: ['offers', filters, ordering, page],
@@ -158,24 +162,32 @@ function FlightDeals({ navigation, route }: Props) {
   ) : null;
 
   return (
-    <DetailLayout
-      title="Flight deal"
+    <SplitView
+      open={Boolean(selected)}
+      title={
+        offer.data
+          ? routeCodes(offer.data.origin, offer.data.destination, offer.data.trip_type === 'return')
+          : 'Flight deal'
+      }
       backLabel="All deals"
       onClose={close}
-      selected={selected}
-      rail={{
-        title: 'Deals',
-        items: offers.data?.results.map((offer) => ({
-          id: offer.id,
-          primary: routeCodes(offer.origin, offer.destination, offer.trip_type === 'return'),
-          secondary: formatDate(offer.departure_date),
-          accessibilityLabel: `${routeCodes(offer.origin, offer.destination, offer.trip_type === 'return')}, ${offer.airline.name}, ${formatDate(offer.departure_date)}`,
-        })),
-        onSelect: (id) => navigation.setParams({ id, query: undefined }),
-        page,
-        count: offers.data?.count,
-        onPage: setPage,
-      }}
+      column={
+        <ColumnResults
+          query={offers}
+          render={(item) => (
+            <FlightRow
+              key={item.id}
+              offer={item}
+              compact
+              selected={item.id === selected}
+              onPress={() => navigation.setParams({ id: item.id, query: undefined })}
+            />
+          )}
+        />
+      }
+      page={page}
+      count={offers.data?.count}
+      onPage={setPage}
       detail={selected ? <OfferDetailView key={selected} id={selected} query={route.params?.query} /> : null}
       list={
         <ScrollView style={styles.scroll}>

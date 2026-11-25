@@ -1,11 +1,11 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useQuery } from '@tanstack/react-query';
+import { useCallback, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { Tour } from '../../api/types';
 import { useAuthGate } from '../../auth/gate';
-import { BackLink } from '../../components/BackLink';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { DetailError } from '../../components/DetailLayout';
@@ -13,41 +13,78 @@ import { Icon, IconName } from '../../components/Icon';
 import { PhotoGallery } from '../../components/PhotoGallery';
 import { ReviewsCard } from '../../components/Reviews';
 import { RichText } from '../../components/rich/RichText';
-import { Screen } from '../../components/Screen';
+import { ColumnResults, SplitView } from '../../components/SplitView';
 import { LoadingState } from '../../components/StatusViews';
 import { MainTabParamList } from '../../navigation/types';
-import { colors, createStyles, font, radius, space, useIsWide, weight } from '../../theme';
+import { colors, createStyles, font, radius, space, weight } from '../../theme';
 import { formatDate, formatPrice } from '../../utils/format';
 import { NOT_BOOKABLE, slotsLeftLabel, tourDates, unitPrice } from '../../utils/tours';
+import { useTourList } from '../explore/exploreLists';
+import { TourCard } from './ToursPage';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'TourDetail'>;
 
-export function TourDetailScreen({ navigation, route }: Props) {
-  const { id } = route.params;
-  const isWide = useIsWide();
-  const requireAuth = useAuthGate();
-  const tour = useQuery({
+/** Width from which the price card sits beside the details. */
+const TWO_COLUMNS = 760;
+
+function useTour(id: string) {
+  return useQuery({
     queryKey: ['tours', 'detail', id],
     queryFn: async () => (await api.get<Tour>(`/tours/${id}`)).data,
   });
-  const back = <BackLink label="All tours" onPress={() => navigation.navigate('Explore')} />;
+}
+
+/** The tour at /tours/<id>, beside the tours results. */
+export function TourDetailScreen({ navigation, route }: Props) {
+  const { id } = route.params;
+  const { list, update, results } = useTourList();
+  const tour = useTour(id);
+  const close = useCallback(() => navigation.navigate('Explore', { tab: 'tours' }), [navigation]);
+  return (
+    <SplitView
+      open
+      column={
+        <ColumnResults
+          query={results}
+          render={(item) => (
+            <TourCard
+              key={item.id}
+              tour={item}
+              selected={item.id === id}
+              onPress={() => navigation.setParams({ id: item.id })}
+            />
+          )}
+        />
+      }
+      page={list.page}
+      count={results.data?.count}
+      onPage={(page) => update({ page })}
+      title={tour.data?.title ?? 'Tour'}
+      backLabel="All tours"
+      onClose={close}
+      detail={<TourDetailView id={id} />}
+    />
+  );
+}
+
+function TourDetailView({ id }: { id: string }) {
+  const requireAuth = useAuthGate();
+  const [width, setWidth] = useState(0);
+  const tour = useTour(id);
 
   if (tour.isPending) {
     return <LoadingState />;
   }
   if (tour.isError) {
     return (
-      <Screen maxWidth={900}>
-        {back}
-        <Card>
-          <DetailError
-            error={tour.error}
-            onRetry={() => tour.refetch()}
-            notFound="Tour not found"
-            message="It may no longer be offered."
-          />
-        </Card>
-      </Screen>
+      <Card>
+        <DetailError
+          error={tour.error}
+          onRetry={() => tour.refetch()}
+          notFound="Tour not found"
+          message="It may no longer be offered."
+        />
+      </Card>
     );
   }
 
@@ -55,9 +92,10 @@ export function TourDetailScreen({ navigation, route }: Props) {
   const book = () => requireAuth({ screen: 'Main', params: { screen: 'TourBook', params: { id } } });
   const priceCard = <PriceCard tour={data} onBook={book} />;
 
+  const isWide = width >= TWO_COLUMNS;
+
   return (
-    <Screen maxWidth={1100}>
-      {back}
+    <View style={styles.view} onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
       <PhotoGallery title={data.title} photos={data.photos} />
       <View style={[styles.columns, !isWide && styles.stacked]}>
         <View style={styles.main}>
@@ -85,7 +123,7 @@ export function TourDetailScreen({ navigation, route }: Props) {
         </View>
         {isWide ? <View style={styles.side}>{priceCard}</View> : null}
       </View>
-    </Screen>
+    </View>
   );
 }
 
@@ -160,6 +198,7 @@ export function PriceCard({ tour, onBook }: { tour: Tour; onBook: () => void }) 
 }
 
 const styles = createStyles(() => ({
+  view: { gap: space.lg },
   columns: { flexDirection: 'row', alignItems: 'flex-start', gap: space.lg },
   stacked: { flexDirection: 'column', alignItems: 'stretch' },
   main: { flex: 1, minWidth: 0, gap: space.lg },

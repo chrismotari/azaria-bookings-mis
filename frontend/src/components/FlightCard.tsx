@@ -1,4 +1,4 @@
-import { Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
 
 import { Offer } from '../api/types';
 import { colors, createStyles, font, space, weight } from '../theme';
@@ -6,7 +6,9 @@ import { routeCodes, ticketClassLabel, tripDates } from '../utils/format';
 import { AirlineBadge } from './AirlineBadge';
 import { CardFact, CardPrice, ItemCard } from './ItemCard';
 
-/** A flight offer as a card: the route on the primary tint, then dates, trip type and class, and the price. */
+const PLANE = require('../../assets/plane.jpg');
+
+/** A flight offer as a card: the route over the plane photo, then dates, trip type and class, and the price. */
 export function FlightCard({ offer, onPress }: { offer: Offer; onPress: () => void }) {
   const isReturn = offer.trip_type === 'return';
   return (
@@ -16,13 +18,16 @@ export function FlightCard({ offer, onPress }: { offer: Offer; onPress: () => vo
       featured={offer.is_featured}
       image={
         <View style={styles.image}>
-          <View style={styles.badge}>
-            <AirlineBadge airline={offer.airline} size={36} />
+          <Image source={PLANE} style={styles.photo} resizeMode="cover" accessible={false} />
+          <View style={styles.scrim}>
+            <View style={styles.badge}>
+              <AirlineBadge airline={offer.airline} size={36} />
+            </View>
+            <Text style={styles.route}>{routeCodes(offer.origin, offer.destination, isReturn)}</Text>
+            <Text style={styles.cities} numberOfLines={1}>
+              {offer.origin.city} {isReturn ? '⇄' : '→'} {offer.destination.city}
+            </Text>
           </View>
-          <Text style={styles.route}>{routeCodes(offer.origin, offer.destination, isReturn)}</Text>
-          <Text style={styles.cities} numberOfLines={1}>
-            {offer.origin.city} {isReturn ? '⇄' : '→'} {offer.destination.city}
-          </Text>
         </View>
       }
       title={tripDates(offer)}
@@ -37,15 +42,16 @@ export function FlightCard({ offer, onPress }: { offer: Offer; onPress: () => vo
 }
 
 const styles = createStyles(() => ({
-  image: {
+  image: { flex: 1, backgroundColor: colors.dark },
+  photo: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
+  scrim: {
     flex: 1,
-    backgroundColor: colors.primaryTint,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: colors.scrim,
+    justifyContent: 'flex-end',
     padding: space.lg,
-    gap: space.xs,
+    gap: 2,
   },
   badge: { position: 'absolute', top: space.sm, right: space.sm },
-  route: { fontSize: font.display, fontWeight: weight.heavy, color: colors.primary },
-  cities: { fontSize: font.small, color: colors.text },
+  route: { fontSize: font.display, fontWeight: weight.heavy, color: colors.onImage },
+  cities: { fontSize: font.small, fontWeight: weight.semibold, color: colors.onImage },
 }));

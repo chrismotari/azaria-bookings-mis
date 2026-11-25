@@ -56,6 +56,9 @@ export const colors = {
   neutralTint: '#eceff1',
   /** Dims the page behind a dialog. */
   overlay: 'rgba(37, 37, 37, 0.5)',
+  /** Darkens a photo under text. */
+  scrim: 'rgba(20, 20, 35, 0.38)',
+  onImage: '#ffffff',
 };
 
 // Bumped whenever the colours change: styles rebuild, and the app below the theme re-mounts (App.tsx).

@@ -22,16 +22,33 @@ type Props = {
   /** Detail lines under the title. */
   children: ReactNode;
   price: ReactNode;
+  /** The item open beside the list. */
+  selected?: boolean;
 };
 
 /** The one frame for flight, tour and hotel cards, so mixed rows line up: image, title, details, price last. */
-export function ItemCard({ accessibilityLabel, onPress, image, title, featured, rating, children, price }: Props) {
+export function ItemCard({
+  accessibilityLabel,
+  onPress,
+  image,
+  title,
+  featured,
+  rating,
+  children,
+  price,
+  selected,
+}: Props) {
   return (
     <Pressable
       accessibilityRole="link"
       accessibilityLabel={`${accessibilityLabel}${featured ? ', featured' : ''}`}
+      aria-current={selected}
       onPress={onPress}
-      style={({ hovered }: PressState) => [styles.card, hovered && styles.hovered]}
+      style={({ hovered }: PressState) => [
+        styles.card,
+        (hovered || selected) && styles.hovered,
+        selected && styles.selected,
+      ]}
     >
       <View style={styles.image}>
         {image}
@@ -88,6 +105,7 @@ const styles = createStyles(() => ({
     ...shadow,
   },
   hovered: { borderColor: colors.primary },
+  selected: { borderWidth: 2, backgroundColor: colors.primaryTint },
   image: { height: CARD_IMAGE_HEIGHT, overflow: 'hidden' },
   featured: {
     position: 'absolute',
