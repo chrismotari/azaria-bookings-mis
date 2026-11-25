@@ -11,6 +11,7 @@ The full specification is in @SPEC.md. Treat it as the source of truth.
 - If the spec is ambiguous, pick the simplest option and add one line to DECISIONS.md.
 - No Docker. PostgreSQL and Redis run locally.
 - Identifiers are always UUIDs, never plain numbers: every model's primary key is a UUID, and so is every id in URLs and the API (only Django's own framework tables are exempt).
+- Comments: keep them minimal, backend and frontend alike. No verbose inline comments; add one only when the code can't explain itself. Functions get a very brief docstring (3 lines or less); nothing else gets docstrings.
 - Files: preview first. Anything the browser can display (PDF, images) opens in a new tab; download only when a preview is not possible. This holds for any new file type too.
 
 ## Commands
