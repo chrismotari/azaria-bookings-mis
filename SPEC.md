@@ -238,6 +238,10 @@ All delivered; each was one commit.
 50. Fully booked tours stay visible (see §30).
 51. Reviews (see §31).
 
+Pending (not yet built):
+
+52. Platform website (see §32).
+
 ## 14. Step 34: Return trips and flight details
 
 Goal: offers describe real itineraries the way airlines and GDSs do: one-way or return, each direction made of flight segments with flight numbers and local times, plus the baggage allowance and fare conditions. This works for offers the admin enters by hand and is the shape GDS results will later be mapped into. Prices stay USD.
@@ -871,3 +875,85 @@ Tests
   - the flight service rating dialog
   - Admin › Reviews: filtering, replying and hiding
   - an agency with no reviews.
+
+## 32. Step 52: Platform website
+
+Goal: the root host's public home page is Azaria's sales website. It replaces the short introduction (§11, step 29) with a full, well-designed product page. The page shows the three products (Flights, Tours, Hotels), what each one does for an agency and for its customers, and everything around them. It leads visitors to pricing and to a plan enquiry. Its claims cover only what is built: it never promises online payment, GDS booking or ticketing, or anything else §1 lists as out of scope. It is a frontend step only: no new endpoints, models or dependencies, and no stock photos or image files. Every visual is drawn in code from the app's own components and tokens, so the page always shows the real product.
+
+Look
+- Azaria's own brand throughout (§11: indigo primary, amber accent for the main calls to action), on the shared tokens. Generous spacing, large type for headings, and a content width of about 1,200 px centred.
+- Sections alternate between the background and white surface bands, with an indigo band for the hero and the closing call to action.
+- Product visuals are **mock screens**: a framed browser window (three dots and an address bar with "youragency.<base domain>") holding a miniature of the real screen, built from the app's real cards and chips with sample content, for example "NBO → DXB, $420 per person", "Maasai Mara, 3 days" and "Diani Beach Resort". They are decorative and hidden from screen readers.
+- Wide (≥ 900 px): text and visual side by side, alternating sides from one product to the next. Narrow: stacked, the visual under the text. No horizontal scrolling at 390 or 1280 px.
+
+Public bar (home and `/pricing`; replaces the slim public bar)
+- Brand on the left. On wide screens the links are Products, Flights, Tours, Hotels and Pricing; each product link scrolls to its section, and on `/pricing` it goes home first. On the right, "Get started" (accent). On phones, the brand, "Get started" and a menu button that opens the same links in a sheet.
+- The bar stays at the top while scrolling.
+- As today, nothing links to sign-in. A signed-in owner sees "Open admin" in place of "Get started".
+
+Page, top to bottom
+1. **Hero** (indigo band):
+   - The headline "Your travel agency, online", and the lead "Sell flights, tours and hotel stays from your own booking site and app. Take one product, two, or all three."
+   - "Get started" (accent) and "See pricing" (secondary).
+   - Three short ticks: "Your own address and colours", "Web and mobile app", "Nothing to install".
+   - On the right (under it on phones), a mock of an agency's Explore All: hero tiles and a row of featured cards, one flight, one tour and one hotel.
+2. **Three products** (anchor `products`): the title "One platform, three products" and the line "Each is a module: switch on what you sell, add the rest when you're ready."
+   - Three large cards, each with its module icon (plane, map pin, bed), name, one line, three ticks and "Learn more", which scrolls to the product's section:
+     - Flights: "Publish fares and take booking requests"
+     - Tours: "Sell scheduled tours with instant booking"
+     - Hotels: "Sell stays with seasonal room rates"
+3. **Flights** (anchor `flights`), the title "Flights: fares your customers can book":
+   - Publish one-way and return offers with full itineraries, baggage and fare conditions.
+   - Search fares across Travelport, Sabre and Amadeus by route and date, review them and publish with your markup. Saved routes refresh on a schedule.
+   - Customers ask for options and you answer with offers.
+   - Bookings with passenger details: you confirm availability, and the customer pays before a deadline with automatic reminders.
+   - Boarding passes delivered by email and in the app.
+   - Visual: an offer detail mock with the route, segments and "Book", beside a small progress tracker (Requested → Confirmed → Paid → Passes sent).
+4. **Tours** (anchor `tours`), the title "Tours: fill every seat":
+   - Fixed dates and slots, with price options (Regular, VIP, Couple, Group of 6).
+   - Customers book and get confirmed instantly, with travellers added now or later.
+   - Booking and cancellation deadlines with your own policy.
+   - Tell every booked customer about a change or cancellation in your own words.
+   - Fully booked tours stay on show.
+   - Visual: a tour card grid with an "N slots left" chip and a "Fully booked" chip, beside the price options card.
+5. **Hotels** (anchor `hotels`), the title "Hotels: your partner stays, priced by season":
+   - Room types with seasonal rates, an optional charge per adult, and occupancy rules.
+   - Customers choose dates and rooms and send a request; you confirm with the hotel, possibly at a new price, which they accept.
+   - Mark paid, then send the hotel's voucher with its confirmation number.
+   - Visual: the hotel room table mock (Room type, Sleeps, Price, Select) with "$Y for N nights".
+6. **Everything around the booking**, the title "Everything you need to run the agency": a grid of feature tiles (icon, title, one line), three columns wide, two at mid widths and one on phones:
+   - Your own site (address, extra domains, your colours)
+   - Mobile app (customers find you by link or code)
+   - Featured on Explore
+   - Reviews and ratings
+   - Live support chat
+   - Customer accounts and admin bookings for customers
+   - Emails at every step
+   - A dashboard across your products
+   - Your data kept apart from every other agency
+7. **Dashboard** band: "See the whole business at a glance", with a dashboard mock: needs-action tiles, the stacked 12-month chart with its legend, and a Coming up list mixing the three products.
+8. **How it works**: three numbered steps, in a row on wide screens and stacked on phones:
+   1. "Choose a plan and your products"
+   2. "Add your colours, offers, tours and hotels"
+   3. "Share your link and start taking bookings"
+9. **Pricing preview**: the title "Simple plans, billed monthly or yearly", PlanShowcase's featured cards (as on `/pricing`, Get started included), and "See all plans" linking to `/pricing`.
+10. **Questions**: an accordion, one open at a time, with these answers:
+    - "Do I need a GDS contract?" Fare search is optional; you can publish fares by hand.
+    - "Can I sell only tours or only hotels?" Yes, any of the three.
+    - "How do customers pay?" As your agency instructs, outside the system; you mark bookings paid.
+    - "Can I use my own domain?" Extra domains can be added.
+    - "Is there a mobile app?" Yes, one shared app; customers reach your agency by link or code.
+    - "How do I get help?" The support chat.
+11. **Closing call to action** (indigo band): "Ready to take bookings online?", with "Get started" and "See pricing".
+12. **Footer**: brand and one line, columns for Products (Flights, Tours, Hotels), Company (Pricing, Contact, which opens the support chat) and the year's "© Azaria Bookings". There is no sign-in link.
+
+Behaviour
+- "Get started" anywhere opens the platform desk's chat with the subject "Getting started with Azaria Bookings", as plan enquiries do (§8). On a plan card it keeps today's plan-specific subject.
+- Anchors work on web: `/#flights` and the other anchors scroll to the section on load, and the bar links update the hash without adding history entries.
+- Page title "Azaria Bookings: booking sites for travel agencies", with a meta description.
+- Headings are real headings (h1 once, h2 per section) for accessibility and search. Contrast meets AA on every band.
+
+Tests
+- Frontend: type-check, lint, format check, web export.
+- Browser check at 1280, 900 and 390 px: every section; no horizontal overflow; the bar links and anchors (including loading `/#hotels`); the phone menu sheet; the FAQ accordion; Get started opening the prefilled chat; the pricing preview and See all plans; a signed-in owner seeing Open admin; and the `/pricing` page with the new bar.
+- When built, §11's platform "Public" line describes the website as here.
