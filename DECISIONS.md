@@ -223,3 +223,12 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Step 50: the 409 for a fully booked tour stays "This tour is fully booked." (with the full stop every 409 message carries).
 - Step 50: a tour whose active options are all limited and sold out reports `not_bookable_reason` `fully_booked` (closed and cancelled still win), and the admin Tours status shows it as "Fully booked" rather than "Closed".
 - Step 50: on tour detail, "Sold out" replaces "None left" on a limited option with no units left; the tour-not-found message drops "fully booked" since fully booked tours now open.
+- Step 51: `GET reviews` with `tour`, `hotel` or `kind=flight` is the public list; without any of them it is the signed-in customer's own reviews (401 for guests); a malformed id, or two scopes, is a 400.
+- Step 51: a flight booking's "last segment's date" is the latest segment departure date (the offer's departure date for bookings without segments); reviewable from the day after it.
+- Step 51: `summary` with no reviews is `{average: null, count: 0, by_rating}` with every level at 0; `rating` and `service_rating` are null.
+- Step 51: reviewing someone else's booking answers 404 (it is not among the customer's bookings); an admin posting a review gets 403; a booking that cannot be reviewed yet or ever answers 409.
+- Step 51: `can_review` and `review` are on the customer's booking responses only, not the admin ones; review responses carry `booking` as `{kind, id, title}` (the tour or hotel name, or the route line), and admin reviews add `customer {id, full_name, email}` and `item` (the tour or hotel, null for flights).
+- Step 51: admins also have `GET admin/reviews/{id}` for the review opened beside the rail; Admin › Reviews keeps its filters in the URL, and the tour and hotel filters are set from the rating link on the admin tour and hotel pages (shown as "Reviews of <name>" with Show all) rather than with a picker.
+- Step 51: the "Rate your trip" card sits right under the booking's status card; on tour and hotel detail the Reviews card follows the description card (after the price card on phones).
+- Step 51: with more than eight items in the wide top bar, items sit closer with smaller labels and the account menu shows only the initials, so the bar fits at 1280 px.
+- Step 51: `request_reviews` also emails bookings that finished before the step was deployed, once each.

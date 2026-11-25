@@ -29,6 +29,7 @@ import { FileField } from '../../components/FileField';
 import { Pagination } from '../../components/Pagination';
 import { PriceTag } from '../../components/PriceTag';
 import { RichText } from '../../components/rich/RichText';
+import { AdminRatingLink } from '../../components/Reviews';
 import { Screen } from '../../components/Screen';
 import { SegmentedControl } from '../../components/SegmentedControl';
 import { StatusChip } from '../../components/StatusChip';
@@ -830,6 +831,7 @@ function HotelsTab({ navigation, route }: Props) {
             id={selected}
             onEdit={() => navigation.navigate('AdminHotelEdit', { id: selected })}
             onOpenBooking={(booking) => navigation.setParams({ tab: undefined, id: booking, status: 'all' })}
+            onOpenReviews={() => navigation.navigate('AdminReviews', { hotel: selected })}
           />
         ) : null
       }
@@ -930,10 +932,12 @@ function AdminHotelDetailView({
   id,
   onEdit,
   onOpenBooking,
+  onOpenReviews,
 }: {
   id: string;
   onEdit: () => void;
   onOpenBooking: (id: string) => void;
+  onOpenReviews: () => void;
 }) {
   const queryClient = useQueryClient();
   const [bookingsPage, setBookingsPage] = useState(1);
@@ -974,6 +978,7 @@ function AdminHotelDetailView({
         <Text style={styles.text}>
           {data.address}, {data.destination} · {starsLabel(data.star_rating)}
         </Text>
+        <AdminRatingLink rating={data.rating} onPress={onOpenReviews} />
         <View style={styles.row}>
           <Button title="Edit" onPress={onEdit} />
           <Button

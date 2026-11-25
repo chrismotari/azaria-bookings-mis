@@ -9,6 +9,7 @@ import { HotelBooking, HotelBookingStatus, Paginated } from '../../api/types';
 import { BoardingPassList } from '../../components/BoardingPassList';
 import { BookingProgress } from '../../components/BookingProgress';
 import { BookingTimeline } from '../../components/BookingTimeline';
+import { ReviewCard } from '../../components/Reviews';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { useConfirm } from '../../components/ConfirmDialog';
@@ -175,6 +176,13 @@ function HotelBookingDetailView({ id, onOpenHotel }: { id: string; onOpenHotel: 
         <BookingProgress status={data.status} message={help} />
         {help && !TERMINAL_STATUSES.includes(data.status) ? <Text style={styles.text}>{help}</Text> : null}
       </Card>
+      <ReviewCard
+        kind="hotel"
+        bookingId={data.id}
+        canReview={data.can_review}
+        review={data.review}
+        bookingsKey={['hotel-bookings']}
+      />
 
       {awaiting && data.changes ? (
         <View style={styles.changes}>

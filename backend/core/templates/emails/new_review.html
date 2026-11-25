@@ -1,0 +1,12 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p style="margin:0 0 16px 0;">A customer has left a review.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
+  {% if kind == "flight" %}{% include "emails/_row.html" with label="Flight booking" value=title %}{% elif kind == "tour" %}{% include "emails/_row.html" with label="Tour" value=title %}{% else %}{% include "emails/_row.html" with label="Hotel" value=title %}{% endif %}
+  {% include "emails/_row.html" with label="Dates" value=dates %}
+  {% include "emails/_row.html" with label="Customer" value=review.user.full_name %}
+  {% include "emails/_row.html" with label="Rating" value=stars %}
+  {% include "emails/_row.html" with label="Comment" value=review.comment|default:"(none)" %}
+</table>
+{% with review_id=review.id|stringformat:"s" %}{% include "emails/_button.html" with url=frontend_url|add:"/admin/reviews/"|add:review_id label="Open the review in the app" %}{% endwith %}
+{% endblock %}

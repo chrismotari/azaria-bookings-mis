@@ -12,6 +12,7 @@ from rest_framework.views import APIView
 from bookings.models import Traveller
 from bookings.serializers import TravellerSerializer
 from core.permissions import IsAdminRole
+from reviews.models import with_rating
 
 from . import pricing, services
 from .models import Hotel, HotelBooking, HotelBookingRoom, HotelPhoto, HotelVoucher, RoomRate, RoomType
@@ -45,7 +46,7 @@ ORDERINGS = {
 
 def hotel_bookings():
     rooms = HotelBookingRoom.objects.prefetch_related("travellers")
-    return HotelBooking.objects.select_related("hotel", "user", "created_by").prefetch_related(
+    return HotelBooking.objects.select_related("hotel", "user", "created_by", "review").prefetch_related(
         "hotel__photos", Prefetch("rooms", queryset=rooms), "events", "vouchers"
     )
 
@@ -54,7 +55,7 @@ def admin_hotels():
     rates = RoomRate.objects.prefetch_related("periods")
     types = RoomType.objects.prefetch_related(Prefetch("rates", queryset=rates))
     return pricing.with_offered_rates(
-        Hotel.objects.prefetch_related("photos", Prefetch("room_types", queryset=types))
+        with_rating(Hotel.objects.all(), "hotel").prefetch_related("photos", Prefetch("room_types", queryset=types))
     ).order_by("name")
 
 

@@ -28,6 +28,8 @@ type TabItem = {
 };
 
 const MAX_NARROW_TABS = 5;
+// More items than this on a wide bar sit closer together, so they fit at 1280 px.
+const COMPACT_WIDE_TABS = 8;
 
 export function ResponsiveTabBar({
   state,
@@ -69,8 +71,9 @@ export function ResponsiveTabBar({
   });
 
   if (isWide) {
+    const compact = routes.length > COMPACT_WIDE_TABS;
     return (
-      <AppBar>
+      <AppBar compact={compact}>
         {routes.map((route) => (
           <AppBarItem
             key={route.key}
@@ -79,6 +82,7 @@ export function ResponsiveTabBar({
             focused={route.focused}
             onPress={route.onPress}
             badge={route.badge}
+            compact={compact}
           />
         ))}
       </AppBar>

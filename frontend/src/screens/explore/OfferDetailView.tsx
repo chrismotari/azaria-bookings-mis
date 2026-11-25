@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Text, View, ViewStyle } from 'react-native';
 
 import { api } from '../../api/client';
-import { Offer } from '../../api/types';
+import { OfferDetail } from '../../api/types';
 import { useAuthGate } from '../../auth/gate';
 import { AirlineBadge } from '../../components/AirlineBadge';
 import { Button } from '../../components/Button';
@@ -11,6 +11,7 @@ import { Card } from '../../components/Card';
 import { Icon, IconName } from '../../components/Icon';
 import { ItineraryCards, TripConditions } from '../../components/Itinerary';
 import { PriceTag } from '../../components/PriceTag';
+import { FlightServiceRating } from '../../components/Reviews';
 import { RouteLine } from '../../components/RouteLine';
 import { DetailError } from '../../components/DetailLayout';
 import { LoadingState } from '../../components/StatusViews';
@@ -26,7 +27,7 @@ export function OfferDetailView({ id, query }: { id: string; query?: string }) {
   const [width, setWidth] = useState(0);
   const offer = useQuery({
     queryKey: ['offers', id],
-    queryFn: async () => (await api.get<Offer>(`/offers/${id}`)).data,
+    queryFn: async () => (await api.get<OfferDetail>(`/offers/${id}`)).data,
   });
 
   if (offer.isPending) {
@@ -107,6 +108,7 @@ export function OfferDetailView({ id, query }: { id: string; query?: string }) {
           ) : (
             <Text style={styles.notice}>This offer can no longer be booked.</Text>
           )}
+          <FlightServiceRating rating={data.service_rating} />
         </Card>
       </View>
     </View>

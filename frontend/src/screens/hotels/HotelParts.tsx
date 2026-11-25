@@ -124,6 +124,7 @@ export function HotelCard({ hotel, nights, onPress }: { hotel: Hotel; nights: nu
       accessibilityLabel={`${hotel.name}, ${hotel.destination}`}
       onPress={onPress}
       featured={hotel.is_featured}
+      rating={hotel.rating}
       image={<CoverImage url={hotel.photos[0]?.url} height={CARD_IMAGE_HEIGHT} />}
       title={hotel.name}
       price={

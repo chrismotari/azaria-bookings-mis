@@ -14,7 +14,16 @@ import { PressState } from '../components/pressState';
 export const APP_BAR_HEIGHT = 56;
 
 /** brandOnly drops the account controls, for the auth screens where they would repeat the form. */
-export function AppBar({ children, brandOnly }: { children?: ReactNode; brandOnly?: boolean }) {
+/** compact: a bar with many items, where the account menu shows only the initials. */
+export function AppBar({
+  children,
+  brandOnly,
+  compact,
+}: {
+  children?: ReactNode;
+  brandOnly?: boolean;
+  compact?: boolean;
+}) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
@@ -45,24 +54,40 @@ export function AppBar({ children, brandOnly }: { children?: ReactNode; brandOnl
         <View style={styles.items} accessibilityRole="tablist">
           {children}
         </View>
-        {brandOnly ? null : user ? <AccountMenu /> : <GuestActions />}
+        {brandOnly ? null : user ? <AccountMenu compact={compact} /> : <GuestActions />}
       </View>
     </View>
   );
 }
 
-type ItemProps = { label: string; icon: ReactNode; focused: boolean; onPress: () => void; badge?: string | number };
+type ItemProps = {
+  label: string;
+  icon: ReactNode;
+  focused: boolean;
+  onPress: () => void;
+  badge?: string | number;
+  /** Tighter, for a bar with many items. */
+  compact?: boolean;
+};
 
-export function AppBarItem({ label, icon, focused, onPress, badge }: ItemProps) {
+export function AppBarItem({ label, icon, focused, onPress, badge, compact }: ItemProps) {
   return (
     <Pressable
       accessibilityRole="tab"
       accessibilityState={{ selected: focused }}
       onPress={onPress}
-      style={({ hovered }: PressState) => [styles.item, hovered && styles.itemHovered, focused && styles.itemFocused]}
+      style={({ hovered }: PressState) => [
+        styles.item,
+        compact && styles.itemCompact,
+        hovered && styles.itemHovered,
+        focused && styles.itemFocused,
+      ]}
     >
       {icon}
-      <Text style={[styles.itemText, focused && styles.itemTextFocused]} numberOfLines={1}>
+      <Text
+        style={[styles.itemText, compact && styles.itemTextCompact, focused && styles.itemTextFocused]}
+        numberOfLines={1}
+      >
         {label}
       </Text>
       {badge ? (
@@ -93,7 +118,7 @@ function GuestActions() {
   );
 }
 
-function AccountMenu() {
+function AccountMenu({ compact }: { compact?: boolean }) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
@@ -114,7 +139,7 @@ function AccountMenu() {
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{initials(user?.full_name ?? '')}</Text>
         </View>
-        {isWide ? (
+        {isWide && !compact ? (
           <Text style={[styles.linkText, styles.shrink]} numberOfLines={1}>
             {user?.full_name}
           </Text>
@@ -227,9 +252,11 @@ const styles = createStyles(() => ({
     borderBottomWidth: 3,
     borderBottomColor: 'transparent',
   },
+  itemCompact: { paddingHorizontal: space.sm, gap: space.xs },
   itemHovered: { backgroundColor: colors.primaryHover },
   itemFocused: { borderBottomColor: colors.accent },
   itemText: { fontSize: font.body, color: colors.primaryText, opacity: 0.85 },
+  itemTextCompact: { fontSize: font.small },
   itemTextFocused: { fontWeight: weight.bold, opacity: 1 },
   itemBadge: {
     minWidth: 18,

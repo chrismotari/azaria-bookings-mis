@@ -50,6 +50,7 @@ const agencyLinking: LinkingOptions<RootStackParamList> = {
           AdminTourEdit: 'tours/:id/edit',
           AdminTourBook: 'tours/:id/book',
           AdminHotels: 'hotels/:id?',
+          AdminReviews: 'reviews/:id?',
           AdminHotelNew: 'hotels/new',
           AdminHotelEdit: 'hotels/:id/edit',
           AdminHotelBook: 'hotels/:id/book',

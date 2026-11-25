@@ -10,6 +10,7 @@ import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { DetailError, DetailLayout } from '../../components/DetailLayout';
 import { FeatureStar } from '../../components/FeatureStar';
+import { AdminRatingLink } from '../../components/Reviews';
 import { Dialog } from '../../components/Dialog';
 import { FormError } from '../../components/Field';
 import { Pagination } from '../../components/Pagination';
@@ -112,6 +113,7 @@ export function AdminToursScreen({ navigation, route }: Props) {
               onEdit={() => navigation.navigate('AdminTourEdit', { id: selected })}
               onOpenBooking={(booking) => navigation.setParams({ booking })}
               onBookFor={(customer) => navigation.navigate('AdminTourBook', { id: selected, customer: customer.id })}
+              onOpenReviews={() => navigation.navigate('AdminReviews', { tour: selected })}
             />
           )
         ) : null
@@ -214,9 +216,10 @@ type DetailProps = {
   onEdit: () => void;
   onOpenBooking: (id: string) => void;
   onBookFor: (customer: AdminCustomer) => void;
+  onOpenReviews: () => void;
 };
 
-function AdminTourDetailView({ id, onEdit, onOpenBooking, onBookFor }: DetailProps) {
+function AdminTourDetailView({ id, onEdit, onOpenBooking, onBookFor, onOpenReviews }: DetailProps) {
   const queryClient = useQueryClient();
   const [dialog, setDialog] = useState<'cancel' | 'book' | null>(null);
   const [bookingsPage, setBookingsPage] = useState(1);
@@ -260,6 +263,7 @@ function AdminTourDetailView({ id, onEdit, onOpenBooking, onBookFor }: DetailPro
         </View>
         <Text style={styles.text}>{data.destination}</Text>
         <Text style={styles.text}>{tourDates(data)}</Text>
+        <AdminRatingLink rating={data.rating} onPress={onOpenReviews} />
         {cancelled ? (
           <Text style={styles.danger}>
             Cancelled {formatDateTime(data.cancelled_at ?? '')}

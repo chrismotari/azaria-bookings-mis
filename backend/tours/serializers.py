@@ -7,6 +7,8 @@ from accounts.serializers import UserSerializer
 from airlines.models import LOGO_SIGNATURES
 from bookings.serializers import TravellerSerializer
 from core.models import AppSettings
+from reviews.models import annotated_rating
+from reviews.serializers import ReviewFields
 from tenants import richtext
 
 from .models import MAX_LIST_LINES, Tour, TourBooking, TourBookingEvent, TourBookingLine, TourNotice, TourPhoto
@@ -78,6 +80,7 @@ class TourSerializer(serializers.ModelSerializer):
     photos = TourPhotoSerializer(many=True, read_only=True)
     bookable = serializers.SerializerMethodField()
     not_bookable_reason = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Tour
@@ -92,6 +95,7 @@ class TourSerializer(serializers.ModelSerializer):
             "bookable",
             "not_bookable_reason",
             "is_featured",
+            "rating",
         ]
         read_only_fields = fields
 
@@ -104,6 +108,9 @@ class TourSerializer(serializers.ModelSerializer):
 
     def get_not_bookable_reason(self, tour):
         return tour.not_bookable_reason()
+
+    def get_rating(self, tour):
+        return annotated_rating(tour)
 
 
 class AdminTourSerializer(TourSerializer):
@@ -315,7 +322,7 @@ class TourBookingEventSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-class TourBookingSerializer(serializers.ModelSerializer):
+class TourBookingSerializer(ReviewFields, serializers.ModelSerializer):
     tour = TourBriefSerializer(read_only=True)
     lines = TourBookingLineSerializer(many=True, read_only=True)
     total_price = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
@@ -344,8 +351,12 @@ class TourBookingSerializer(serializers.ModelSerializer):
             "can_edit_travellers",
             "payment_instructions",
             "created_at",
+            "can_review",
+            "review",
         ]
         read_only_fields = fields
+
+    review_kind = "tour"
 
     def get_travellers_added(self, booking):
         return sum(len(line.travellers.all()) for line in booking.lines.all())
@@ -366,8 +377,11 @@ class AdminTourBookingSerializer(TourBookingSerializer):
     user = UserSerializer(read_only=True)
     created_by = serializers.CharField(source="created_by.full_name", read_only=True, default=None)
 
+    can_review = None
+    review = None
+
     class Meta(TourBookingSerializer.Meta):
-        fields = [*TourBookingSerializer.Meta.fields, "user", "created_by"]
+        fields = [*TourBookingSerializer.Meta.fields[:-2], "user", "created_by"]
         read_only_fields = fields
 
     def get_can_cancel(self, booking):

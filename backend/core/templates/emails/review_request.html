@@ -1,0 +1,8 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hello {{ booking.user.full_name }},</p>
+{% if kind == "flight" %}<p style="margin:0 0 16px 0;">We hope your trip went well. How did we handle your flight booking, <strong>{{ title }}</strong> on {{ dates }}?</p>
+<p style="margin:0 0 16px 0;">Your review is about our booking service, not the airline or the flight itself. It takes a minute and helps other travellers choose.</p>{% else %}<p style="margin:0 0 16px 0;">We hope you enjoyed <strong>{{ title }}</strong> ({{ dates }}). How was it?</p>
+<p style="margin:0 0 16px 0;">Your review takes a minute and helps other travellers choose.</p>{% endif %}
+{% include "emails/_button.html" with url=frontend_url|add:path label="Leave a review" %}
+{% endblock %}

@@ -20,8 +20,8 @@ from .serializers import (
     BoardingPassUploadSerializer,
     BookingCreateSerializer,
     BookingDetailSerializer,
-    BookingSerializer,
     ConfirmAvailabilitySerializer,
+    CustomerBookingSerializer,
     PassengerSerializer,
     TravellerSerializer,
     last_flight_date,
@@ -46,12 +46,12 @@ BOOKING_SEGMENTS = [
 
 
 class BookingListCreateView(generics.ListAPIView):
-    serializer_class = BookingSerializer
+    serializer_class = CustomerBookingSerializer
 
     def get_queryset(self):
         return (
             Booking.objects.filter(user=self.request.user)
-            .select_related(*BOOKING_RELATED)
+            .select_related(*BOOKING_RELATED, "review")
             .prefetch_related(*BOOKING_SEGMENTS)
         )
 
@@ -73,7 +73,7 @@ class BookingDetailView(generics.RetrieveAPIView):
     def get_queryset(self):
         return (
             Booking.objects.filter(user=self.request.user)
-            .select_related(*BOOKING_RELATED)
+            .select_related(*BOOKING_RELATED, "review")
             .prefetch_related("events", "travellers", *BOOKING_SEGMENTS)
         )
 

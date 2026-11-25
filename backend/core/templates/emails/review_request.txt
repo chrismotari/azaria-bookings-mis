@@ -1,0 +1,12 @@
+Hello {{ booking.user.full_name }},
+
+{% if kind == "flight" %}We hope your trip went well. How did we handle your flight booking, {{ title }} on {{ dates }}?
+
+Your review is about our booking service, not the airline or the flight itself. It takes a minute and helps other travellers choose.{% else %}We hope you enjoyed {{ title }} ({{ dates }}). How was it?
+
+Your review takes a minute and helps other travellers choose.{% endif %}
+
+Leave a review:
+{{ frontend_url }}{{ path }}
+
+Azaria Bookings

@@ -11,6 +11,7 @@ import { Card } from '../../components/Card';
 import { DetailError } from '../../components/DetailLayout';
 import { Icon, IconName } from '../../components/Icon';
 import { PhotoGallery } from '../../components/PhotoGallery';
+import { ReviewsCard } from '../../components/Reviews';
 import { RichText } from '../../components/rich/RichText';
 import { Screen } from '../../components/Screen';
 import { LoadingState } from '../../components/StatusViews';
@@ -69,6 +70,7 @@ export function TourDetailScreen({ navigation, route }: Props) {
             <RichText html={data.description} />
           </Card>
           {!isWide ? priceCard : null}
+          <ReviewsCard scope={{ tour: data.id }} />
           {data.included.length || data.not_included.length ? (
             <Card>
               <Lines title="Included" icon="checkmark-circle" color={colors.success} lines={data.included} />

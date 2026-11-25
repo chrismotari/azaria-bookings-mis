@@ -1,10 +1,12 @@
 import { ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
+import { Rating } from '../api/types';
 import { colors, createStyles, font, radius, shadow, space, weight } from '../theme';
 import { Icon, IconName } from './Icon';
 import { PressState } from './pressState';
 import { PriceTag } from './PriceTag';
+import { RatingLine } from './Reviews';
 
 export const CARD_IMAGE_HEIGHT = 170;
 
@@ -15,13 +17,15 @@ type Props = {
   image: ReactNode;
   title: string;
   featured: boolean;
+  /** "★ 4.6 (12)" under the title when rated. */
+  rating?: Rating | null;
   /** Detail lines under the title. */
   children: ReactNode;
   price: ReactNode;
 };
 
 /** The one frame for flight, tour and hotel cards, so mixed rows line up: image, title, details, price last. */
-export function ItemCard({ accessibilityLabel, onPress, image, title, featured, children, price }: Props) {
+export function ItemCard({ accessibilityLabel, onPress, image, title, featured, rating, children, price }: Props) {
   return (
     <Pressable
       accessibilityRole="link"
@@ -42,6 +46,7 @@ export function ItemCard({ accessibilityLabel, onPress, image, title, featured, 
         <Text style={styles.title} numberOfLines={2}>
           {title}
         </Text>
+        <RatingLine rating={rating} />
         {children}
         <View style={styles.price}>{price}</View>
       </View>

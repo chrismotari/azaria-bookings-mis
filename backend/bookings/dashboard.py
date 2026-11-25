@@ -341,7 +341,7 @@ def tours_on_sale(today):
     bookable = Tour.objects.bookable()
     return {
         "upcoming": bookable.count(),
-        "fully_booked": upcoming.filter(booked__gte=F("slots")).count(),
+        "fully_booked": Tour.objects.listed().exclude(pk__in=bookable.values("pk")).count(),
         "seats_sold": seats["sold"] or 0,
         "seats_total": seats["total"] or 0,
         "featured": bookable.filter(is_featured=True).count(),

@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from bookings.models import Traveller
 from bookings.serializers import TravellerSerializer
 from core.permissions import IsAdminRole
+from reviews.models import with_rating
 
 from . import services
 from .models import Tour, TourBooking, TourNotice, TourPhoto, TourPriceOption
@@ -32,7 +33,7 @@ from .serializers import (
 
 
 def tours():
-    return Tour.objects.with_figures().prefetch_related(
+    return with_rating(Tour.objects.with_figures(), "tour").prefetch_related(
         "photos", Prefetch("options", queryset=TourPriceOption.objects.with_sold(), to_attr="all_options")
     )
 
@@ -46,7 +47,7 @@ def admin_tours():
 
 
 def tour_bookings():
-    return TourBooking.objects.select_related("tour", "user", "created_by").prefetch_related(
+    return TourBooking.objects.select_related("tour", "user", "created_by", "review").prefetch_related(
         "tour__photos", "lines__travellers", "events"
     )
 

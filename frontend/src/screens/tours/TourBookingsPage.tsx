@@ -14,6 +14,7 @@ import { FormError } from '../../components/Field';
 import { Icon } from '../../components/Icon';
 import { Pagination } from '../../components/Pagination';
 import { PriceTag } from '../../components/PriceTag';
+import { ReviewCard } from '../../components/Reviews';
 import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
@@ -172,6 +173,13 @@ function TourBookingDetailView({
           {data.cancel_reason ? <Text style={styles.text}>{data.cancel_reason}</Text> : null}
         </View>
       ) : null}
+      <ReviewCard
+        kind="tour"
+        bookingId={data.id}
+        canReview={data.can_review}
+        review={data.review}
+        bookingsKey={['tour-bookings']}
+      />
       <Card>
         <Text style={styles.heading}>What you booked</Text>
         <TourBookingLines booking={data} base={`/tour-bookings/${id}`} queryKey={queryKey} />

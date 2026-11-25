@@ -13,6 +13,7 @@ from catalog.serializers import OfferSerializer, SegmentInputSerializer, itinera
 from core.files import check_upload
 from core.models import AppSettings
 from customer_requests.models import Query
+from reviews.serializers import ReviewFields
 
 from .models import BoardingPass, Booking, BookingEvent, Traveller
 from .services import ADMIN_EDITS_PASSENGERS, CUSTOMER_EDITS_PASSENGERS
@@ -224,14 +225,28 @@ class BookingSerializer(serializers.ModelSerializer):
         return {**super().to_representation(booking), **itinerary_data(booking.segments.all(), self.context)}
 
 
-class BookingDetailSerializer(BookingSerializer):
+class CustomerBookingSerializer(ReviewFields, BookingSerializer):
+    review_kind = "flight"
+
+    class Meta(BookingSerializer.Meta):
+        fields = [*BookingSerializer.Meta.fields, "can_review", "review"]
+        read_only_fields = fields
+
+
+class BookingDetailSerializer(CustomerBookingSerializer):
     events = BookingEventSerializer(many=True, read_only=True)
     payment_instructions = serializers.SerializerMethodField()
     travellers = TravellerSerializer(many=True, read_only=True)
     can_edit_travellers = serializers.SerializerMethodField()
 
-    class Meta(BookingSerializer.Meta):
-        fields = [*BookingSerializer.Meta.fields, "events", "payment_instructions", "travellers", "can_edit_travellers"]
+    class Meta(CustomerBookingSerializer.Meta):
+        fields = [
+            *CustomerBookingSerializer.Meta.fields,
+            "events",
+            "payment_instructions",
+            "travellers",
+            "can_edit_travellers",
+        ]
         read_only_fields = fields
 
     def get_can_edit_travellers(self, booking):

@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 
 from airports.models import Airport
 from core.permissions import IsAdminRole
+from reviews.models import Review, rating
 
 from .filters import AdminOfferFilter, OfferFilter
 from .models import Offer
@@ -36,6 +37,11 @@ class AirportSearchView(APIView):
         return Response(AirportSerializer(airports, many=True).data)
 
 
+def service_rating():
+    """The agency's flight booking service: every flight review, hidden ones included."""
+    return rating(Review.objects.filter(kind=Review.Kind.FLIGHT))
+
+
 OFFER_RELATED = ["origin", "destination", "airline"]
 OFFER_SEGMENTS = [
     "segments__airline",
@@ -57,6 +63,11 @@ class OfferListView(generics.ListAPIView):
             Offer.objects.publicly_visible().bookable().select_related(*OFFER_RELATED).prefetch_related(*OFFER_SEGMENTS)
         )
 
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        response.data["service_rating"] = service_rating()
+        return response
+
 
 class OfferDetailView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
@@ -66,6 +77,11 @@ class OfferDetailView(generics.RetrieveAPIView):
         return (
             Offer.objects.visible_to(self.request.user).select_related(*OFFER_RELATED).prefetch_related(*OFFER_SEGMENTS)
         )
+
+    def retrieve(self, request, *args, **kwargs):
+        response = super().retrieve(request, *args, **kwargs)
+        response.data["service_rating"] = service_rating()
+        return response
 
 
 class AdminOfferListView(generics.ListCreateAPIView):

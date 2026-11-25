@@ -22,4 +22,5 @@ urlpatterns = [
     path("api/", include("integrations.urls")),
     path("api/", include("tours.urls")),
     path("api/", include("hotels.urls")),
+    path("api/", include("reviews.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.PUBLIC_MEDIA_ROOT)

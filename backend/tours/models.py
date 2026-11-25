@@ -209,6 +209,7 @@ class TourBooking(models.Model):
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.CONFIRMED)
     cancelled_by = models.CharField(max_length=20, choices=CancelledBy.choices, null=True, blank=True)
     cancel_reason = models.TextField(max_length=2000, blank=True)
+    review_requested_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

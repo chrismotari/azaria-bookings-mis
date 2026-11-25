@@ -5,7 +5,7 @@ import { ScrollView, Text, View } from 'react-native';
 
 import { GetAppFooter } from '../../agency/GetAppFooter';
 import { api } from '../../api/client';
-import { Offer, Paginated } from '../../api/types';
+import { OfferList } from '../../api/types';
 import { useAuthGate } from '../../auth/gate';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
@@ -21,6 +21,7 @@ import {
 import { ModulePages } from '../../components/ModulePages';
 import { useModules } from '../../agency/modules';
 import { Pagination } from '../../components/Pagination';
+import { FlightServiceRating } from '../../components/Reviews';
 import { SegmentedControl } from '../../components/SegmentedControl';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { MainTabParamList, QueryPrefill } from '../../navigation/types';
@@ -99,7 +100,7 @@ function FlightDeals({ navigation, route }: Props) {
     queryKey: ['offers', filters, ordering, page],
     queryFn: async () => {
       const params = { ...offerFilterParams(filters), ordering, page };
-      return (await api.get<Paginated<Offer>>('/offers', { params })).data;
+      return (await api.get<OfferList>('/offers', { params })).data;
     },
     placeholderData: keepPreviousData,
   });
@@ -213,6 +214,7 @@ function FlightDeals({ navigation, route }: Props) {
                   </View>
                 )}
 
+                <FlightServiceRating rating={offers.data?.service_rating} />
                 {offers.isPending ? (
                   <LoadingState />
                 ) : offers.isError ? (

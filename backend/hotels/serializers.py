@@ -6,6 +6,8 @@ from accounts.serializers import UserSerializer
 from bookings.serializers import TravellerSerializer
 from core.files import check_upload
 from core.models import AppSettings
+from reviews.models import annotated_rating
+from reviews.serializers import ReviewFields
 from tenants import richtext
 from tours.serializers import TourPhotoUploadSerializer, photo_url
 
@@ -104,11 +106,15 @@ class HotelSerializer(serializers.ModelSerializer):
     from_price = serializers.SerializerMethodField()
     photos = HotelPhotoSerializer(many=True, read_only=True)
     room_types = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Hotel
-        fields = ["id", *HOTEL_FIELDS, "is_featured", "from_price", "photos", "room_types"]
+        fields = ["id", *HOTEL_FIELDS, "is_featured", "from_price", "photos", "room_types", "rating"]
         read_only_fields = fields
+
+    def get_rating(self, hotel):
+        return annotated_rating(hotel)
 
     def get_from_price(self, hotel):
         price = getattr(hotel, "listed_price", None)
@@ -285,6 +291,7 @@ class AdminHotelSerializer(serializers.ModelSerializer):
     from_price = serializers.SerializerMethodField()
     photos = HotelPhotoSerializer(many=True, read_only=True)
     room_types = AdminRoomTypeSerializer(many=True, read_only=True)
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Hotel
@@ -296,6 +303,7 @@ class AdminHotelSerializer(serializers.ModelSerializer):
             "from_price",
             "photos",
             "room_types",
+            "rating",
             "created_at",
             "updated_at",
         ]
@@ -304,6 +312,9 @@ class AdminHotelSerializer(serializers.ModelSerializer):
     def get_from_price(self, hotel):
         price = pricing.from_price(hotel)
         return None if price is None else str(price)
+
+    def get_rating(self, hotel):
+        return annotated_rating(hotel)
 
 
 class HotelInputSerializer(serializers.ModelSerializer):
@@ -409,7 +420,7 @@ class HotelVoucherSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-class HotelBookingSerializer(serializers.ModelSerializer):
+class HotelBookingSerializer(ReviewFields, serializers.ModelSerializer):
     hotel = HotelBriefSerializer(read_only=True)
     rooms = HotelBookingRoomSerializer(many=True, read_only=True)
     nights = serializers.IntegerField(read_only=True)
@@ -443,8 +454,12 @@ class HotelBookingSerializer(serializers.ModelSerializer):
             "can_edit_guests",
             "payment_instructions",
             "created_at",
+            "can_review",
+            "review",
         ]
         read_only_fields = fields
+
+    review_kind = "hotel"
 
     def get_vouchers(self, booking):
         """The customer sees the vouchers once they have been sent."""
@@ -468,8 +483,11 @@ class AdminHotelBookingSerializer(HotelBookingSerializer):
     user = UserSerializer(read_only=True)
     created_by = serializers.CharField(source="created_by.full_name", read_only=True, default=None)
 
+    can_review = None
+    review = None
+
     class Meta(HotelBookingSerializer.Meta):
-        fields = [*HotelBookingSerializer.Meta.fields, "user", "created_by"]
+        fields = [*HotelBookingSerializer.Meta.fields[:-2], "user", "created_by"]
         read_only_fields = fields
 
     def get_vouchers(self, booking):

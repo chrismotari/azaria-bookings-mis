@@ -53,6 +53,7 @@ class Booking(Trip):
     status = models.CharField(max_length=30, choices=Status.choices, default=Status.REQUESTED)
     payment_deadline = models.DateTimeField(null=True, blank=True)
     reminder_sent_at = models.DateTimeField(null=True, blank=True)
+    review_requested_at = models.DateTimeField(null=True, blank=True)
     # What the admin changed when confirming availability: {"unit_price": {"old", "new"}, "airline": {"old", "new"}
     # (airline names), "segments": {"old", "new"}} with only the changed keys; null when nothing changed.
     changes = models.JSONField(null=True, blank=True)

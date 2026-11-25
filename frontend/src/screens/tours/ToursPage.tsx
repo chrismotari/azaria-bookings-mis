@@ -225,6 +225,7 @@ export function TourCard({ tour, onPress }: { tour: Tour; onPress: () => void })
       accessibilityLabel={`${tour.title}, ${tour.destination}`}
       onPress={onPress}
       featured={tour.is_featured}
+      rating={tour.rating}
       image={<CoverImage url={tour.photos[0]?.url} height={CARD_IMAGE_HEIGHT} />}
       title={tour.title}
       price={

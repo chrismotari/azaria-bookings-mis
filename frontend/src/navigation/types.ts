@@ -1,6 +1,14 @@
 import { NavigatorScreenParams } from '@react-navigation/native';
 
-import { BookingStatus, HotelBookingStatus, Module, QueryStatus, TicketClass, TripType } from '../api/types';
+import {
+  BookingStatus,
+  HotelBookingStatus,
+  Module,
+  QueryStatus,
+  ReviewKind,
+  TicketClass,
+  TripType,
+} from '../api/types';
 
 /** Prefilled request-for-options criteria (airports as IATA codes), e.g. from Explore's filters. */
 export type QueryPrefill = {
@@ -60,6 +68,8 @@ export type AdminTabParamList = {
   AdminTourBook: { id: string; customer: string };
   /** tab hotels: the hotels list (id a hotel); otherwise the bookings (id a booking). */
   AdminHotels: { tab?: 'hotels'; id?: string; status?: HotelBookingStatus | 'all' } | undefined;
+  /** id: a review; the filters as the list takes them. */
+  AdminReviews: (AdminReviewFilters & { id?: string }) | undefined;
   /** Not in the bar: shown under Hotels. customer: who the admin books for. */
   AdminHotelNew: undefined;
   AdminHotelEdit: { id: string };
@@ -78,6 +88,16 @@ export type AdminTabParamList = {
 
 /** A hotel stay and its guests as URL params. */
 export type HotelStay = { check_in?: string; check_out?: string; adults?: string; children?: string };
+
+/** hidden and replied: "true" or "false"; rating: "1" to "5". */
+export type AdminReviewFilters = {
+  kind?: ReviewKind;
+  tour?: string;
+  hotel?: string;
+  rating?: string;
+  hidden?: string;
+  replied?: string;
+};
 
 export type AdminTourFilter = 'all' | 'upcoming' | 'past' | 'inactive' | 'cancelled';
 

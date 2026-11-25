@@ -14,6 +14,7 @@ import { FormError } from '../../components/Field';
 import { Icon, IconName } from '../../components/Icon';
 import { PhotoGallery } from '../../components/PhotoGallery';
 import { PriceTag } from '../../components/PriceTag';
+import { ReviewsCard } from '../../components/Reviews';
 import { RichText } from '../../components/rich/RichText';
 import { Screen } from '../../components/Screen';
 import { SelectField } from '../../components/SelectField';
@@ -169,6 +170,7 @@ export function HotelDetailScreen({ navigation, route }: Props) {
           </View>
         ) : null}
       </Card>
+      <ReviewsCard scope={{ hotel: data.id }} />
       <Card>
         <Text style={styles.heading}>Your stay</Text>
         <StayFields value={draft} onChange={setDraft} errors={errors} />

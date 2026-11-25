@@ -24,6 +24,11 @@ export function formatDate(isoDate: string): string {
   return dateFormat.format(new Date(`${isoDate}T00:00:00Z`));
 }
 
+/** The Nairobi date of a moment, e.g. "Tue, 3 Mar 2026". */
+export function formatDay(isoDateTime: string): string {
+  return formatDate(new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Nairobi' }).format(new Date(isoDateTime)));
+}
+
 /** Today's date in Nairobi as "YYYY-MM-DD". */
 export function todayInNairobi(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Nairobi' }).format(new Date());

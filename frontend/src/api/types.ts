@@ -122,6 +122,11 @@ export type Offer = Trip & {
   price_checked_at: string | null;
 };
 
+/** service_rating: the agency's flight booking service over every flight review. */
+export type OfferDetail = Offer & { service_rating: Rating | null };
+
+export type OfferList = Paginated<Offer> & { service_rating: Rating | null };
+
 export type OfferSource = 'manual' | 'gds';
 
 export type FareType = 'public' | 'private' | 'unknown';
@@ -224,7 +229,7 @@ export type Booking = Trip & {
   /** The request holding options suggested when the booking was marked unavailable. */
   alternatives: string | null;
   created_at: string;
-};
+} & CustomerReviewFields;
 
 export type BoardingPass = {
   id: string;
@@ -807,6 +812,7 @@ export type Tour = {
   bookable: boolean;
   not_bookable_reason: NotBookableReason | null;
   is_featured: boolean;
+  rating: Rating | null;
 };
 
 export type AdminTourOption = TourOption & { units_sold: number; booked: boolean; is_active: boolean };
@@ -910,7 +916,7 @@ export type TourBooking = {
   /** While confirmed. */
   payment_instructions: string | null;
   created_at: string;
-};
+} & CustomerReviewFields;
 
 export type AdminTourBooking = TourBooking & { user: User; created_by: string | null };
 
@@ -960,6 +966,7 @@ export type Hotel = {
   from_price: string | null;
   photos: HotelPhoto[];
   room_types: HotelRoomType[];
+  rating: Rating | null;
 };
 
 export type RatePeriod = { id?: string; start_date: string; end_date: string; price_per_night: string };
@@ -1057,6 +1064,53 @@ export type HotelBooking = {
   /** While availability is confirmed. */
   payment_instructions: string | null;
   created_at: string;
-};
+} & CustomerReviewFields;
 
 export type AdminHotelBooking = HotelBooking & { user: User; created_by: string | null };
+
+export type ReviewKind = 'flight' | 'tour' | 'hotel';
+
+/** Over every review, hidden ones included; null when there are none. */
+export type Rating = { average: number; count: number };
+
+export type RatingSummary = {
+  average: number | null;
+  count: number;
+  by_rating: Record<'1' | '2' | '3' | '4' | '5', number>;
+};
+
+export type PublicReview = {
+  id: string;
+  rating: number;
+  comment: string;
+  /** e.g. "Wanjiru K.". */
+  reviewer_name: string;
+  created_at: string;
+  /** Blank when the agency has not replied. */
+  reply: string;
+  replied_at: string | null;
+};
+
+export type PublicReviews = Paginated<PublicReview> & { summary: RatingSummary };
+
+/** title: the tour or hotel name, or the flight's route line. */
+export type ReviewBooking = { kind: ReviewKind; id: string; title: string };
+
+export type OwnReview = PublicReview & {
+  kind: ReviewKind;
+  is_hidden: boolean;
+  booking: ReviewBooking;
+  updated_at: string;
+};
+
+export type AdminReview = OwnReview & {
+  customer: { id: string; full_name: string; email: string };
+  /** The tour or hotel; null for flights. */
+  item: { id: string; title: string } | null;
+  hidden_by: string | null;
+  hidden_at: string | null;
+  replied_by: string | null;
+};
+
+/** On a customer's own bookings only. */
+export type CustomerReviewFields = { can_review?: boolean; review?: OwnReview | null };

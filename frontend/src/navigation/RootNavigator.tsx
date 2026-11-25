@@ -25,6 +25,7 @@ import { AdminUsersScreen } from '../screens/admin/AdminUsersScreen';
 import { AdminHotelBookScreen } from '../screens/admin/AdminHotelBookScreen';
 import { AdminHotelEditScreen, AdminHotelNewScreen } from '../screens/admin/AdminHotelFormScreen';
 import { AdminHotelsScreen } from '../screens/admin/AdminHotelsScreen';
+import { AdminReviewsScreen } from '../screens/admin/AdminReviewsScreen';
 import { AdminTourBookScreen } from '../screens/admin/AdminTourBookScreen';
 import { AdminTourEditScreen, AdminTourNewScreen } from '../screens/admin/AdminTourFormScreen';
 import { AdminToursScreen } from '../screens/admin/AdminToursScreen';
@@ -440,6 +441,11 @@ function AdminTabsNavigator() {
         name="AdminHotels"
         component={AdminHotelsScreen}
         options={tab('Hotels', 'bed-outline', 'bed')}
+      />
+      <AdminTabs.Screen
+        name="AdminReviews"
+        component={AdminReviewsScreen}
+        options={tab('Reviews', 'star-outline', 'star')}
       />
       <AdminTabs.Screen
         name="AdminUsers"

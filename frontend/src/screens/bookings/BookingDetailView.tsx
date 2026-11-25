@@ -9,6 +9,7 @@ import { BoardingPassList } from '../../components/BoardingPassList';
 import { BookingProgress } from '../../components/BookingProgress';
 import { BookingSummary } from '../../components/BookingSummary';
 import { BookingTimeline } from '../../components/BookingTimeline';
+import { ReviewCard } from '../../components/Reviews';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { ChangeList } from '../../components/ChangeList';
@@ -122,6 +123,13 @@ export function BookingDetailView({ id }: { id: string }) {
           </View>
         ) : null}
       </Card>
+      <ReviewCard
+        kind="flight"
+        bookingId={data.id}
+        canReview={data.can_review}
+        review={data.review}
+        bookingsKey={['bookings']}
+      />
 
       {awaitingChanges && data.changes ? (
         <View style={styles.changes}>

@@ -67,6 +67,7 @@ TENANT_APPS = [
     "integrations",
     "tours",
     "hotels",
+    "reviews",
 ]
 
 INSTALLED_APPS = [*SHARED_APPS, *[app for app in TENANT_APPS if app not in SHARED_APPS]]
@@ -248,6 +249,10 @@ CELERY_BEAT_SCHEDULE = {
     },
     "complete-finished-tour-bookings": {
         "task": "tours.tasks.complete_finished_tour_bookings",
+        "schedule": timedelta(days=1),
+    },
+    "request-reviews": {
+        "task": "reviews.tasks.request_reviews",
         "schedule": timedelta(days=1),
     },
 }

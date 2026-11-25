@@ -1,0 +1,10 @@
+A customer has left a review.
+
+{% if kind == "flight" %}Flight booking{% elif kind == "tour" %}Tour{% else %}Hotel{% endif %}: {{ title }}
+Dates: {{ dates }}
+Customer: {{ review.user.full_name }}
+Rating: {{ stars }}
+Comment: {{ review.comment|default:"(none)" }}
+
+Open the review in the app:
+{{ frontend_url }}/admin/reviews/{{ review.id }}

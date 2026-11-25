@@ -540,6 +540,18 @@ def test_tours_on_sale(admin_api, customer, make_tour):
 
 
 @freeze_time(NOW)
+def test_a_tour_with_its_limited_options_sold_out_counts_as_fully_booked(admin_api, customer, make_tour):
+    modules("tours")
+    sold_out = make_tour(slots=10, options=[{"name": "VIP", "price": Decimal("500.00"), "units_available": 2}])
+    book_tour(customer, sold_out, quantity=2)  # slots left, no VIP left
+    make_tour(slots=6, options=[{"name": "VIP", "price": Decimal("500.00"), "units_available": 2}])
+
+    on_sale = dashboard(admin_api)["on_sale"]["tours"]
+    assert on_sale["upcoming"] == 1
+    assert on_sale["fully_booked"] == 1
+
+
+@freeze_time(NOW)
 def test_hotels_on_sale(admin_api, make_hotel):
     modules("hotels")
     make_hotel(is_featured=True)  # prices for 60 days

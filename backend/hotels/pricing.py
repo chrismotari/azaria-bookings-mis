@@ -6,6 +6,8 @@ from decimal import Decimal
 from django.db.models import Prefetch
 from django.utils import timezone
 
+from reviews.models import with_rating
+
 from .models import Hotel, RoomRate, RoomType
 
 
@@ -54,7 +56,8 @@ def with_offered_rates(queryset):
 
 
 def public_hotels():
-    return with_offered_rates(Hotel.objects.filter(is_active=True).prefetch_related("photos"))
+    hotels = with_rating(Hotel.objects.filter(is_active=True), "hotel")
+    return with_offered_rates(hotels.prefetch_related("photos"))
 
 
 def offered_rates(hotel):

@@ -160,6 +160,7 @@ class HotelBooking(models.Model):
     changes_accepted = models.BooleanField(default=False)
     payment_deadline = models.DateTimeField(null=True, blank=True)
     reminder_sent_at = models.DateTimeField(null=True, blank=True)
+    review_requested_at = models.DateTimeField(null=True, blank=True)
     unavailable_message = models.TextField(max_length=2000, blank=True)
     hotel_confirmation = models.CharField(max_length=40, blank=True)
     special_requests = models.TextField(max_length=1000, blank=True)
