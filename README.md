@@ -1,14 +1,30 @@
 # Azaria Bookings
 
-A multitenant SaaS for small and medium-sized flight ticketing agencies ([azariabookings.com](https://azariabookings.com)).
-
-Each agency gets its own site and data. Its admin lists flight deals, which anyone can browse. Registered customers request options or book. The admin confirms availability, the customer pays outside the system, and the admin marks the booking paid, then uploads and sends the boarding passes (by email and in the app). Customers and guests can write to the agency through a built-in support chat.
-
-On the root host, the platform's owner manages agencies, plans and invoices, and answers platform support chats. Agencies pay outside the system; the owner marks invoices paid, and agencies with long-overdue invoices are suspended automatically.
-
-The system is in active development. An agency can connect fare providers (Duffel, Travelport, Sabre and Amadeus) to search its routes and publish the fares it chooses as offers; booking and ticketing stay manual, and the system works fully without any provider. Payment integrations are planned, so payments are recorded by hand for now.
+A multitenant SaaS for small and medium-sized travel agencies ([azariabookings.com](https://azariabookings.com)). Each agency gets its own site, app and data, and sells any of three modules (flights, tours, hotels), which the platform owner switches on per agency.
 
 The full specification is in [SPEC.md](SPEC.md); choices made where it is silent are in [DECISIONS.md](DECISIONS.md).
+
+## What it does
+
+**Flights.** The admin publishes one-way and return offers with full itineraries (segments, local times, connections), baggage and fare conditions. Anyone can browse them on Explore; registered customers request options or book with their passengers' details. The admin confirms availability (possibly with a new price or flights), the customer pays outside the system before a deadline with automatic reminders, the admin marks the booking paid and sends the boarding passes, by email and in the app.
+
+**Fare search.** An agency can connect fare providers (Duffel, Travelport, Sabre and Amadeus), several at once, or none. It keeps a list of routes that are searched by hand or on a daily or weekly schedule, within a monthly search allowance. Fares are converted to USD at daily exchange rates; the admin reviews them and publishes the chosen ones with the agency's markup, or a route publishes automatically. Later searches refresh published offers' prices, and the admin can re-check a booking's fare before confirming. Booking and ticketing stay manual, in the agent's own GDS.
+
+**Tours.** Scheduled tours with fixed dates, slots and price options (Regular, VIP, Couple, Group of 6...). Customers book at once and add travellers now or later; fully booked tours stay on show. The admin can change or cancel a tour and tell every booked customer in their own words.
+
+**Hotels.** The agency's partner hotels with room types and rates priced per night by season, with an optional charge per adult. Customers request rooms for their dates; the admin confirms with the hotel, marks the booking paid and sends the hotel's voucher with its confirmation number.
+
+**Across the modules.**
+- Explore with featured flights, tours and hotels.
+- Reviews of tours, hotels and the flight booking service, with agency replies.
+- An admin dashboard: what needs action, sales by module and month, what is coming up, top sellers and what is on sale.
+- Support chat between guests or customers and the agency.
+- Agency themes: each agency picks its colours from a list of contrast-checked themes.
+- One shared mobile app for every agency, which finds its agency from an email link or a typed code.
+
+**Platform.** On the root host, the system owner manages agencies (domains, modules, theme, search allowance, admins), themes, plans and invoices, exchange rates, and answers platform support chats. Agencies pay outside the system: the owner marks invoices paid, and agencies with long-overdue invoices are suspended automatically. The root host's public pages are Azaria's sales website and pricing.
+
+Payment integrations are planned, so payments are recorded by hand for now.
 
 ## Stack
 
@@ -22,9 +38,11 @@ The full specification is in [SPEC.md](SPEC.md); choices made where it is silent
 | Tests | pytest, pytest-django, freezegun; ruff for lint and format; `tsc`, ESLint (eslint-config-expo) and Prettier for the app |
 
 ```
-backend/      Django project "config": tenants, airports, airlines, rates, accounts, catalog,
-              customer_requests, bookings, support, integrations, core
-frontend/     Expo app (src/api, auth, navigation, screens, components, support)
+backend/      Django project "config"
+              platform (public schema): tenants, airports, airlines, rates, accounts, support
+              each agency's schema: accounts, catalog (offers), customer_requests, bookings,
+              core (app settings), support, integrations (fare search), tours, hotels, reviews
+frontend/     Expo app (src/agency, api, auth, components, navigation, screens, support, utils)
 ```
 
 ## Prerequisites
@@ -60,7 +78,7 @@ python manage.py create_agency --schema azaria --name "Azaria Bookings" \
     --admin-email owner@example.com --admin-password '<strong password>' --admin-name "Agency Owner"
 ```
 
-`create_agency` creates the agency's schema, its domain `<schema>.localhost`, its settings and its first admin. Add more agencies the same way.
+`create_agency` creates the agency's schema, its domain `<schema>.localhost`, its settings and its first admin, with the flights module and the default theme (`--theme <name>` picks another). Add more agencies the same way, or from the platform app, where the owner also switches on tours and hotels.
 
 A database created before the migrations were flattened (each app back to `0001_initial`; catalog also has `0002_initial`) must be dropped and set up again. Otherwise, after pulling changes, `python manage.py migrate_schemas` applies new migrations to the platform and every agency.
 
@@ -138,7 +156,7 @@ Agencies add their own provider credentials under Settings › Integrations; not
 
 ## Mobile app
 
-One shared "Azaria Bookings" app serves every agency. It learns its agency from a link (`https://<code>.<base>/...`, or `azaria://open?agency=<code>` from the web app's `/app` page) or from the agency code typed on first launch, and keeps it with the sign-in tokens. "Switch agency" in the account menu (or on the sign-in screen) signs out and asks again. The web app is unchanged: there the address decides the agency.
+One shared "Azaria Bookings" app serves every agency. It learns its agency from a link (`https://<code>.<base>/...`, or `azaria://open?agency=<code>` from the web app's `/app` page) or from the agency code typed on first launch, and keeps it with the sign-in tokens. "Switch agency" in the account menu (or on the sign-in screen) signs out and asks again. On the web, the address decides the agency.
 
 - **Ids:** bundle id and Android package `com.azariabookings.app` (`frontend/app.config.ts`). The build reads `EXPO_PUBLIC_TENANT_BASE_DOMAIN` to declare `applinks:*.<base>` (iOS) and an auto-verified intent filter for `*.<base>` (Android).
 - **Verification files:** set `IOS_APP_ID` (Apple Team ID plus bundle id, e.g. `ABCDE12345.com.azariabookings.app`), `ANDROID_PACKAGE` (`com.azariabookings.app`) and `ANDROID_CERT_FINGERPRINTS` (the SHA-256 fingerprints of the signing certificates, comma-separated; for Play App Signing take them from the Play Console). Django then serves `/.well-known/apple-app-site-association` and `/.well-known/assetlinks.json` on every agency host and on the root host; in production the reverse proxy must send `/.well-known/` to the API over HTTPS, without redirects.
@@ -147,8 +165,8 @@ One shared "Azaria Bookings" app serves every agency. It learns its agency from 
 
 ## Files
 
-- `backend/private_media/`: boarding passes, invoice PDFs and chat attachments. Never served by URL; only through authenticated endpoints.
-- `backend/media/`: airline logos, served at `/media/` (by Django while `DEBUG` is true; by the reverse proxy in production).
+- `backend/private_media/`: boarding passes, hotel vouchers, invoice PDFs and chat attachments. Never served by URL; only through authenticated endpoints.
+- `backend/media/`: airline logos, tour photos and hotel photos, served at `/media/` (by Django while `DEBUG` is true; by the reverse proxy in production).
 
 ## Tests
 

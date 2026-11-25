@@ -187,7 +187,7 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Step 45: a link to a flight item (`/offers/<id>`, `/bookings/<id>`) always opens the flights page, without the module switch.
 - Step 45: when flights is off the admin dashboard leaves out every flight key (the API returns only `customers` and `overdue_invoice`); `manage.py create_agency` is unchanged (flights only).
 - Step 45: the last module is checked before open bookings, so turning off the only module answers 400 even when it has open bookings.
-- Step 46: Traveller gets both owners now (tour_line, and the flight `booking` that step 47 uses), as §26 defines it, so the database check of exactly one owner holds from the start.
+- Step 46: Traveller gets both owners now (tour_line, and the flight `booking` that step 47 uses), as SPEC §9 defines it, so the database check of exactly one owner holds from the start.
 - Step 46: a tour's summary is required and its description optional; option names are unique ignoring case; units_available is at least 1 (blank = no limit); an option left out of a PATCH list is deleted only when never booked.
 - Step 46: traveller rules: nationality is two letters (the app lists countries from the bundled flag codes); a document number needs its type, an expiry needs a number, and a passport number needs its expiry.
 - Step 46: not_bookable_reason is cancelled first, then closed (inactive, no active option, deadline passed or started), then fully_booked; a tour customers can no longer book is not found for those who have not booked it (as the API defines), so a 409 on Book shows its message with a link to other tours.
@@ -201,7 +201,7 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Step 47: emails list passenger names after the passenger count (new booking, seats confirmed) or as a Passengers row (other customer emails), and leave it out for bookings with no passengers.
 - Step 47: Copy for GDS is web only (no clipboard without a new dependency); each line is "SURNAME/GIVEN NAMES, F or M, 17MAY1990, PASSPORT number, expiry, KE", the surname being the full name's last word.
 - Step 47: passenger forms mark required fields with "*" and the gender, nationality and document selects start on "Choose"; the first passenger is prefilled once, when the customer is chosen (admin) or from the signed-in account.
-- Step 48: a hotel's from price, and its place in the public list, use only rates that fit the adults and children searched (a rate's own limits); adults above a rate's max are priced at its max, as §28 says.
+- Step 48: a hotel's from price, and its place in the public list, use only rates that fit the adults and children searched (a rate's own limits); adults above a rate's max are priced at its max, as SPEC §8 says.
 - Step 48: the public list is worked out in Python (from prices need each rate's periods) and paginated as a list; ordering `from_price` (default), `-from_price`, `-star_rating` (unrated last, then price) and `name`; check-in must be today or later and the stay 1–30 nights (400 otherwise).
 - Step 48: `hotels/{id}` shows any active hotel with its active rates that still have a period not ended; without dates each rate's `available`, `nights`, `room_price` and `stay_price` are null.
 - Step 48: `changes` is `{total: {old, new}, note}`; it is set only when the new total differs from the booking's, and a note without a new total is refused (400). The booking's total becomes the new one on accept-changes.
