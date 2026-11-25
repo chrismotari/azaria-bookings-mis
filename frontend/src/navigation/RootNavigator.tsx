@@ -22,9 +22,14 @@ import { AdminRoutesScreen } from '../screens/admin/AdminRoutesScreen';
 import { useIntegrations } from '../screens/admin/gds';
 import { AdminSettingsScreen } from '../screens/admin/AdminSettingsScreen';
 import { AdminUsersScreen } from '../screens/admin/AdminUsersScreen';
+import { AdminHotelBookScreen } from '../screens/admin/AdminHotelBookScreen';
+import { AdminHotelEditScreen, AdminHotelNewScreen } from '../screens/admin/AdminHotelFormScreen';
+import { AdminHotelsScreen } from '../screens/admin/AdminHotelsScreen';
 import { AdminTourBookScreen } from '../screens/admin/AdminTourBookScreen';
 import { AdminTourEditScreen, AdminTourNewScreen } from '../screens/admin/AdminTourFormScreen';
 import { AdminToursScreen } from '../screens/admin/AdminToursScreen';
+import { HotelBookScreen } from '../screens/hotels/HotelBookScreen';
+import { HotelDetailScreen } from '../screens/hotels/HotelDetailScreen';
 import { TourBookScreen } from '../screens/tours/TourBookScreen';
 import { TourDetailScreen } from '../screens/tours/TourDetailScreen';
 import { BookingNewScreen } from '../screens/bookings/BookingNewScreen';
@@ -179,6 +184,16 @@ function GatedTourBook(props: BottomTabScreenProps<MainTabParamList, 'TourBook'>
   );
 }
 
+function GatedHotelBook(props: BottomTabScreenProps<MainTabParamList, 'HotelBook'>) {
+  return (
+    <RequireAuth target={{ screen: 'Main', params: { screen: 'HotelBook', params: props.route.params } }}>
+      <FreshEachVisit params={props.route.params}>
+        <HotelBookScreen {...props} />
+      </FreshEachVisit>
+    </RequireAuth>
+  );
+}
+
 function FreshTourNew(props: BottomTabScreenProps<AdminTabParamList, 'AdminTourNew'>) {
   return (
     <FreshEachVisit params={props.route.params}>
@@ -203,17 +218,51 @@ function FreshAdminTourBook(props: BottomTabScreenProps<AdminTabParamList, 'Admi
   );
 }
 
+function FreshHotelNew(props: BottomTabScreenProps<AdminTabParamList, 'AdminHotelNew'>) {
+  return (
+    <FreshEachVisit params={props.route.params}>
+      <AdminHotelNewScreen {...props} />
+    </FreshEachVisit>
+  );
+}
+
+function FreshHotelEdit(props: BottomTabScreenProps<AdminTabParamList, 'AdminHotelEdit'>) {
+  return (
+    <FreshEachVisit params={props.route.params}>
+      <AdminHotelEditScreen {...props} />
+    </FreshEachVisit>
+  );
+}
+
+function FreshAdminHotelBook(props: BottomTabScreenProps<AdminTabParamList, 'AdminHotelBook'>) {
+  return (
+    <FreshEachVisit params={props.route.params}>
+      <AdminHotelBookScreen {...props} />
+    </FreshEachVisit>
+  );
+}
+
 // Login-required tabs, left out of the bar for guests.
 const GATED_TABS: (keyof MainTabParamList)[] = ['Requests', 'Bookings', 'Account'];
 
 // Never in the bar; the tab they belong to stays highlighted on them.
-const MAIN_FORM_PAGES: (keyof MainTabParamList)[] = ['QueryNew', 'BookingNew', 'Support', 'TourDetail', 'TourBook'];
+const MAIN_FORM_PAGES: (keyof MainTabParamList)[] = [
+  'QueryNew',
+  'BookingNew',
+  'Support',
+  'TourDetail',
+  'TourBook',
+  'HotelDetail',
+  'HotelBook',
+];
 const MAIN_PARENT_ROUTES: Record<string, string> = {
   QueryNew: 'Requests',
   BookingNew: 'Explore',
   Support: 'Account',
   TourDetail: 'Explore',
   TourBook: 'Explore',
+  HotelDetail: 'Explore',
+  HotelBook: 'Explore',
 };
 
 function GatedSupport(props: BottomTabScreenProps<MainTabParamList, 'Support'>) {
@@ -295,6 +344,8 @@ function MainTabsNavigator() {
       <MainTabs.Screen name="Support" component={GatedSupport} options={{ title: 'Support' }} />
       <MainTabs.Screen name="TourDetail" component={TourDetailScreen} options={{ title: 'Tour' }} />
       <MainTabs.Screen name="TourBook" component={GatedTourBook} options={{ title: 'Book tour' }} />
+      <MainTabs.Screen name="HotelDetail" component={HotelDetailScreen} options={{ title: 'Hotel' }} />
+      <MainTabs.Screen name="HotelBook" component={GatedHotelBook} options={{ title: 'Request booking' }} />
     </MainTabs.Navigator>
   );
 }
@@ -310,6 +361,9 @@ const ADMIN_SETTINGS_PAGES: (keyof AdminTabParamList)[] = [
   'AdminTourNew',
   'AdminTourEdit',
   'AdminTourBook',
+  'AdminHotelNew',
+  'AdminHotelEdit',
+  'AdminHotelBook',
 ];
 const ADMIN_PARENT_ROUTES: Record<string, string> = {
   AdminOfferNew: 'AdminOffers',
@@ -321,6 +375,9 @@ const ADMIN_PARENT_ROUTES: Record<string, string> = {
   AdminTourNew: 'AdminTours',
   AdminTourEdit: 'AdminTours',
   AdminTourBook: 'AdminTours',
+  AdminHotelNew: 'AdminHotels',
+  AdminHotelEdit: 'AdminHotels',
+  AdminHotelBook: 'AdminHotels',
 };
 
 const ADMIN_FLIGHT_TABS = ['AdminOffers', 'AdminRoutes', 'AdminRequests', 'AdminBookings'];
@@ -332,12 +389,14 @@ function AdminTabsNavigator() {
   const unreadChats = useDeskUnread(AGENCY_DESK);
   const flights = useHasModule('flights');
   const tours = useHasModule('tours');
+  const hotels = useHasModule('hotels');
   // Routes only matter once the agency has connected a fare provider.
   const integrations = useIntegrations(flights);
   const hiddenRoutes = [
     ...ADMIN_SETTINGS_PAGES,
     ...(flights ? (integrations.data?.length ? [] : ['AdminRoutes']) : ADMIN_FLIGHT_TABS),
     ...(tours ? [] : ['AdminTours']),
+    ...(hotels ? [] : ['AdminHotels']),
   ];
   return (
     <AdminTabs.Navigator
@@ -378,6 +437,11 @@ function AdminTabsNavigator() {
       />
       <AdminTabs.Screen name="AdminTours" component={AdminToursScreen} options={tab('Tours', 'map-outline', 'map')} />
       <AdminTabs.Screen
+        name="AdminHotels"
+        component={AdminHotelsScreen}
+        options={tab('Hotels', 'bed-outline', 'bed')}
+      />
+      <AdminTabs.Screen
         name="AdminUsers"
         component={AdminUsersScreen}
         options={tab('Users', 'people-outline', 'people')}
@@ -408,6 +472,9 @@ function AdminTabsNavigator() {
       <AdminTabs.Screen name="AdminTourNew" component={FreshTourNew} options={{ title: 'New tour' }} />
       <AdminTabs.Screen name="AdminTourEdit" component={FreshTourEdit} options={{ title: 'Edit tour' }} />
       <AdminTabs.Screen name="AdminTourBook" component={FreshAdminTourBook} options={{ title: 'Book tour' }} />
+      <AdminTabs.Screen name="AdminHotelNew" component={FreshHotelNew} options={{ title: 'New hotel' }} />
+      <AdminTabs.Screen name="AdminHotelEdit" component={FreshHotelEdit} options={{ title: 'Edit hotel' }} />
+      <AdminTabs.Screen name="AdminHotelBook" component={FreshAdminHotelBook} options={{ title: 'Book hotel' }} />
     </AdminTabs.Navigator>
   );
 }

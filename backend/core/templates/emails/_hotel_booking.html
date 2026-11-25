@@ -1,0 +1,9 @@
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
+  {% include "emails/_row.html" with label="Hotel" value=hotel.name %}
+  {% include "emails/_row.html" with label="Address" value=hotel.address|add:", "|add:hotel.destination %}
+  {% include "emails/_row.html" with label="Dates" value=dates|add:" ("|add:nights|add:")" %}
+  {% include "emails/_row.html" with label="Times" value=times %}
+  {% include "emails/_row.html" with label="Rooms" value=rooms %}
+  {% if booking.special_requests %}{% include "emails/_row.html" with label="Special requests" value=booking.special_requests %}{% endif %}
+  {% include "emails/_row.html" with label="Total" value=total price=True %}
+</table>

@@ -1,0 +1,8 @@
+A customer has asked to book a hotel. Check availability with the hotel, then confirm it in the app.
+
+Customer: {{ booking.user.full_name }} <{{ booking.user.email }}>{% if booking.user.phone %}, {{ booking.user.phone }}{% endif %}
+Notes: {{ booking.notes|default:"(none)" }}
+
+{% include "emails/_hotel_booking.txt" %}
+Open the booking in the app:
+{{ frontend_url }}/admin/hotels/{{ booking.id }}

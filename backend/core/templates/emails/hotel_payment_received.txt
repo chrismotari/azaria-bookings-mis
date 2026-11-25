@@ -1,0 +1,9 @@
+Hello {{ booking.user.full_name }},
+
+We have received your payment. We will email your hotel voucher once the hotel has confirmed your rooms.
+
+{% include "emails/_hotel_booking.txt" %}
+Open your booking:
+{{ frontend_url }}/bookings?hotel={{ booking.id }}
+
+Azaria Bookings

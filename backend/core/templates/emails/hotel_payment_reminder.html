@@ -1,0 +1,9 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hello {{ booking.user.full_name }},</p>
+<p style="margin:0 0 16px 0;">This is a reminder that payment for your stay at <strong>{{ hotel.name }}</strong> is due by <strong>{{ deadline }}</strong>.</p>
+{% include "emails/_hotel_booking.html" %}
+{% include "emails/_box.html" with title="How to pay" text=payment_instructions %}
+<p style="margin:0 0 16px 0;">If we have not received your payment by then, the hold on these rooms will lapse.</p>
+{% with booking_id=booking.id|stringformat:"s" %}{% include "emails/_button.html" with url=frontend_url|add:"/bookings?hotel="|add:booking_id label="View your booking" %}{% endwith %}
+{% endblock %}

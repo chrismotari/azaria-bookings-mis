@@ -232,10 +232,10 @@ All delivered; each was one commit.
 45. Modules: flights, tours and hotels per agency (see §25).
 46. Tours (see §26).
 47. Flight passenger details (see §27).
+48. Hotels (see §28).
 
 Pending (not yet built):
 
-48. Hotels (see §28).
 49. Dashboard and Explore across modules (see §29).
 
 ## 14. Step 34: Return trips and flight details

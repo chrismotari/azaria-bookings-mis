@@ -1,13 +1,14 @@
 import { useNavigation } from '@react-navigation/native';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { GetAppFooter } from '../../agency/GetAppFooter';
 import { api } from '../../api/client';
 import { Paginated, Tour } from '../../api/types';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
+import { CoverImage } from '../../components/CoverImage';
 import { DateField } from '../../components/DateField';
 import { Icon } from '../../components/Icon';
 import { Pagination } from '../../components/Pagination';
@@ -215,18 +216,6 @@ export function ToursPage() {
   );
 }
 
-/** A cover photo, or a neutral placeholder with an icon. */
-export function TourCover({ url, height }: { url: string | null | undefined; height: number }) {
-  if (url) {
-    return <Image source={{ uri: url }} style={[styles.cover, { height }]} resizeMode="cover" accessible={false} />;
-  }
-  return (
-    <View style={[styles.cover, styles.placeholder, { height }]}>
-      <Icon name="image-outline" size={32} color={colors.light} />
-    </View>
-  );
-}
-
 function TourCard({ tour, onPress }: { tour: Tour; onPress: () => void }) {
   return (
     <Pressable
@@ -235,7 +224,7 @@ function TourCard({ tour, onPress }: { tour: Tour; onPress: () => void }) {
       onPress={onPress}
       style={({ hovered }: PressState) => [styles.card, hovered && styles.hovered]}
     >
-      <TourCover url={tour.photos[0]?.url} height={170} />
+      <CoverImage url={tour.photos[0]?.url} height={170} />
       <View style={styles.cardBody}>
         <Text style={styles.title} numberOfLines={2}>
           {tour.title}
@@ -298,8 +287,6 @@ const styles = createStyles(() => ({
     ...shadow,
   },
   hovered: { borderColor: colors.primary },
-  cover: { width: '100%', backgroundColor: colors.neutralTint },
-  placeholder: { alignItems: 'center', justifyContent: 'center' },
   cardBody: { padding: space.lg, gap: space.sm },
   title: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text },
   fact: { flexDirection: 'row', alignItems: 'center', gap: space.xs },

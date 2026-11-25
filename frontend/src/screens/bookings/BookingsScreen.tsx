@@ -8,7 +8,7 @@ import { Booking, Paginated } from '../../api/types';
 import { AirlineBadge } from '../../components/AirlineBadge';
 import { DetailLayout } from '../../components/DetailLayout';
 import { Icon, IconName } from '../../components/Icon';
-import { ModulePages, NotYet } from '../../components/ModulePages';
+import { ModulePages } from '../../components/ModulePages';
 import { Pagination } from '../../components/Pagination';
 import { PriceTag } from '../../components/PriceTag';
 import { RouteLine } from '../../components/RouteLine';
@@ -20,6 +20,7 @@ import { MainTabParamList } from '../../navigation/types';
 import { colors, createStyles, font, space, weight } from '../../theme';
 import { BOOKING_STATUS, bookingDates, bookingRoute, passengersLabel } from '../../utils/bookings';
 import { formatDate, routeCodes, tripDates } from '../../utils/format';
+import { HotelBookingsPage } from '../hotels/HotelBookingsPage';
 import { TourBookingsPage } from '../tours/TourBookingsPage';
 import { BookingDetailView } from './BookingDetailView';
 
@@ -29,13 +30,19 @@ export function BookingsScreen(props: Props) {
   return (
     <ModulePages
       label="Bookings"
-      only={props.route.params?.id ? 'flights' : props.route.params?.tour ? 'tours' : undefined}
+      only={
+        props.route.params?.id
+          ? 'flights'
+          : props.route.params?.tour
+            ? 'tours'
+            : props.route.params?.hotel
+              ? 'hotels'
+              : undefined
+      }
       pages={{
         flights: () => <FlightBookings {...props} />,
         tours: () => <TourBookingsPage {...props} />,
-        hotels: () => (
-          <NotYet icon="bed-outline" title="No hotel bookings yet" message="Your hotel bookings will appear here." />
-        ),
+        hotels: () => <HotelBookingsPage {...props} />,
       }}
     />
   );

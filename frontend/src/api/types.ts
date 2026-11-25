@@ -863,3 +863,149 @@ export type TourBooking = {
 };
 
 export type AdminTourBooking = TourBooking & { user: User; created_by: string | null };
+
+export type HotelPhoto = { id: string; url: string };
+
+/** A rate as the room table shows it; prices only with dates, and null available without them. */
+export type HotelRate = {
+  id: string;
+  name: string;
+  inclusions: string[];
+  max_adults: number;
+  max_children: number;
+  per_adult_per_night: string;
+  available: boolean | null;
+  nights: number | null;
+  /** The nights' room prices summed. */
+  room_price: string | null;
+  /** For the adults priced. */
+  stay_price: string | null;
+};
+
+export type HotelRoomType = {
+  id: string;
+  name: string;
+  description: string;
+  max_adults: number;
+  max_children: number;
+  rates: HotelRate[];
+};
+
+export type Hotel = {
+  id: string;
+  name: string;
+  destination: string;
+  address: string;
+  star_rating: number | null;
+  summary: string;
+  /** Sanitized HTML. */
+  description: string;
+  amenities: string[];
+  /** "HH:MM:SS". */
+  check_in_time: string;
+  check_out_time: string;
+  cancellation_policy: string;
+  /** Per night without dates; for the stay with them. */
+  from_price: string | null;
+  photos: HotelPhoto[];
+  room_types: HotelRoomType[];
+};
+
+export type RatePeriod = { id?: string; start_date: string; end_date: string; price_per_night: string };
+
+export type AdminRate = {
+  id: string;
+  name: string;
+  inclusions: string[];
+  max_adults: number;
+  max_children: number;
+  per_adult_per_night: string;
+  is_active: boolean;
+  periods: RatePeriod[];
+  booked: boolean;
+};
+
+export type AdminRoomType = {
+  id: string;
+  name: string;
+  description: string;
+  max_adults: number;
+  max_children: number;
+  is_active: boolean;
+  rates: AdminRate[];
+  booked: boolean;
+};
+
+export type AdminHotel = Omit<Hotel, 'room_types'> & {
+  is_active: boolean;
+  room_types: AdminRoomType[];
+  created_at: string;
+  updated_at: string;
+};
+
+/** The same statuses as flight bookings. */
+export type HotelBookingStatus = BookingStatus;
+
+export type HotelBookingRoom = {
+  id: string;
+  room_type: string;
+  rate: string;
+  room_name: string;
+  rate_name: string;
+  per_adult_per_night: string;
+  price: string;
+  adults: number;
+  children: number;
+  /** The first is the lead guest. */
+  guests: Traveller[];
+};
+
+export type HotelBookingEvent = {
+  id: string;
+  from_status: HotelBookingStatus | null;
+  to_status: HotelBookingStatus;
+  created_at: string;
+};
+
+export type HotelVoucher = { id: string; original_name: string; uploaded_at: string };
+
+export type HotelBrief = {
+  id: string;
+  name: string;
+  destination: string;
+  address: string;
+  star_rating: number | null;
+  check_in_time: string;
+  check_out_time: string;
+  cancellation_policy: string;
+  cover_url: string | null;
+};
+
+export type HotelBooking = {
+  id: string;
+  hotel: HotelBrief;
+  check_in: string;
+  check_out: string;
+  nights: number;
+  rooms: HotelBookingRoom[];
+  total: string;
+  status: HotelBookingStatus;
+  /** A new total from confirming, with the admin's note; null when none. */
+  changes: { total: { old: string; new: string }; note: string } | null;
+  changes_accepted: boolean;
+  payment_deadline: string | null;
+  unavailable_message: string;
+  hotel_confirmation: string;
+  special_requests: string;
+  notes: string;
+  events: HotelBookingEvent[];
+  /** Customers see them once completed. */
+  vouchers: HotelVoucher[];
+  can_cancel: boolean;
+  can_edit_guests: boolean;
+  /** While availability is confirmed. */
+  payment_instructions: string | null;
+  created_at: string;
+};
+
+export type AdminHotelBooking = HotelBooking & { user: User; created_by: string | null };

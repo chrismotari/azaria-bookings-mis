@@ -91,8 +91,10 @@ def open_bookings(tenant, module):
                 status=TourBooking.Status.CONFIRMED, tour__end_date__gte=timezone.localdate()
             )
             return open_tours.count(), "open tour booking"
-    # Hotels (step 48) have no bookings yet.
-    return 0, ""
+    from hotels.models import HotelBooking
+
+    with schema_context(tenant.schema_name):
+        return HotelBooking.objects.filter(status__in=HotelBooking.OPEN_STATUSES).count(), "open hotel booking"
 
 
 def check_modules_change(tenant, modules):

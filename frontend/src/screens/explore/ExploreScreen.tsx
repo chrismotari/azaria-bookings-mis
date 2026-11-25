@@ -18,7 +18,7 @@ import {
   offerFilterParams,
   validateOfferFilters,
 } from '../../components/OfferFilterFields';
-import { ModulePages, NotYet } from '../../components/ModulePages';
+import { ModulePages } from '../../components/ModulePages';
 import { Pagination } from '../../components/Pagination';
 import { SegmentedControl } from '../../components/SegmentedControl';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
@@ -27,6 +27,7 @@ import { colors, createStyles, font, radius, space, useIsWide } from '../../them
 import { formatDate, routeCodes } from '../../utils/format';
 import { ExploreFilters } from './ExploreFilters';
 import { ExploreSearchBar } from './ExploreSearchBar';
+import { HotelsPage } from '../hotels/HotelsPage';
 import { ToursPage } from '../tours/ToursPage';
 import { OfferDetailView } from './OfferDetailView';
 
@@ -68,7 +69,7 @@ export function ExploreScreen(props: Props) {
       pages={{
         flights: () => <FlightDeals {...props} />,
         tours: () => <ToursPage />,
-        hotels: () => <NotYet icon="bed-outline" title="No hotels yet" message="Hotels will appear here." />,
+        hotels: () => <HotelsPage />,
       }}
     />
   );

@@ -21,4 +21,5 @@ urlpatterns = [
     path("api/", include("support.urls")),
     path("api/", include("integrations.urls")),
     path("api/", include("tours.urls")),
+    path("api/", include("hotels.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.PUBLIC_MEDIA_ROOT)

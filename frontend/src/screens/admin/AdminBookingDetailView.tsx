@@ -63,11 +63,11 @@ const SEND_PASSES: Action = {
 // Mirrors the server's upload rules.
 const MAX_PASSES = 10;
 const MAX_SIZE = 5 * 1024 * 1024;
-const ACCEPT = '.pdf,.png,.jpg,.jpeg';
+export const ACCEPT = '.pdf,.png,.jpg,.jpeg';
 const ALLOWED_TYPES = ['application/pdf', 'image/png', 'image/jpeg'];
 
 /** Why the file cannot be uploaded, or null. */
-function fileProblem(file: File): string | null {
+export function fileProblem(file: File): string | null {
   const extension = file.name.toLowerCase().split('.').pop() ?? '';
   if (!['pdf', 'png', 'jpg', 'jpeg'].includes(extension) || !ALLOWED_TYPES.includes(file.type)) {
     return `${file.name}: upload a PDF, PNG or JPEG file.`;

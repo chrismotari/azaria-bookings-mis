@@ -1,0 +1,19 @@
+Hello {{ booking.user.full_name }},
+
+Good news: the hotel has rooms for your stay.
+{% if new_total %}
+The price has changed: {{ old_total }} → {{ new_total }}
+{% if note %}Why it changed: {{ note }}
+{% endif %}
+Please accept or decline the new total in the app before you pay.
+{% endif %}
+{% include "emails/_hotel_booking.txt" %}
+How to pay:
+{{ payment_instructions }}
+
+Please pay by {{ deadline }}. If we have not received your payment by then, the hold on these rooms will lapse.
+
+View your booking:
+{{ frontend_url }}/bookings?hotel={{ booking.id }}
+
+Azaria Bookings

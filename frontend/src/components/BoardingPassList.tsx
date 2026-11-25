@@ -12,13 +12,15 @@ import { Icon } from './Icon';
 
 type Props = {
   passes: BoardingPass[];
+  /** Opens a file; boarding passes unless given (e.g. hotel vouchers). */
+  openFile?: (id: string, filename: string) => Promise<void>;
   /** Shows a Delete button on each pass. */
   onDelete?: (boardingPass: BoardingPass) => void;
   deletingId?: string | null;
 };
 
-/** Opening a pass works on web only. */
-export function BoardingPassList({ passes, onDelete, deletingId }: Props) {
+/** Uploaded files (boarding passes, vouchers) with Open; opening works on web only. */
+export function BoardingPassList({ passes, openFile = openBoardingPass, onDelete, deletingId }: Props) {
   const [openingId, setOpeningId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +28,7 @@ export function BoardingPassList({ passes, onDelete, deletingId }: Props) {
     setError(null);
     setOpeningId(boardingPass.id);
     try {
-      await openBoardingPass(boardingPass.id, boardingPass.original_name);
+      await openFile(boardingPass.id, boardingPass.original_name);
     } catch (openError) {
       setError(errorMessage(openError));
     } finally {
@@ -74,9 +76,7 @@ export function BoardingPassList({ passes, onDelete, deletingId }: Props) {
           </View>
         </View>
       ))}
-      {Platform.OS !== 'web' ? (
-        <Text style={styles.muted}>Opening boarding passes is available on the web app.</Text>
-      ) : null}
+      {Platform.OS !== 'web' ? <Text style={styles.muted}>Opening files is available on the web app.</Text> : null}
       <FormError message={error} />
     </View>
   );

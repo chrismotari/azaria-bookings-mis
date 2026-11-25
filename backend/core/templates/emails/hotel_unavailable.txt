@@ -1,0 +1,12 @@
+Hello {{ booking.user.full_name }},
+
+We are sorry: the hotel has no rooms for your stay, so we could not confirm your booking.
+{% if message %}
+Message from your agency:
+{{ message }}
+{% endif %}
+{% include "emails/_hotel_booking.txt" %}
+Find another stay:
+{{ frontend_url }}
+
+Azaria Bookings

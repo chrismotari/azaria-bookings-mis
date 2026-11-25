@@ -1,12 +1,12 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
-import { useEffect, useMemo, useState } from 'react';
-import { Image, Platform, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { errorMessage, firstMessage } from '../../api/errors';
-import { AdminTour, TourPhoto } from '../../api/types';
+import { AdminTour } from '../../api/types';
 import { BackLink } from '../../components/BackLink';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
@@ -14,8 +14,9 @@ import { DateField } from '../../components/DateField';
 import { DetailError } from '../../components/DetailLayout';
 import { Dialog } from '../../components/Dialog';
 import { FieldGrid, FormError } from '../../components/Field';
-import { FileField } from '../../components/FileField';
 import { FormFooter, FormSection } from '../../components/FormSection';
+import { LinesEditor } from '../../components/LinesEditor';
+import { PendingPhotos, SavedPhotos, uploadPendingPhotos } from '../../components/PhotoEditor';
 import { RichTextEditor } from '../../components/rich/RichTextEditor';
 import { Screen } from '../../components/Screen';
 import { StatusChip } from '../../components/StatusChip';
@@ -28,8 +29,6 @@ import { dayBefore, peopleLabel } from '../../utils/tours';
 
 const MAX_LINES = 30;
 const MAX_PHOTOS = 8;
-const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
-const PHOTO_TYPES = '.png,.jpg,.jpeg,.webp';
 const PRICE = /^\d+(\.\d{1,2})?$/;
 
 type OptionDraft = {
@@ -324,12 +323,7 @@ function TourForm({ tour, initial, onCancel, onSaved }: FormProps) {
       const { data } = tour
         ? await api.patch<AdminTour>(`/admin/tours/${tour.id}`, body)
         : await api.post<AdminTour>('/admin/tours', body);
-      for (const file of pending) {
-        const form = new FormData();
-        form.append('image', file);
-        // Checked here first; one the server still refuses can be added again from Edit tour.
-        await api.post(`/admin/tours/${data.id}/photos`, form).catch(() => undefined);
-      }
+      await uploadPendingPhotos(`/admin/tours/${data.id}/photos`, pending);
       await queryClient.invalidateQueries({ queryKey: ['admin', 'tours'] });
       setAskNotice(false);
       onSaved(data);
@@ -465,18 +459,31 @@ function TourForm({ tour, initial, onCancel, onSaved }: FormProps) {
           label="Included"
           lines={values.included}
           onChange={(lines) => set('included', lines)}
+          maxLines={MAX_LINES}
+          maxLength={200}
           error={errors.included}
         />
         <LinesEditor
           label="Not included"
           lines={values.not_included}
           onChange={(lines) => set('not_included', lines)}
+          maxLines={MAX_LINES}
+          maxLength={200}
           error={errors.not_included}
         />
       </FormSection>
 
       <FormSection title="Photos" description="PNG, JPEG or WebP up to 2 MB, at most 8. The first is the cover.">
-        {tour ? <SavedPhotos tour={tour} /> : <PendingPhotos files={pending} onChange={setPending} />}
+        {tour ? (
+          <SavedPhotos
+            path={`/admin/tours/${tour.id}/photos`}
+            initial={tour.photos}
+            max={MAX_PHOTOS}
+            queryKey={['admin', 'tours']}
+          />
+        ) : (
+          <PendingPhotos files={pending} onChange={setPending} max={MAX_PHOTOS} noun="tour" />
+        )}
       </FormSection>
 
       <FormError message={formError} />
@@ -642,195 +649,6 @@ function OptionsEditor({ options, onChange }: { options: OptionDraft[]; onChange
   );
 }
 
-function LinesEditor({
-  label,
-  lines,
-  onChange,
-  error,
-}: {
-  label: string;
-  lines: string[];
-  onChange: (lines: string[]) => void;
-  error?: string;
-}) {
-  return (
-    <View style={styles.list}>
-      <Text style={styles.strong}>{label}</Text>
-      {lines.map((line, index) => (
-        <View key={index} style={styles.lineRow}>
-          <View style={styles.grow}>
-            <TextField
-              label={`${label} ${index + 1}`}
-              value={line}
-              onChangeText={(text) => onChange(lines.map((other, at) => (at === index ? text : other)))}
-              maxLength={200}
-            />
-          </View>
-          <Button title="Remove" variant="link" onPress={() => onChange(lines.filter((_, other) => other !== index))} />
-        </View>
-      ))}
-      <FormError message={error} />
-      {lines.length < MAX_LINES ? (
-        <View style={styles.start}>
-          <Button
-            title={`Add to ${label.toLowerCase()}`}
-            icon="add"
-            variant="secondary"
-            onPress={() => onChange([...lines, ''])}
-          />
-        </View>
-      ) : null}
-    </View>
-  );
-}
-
-function photoProblem(file: File): string | null {
-  if (!/\.(png|jpe?g|webp)$/i.test(file.name)) {
-    return `${file.name}: upload a PNG, JPEG or WebP image.`;
-  }
-  if (file.size > MAX_PHOTO_BYTES) {
-    return `${file.name}: the photo is larger than 2 MB.`;
-  }
-  return null;
-}
-
-/** New tour: photos are kept here and uploaded once the tour is created. */
-function PendingPhotos({ files, onChange }: { files: File[]; onChange: (files: File[]) => void }) {
-  const [error, setError] = useState<string | null>(null);
-  const urls = useMemo(() => files.map((file) => URL.createObjectURL(file)), [files]);
-  useEffect(() => () => urls.forEach((url) => URL.revokeObjectURL(url)), [urls]);
-  const move = (index: number, by: number) => {
-    const next = [...files];
-    const [item] = next.splice(index, 1);
-    next.splice(index + by, 0, item);
-    onChange(next);
-  };
-  return (
-    <PhotoGrid
-      photos={files.map((file, index) => ({ key: `${file.name}-${index}`, url: urls[index] }))}
-      onMove={move}
-      onDelete={(index) => onChange(files.filter((_, other) => other !== index))}
-      onAdd={(added) => {
-        const problems = added.map(photoProblem).filter(Boolean);
-        setError(problems.length ? problems.join(' ') : null);
-        const fine = added.filter((file) => !photoProblem(file));
-        const room = MAX_PHOTOS - files.length;
-        if (fine.length > room) {
-          setError(`A tour can have at most ${MAX_PHOTOS} photos.`);
-        }
-        onChange([...files, ...fine.slice(0, room)]);
-      }}
-      error={error}
-      busy={false}
-    />
-  );
-}
-
-/** Edit tour: each change is saved at once. */
-function SavedPhotos({ tour }: { tour: AdminTour }) {
-  const queryClient = useQueryClient();
-  const [photos, setPhotos] = useState<TourPhoto[]>(tour.photos);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const run = async (work: () => Promise<void>) => {
-    setBusy(true);
-    setError(null);
-    try {
-      await work();
-    } catch (failure) {
-      setError(errorMessage(failure));
-    } finally {
-      setBusy(false);
-      void queryClient.invalidateQueries({ queryKey: ['admin', 'tours'] });
-    }
-  };
-  return (
-    <PhotoGrid
-      photos={photos.map((photo) => ({ key: photo.id, url: photo.url }))}
-      busy={busy}
-      error={error}
-      onMove={(index, by) =>
-        run(async () => {
-          const { data } = await api.patch<TourPhoto[]>(`/admin/tours/${tour.id}/photos/${photos[index].id}`, {
-            position: index + by,
-          });
-          setPhotos(data);
-        })
-      }
-      onDelete={(index) =>
-        run(async () => {
-          await api.delete(`/admin/tours/${tour.id}/photos/${photos[index].id}`);
-          setPhotos(photos.filter((_, other) => other !== index));
-        })
-      }
-      onAdd={(files) =>
-        run(async () => {
-          const added: TourPhoto[] = [];
-          const failed: string[] = [];
-          for (const file of files) {
-            const form = new FormData();
-            form.append('image', file);
-            try {
-              added.push((await api.post<TourPhoto>(`/admin/tours/${tour.id}/photos`, form)).data);
-            } catch (failure) {
-              failed.push(`${file.name}: ${errorMessage(failure)}`);
-            }
-          }
-          setPhotos((current) => [...current, ...added]);
-          if (failed.length) {
-            throw new Error(failed.join(' '));
-          }
-        })
-      }
-    />
-  );
-}
-
-type GridProps = {
-  photos: { key: string; url: string }[];
-  onMove: (index: number, by: number) => void;
-  onDelete: (index: number) => void;
-  onAdd: (files: File[]) => void;
-  error: string | null;
-  busy: boolean;
-};
-
-function PhotoGrid({ photos, onMove, onDelete, onAdd, error, busy }: GridProps) {
-  if (Platform.OS !== 'web') {
-    return <Text style={styles.muted}>Photos can be changed in the web app.</Text>;
-  }
-  return (
-    <View style={styles.list}>
-      <View style={styles.photos}>
-        {photos.map((photo, index) => (
-          <View key={photo.key} style={styles.photo}>
-            <Image source={{ uri: photo.url }} style={styles.photoImage} resizeMode="cover" />
-            {index === 0 ? <StatusChip label="Cover" tone="info" /> : null}
-            <View style={styles.row}>
-              <Button title="Up" variant="link" disabled={busy || index === 0} onPress={() => onMove(index, -1)} />
-              <Button
-                title="Down"
-                variant="link"
-                disabled={busy || index === photos.length - 1}
-                onPress={() => onMove(index, 1)}
-              />
-              <Button title="Delete" variant="link" disabled={busy} onPress={() => onDelete(index)} />
-            </View>
-          </View>
-        ))}
-      </View>
-      <FileField
-        label="Add photos"
-        hint={`PNG, JPEG or WebP, up to 2 MB each; ${photos.length} of ${MAX_PHOTOS} added.`}
-        accept={PHOTO_TYPES}
-        onSelect={onAdd}
-        disabled={busy || photos.length >= MAX_PHOTOS}
-        error={error ?? undefined}
-      />
-    </View>
-  );
-}
-
 const styles = createStyles(() => ({
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   text: { fontSize: font.body, color: colors.text },
@@ -853,10 +671,5 @@ const styles = createStyles(() => ({
     flexWrap: 'wrap',
   },
   row: { flexDirection: 'row', alignItems: 'center', gap: space.sm, flexWrap: 'wrap' },
-  lineRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm },
-  grow: { flex: 1, minWidth: 0 },
   start: { alignSelf: 'flex-start' },
-  photos: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
-  photo: { width: 160, gap: space.xs },
-  photoImage: { width: 160, height: 110, borderRadius: radius.md, backgroundColor: colors.neutralTint },
 }));

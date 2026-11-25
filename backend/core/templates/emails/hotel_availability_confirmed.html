@@ -1,0 +1,20 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hello {{ booking.user.full_name }},</p>
+<p style="margin:0 0 16px 0;">Good news: the hotel has rooms for your stay.</p>
+{% if new_total %}
+<p style="margin:0 0 8px 0;"><strong>The price has changed:</strong></p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
+  <tr>
+    <td valign="top" style="padding:8px 12px 8px 0; border-bottom:1px solid {{ brand.border }}; color:{{ brand.muted }}; font-size:14px; width:40%;">Total</td>
+    <td valign="top" style="padding:8px 0; border-bottom:1px solid {{ brand.border }}; color:{{ brand.text }}; font-size:14px;"><span style="text-decoration:line-through; color:{{ brand.muted }};">{{ old_total }}</span><br>{{ new_total }}</td>
+  </tr>
+</table>
+{% if note %}{% include "emails/_box.html" with title="Why it changed" text=note %}{% endif %}
+<p style="margin:0 0 16px 0;">Please accept or decline the new total in the app before you pay.</p>
+{% endif %}
+{% include "emails/_hotel_booking.html" %}
+{% include "emails/_box.html" with title="How to pay" text=payment_instructions %}
+<p style="margin:0 0 16px 0;">Please pay by <strong>{{ deadline }}</strong>. If we have not received your payment by then, the hold on these rooms will lapse.</p>
+{% with booking_id=booking.id|stringformat:"s" %}{% include "emails/_button.html" with url=frontend_url|add:"/bookings?hotel="|add:booking_id label="View your booking" %}{% endwith %}
+{% endblock %}

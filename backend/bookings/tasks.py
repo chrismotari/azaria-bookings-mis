@@ -194,8 +194,12 @@ def _expire(booking_ids, from_status):
 
 @shared_task
 def expire_unpaid_bookings():
-    """Confirmed bookings whose payment deadline has passed, in every active tenant."""
-    return for_each_tenant(_expire_unpaid_bookings, "expire_unpaid_bookings", "flights")
+    """Confirmed flight and hotel bookings whose payment deadline has passed, in every active tenant."""
+    from hotels.tasks import expire_unpaid_hotel_bookings
+
+    return for_each_tenant(_expire_unpaid_bookings, "expire_unpaid_bookings", "flights") + for_each_tenant(
+        expire_unpaid_hotel_bookings, "expire_unpaid_bookings", "hotels"
+    )
 
 
 def _expire_unpaid_bookings():
@@ -209,8 +213,13 @@ def _expire_unpaid_bookings():
 
 @shared_task
 def expire_stale_requests():
-    """Requested bookings whose flight has already departed, in every active tenant."""
-    return for_each_tenant(_expire_stale_requests, "expire_stale_requests", "flights")
+    """Requested flight bookings whose flight has departed and hotel bookings still requested on the check-in day,
+    in every active tenant."""
+    from hotels.tasks import expire_stale_hotel_requests
+
+    return for_each_tenant(_expire_stale_requests, "expire_stale_requests", "flights") + for_each_tenant(
+        expire_stale_hotel_requests, "expire_stale_requests", "hotels"
+    )
 
 
 def _expire_stale_requests():
@@ -234,8 +243,12 @@ def _reminder_due(now, hours_before):
 
 @shared_task
 def send_payment_reminders():
-    """Reminders for confirmed bookings near their payment deadline, in every active tenant."""
-    return for_each_tenant(_send_payment_reminders, "send_payment_reminders", "flights")
+    """Reminders for confirmed flight and hotel bookings near their payment deadline, in every active tenant."""
+    from hotels.tasks import send_hotel_payment_reminders
+
+    return for_each_tenant(_send_payment_reminders, "send_payment_reminders", "flights") + for_each_tenant(
+        send_hotel_payment_reminders, "send_payment_reminders", "hotels"
+    )
 
 
 def _send_payment_reminders():

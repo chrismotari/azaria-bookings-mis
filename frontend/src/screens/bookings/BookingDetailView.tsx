@@ -1,6 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
@@ -18,11 +17,12 @@ import { FormError } from '../../components/Field';
 import { ItineraryCards, TripConditions } from '../../components/Itinerary';
 import { Icon } from '../../components/Icon';
 import { PassengersCard } from '../../components/Passengers';
+import { PaymentBox } from '../../components/PaymentBox';
 import { StatusChip } from '../../components/StatusChip';
 import { DetailError } from '../../components/DetailLayout';
 import { LoadingState } from '../../components/StatusViews';
 import { colors, createStyles, font, radius, space, weight } from '../../theme';
-import { BOOKING_STATUS, TERMINAL_STATUSES, changesAwaitingAcceptance, timeLeft } from '../../utils/bookings';
+import { BOOKING_STATUS, TERMINAL_STATUSES, changesAwaitingAcceptance } from '../../utils/bookings';
 import { formatDateTime } from '../../utils/format';
 
 const CANCELLABLE: BookingStatus[] = ['requested', 'availability_confirmed'];
@@ -156,7 +156,12 @@ export function BookingDetailView({ id }: { id: string }) {
           </View>
         </View>
       ) : data.status === 'availability_confirmed' ? (
-        <PaymentBox deadline={data.payment_deadline} instructions={data.payment_instructions} />
+        <PaymentBox
+          title="Seats confirmed: please pay"
+          deadline={data.payment_deadline}
+          instructions={data.payment_instructions}
+          lapse="If payment is not received by the deadline, the hold on these seats lapses."
+        />
       ) : null}
 
       <Card>
@@ -197,47 +202,7 @@ export function BookingDetailView({ id }: { id: string }) {
   );
 }
 
-/** Payment instructions and the deadline with a countdown, refreshed each minute. */
-function PaymentBox({ deadline, instructions }: { deadline: string | null; instructions: string | null }) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 60_000);
-    return () => clearInterval(timer);
-  }, []);
-  const passed = deadline !== null && new Date(deadline).getTime() <= now;
-
-  return (
-    <View style={styles.payment}>
-      <View style={styles.paymentTitle}>
-        <Icon name="card-outline" size={22} color={colors.primary} />
-        <Text style={styles.section}>Seats confirmed: please pay</Text>
-      </View>
-      {deadline ? (
-        <View style={styles.deadlineRow}>
-          <Text style={styles.deadline}>Pay by {formatDateTime(deadline)}</Text>
-          <View style={[styles.countdown, passed && styles.countdownPassed]}>
-            <Icon name="time-outline" size={14} color={passed ? colors.dangerText : colors.warningText} />
-            <Text style={[styles.countdownText, passed && styles.countdownTextPassed]}>{timeLeft(deadline, now)}</Text>
-          </View>
-        </View>
-      ) : null}
-      <Text style={styles.instructions}>{instructions}</Text>
-      <Text style={styles.muted}>If payment is not received by the deadline, the hold on these seats lapses.</Text>
-    </View>
-  );
-}
-
 const styles = createStyles(() => ({
-  payment: {
-    gap: space.md,
-    padding: space.lg,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.primary,
-    backgroundColor: colors.primaryTint,
-  },
   paymentTitle: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   changes: {
     gap: space.md,
@@ -250,29 +215,8 @@ const styles = createStyles(() => ({
     backgroundColor: colors.warningTint,
   },
   changeActions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  deadlineRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: space.sm },
-  countdown: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.xs,
-    paddingVertical: 3,
-    paddingHorizontal: 10,
-    borderRadius: radius.pill,
-    backgroundColor: colors.warningTint,
-  },
-  countdownPassed: { backgroundColor: colors.dangerTint },
-  countdownText: { fontSize: font.small, fontWeight: weight.bold, color: colors.warningText },
-  countdownTextPassed: { color: colors.dangerText },
-  instructions: {
-    fontSize: font.body,
-    color: colors.text,
-    padding: space.md,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surface,
-  },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   section: { fontSize: font.heading, fontWeight: weight.bold, color: colors.tertiary },
-  deadline: { color: colors.text, fontWeight: weight.bold },
   actions: { flexDirection: 'row' },
   text: { color: colors.text },
   muted: { color: colors.muted },

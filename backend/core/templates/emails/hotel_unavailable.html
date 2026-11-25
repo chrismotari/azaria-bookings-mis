@@ -1,0 +1,8 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hello {{ booking.user.full_name }},</p>
+<p style="margin:0 0 16px 0;">We are sorry: the hotel has no rooms for your stay, so we could not confirm your booking.</p>
+{% if message %}{% include "emails/_box.html" with title="Message from your agency" text=message %}{% endif %}
+{% include "emails/_hotel_booking.html" %}
+{% include "emails/_button.html" with url=frontend_url label="Find another stay" %}
+{% endblock %}

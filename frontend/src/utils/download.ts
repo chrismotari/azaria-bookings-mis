@@ -69,3 +69,7 @@ function save(data: Blob, filename: string) {
 export function openBoardingPass(id: string, filename: string) {
   return openFile(`/boarding-passes/${id}/download`, filename);
 }
+
+export function openHotelVoucher(id: string, filename: string) {
+  return openFile(`/hotel-vouchers/${id}/download`, filename);
+}

@@ -7,6 +7,7 @@ import { errorMessage } from '../../api/errors';
 import { Traveller, TourBooking, TourBookingEvent, TourBookingLine, TravellerInput } from '../../api/types';
 import { Button } from '../../components/Button';
 import { useConfirm } from '../../components/ConfirmDialog';
+import { CoverImage } from '../../components/CoverImage';
 import { FormError } from '../../components/Field';
 import { Icon } from '../../components/Icon';
 import { PriceTag } from '../../components/PriceTag';
@@ -22,7 +23,6 @@ import { TripCard } from '../../components/TripCard';
 import { colors, createStyles, font, space, weight } from '../../theme';
 import { formatDateTime, formatPrice } from '../../utils/format';
 import { peopleLabel, TOUR_BOOKING_STATUS, TOUR_EVENT_LABELS, tourDates, unitPrice } from '../../utils/tours';
-import { TourCover } from './ToursPage';
 
 type Editing = { line: TourBookingLine; traveller: Traveller | null; initial: TravellerDraft };
 
@@ -168,7 +168,7 @@ export function TourBookingCard({
     >
       <View style={styles.card}>
         <View style={styles.thumb}>
-          <TourCover url={booking.tour.cover_url} height={72} />
+          <CoverImage url={booking.tour.cover_url} height={72} />
         </View>
         <View style={styles.cardBody}>
           <View style={styles.between}>

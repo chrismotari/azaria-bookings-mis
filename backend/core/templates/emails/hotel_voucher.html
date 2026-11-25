@@ -1,0 +1,13 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hello {{ booking.user.full_name }},</p>
+<p style="margin:0 0 16px 0;">Your stay is confirmed. Your hotel voucher{{ voucher_count|pluralize }} {{ voucher_count|pluralize:"is,are" }} attached to this email; show {{ voucher_count|pluralize:"it,them" }} at check-in.</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
+  {% include "emails/_row.html" with label="Hotel confirmation number" value=booking.hotel_confirmation %}
+</table>
+{% include "emails/_hotel_booking.html" %}
+<p style="margin:0 0 8px 0;"><strong>Cancellation policy</strong></p>
+<p style="margin:0 0 16px 0;">{{ hotel.cancellation_policy|linebreaksbr }}</p>
+{% with booking_id=booking.id|stringformat:"s" %}{% include "emails/_button.html" with url=frontend_url|add:"/bookings?hotel="|add:booking_id label="Open your booking" %}{% endwith %}
+<p style="margin:0 0 16px 0;">Enjoy your stay!</p>
+{% endblock %}

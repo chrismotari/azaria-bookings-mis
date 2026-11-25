@@ -4,10 +4,7 @@ import { View } from 'react-native';
 import { MODULE_LABELS, useModules } from '../agency/modules';
 import { Module } from '../api/types';
 import { colors, createStyles, space } from '../theme';
-import { IconName } from './Icon';
-import { Screen } from './Screen';
 import { SegmentedControl } from './SegmentedControl';
-import { EmptyState } from './StatusViews';
 
 type Props = {
   label: string;
@@ -37,15 +34,6 @@ export function ModulePages({ label, pages, only }: Props) {
       </View>
       <View style={styles.fill}>{pages[current]()}</View>
     </View>
-  );
-}
-
-/** The page of a module whose screens are not built yet. */
-export function NotYet({ icon, title, message }: { icon: IconName; title: string; message: string }) {
-  return (
-    <Screen maxWidth={900} card>
-      <EmptyState icon={icon} title={title} message={message} />
-    </Screen>
   );
 }
 

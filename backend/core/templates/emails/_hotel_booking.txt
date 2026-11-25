@@ -1,0 +1,8 @@
+Hotel: {{ hotel.name }}
+Address: {{ hotel.address }}, {{ hotel.destination }}
+Dates: {{ dates }} ({{ nights }})
+{{ times }}
+Rooms:
+{{ rooms }}
+{% if booking.special_requests %}Special requests: {{ booking.special_requests }}
+{% endif %}Total: {{ total }}

@@ -1,0 +1,14 @@
+Hello {{ booking.user.full_name }},
+
+This is a reminder that payment for your stay at {{ hotel.name }} is due by {{ deadline }}.
+
+{% include "emails/_hotel_booking.txt" %}
+How to pay:
+{{ payment_instructions }}
+
+If we have not received your payment by then, the hold on these rooms will lapse.
+
+View your booking:
+{{ frontend_url }}/bookings?hotel={{ booking.id }}
+
+Azaria Bookings

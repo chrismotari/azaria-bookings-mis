@@ -1,0 +1,7 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hello {{ booking.user.full_name }},</p>
+<p style="margin:0 0 16px 0;">Your booking at <strong>{{ hotel.name }}</strong> has expired: {% if booking.payment_deadline %}we did not receive your payment in time{% else %}the hotel could not be confirmed before the check-in day{% endif %}.</p>
+{% include "emails/_hotel_booking.html" %}
+{% with hotel_id=hotel.id|stringformat:"s" %}{% include "emails/_button.html" with url=frontend_url|add:"/hotels/"|add:hotel_id label="Book again" %}{% endwith %}
+{% endblock %}

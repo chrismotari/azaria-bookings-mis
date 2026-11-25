@@ -1,0 +1,16 @@
+Hello {{ booking.user.full_name }},
+
+Your stay is confirmed. Your hotel voucher{{ voucher_count|pluralize }} {{ voucher_count|pluralize:"is,are" }} attached to this email; show {{ voucher_count|pluralize:"it,them" }} at check-in.
+
+Hotel confirmation number: {{ booking.hotel_confirmation }}
+
+{% include "emails/_hotel_booking.txt" %}
+Cancellation policy:
+{{ hotel.cancellation_policy }}
+
+Open your booking:
+{{ frontend_url }}/bookings?hotel={{ booking.id }}
+
+Enjoy your stay!
+
+Azaria Bookings

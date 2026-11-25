@@ -1,0 +1,9 @@
+Hello {{ booking.user.full_name }},
+
+Your booking at {{ hotel.name }} has expired: {% if booking.payment_deadline %}we did not receive your payment in time{% else %}the hotel could not be confirmed before the check-in day{% endif %}.
+
+{% include "emails/_hotel_booking.txt" %}
+Book again:
+{{ frontend_url }}/hotels/{{ hotel.id }}
+
+Azaria Bookings

@@ -142,7 +142,7 @@ class BoardingPass(models.Model):
 
 
 class Traveller(models.Model):
-    """Someone travelling on a tour booking line (or, from step 47, a flight booking); exactly one of the two."""
+    """Someone travelling on a tour booking line, a flight booking or a hotel room; exactly one of the three."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -160,6 +160,9 @@ class Traveller(models.Model):
         "tours.TourBookingLine", on_delete=models.CASCADE, null=True, blank=True, related_name="travellers"
     )
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, null=True, blank=True, related_name="travellers")
+    hotel_room = models.ForeignKey(
+        "hotels.HotelBookingRoom", on_delete=models.CASCADE, null=True, blank=True, related_name="travellers"
+    )
     full_name = models.CharField(max_length=100)
     gender = models.CharField(max_length=10, choices=Gender.choices, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
@@ -182,8 +185,9 @@ class Traveller(models.Model):
         ordering = ["created_at", "pk"]
         constraints = [
             models.CheckConstraint(
-                condition=models.Q(tour_line__isnull=False, booking__isnull=True)
-                | models.Q(tour_line__isnull=True, booking__isnull=False),
+                condition=models.Q(tour_line__isnull=False, booking__isnull=True, hotel_room__isnull=True)
+                | models.Q(tour_line__isnull=True, booking__isnull=False, hotel_room__isnull=True)
+                | models.Q(tour_line__isnull=True, booking__isnull=True, hotel_room__isnull=False),
                 name="traveller_has_one_owner",
             ),
         ]

@@ -1,6 +1,6 @@
 import { NavigatorScreenParams } from '@react-navigation/native';
 
-import { BookingStatus, QueryStatus, TicketClass, TripType } from '../api/types';
+import { BookingStatus, HotelBookingStatus, QueryStatus, TicketClass, TripType } from '../api/types';
 
 /** Prefilled request-for-options criteria (airports as IATA codes), e.g. from Explore's filters. */
 export type QueryPrefill = {
@@ -21,8 +21,9 @@ export type MainTabParamList = {
   /** query: the request whose response led to this offer; passed on to the booking. */
   Explore: { id?: string; query?: string } | undefined;
   Requests: { id?: string } | undefined;
-  /** id: a flight booking; tour: a tour booking (booked: just made, shows "You're booked"). */
-  Bookings: { id?: string; tour?: string; booked?: 'yes' } | undefined;
+  /** id: a flight booking; tour: a tour booking (booked: just made, shows "You're booked"); hotel: a hotel
+   * booking. */
+  Bookings: { id?: string; tour?: string; hotel?: string; booked?: 'yes' } | undefined;
   Account: undefined;
   /** Not in the bar: shown under Requests and Explore. */
   QueryNew: QueryPrefill | undefined;
@@ -30,6 +31,10 @@ export type MainTabParamList = {
   /** Not in the bar: under Explore. */
   TourDetail: { id: string };
   TourBook: { id: string };
+  /** Not in the bar: under Explore. The stay and guests, when chosen, price the rooms. */
+  HotelDetail: HotelStay & { id: string };
+  /** rooms: the rates picked, one id per room, comma-separated. */
+  HotelBook: HotelStay & { id: string; rooms?: string };
   /** Account > Support: the customer's chats. */
   Support: { id?: string } | undefined;
 };
@@ -52,6 +57,12 @@ export type AdminTabParamList = {
   AdminTourNew: undefined;
   AdminTourEdit: { id: string };
   AdminTourBook: { id: string; customer: string };
+  /** tab hotels: the hotels list (id a hotel); otherwise the bookings (id a booking). */
+  AdminHotels: { tab?: 'hotels'; id?: string; status?: HotelBookingStatus | 'all' } | undefined;
+  /** Not in the bar: shown under Hotels. customer: who the admin books for. */
+  AdminHotelNew: undefined;
+  AdminHotelEdit: { id: string };
+  AdminHotelBook: { id: string; customer: string };
   /** Not in the bar: shown under Offers and Requests. */
   AdminOfferNew: undefined;
   AdminQueryRespond: { id: string };
@@ -63,6 +74,9 @@ export type AdminTabParamList = {
   /** Settings > Support: the agency's chats with the platform. */
   AdminSupport: { id?: string } | undefined;
 };
+
+/** A hotel stay and its guests as URL params. */
+export type HotelStay = { check_in?: string; check_out?: string; adults?: string; children?: string };
 
 export type AdminTourFilter = 'all' | 'upcoming' | 'past' | 'inactive' | 'cancelled';
 

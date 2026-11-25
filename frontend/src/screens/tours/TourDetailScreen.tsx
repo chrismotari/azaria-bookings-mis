@@ -1,7 +1,6 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { api } from '../../api/client';
 import { Tour } from '../../api/types';
@@ -10,9 +9,8 @@ import { BackLink } from '../../components/BackLink';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { DetailError } from '../../components/DetailLayout';
-import { Dialog } from '../../components/Dialog';
 import { Icon, IconName } from '../../components/Icon';
-import { PressState } from '../../components/pressState';
+import { PhotoGallery } from '../../components/PhotoGallery';
 import { RichText } from '../../components/rich/RichText';
 import { Screen } from '../../components/Screen';
 import { LoadingState } from '../../components/StatusViews';
@@ -20,7 +18,6 @@ import { MainTabParamList } from '../../navigation/types';
 import { colors, createStyles, font, radius, space, useIsWide, weight } from '../../theme';
 import { formatDate, formatPrice } from '../../utils/format';
 import { NOT_BOOKABLE, slotsLeftLabel, tourDates, unitPrice } from '../../utils/tours';
-import { TourCover } from './ToursPage';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'TourDetail'>;
 
@@ -60,7 +57,7 @@ export function TourDetailScreen({ navigation, route }: Props) {
   return (
     <Screen maxWidth={1100}>
       {back}
-      <Gallery tour={data} />
+      <PhotoGallery title={data.title} photos={data.photos} />
       <View style={[styles.columns, !isWide && styles.stacked]}>
         <View style={styles.main}>
           <Card>
@@ -116,41 +113,6 @@ function Lines({ title, icon, color, lines }: { title: string; icon: IconName; c
   );
 }
 
-function Gallery({ tour }: { tour: Tour }) {
-  const isWide = useIsWide();
-  const [open, setOpen] = useState<string | null>(null);
-  const [cover, ...rest] = tour.photos;
-  if (!cover) {
-    return <TourCover url={null} height={isWide ? 280 : 200} />;
-  }
-  const photo = (url: string, label: string, style: object) => (
-    <Pressable
-      key={url}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={() => setOpen(url)}
-      style={({ hovered }: PressState) => [style, hovered && styles.photoHovered]}
-    >
-      <Image source={{ uri: url }} style={styles.image} resizeMode="cover" />
-    </Pressable>
-  );
-  return (
-    <View style={styles.gallery}>
-      {photo(cover.url, 'Open the cover photo', [styles.coverPhoto, { height: isWide ? 360 : 220 }])}
-      {rest.length ? (
-        <View style={styles.thumbs}>
-          {rest.map((item, index) => photo(item.url, `Open photo ${index + 2}`, styles.thumb))}
-        </View>
-      ) : null}
-      {open ? (
-        <Dialog open title={tour.title} size="wide" onClose={() => setOpen(null)} footer={null}>
-          <Image source={{ uri: open }} style={styles.large} resizeMode="contain" accessibilityLabel="Photo" />
-        </Dialog>
-      ) : null}
-    </View>
-  );
-}
-
 function PriceCard({ tour, onBook }: { tour: Tour; onBook: () => void }) {
   return (
     <Card>
@@ -200,13 +162,6 @@ const styles = createStyles(() => ({
   muted: { fontSize: font.small, color: colors.muted },
   fact: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   lines: { gap: space.sm },
-  gallery: { gap: space.sm },
-  coverPhoto: { width: '100%', borderRadius: radius.lg, overflow: 'hidden' },
-  thumbs: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  thumb: { width: 96, height: 72, borderRadius: radius.md, overflow: 'hidden' },
-  photoHovered: { opacity: 0.85 },
-  image: { width: '100%', height: '100%' },
-  large: { width: '100%', height: 520 },
   option: {
     flexDirection: 'row',
     justifyContent: 'space-between',
