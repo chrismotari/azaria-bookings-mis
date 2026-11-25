@@ -73,6 +73,7 @@ cp .env.example .env               # then edit .env
 python manage.py migrate_schemas --shared
 python manage.py seed_airports
 python manage.py seed_airlines
+python manage.py fetch_airline_logos   # optional: logos by IATA code; check them in /django-admin/
 python manage.py createsuperuser   # the platform owner
 python manage.py create_agency --schema azaria --name "Azaria Bookings" \
     --admin-email owner@example.com --admin-password '<strong password>' --admin-name "Agency Owner"

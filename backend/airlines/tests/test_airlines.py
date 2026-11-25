@@ -2,7 +2,9 @@
 
 import struct
 from datetime import timedelta
+from io import StringIO
 
+import httpx
 import pytest
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -12,7 +14,7 @@ from django_tenants.utils import schema_context
 from rest_framework.test import APIRequestFactory
 
 from accounts.models import User
-from airlines.management.commands import seed_airlines
+from airlines.management.commands import fetch_airline_logos, seed_airlines
 from airlines.models import MAX_LOGO_SIZE, Airline, validate_logo
 from airlines.serializers import AirlineSerializer
 from core.storage import public_storage
@@ -112,6 +114,76 @@ def test_replacing_or_removing_a_logo_deletes_the_old_file(django_capture_on_com
         airline.logo = ""
         airline.save()
     assert not public_storage.exists(second)
+
+
+# Fetching logos
+
+
+@pytest.fixture
+def logo_server(monkeypatch):
+    """Answers logo requests from a dict of IATA code -> response (404 for the rest); records the codes asked."""
+    answers, asked = {}, []
+
+    def handler(request):
+        code = request.url.path.rsplit("/", 1)[-1].removesuffix(".png")
+        asked.append(code)
+        answer = answers.get(code, httpx.Response(404))
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
+
+    monkeypatch.setattr(fetch_airline_logos, "transport", httpx.MockTransport(handler))
+    return answers, asked
+
+
+def fetch_logos(*args):
+    out = StringIO()
+    call_command("fetch_airline_logos", *args, stdout=out)
+    return out.getvalue()
+
+
+def test_fetch_airline_logos_saves_found_logos_and_skips_the_rest(logo_server):
+    answers, asked = logo_server
+    for code in ["KQ", "EK", "QR", "ET", "BA", "SA"]:
+        Airline.objects.create(iata_code=code, name=code)
+    answers["KQ"] = httpx.Response(200, content=PNG)
+    answers["EK"] = httpx.Response(200, content=JPEG)
+    answers["QR"] = httpx.Response(200, content=PNG + b"\x00" * MAX_LOGO_SIZE)
+    answers["ET"] = httpx.ConnectError("refused")
+    answers["BA"] = httpx.Response(500)
+
+    output = fetch_logos()
+
+    assert sorted(asked) == ["BA", "EK", "ET", "KQ", "QR", "SA"]
+    assert "1 saved, 2 not found, 3 failed." in output
+    assert "Saved: KQ" in output
+    kq = Airline.objects.get(iata_code="KQ")
+    assert kq.logo.name.startswith("airline_logos/") and kq.logo.name.endswith(".png")
+    assert public_storage.open(kq.logo.name).read() == PNG
+    assert set(Airline.objects.exclude(logo="").values_list("iata_code", flat=True)) == {"KQ"}
+
+
+def test_fetch_airline_logos_leaves_existing_logos_and_inactive_airlines_alone(logo_server):
+    answers, asked = logo_server
+    existing = Airline.objects.create(iata_code="KQ", name="Kenya Airways", logo=upload("kq.png", PNG))
+    Airline.objects.create(iata_code="EK", name="Emirates", is_active=False)
+    answers["KQ"] = answers["EK"] = httpx.Response(200, content=PNG)
+
+    assert "0 saved, 0 not found, 0 failed." in fetch_logos()
+    assert asked == []
+    assert Airline.objects.get(pk=existing.pk).logo.name == existing.logo.name
+    assert Airline.objects.get(iata_code="EK").logo.name == ""
+
+
+def test_fetch_airline_logos_with_codes_fetches_only_those(logo_server):
+    answers, asked = logo_server
+    for code in ["KQ", "EK", "QR"]:
+        Airline.objects.create(iata_code=code, name=code)
+        answers[code] = httpx.Response(200, content=PNG)
+
+    assert "2 saved" in fetch_logos("--codes", "kq, QR")
+    assert sorted(asked) == ["KQ", "QR"]
+    assert Airline.objects.get(iata_code="EK").logo.name == ""
 
 
 # The API
