@@ -9,6 +9,7 @@ import { AdminCustomer, AdminTour, AdminTourBooking, Paginated, TourNotice } fro
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { DetailError, DetailLayout } from '../../components/DetailLayout';
+import { FeatureStar } from '../../components/FeatureStar';
 import { Dialog } from '../../components/Dialog';
 import { FormError } from '../../components/Field';
 import { Pagination } from '../../components/Pagination';
@@ -20,6 +21,7 @@ import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { Column, Table, TableRow, TwoLineCell } from '../../components/Table';
 import { TextField } from '../../components/TextField';
+import { Toggle } from '../../components/Toggle';
 import { AdminTabParamList, AdminTourFilter } from '../../navigation/types';
 import { colors, createStyles, font, radius, space, useIsWide, weight } from '../../theme';
 import { formatDate, formatDateTime, formatPrice, todayInNairobi } from '../../utils/format';
@@ -38,6 +40,7 @@ const FILTERS: { value: AdminTourFilter; label: string }[] = [
 ];
 
 const COLUMNS: Column[] = [
+  { label: 'Featured', flex: 0.8 },
   { label: 'Tour', flex: 3 },
   { label: 'Dates', flex: 2.4 },
   { label: 'Booked / slots', flex: 1.3 },
@@ -51,14 +54,28 @@ export function AdminToursScreen({ navigation, route }: Props) {
   const status = route.params?.status ?? 'all';
   const close = useCallback(() => navigation.setParams({ id: undefined, booking: undefined }), [navigation]);
   const [page, setPage] = useState(1);
+  const [featured, setFeatured] = useState(false);
+  const queryClient = useQueryClient();
   const tours = useQuery({
-    queryKey: ['admin', 'tours', status, page],
+    queryKey: ['admin', 'tours', status, featured, page],
     queryFn: async () => {
-      const params = { page, ...(status === 'all' ? {} : { status }) };
+      const params = { page, ...(status === 'all' ? {} : { status }), ...(featured ? { featured: 'true' } : {}) };
       return (await api.get<Paginated<AdminTour>>('/admin/tours', { params })).data;
     },
     placeholderData: keepPreviousData,
   });
+  const feature = useMutation({
+    mutationFn: ({ id, is_featured }: { id: string; is_featured: boolean }) =>
+      api.patch(`/admin/tours/${id}`, { is_featured }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['admin', 'tours'] }),
+  });
+  const star = (tour: AdminTour) => (
+    <FeatureStar
+      featured={tour.is_featured}
+      disabled={Boolean(tour.cancelled_at) || (feature.isPending && feature.variables?.id === tour.id)}
+      onChange={(is_featured) => feature.mutate({ id: tour.id, is_featured })}
+    />
+  );
   const open = (id: string) => navigation.setParams({ id, booking: undefined });
 
   return (
@@ -115,6 +132,15 @@ export function AdminToursScreen({ navigation, route }: Props) {
               setPage(1);
             }}
           />
+          <Toggle
+            label="Featured only"
+            value={featured}
+            onChange={(value) => {
+              setFeatured(value);
+              setPage(1);
+            }}
+          />
+          <FormError message={feature.isError ? errorMessage(feature.error) : null} />
           {tours.isPending ? (
             <LoadingState />
           ) : tours.isError ? (
@@ -123,7 +149,7 @@ export function AdminToursScreen({ navigation, route }: Props) {
             <EmptyState
               icon="map-outline"
               title="No tours"
-              message={status === 'all' ? 'Create your first tour.' : 'No tours match this filter.'}
+              message={status === 'all' && !featured ? 'Create your first tour.' : 'No tours match this filter.'}
             />
           ) : isWide ? (
             <Table columns={COLUMNS}>
@@ -137,6 +163,7 @@ export function AdminToursScreen({ navigation, route }: Props) {
                     onPress={() => open(tour.id)}
                     accessibilityLabel={`${tour.title}, ${state.label}`}
                     cells={[
+                      <View key="featured">{star(tour)}</View>,
                       <TwoLineCell key="tour" primary={tour.title} secondary={tour.destination} />,
                       <TwoLineCell
                         key="dates"
@@ -166,8 +193,9 @@ export function AdminToursScreen({ navigation, route }: Props) {
                       {tour.booked} / {tour.slots} booked
                       {tour.from_price ? ` · from ${formatPrice(tour.from_price)}` : ''}
                     </Text>
-                    <View style={styles.start}>
+                    <View style={styles.cardActions}>
                       <Button title="Open" variant="secondary" onPress={() => open(tour.id)} />
+                      {star(tour)}
                     </View>
                   </Card>
                 );
@@ -627,6 +655,7 @@ const styles = createStyles(() => ({
   },
   shrink: { flexShrink: 1, minWidth: 0 },
   start: { alignSelf: 'flex-start' },
+  cardActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
   cards: { gap: space.md },
   actions: { flexDirection: 'row', gap: space.sm, flexWrap: 'wrap' },
   row: {

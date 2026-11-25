@@ -57,6 +57,7 @@ type Values = {
   included: string[];
   not_included: string[];
   meeting_point: string;
+  is_featured: boolean;
   options: OptionDraft[];
 };
 
@@ -76,6 +77,7 @@ const FIELDS: (keyof Values)[] = [
   'included',
   'not_included',
   'meeting_point',
+  'is_featured',
   'options',
 ];
 
@@ -107,6 +109,7 @@ const EMPTY: Values = {
   included: [],
   not_included: [],
   meeting_point: '',
+  is_featured: false,
   options: [{ ...newOption(), name: 'Regular' }],
 };
 
@@ -125,6 +128,7 @@ function toValues(tour: AdminTour): Values {
     included: tour.included,
     not_included: tour.not_included,
     meeting_point: tour.meeting_point,
+    is_featured: tour.is_featured,
     options: tour.options.map((option) => ({
       id: option.id,
       name: option.name,
@@ -421,6 +425,7 @@ function TourForm({ tour, initial, onCancel, onSaved }: FormProps) {
           onChange={(html) => set('description', html)}
           error={errors.description}
         />
+        <Toggle label="Feature on Explore" value={values.is_featured} onChange={(value) => set('is_featured', value)} />
       </FormSection>
 
       <FormSection title="Booking and cancelling" description="Both deadlines are the last day, until midnight.">

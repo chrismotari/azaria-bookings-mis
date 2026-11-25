@@ -222,6 +222,20 @@ def test_admin_list_filters(admin_api, make_tour):
     assert titles("cancelled") == {cancelled.title}
 
 
+def test_admin_features_a_tour_and_filters_featured(admin_api, make_tour):
+    tour, other = make_tour(title="Featured"), make_tour(title="Plain")
+    response = admin_api.patch(f"/api/admin/tours/{tour.pk}", {"is_featured": True}, format="json")
+    assert response.status_code == 200 and response.data["is_featured"] is True
+    created = admin_api.post("/api/admin/tours", body(title="New", is_featured=True), format="json")
+    assert created.status_code == 201 and created.data["is_featured"] is True
+
+    def titles(featured):
+        return {row["title"] for row in admin_api.get("/api/admin/tours", {"featured": featured}).data["results"]}
+
+    assert titles("true") == {"Featured", "New"}
+    assert titles("false") == {other.title}
+
+
 def test_admin_tours_need_the_admin_role(api, customer_api, make_tour):
     tour = make_tour()
     for client, code in [(api, 401), (customer_api, 403)]:

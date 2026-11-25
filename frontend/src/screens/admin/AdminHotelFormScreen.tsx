@@ -69,6 +69,7 @@ type Values = {
   check_in_time: string;
   check_out_time: string;
   cancellation_policy: string;
+  is_featured: boolean;
   room_types: RoomTypeDraft[];
 };
 
@@ -85,6 +86,7 @@ const FIELDS: (keyof Values)[] = [
   'check_in_time',
   'check_out_time',
   'cancellation_policy',
+  'is_featured',
   'room_types',
 ];
 
@@ -131,6 +133,7 @@ const EMPTY: Values = {
   check_in_time: '14:00',
   check_out_time: '10:00',
   cancellation_policy: '',
+  is_featured: false,
   room_types: [newRoomType()],
 };
 
@@ -146,6 +149,7 @@ function toValues(hotel: AdminHotel): Values {
     check_in_time: hotel.check_in_time.slice(0, 5),
     check_out_time: hotel.check_out_time.slice(0, 5),
     cancellation_policy: hotel.cancellation_policy,
+    is_featured: hotel.is_featured,
     room_types: hotel.room_types.map((roomType) => ({
       id: roomType.id,
       name: roomType.name,
@@ -290,6 +294,7 @@ function toBody(values: Values) {
     check_in_time: values.check_in_time,
     check_out_time: values.check_out_time,
     cancellation_policy: values.cancellation_policy.trim(),
+    is_featured: values.is_featured,
     room_types: values.room_types.map((roomType) => ({
       ...(roomType.id ? { id: roomType.id } : {}),
       name: roomType.name.trim(),
@@ -494,6 +499,7 @@ function HotelForm({ hotel, initial, onCancel, onSaved }: FormProps) {
           numberOfLines={3}
           maxLength={2000}
         />
+        <Toggle label="Feature on Explore" value={values.is_featured} onChange={(value) => set('is_featured', value)} />
       </FormSection>
 
       <FormSection

@@ -1,6 +1,6 @@
 import { NavigatorScreenParams } from '@react-navigation/native';
 
-import { BookingStatus, HotelBookingStatus, QueryStatus, TicketClass, TripType } from '../api/types';
+import { BookingStatus, HotelBookingStatus, Module, QueryStatus, TicketClass, TripType } from '../api/types';
 
 /** Prefilled request-for-options criteria (airports as IATA codes), e.g. from Explore's filters. */
 export type QueryPrefill = {
@@ -18,8 +18,9 @@ export type QueryPrefill = {
 
 /** id: the item whose detail is open beside (wide) or instead of (narrow) the list. */
 export type MainTabParamList = {
-  /** query: the request whose response led to this offer; passed on to the booking. */
-  Explore: { id?: string; query?: string } | undefined;
+  /** query: the request whose response led to this offer; passed on to the booking. tab: the module switch's tab,
+   * with more than one module. */
+  Explore: { id?: string; query?: string; tab?: 'all' | Module } | undefined;
   Requests: { id?: string } | undefined;
   /** id: a flight booking; tour: a tour booking (booked: just made, shows "You're booked"); hotel: a hotel
    * booking. */

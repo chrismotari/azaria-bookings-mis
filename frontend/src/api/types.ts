@@ -114,6 +114,8 @@ export type Offer = Trip & {
   airline: Airline;
   valid_until: string;
   is_bookable: boolean;
+  /** Shown first on Explore. */
+  is_featured: boolean;
   /** gds: published from a fare search. */
   source: OfferSource;
   /** When the provider last priced a GDS offer; null for manual offers. */
@@ -292,51 +294,98 @@ export type AdminBookingDetail = AdminBooking & {
   can_edit_travellers: boolean;
 };
 
-export type FlightFigures = {
-  open_queries: number;
-  bookings_requested: number;
-  bookings_awaiting_payment: number;
-  bookings_paid_awaiting_boarding_pass: number;
+type ByModule = Partial<Record<Module, string>>;
+/** An amount in USD with its share per module on. */
+export type ModuleAmount = { total: string; by_module: ByModule };
+
+export type DashboardCustomer = { name: string; email: string };
+
+/** Each count is present only when its module is on. */
+export type NeedsAction = {
+  bookings_requested?: number;
+  bookings_paid_awaiting_boarding_pass?: number;
+  open_queries?: number;
+  bookings_awaiting_payment?: number;
   /** Fares picked by a search, waiting to be published or dismissed. */
-  new_fares: number;
-  /** Bookings that reached Paid, by the day they were marked paid (Nairobi time); amounts in USD. */
-  sales: { this_month: string; this_year: string; all_time: string; count_this_month: number };
-  sales_by_month: { month: string; total: string; count: number }[];
-  payments_due: {
-    id: string;
-    customer: DashboardCustomer;
-    route: DashboardRoute;
-    total: string;
-    payment_deadline: string;
-  }[];
-  departures: {
-    id: string;
-    customer: DashboardCustomer;
-    route: DashboardRoute;
-    departure_date: string;
-    passenger_count: number;
-    boarding_passes_sent: boolean;
-  }[];
-  top_routes: (DashboardRoute & { count: number; total: string })[];
-  offers: { bookable: number; public_bookable: number; expiring_soon: number };
-  /** Null until the agency has an integration. */
-  searches: { used: number; allowance: number } | null;
+  new_fares?: number;
+  /** Confirmed bookings on tours starting in the next 7 days with fewer travellers than people. */
+  travellers_missing?: number;
+  hotel_to_confirm?: number;
+  hotel_awaiting_payment?: number;
+  hotel_vouchers_due?: number;
 };
 
-export type Dashboard = Partial<FlightFigures> & {
+export type PaymentDue = {
+  kind: 'flight' | 'hotel';
+  id: string;
+  customer: DashboardCustomer;
+  /** The route line or the hotel's name. */
+  title: string;
+  total: string;
+  payment_deadline: string;
+};
+
+export type ComingUp =
+  | {
+      kind: 'flight';
+      id: string;
+      date: string;
+      title: string;
+      customer: DashboardCustomer;
+      passenger_count: number;
+      boarding_passes_sent: boolean;
+    }
+  | { kind: 'tour'; id: string; date: string; title: string; booked: number; slots: number; travellers_missing: number }
+  | {
+      kind: 'hotel';
+      id: string;
+      date: string;
+      title: string;
+      customer: DashboardCustomer;
+      nights: number;
+      rooms: number;
+      voucher_sent: boolean;
+    };
+
+export type TopSeller = {
+  kind: 'flight' | 'tour' | 'hotel';
+  id: string | null;
+  title: string;
+  count: number;
+  total: string;
+};
+
+export type Dashboard = {
+  /** The modules on, in order. */
+  modules: Module[];
+  needs_action: NeedsAction;
+  /** Sales by the day they count (Nairobi time); amounts in USD. */
+  sales: { this_month: ModuleAmount; this_year: ModuleAmount; all_time: ModuleAmount; count_this_month: number };
+  sales_by_month: (ModuleAmount & { month: string; count: number })[];
+  payments_due: PaymentDue[];
+  this_week: ComingUp[];
+  top_sellers: TopSeller[];
   customers: { total: number; new_this_month: number };
+  on_sale: {
+    flights?: {
+      bookable: number;
+      public_bookable: number;
+      expiring_soon: number;
+      featured: number;
+      /** Null until the agency has an integration. */
+      searches: { used: number; allowance: number } | null;
+    };
+    tours?: { upcoming: number; fully_booked: number; seats_sold: number; seats_total: number; featured: number };
+    hotels?: { listed: number; prices_ending: number; featured: number };
+  };
   overdue_invoice: OverdueInvoice | null;
 };
 
+/** Explore's featured cards, for the modules on. */
+export type ExploreCards = { flights?: Offer[]; tours?: Tour[]; hotels?: Hotel[] };
+
 /** The agency's oldest overdue invoice, as its admins are told about it. */
 export type OverdueInvoice = { number: string; amount: string; currency: string; due_on: string; suspends_on: string };
-
-type DashboardCustomer = { name: string; email: string };
-type DashboardRoute = {
-  origin: { code: string; city: string };
-  destination: { code: string; city: string };
-  trip_type: TripType;
-};
 
 export type AppSettings = {
   payment_instructions: string;
@@ -757,6 +806,7 @@ export type Tour = {
   photos: TourPhoto[];
   bookable: boolean;
   not_bookable_reason: NotBookableReason | null;
+  is_featured: boolean;
 };
 
 export type AdminTourOption = TourOption & { units_sold: number; booked: boolean; is_active: boolean };
@@ -905,6 +955,7 @@ export type Hotel = {
   check_in_time: string;
   check_out_time: string;
   cancellation_policy: string;
+  is_featured: boolean;
   /** Per night without dates; for the stay with them. */
   from_price: string | null;
   photos: HotelPhoto[];

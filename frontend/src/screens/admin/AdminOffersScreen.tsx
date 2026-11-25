@@ -11,6 +11,7 @@ import { AirlineBadge } from '../../components/AirlineBadge';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { DetailLayout } from '../../components/DetailLayout';
+import { FeatureStar } from '../../components/FeatureStar';
 import { Field, FieldGrid, FormError } from '../../components/Field';
 import { tripSummary } from '../../components/Itinerary';
 import {
@@ -56,14 +57,16 @@ export function AdminOffersScreen({ navigation, route }: BottomTabScreenProps<Ad
   const [filters, setFilters] = useState<AdminFilters>(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [featured, setFeatured] = useState(false);
 
   const offers = useQuery({
-    queryKey: ['admin', 'offers', filters, page],
+    queryKey: ['admin', 'offers', filters, featured, page],
     queryFn: async () => {
       const params = {
         ...offerFilterParams(filters),
         ...(filters.is_active ? { is_active: filters.is_active } : {}),
         ...(filters.is_public ? { is_public: filters.is_public } : {}),
+        ...(featured ? { featured: 'true' } : {}),
         page,
       };
       return (await api.get<Paginated<AdminOffer>>('/admin/offers', { params })).data;
@@ -75,6 +78,11 @@ export function AdminOffersScreen({ navigation, route }: BottomTabScreenProps<Ad
     mutationFn: ({ id, is_active }: { id: string; is_active: boolean }) =>
       api.patch(`/admin/offers/${id}`, { is_active }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'offers'] }),
+  });
+  const feature = useMutation({
+    mutationFn: ({ id, is_featured }: { id: string; is_featured: boolean }) =>
+      api.patch(`/admin/offers/${id}`, { is_featured }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['admin', 'offers'] }),
   });
 
   const apply = () => {
@@ -94,6 +102,8 @@ export function AdminOffersScreen({ navigation, route }: BottomTabScreenProps<Ad
       selected={offer.id === selected}
       toggling={setActive.isPending && setActive.variables?.id === offer.id}
       onToggleActive={(is_active) => setActive.mutate({ id: offer.id, is_active })}
+      featuring={feature.isPending && feature.variables?.id === offer.id}
+      onFeature={(is_featured) => feature.mutate({ id: offer.id, is_featured })}
       onEdit={() => navigation.setParams({ id: offer.id })}
     />
   ));
@@ -176,7 +186,16 @@ export function AdminOffersScreen({ navigation, route }: BottomTabScreenProps<Ad
             </Card>
           ) : null}
 
+          <Toggle
+            label="Featured only"
+            value={featured}
+            onChange={(value) => {
+              setFeatured(value);
+              setPage(1);
+            }}
+          />
           <FormError message={setActive.isError ? errorMessage(setActive.error) : null} />
+          <FormError message={feature.isError ? errorMessage(feature.error) : null} />
 
           {offers.isPending ? (
             <LoadingState />
@@ -200,6 +219,7 @@ export function AdminOffersScreen({ navigation, route }: BottomTabScreenProps<Ad
 }
 
 const COLUMNS: Column[] = [
+  { label: 'Featured', flex: 1 },
   { label: 'Route', flex: 2 },
   { label: 'Departure / valid until', flex: 2 },
   { label: 'Flight', flex: 2.6 },
@@ -214,10 +234,13 @@ type RowProps = {
   selected: boolean;
   toggling: boolean;
   onToggleActive: (value: boolean) => void;
+  featuring: boolean;
+  onFeature: (value: boolean) => void;
   onEdit: () => void;
 };
 
-function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: RowProps) {
+function OfferRow({ offer, wide, selected, toggling, onToggleActive, featuring, onFeature, onEdit }: RowProps) {
+  const star = <FeatureStar featured={offer.is_featured} disabled={featuring} onChange={onFeature} />;
   const flight = `${ticketClassLabel(offer.ticket_class)} · ${tripSummary(offer)}`;
   const chips = (
     <View style={styles.chips}>
@@ -246,6 +269,7 @@ function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: R
         columns={COLUMNS}
         selected={selected}
         cells={[
+          <View key="featured">{star}</View>,
           <RouteCell
             key="route"
             origin={offer.origin}
@@ -288,7 +312,10 @@ function OfferRow({ offer, wide, selected, toggling, onToggleActive, onEdit }: R
       {chips}
       <View style={styles.cardTop}>
         {toggle}
-        <Button title="Edit" variant="secondary" onPress={onEdit} />
+        <View style={styles.airlineCell}>
+          {star}
+          <Button title="Edit" variant="secondary" onPress={onEdit} />
+        </View>
       </View>
     </Card>
   );

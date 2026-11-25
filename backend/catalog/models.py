@@ -106,6 +106,7 @@ class Offer(Trip):
     # False for offers created for one specific query response.
     is_public = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     source = models.CharField(max_length=10, choices=Source.choices, default=Source.MANUAL)

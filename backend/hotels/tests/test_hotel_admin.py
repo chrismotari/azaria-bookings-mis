@@ -213,6 +213,21 @@ def test_admin_list_filters_and_permissions(admin_api, customer_api, api, make_h
     assert Hotel.objects.filter(pk=active.pk).exists()
 
 
+def test_admin_features_a_hotel_and_filters_featured(admin_api, make_hotel):
+    hotel, other = make_hotel(), make_hotel(name="Plain")
+    response = admin_api.patch(f"/api/admin/hotels/{hotel.pk}", {"is_featured": True}, format="json")
+    assert response.status_code == 200 and response.data["is_featured"] is True
+    assert len(response.data["room_types"]) == 1
+    created = admin_api.post("/api/admin/hotels", body(name="New", is_featured=True), format="json")
+    assert created.status_code == 201 and created.data["is_featured"] is True
+
+    def names(featured):
+        return [row["name"] for row in admin_api.get("/api/admin/hotels", {"featured": featured}).data["results"]]
+
+    assert names("true") == ["Diani Reef", "New"]
+    assert names("false") == [other.name]
+
+
 # Photos
 
 

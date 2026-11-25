@@ -107,7 +107,7 @@ class HotelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Hotel
-        fields = ["id", *HOTEL_FIELDS, "from_price", "photos", "room_types"]
+        fields = ["id", *HOTEL_FIELDS, "is_featured", "from_price", "photos", "room_types"]
         read_only_fields = fields
 
     def get_from_price(self, hotel):
@@ -288,7 +288,17 @@ class AdminHotelSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Hotel
-        fields = ["id", *HOTEL_FIELDS, "is_active", "from_price", "photos", "room_types", "created_at", "updated_at"]
+        fields = [
+            "id",
+            *HOTEL_FIELDS,
+            "is_active",
+            "is_featured",
+            "from_price",
+            "photos",
+            "room_types",
+            "created_at",
+            "updated_at",
+        ]
         read_only_fields = fields
 
     def get_from_price(self, hotel):
@@ -302,11 +312,12 @@ class HotelInputSerializer(serializers.ModelSerializer):
     star_rating = serializers.IntegerField(min_value=1, max_value=5, required=False, allow_null=True)
     amenities = ShortLinesField(MAX_AMENITIES, 100, required=False)
     is_active = serializers.BooleanField(required=False)
+    is_featured = serializers.BooleanField(required=False)
     room_types = AdminRoomTypeSerializer(many=True, required=False)
 
     class Meta:
         model = Hotel
-        fields = [*HOTEL_FIELDS, "is_active", "room_types"]
+        fields = [*HOTEL_FIELDS, "is_active", "is_featured", "room_types"]
 
     def validate_name(self, value):
         return _name(value, "Enter the hotel's name.")

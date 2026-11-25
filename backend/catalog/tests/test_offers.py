@@ -311,6 +311,15 @@ def test_admin_list_filters(admin_api, airports):
     assert get(destination="dubai") == [public.id]
 
 
+def test_admin_features_an_offer_and_filters_featured(admin_api, api, airports):
+    offer, other = make_offer(airports), make_offer(airports, destination="DXB")
+    response = admin_api.patch(f"/api/admin/offers/{offer.id}", {"is_featured": True}, format="json")
+    assert response.status_code == 200 and response.data["is_featured"] is True
+    assert ids(admin_api.get("/api/admin/offers", {"featured": "true"})) == [offer.id]
+    assert ids(admin_api.get("/api/admin/offers", {"featured": "false"})) == [other.id]
+    assert api.get(f"/api/offers/{offer.id}").data["is_featured"] is True
+
+
 def test_admin_patch_deactivates_and_edits(admin_api, api, airports):
     offer = make_offer(airports)
     response = admin_api.patch(f"/api/admin/offers/{offer.id}", {"is_active": False}, format="json")

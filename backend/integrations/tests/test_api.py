@@ -296,7 +296,7 @@ def test_dismiss_hides_a_fare(admin_api, searched, route):
 
 
 def test_the_dashboard_counts_new_picked_fares(admin_api, searched):
-    assert admin_api.get("/api/admin/dashboard").data["new_fares"] == 1
+    assert admin_api.get("/api/admin/dashboard").data["needs_action"]["new_fares"] == 1
 
 
 # Permissions and isolation

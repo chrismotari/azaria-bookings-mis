@@ -119,6 +119,7 @@ class OfferSerializer(serializers.ModelSerializer):
             "airline",
             "valid_until",
             "is_bookable",
+            "is_featured",
             # Never the net amount, rate or fare type.
             "source",
             "price_checked_at",
@@ -153,6 +154,7 @@ class AdminOfferSerializer(serializers.ModelSerializer):
             "valid_until",
             "is_public",
             "is_active",
+            "is_featured",
             "is_bookable",
             "created_at",
             "segments",

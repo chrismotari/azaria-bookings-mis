@@ -32,6 +32,7 @@ class Hotel(models.Model):
     check_out_time = models.TimeField()
     cancellation_policy = models.TextField(max_length=2000)
     is_active = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
 import { GetAppFooter } from '../../agency/GetAppFooter';
+import { useModules } from '../../agency/modules';
 import { api } from '../../api/client';
 import { Hotel, Paginated } from '../../api/types';
 import { Button } from '../../components/Button';
@@ -14,6 +15,7 @@ import { EmptyState, ErrorState, LoadingState } from '../../components/StatusVie
 import { TextField } from '../../components/TextField';
 import { colors, createStyles, font, space, useIsWide, weight } from '../../theme';
 import { nightsBetween } from '../../utils/hotels';
+import { FeaturedRow } from '../explore/Featured';
 import { EMPTY_STAY, HotelCard, Stay, StayErrors, StayFields, stayParams, validateStay } from './HotelParts';
 
 type Filters = { stars: string; price_min: string; price_max: string };
@@ -134,6 +136,7 @@ export function HotelsPage() {
   const columns = width >= 840 ? 3 : width >= 520 ? 2 : 1;
   const cardWidth = columns > 1 ? (width - space.lg * (columns - 1)) / columns : undefined;
   const active = Object.values(filters).filter(Boolean).length;
+  const single = useModules().length === 1;
   const searching = Boolean(applied.search || Object.keys(params).length || active);
 
   return (
@@ -153,6 +156,7 @@ export function HotelsPage() {
             <Button title="Search" variant="accent" icon="search" onPress={runSearch} />
           </View>
         </Card>
+        {single && !searching ? <FeaturedRow module="hotels" /> : null}
         <View style={[styles.main, !compact && styles.columns]}>
           {!compact ? (
             <View style={styles.sidebar}>

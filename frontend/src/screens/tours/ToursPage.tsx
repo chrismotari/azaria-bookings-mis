@@ -1,25 +1,25 @@
 import { useNavigation } from '@react-navigation/native';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
 import { GetAppFooter } from '../../agency/GetAppFooter';
+import { useModules } from '../../agency/modules';
 import { api } from '../../api/client';
 import { Paginated, Tour } from '../../api/types';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { CoverImage } from '../../components/CoverImage';
 import { DateField } from '../../components/DateField';
-import { Icon } from '../../components/Icon';
+import { CARD_IMAGE_HEIGHT, CardFact, CardPrice, ItemCard } from '../../components/ItemCard';
 import { Pagination } from '../../components/Pagination';
-import { PressState } from '../../components/pressState';
 import { SegmentedControl } from '../../components/SegmentedControl';
 import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
-import { colors, createStyles, font, radius, shadow, space, useIsWide, weight } from '../../theme';
-import { formatPrice } from '../../utils/format';
+import { colors, createStyles, font, space, useIsWide, weight } from '../../theme';
 import { slotsLeftLabel, tourDates } from '../../utils/tours';
+import { FeaturedRow } from '../explore/Featured';
 
 type Filters = { search: string; date_from: string; date_to: string; price_min: string; price_max: string };
 type Ordering = 'start_date' | 'from_price';
@@ -57,6 +57,7 @@ export function ToursPage() {
   const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [width, setWidth] = useState(0);
+  const single = useModules().length === 1;
 
   const tours = useQuery({
     queryKey: ['tours', filters, ordering, page],
@@ -147,6 +148,7 @@ export function ToursPage() {
             <Button title="Search" variant="accent" icon="search" onPress={() => apply()} />
           </View>
         </Card>
+        {single && JSON.stringify(filters) === JSON.stringify(EMPTY) ? <FeaturedRow module="tours" /> : null}
         <View style={[styles.main, !compact && styles.columns]}>
           {!compact ? (
             <View style={styles.sidebar}>
@@ -216,39 +218,25 @@ export function ToursPage() {
   );
 }
 
-function TourCard({ tour, onPress }: { tour: Tour; onPress: () => void }) {
+/** A tour in a list: cover, title, destination, dates and its from price. */
+export function TourCard({ tour, onPress }: { tour: Tour; onPress: () => void }) {
   return (
-    <Pressable
-      accessibilityRole="link"
+    <ItemCard
       accessibilityLabel={`${tour.title}, ${tour.destination}`}
       onPress={onPress}
-      style={({ hovered }: PressState) => [styles.card, hovered && styles.hovered]}
-    >
-      <CoverImage url={tour.photos[0]?.url} height={170} />
-      <View style={styles.cardBody}>
-        <Text style={styles.title} numberOfLines={2}>
-          {tour.title}
-        </Text>
-        <View style={styles.fact}>
-          <Icon name="location-outline" size={16} color={colors.muted} />
-          <Text style={styles.muted} numberOfLines={1}>
-            {tour.destination}
-          </Text>
-        </View>
-        <View style={styles.fact}>
-          <Icon name="calendar-outline" size={16} color={colors.muted} />
-          <Text style={styles.muted}>{tourDates(tour)}</Text>
-        </View>
+      featured={tour.is_featured}
+      image={<CoverImage url={tour.photos[0]?.url} height={CARD_IMAGE_HEIGHT} />}
+      title={tour.title}
+      price={
         <View style={styles.between}>
-          {tour.from_price ? (
-            <Text style={styles.from}>
-              From <Text style={styles.priceText}>{formatPrice(tour.from_price)}</Text> per person
-            </Text>
-          ) : null}
+          {tour.from_price ? <CardPrice before="From" amount={tour.from_price} after="per person" /> : null}
           {tour.slots_left <= 5 ? <StatusChip label={slotsLeftLabel(tour.slots_left)} tone="warning" /> : null}
         </View>
-      </View>
-    </Pressable>
+      }
+    >
+      <CardFact icon="location-outline">{tour.destination}</CardFact>
+      <CardFact icon="calendar-outline">{tourDates(tour)}</CardFact>
+    </ItemCard>
   );
 }
 
@@ -278,19 +266,4 @@ const styles = createStyles(() => ({
   price: { flex: 1, minWidth: 0 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.lg },
   full: { width: '100%' },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
-    ...shadow,
-  },
-  hovered: { borderColor: colors.primary },
-  cardBody: { padding: space.lg, gap: space.sm },
-  title: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text },
-  fact: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
-  muted: { fontSize: font.small, color: colors.muted, flexShrink: 1 },
-  from: { fontSize: font.small, color: colors.text },
-  priceText: { fontSize: font.heading, fontWeight: weight.heavy, color: colors.text },
 }));

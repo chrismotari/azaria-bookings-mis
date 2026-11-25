@@ -53,3 +53,4 @@ class OfferFilter(django_filters.FilterSet):
 class AdminOfferFilter(OfferFilter):
     is_active = django_filters.BooleanFilter()
     is_public = django_filters.BooleanFilter()
+    featured = django_filters.BooleanFilter(field_name="is_featured")

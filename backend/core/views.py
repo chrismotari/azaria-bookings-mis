@@ -1,7 +1,18 @@
 from rest_framework import generics
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
+from catalog.models import Offer
+from catalog.serializers import OfferSerializer
+from catalog.views import OFFER_RELATED, OFFER_SEGMENTS
+from hotels import pricing
+from hotels.serializers import HotelSerializer
 from tenants.models import Theme
 from tenants.serializers import ThemeSerializer
+from tours.models import Tour
+from tours.serializers import TourSerializer
+from tours.views import tours
 
 from .models import AppSettings
 from .permissions import IsAdminRole
@@ -26,3 +37,46 @@ class AdminThemeListView(generics.ListAPIView):
 
     def get_queryset(self):
         return Theme.objects.filter(is_active=True).order_by("-is_default", "name")
+
+
+EXPLORE_CARDS = 6
+
+
+def featured_flights(request):
+    offers = (
+        Offer.objects.publicly_visible()
+        .bookable()
+        .select_related(*OFFER_RELATED)
+        .prefetch_related(*OFFER_SEGMENTS)
+        .order_by("-is_featured", "departure_date", "price")[:EXPLORE_CARDS]
+    )
+    return OfferSerializer(offers, many=True, context={"request": request}).data
+
+
+def featured_tours(request):
+    bookable = Tour.objects.bookable().values("pk")
+    cards = tours().filter(pk__in=bookable).order_by("-is_featured", "start_date", "title")[:EXPLORE_CARDS]
+    return TourSerializer(cards, many=True, context={"request": request}).data
+
+
+def featured_hotels(request):
+    hotels = []
+    for hotel in pricing.public_hotels():
+        hotel.listed_price = pricing.from_price(hotel)
+        if hotel.listed_price is not None:
+            hotels.append(hotel)
+    hotels.sort(key=lambda hotel: (not hotel.is_featured, hotel.listed_price, hotel.name.lower()))
+    return HotelSerializer(hotels[:EXPLORE_CARDS], many=True, context={"request": request}).data
+
+
+FEATURED = {"flights": featured_flights, "tours": featured_tours, "hotels": featured_hotels}
+
+
+class ExploreView(APIView):
+    """Up to six cards per module on: featured items first, then the rest of what customers can see."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        tenant = request.tenant
+        return Response({module: cards(request) for module, cards in FEATURED.items() if tenant.has_module(module)})

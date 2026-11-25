@@ -235,6 +235,7 @@ export type OfferFormValues = {
   airline: Airline | null;
   valid_until: string;
   is_public: boolean;
+  is_featured: boolean;
   /** "0" to "3". */
   checked_bags: string;
   checked_bag_kg: string;
@@ -253,6 +254,7 @@ export function offerDefaults(values: Partial<OfferFormValues> = {}): OfferFormV
     airline: null,
     valid_until: '',
     is_public: true,
+    is_featured: false,
     checked_bags: '0',
     checked_bag_kg: '',
     cabin_bag_kg: '',
@@ -282,6 +284,7 @@ export function offerSchema(isCreate: boolean) {
       airline: z.custom<Airline | null>().refine((value) => value !== null, 'Choose the ticketing airline.'),
       valid_until: dateString('Enter the last day this offer is valid.'),
       is_public: z.boolean(),
+      is_featured: z.boolean(),
       checked_bags: z.string().regex(/^[0-3]$/, 'From none to 3 bags.'),
       checked_bag_kg: optionalKg,
       cabin_bag_kg: optionalKg,
@@ -316,6 +319,7 @@ export function toOfferBody(values: OfferFormValues) {
     airline: values.airline?.id,
     valid_until: values.valid_until,
     is_public: values.is_public,
+    is_featured: values.is_featured,
     checked_bags: checkedBags,
     // No weight without a checked bag.
     checked_bag_kg: checkedBags ? kg(values.checked_bag_kg) : null,

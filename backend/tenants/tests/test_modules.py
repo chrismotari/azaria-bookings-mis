@@ -262,9 +262,13 @@ def test_agency_admins_cannot_change_modules_on_the_platform(admin_api):
 def test_the_dashboard_leaves_out_flight_figures_when_flights_is_off(admin_api, booking):
     booking(Status.PAID)
     with_flights = admin_api.get("/api/admin/dashboard").data
-    assert {"sales", "offers", "bookings_requested", "customers", "overdue_invoice"} <= set(with_flights)
+    assert with_flights["sales"]["all_time"]["by_module"] == {"flights": with_flights["sales"]["all_time"]["total"]}
+    assert "bookings_requested" in with_flights["needs_action"] and "flights" in with_flights["on_sale"]
     set_modules("tours")
-    assert admin_api.get("/api/admin/dashboard").data == {
-        "customers": {"total": 1, "new_this_month": 1},
-        "overdue_invoice": None,
-    }
+    data = admin_api.get("/api/admin/dashboard").data
+    assert data["modules"] == ["tours"]
+    assert data["sales"]["all_time"] == {"total": "0.00", "by_module": {"tours": "0.00"}}
+    assert data["needs_action"] == {"travellers_missing": 0}
+    assert data["payments_due"] == data["this_week"] == data["top_sellers"] == []
+    assert set(data["on_sale"]) == {"tours"}
+    assert data["customers"] == {"total": 1, "new_this_month": 1}

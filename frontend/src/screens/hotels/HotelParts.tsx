@@ -1,15 +1,15 @@
-import { Pressable, Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Hotel } from '../../api/types';
 import { CoverImage } from '../../components/CoverImage';
+import { CARD_IMAGE_HEIGHT, CardFact, CardPrice, ItemCard } from '../../components/ItemCard';
 import { DateField } from '../../components/DateField';
 import { FieldGrid } from '../../components/Field';
 import { Icon } from '../../components/Icon';
-import { PressState } from '../../components/pressState';
 import { SelectField } from '../../components/SelectField';
 import { HotelStay } from '../../navigation/types';
-import { colors, createStyles, font, radius, shadow, space, weight } from '../../theme';
-import { formatPrice, todayInNairobi } from '../../utils/format';
+import { colors, createStyles } from '../../theme';
+import { todayInNairobi } from '../../utils/format';
 import { MAX_NIGHTS, nightsBetween, nightsLabel } from '../../utils/hotels';
 
 /** The stay and guests as typed; adults blank: any. */
@@ -120,55 +120,28 @@ export function StarRating({ stars, size = 14 }: { stars: number | null; size?: 
 /** A hotel in a list: cover, name, stars, destination and its from price. */
 export function HotelCard({ hotel, nights, onPress }: { hotel: Hotel; nights: number; onPress: () => void }) {
   return (
-    <Pressable
-      accessibilityRole="link"
+    <ItemCard
       accessibilityLabel={`${hotel.name}, ${hotel.destination}`}
       onPress={onPress}
-      style={({ hovered }: PressState) => [styles.card, hovered && styles.hovered]}
-    >
-      <CoverImage url={hotel.photos[0]?.url} height={170} />
-      <View style={styles.cardBody}>
-        <Text style={styles.title} numberOfLines={2}>
-          {hotel.name}
-        </Text>
-        <StarRating stars={hotel.star_rating} />
-        <View style={styles.fact}>
-          <Icon name="location-outline" size={16} color={colors.muted} />
-          <Text style={styles.muted} numberOfLines={1}>
-            {hotel.destination}
-          </Text>
-        </View>
-        {hotel.from_price ? (
+      featured={hotel.is_featured}
+      image={<CoverImage url={hotel.photos[0]?.url} height={CARD_IMAGE_HEIGHT} />}
+      title={hotel.name}
+      price={
+        hotel.from_price ? (
           nights ? (
-            <Text style={styles.from}>
-              <Text style={styles.priceText}>{formatPrice(hotel.from_price)}</Text> for {nightsLabel(nights)}
-            </Text>
+            <CardPrice amount={hotel.from_price} after={`for ${nightsLabel(nights)}`} />
           ) : (
-            <Text style={styles.from}>
-              From <Text style={styles.priceText}>{formatPrice(hotel.from_price)}</Text> per night
-            </Text>
+            <CardPrice before="From" amount={hotel.from_price} after="per night" />
           )
-        ) : null}
-      </View>
-    </Pressable>
+        ) : null
+      }
+    >
+      <StarRating stars={hotel.star_rating} />
+      <CardFact icon="location-outline">{hotel.destination}</CardFact>
+    </ItemCard>
   );
 }
 
 const styles = createStyles(() => ({
   stars: { flexDirection: 'row', gap: 2 },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
-    ...shadow,
-  },
-  hovered: { borderColor: colors.primary },
-  cardBody: { padding: space.lg, gap: space.sm },
-  title: { fontSize: font.heading, fontWeight: weight.bold, color: colors.text },
-  fact: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
-  muted: { fontSize: font.small, color: colors.muted, flexShrink: 1 },
-  from: { fontSize: font.small, color: colors.text },
-  priceText: { fontSize: font.heading, fontWeight: weight.heavy, color: colors.text },
 }));

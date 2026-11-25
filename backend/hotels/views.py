@@ -229,6 +229,7 @@ class AdminHotelFilter(django_filters.FilterSet):
     status = django_filters.ChoiceFilter(
         choices=[("active", "active"), ("inactive", "inactive")], method="filter_status"
     )
+    featured = django_filters.BooleanFilter(field_name="is_featured")
 
     class Meta:
         model = Hotel

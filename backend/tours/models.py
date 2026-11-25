@@ -67,6 +67,7 @@ class Tour(models.Model):
     not_included = models.JSONField(default=list, blank=True)
     meeting_point = models.CharField(max_length=200, blank=True)
     is_active = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False)
     cancelled_at = models.DateTimeField(null=True, blank=True)
     cancelled_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"

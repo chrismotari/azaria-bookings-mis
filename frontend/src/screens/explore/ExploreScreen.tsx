@@ -19,6 +19,7 @@ import {
   validateOfferFilters,
 } from '../../components/OfferFilterFields';
 import { ModulePages } from '../../components/ModulePages';
+import { useModules } from '../../agency/modules';
 import { Pagination } from '../../components/Pagination';
 import { SegmentedControl } from '../../components/SegmentedControl';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
@@ -29,6 +30,8 @@ import { ExploreFilters } from './ExploreFilters';
 import { ExploreSearchBar } from './ExploreSearchBar';
 import { HotelsPage } from '../hotels/HotelsPage';
 import { ToursPage } from '../tours/ToursPage';
+import { ExploreAll } from './ExploreAll';
+import { FeaturedRow } from './Featured';
 import { OfferDetailView } from './OfferDetailView';
 
 type Ordering = 'departure_date' | 'price' | '-price';
@@ -62,10 +65,14 @@ const ORDERING_OPTIONS: { value: Ordering; label: string }[] = [
 type Props = BottomTabScreenProps<MainTabParamList, 'Explore'>;
 
 export function ExploreScreen(props: Props) {
+  const { navigation, route } = props;
   return (
     <ModulePages
       label="Explore"
-      only={props.route.params?.id ? 'flights' : undefined}
+      only={route.params?.id ? 'flights' : undefined}
+      all={() => <ExploreAll onOpen={(tab) => navigation.setParams({ tab })} />}
+      tab={route.params?.tab}
+      onTab={(tab) => navigation.setParams({ tab })}
       pages={{
         flights: () => <FlightDeals {...props} />,
         tours: () => <ToursPage />,
@@ -86,6 +93,7 @@ function FlightDeals({ navigation, route }: Props) {
   const [page, setPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const requireAuth = useAuthGate();
+  const single = useModules().length === 1;
 
   const offers = useQuery({
     queryKey: ['offers', filters, ordering, page],
@@ -171,6 +179,11 @@ function FlightDeals({ navigation, route }: Props) {
       list={
         <ScrollView style={styles.scroll}>
           <ExploreSearchBar value={draft} onChange={setDraft} errors={errors} onSearch={search} compact={compact} />
+          {single && JSON.stringify(filters) === JSON.stringify(EMPTY_OFFER_FILTERS) ? (
+            <View style={styles.featured}>
+              <FeaturedRow module="flights" />
+            </View>
+          ) : null}
           <View style={[styles.body, !compact && styles.columns]}>
             {!compact ? (
               <View style={styles.sidebar}>
@@ -254,5 +267,6 @@ const styles = createStyles(() => ({
   count: { fontSize: font.small, color: colors.muted },
   panel: { padding: space.lg, borderRadius: radius.md, backgroundColor: colors.background },
   rows: { gap: space.md },
+  featured: { width: '100%', maxWidth: 1100 + 2 * space.lg, alignSelf: 'center', padding: space.lg, paddingBottom: 0 },
   footer: { width: '100%', maxWidth: 1100 + 2 * space.lg, alignSelf: 'center', padding: space.lg, paddingTop: 0 },
 }));

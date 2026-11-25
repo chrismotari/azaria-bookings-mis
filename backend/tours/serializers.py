@@ -91,6 +91,7 @@ class TourSerializer(serializers.ModelSerializer):
             "photos",
             "bookable",
             "not_bookable_reason",
+            "is_featured",
         ]
         read_only_fields = fields
 
@@ -170,10 +171,11 @@ class TourInputSerializer(serializers.ModelSerializer):
     options = TourOptionInputSerializer(many=True)
     notice = serializers.CharField(max_length=2000, required=False, allow_blank=True, write_only=True)
     is_active = serializers.BooleanField(required=False)
+    is_featured = serializers.BooleanField(required=False)
 
     class Meta:
         model = Tour
-        fields = [*TOUR_FIELDS, "is_active", "options", "notice"]
+        fields = [*TOUR_FIELDS, "is_active", "is_featured", "options", "notice"]
 
     def validate_description(self, value):
         cleaned = richtext.sanitize(value)

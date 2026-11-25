@@ -180,6 +180,7 @@ class AdminTourFilter(django_filters.FilterSet):
     status = django_filters.ChoiceFilter(
         choices=[(value, value) for value in ("upcoming", "past", "inactive", "cancelled")], method="filter_status"
     )
+    featured = django_filters.BooleanFilter(field_name="is_featured")
 
     class Meta:
         model = Tour

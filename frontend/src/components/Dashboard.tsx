@@ -74,15 +74,20 @@ export const monthLabel = (month: string, long = false) =>
 
 const CHART_HEIGHT = 160;
 
-type Month = { month: string; total: string; count?: number };
+type Month = { month: string; total: string; count?: number; by_module?: Partial<Record<string, string>> };
 
-/** An amount per month in plain views; the hovered or pressed bar (initially the current month) is labelled above. */
+/** A part of each bar: its amount is month.by_module[key]. */
+export type ChartSeries = { key: string; label: string; color: string };
+
+/** An amount per month in plain views; the hovered or pressed bar (initially the current month) is labelled above.
+ * With two or more series each bar is stacked by series, with a legend. */
 export function MonthChart({
   title,
   months,
   money,
   empty,
   countLabel,
+  series,
 }: {
   title: string;
   months: Month[];
@@ -91,10 +96,14 @@ export function MonthChart({
   empty: string;
   /** e.g. (2) => "2 bookings", for months that carry a count. */
   countLabel?: (count: number) => string;
+  series?: ChartSeries[];
 }) {
   const isWide = useIsWide();
   const [chosen, setChosen] = useState(months.length - 1);
+  const stacked = series && series.length > 1 ? series : null;
   const most = Math.max(...months.map((month) => Number(month.total)));
+  const parts = (month: Month) =>
+    stacked ? stacked.map((part) => `${part.label} ${money(month.by_module?.[part.key] ?? '0')}`).join(', ') : '';
   const describe = (month: Month) =>
     `${money(month.total)}${countLabel && month.count !== undefined ? `, ${countLabel(month.count)}` : ''}`;
   const shown = months[chosen];
@@ -106,30 +115,49 @@ export function MonthChart({
           {monthLabel(shown.month, true)}: {describe(shown)}
         </Text>
       </View>
+      {stacked ? (
+        <View style={styles.legend}>
+          {stacked.map((part) => (
+            <View key={part.key} style={styles.legendItem}>
+              <View style={[styles.swatch, { backgroundColor: part.color }]} />
+              <Text style={styles.legendText}>
+                {part.label} {money(shown.by_module?.[part.key] ?? '0')}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
       {most === 0 ? <Text style={styles.muted}>{empty}</Text> : null}
       <View style={styles.chart} accessibilityRole="list">
         {months.map((month, index) => {
-          const share = most ? Number(month.total) / most : 0;
+          const total = Number(month.total);
+          const height = Math.max((most ? total / most : 0) * CHART_HEIGHT, total > 0 ? 3 : 1);
           const selected = index === chosen;
           return (
             <Pressable
               key={month.month}
               accessibilityRole="button"
-              accessibilityLabel={`${monthLabel(month.month, true)}: ${describe(month)}`}
+              accessibilityLabel={`${monthLabel(month.month, true)}: ${describe(month)}${stacked ? `; ${parts(month)}` : ''}`}
               accessibilityState={{ selected }}
               onPress={() => setChosen(index)}
               onHoverIn={() => setChosen(index)}
               style={styles.barColumn}
             >
               <View style={styles.barTrack}>
-                <View
-                  style={[
-                    styles.bar,
-                    { height: Math.max(share * CHART_HEIGHT, Number(month.total) > 0 ? 3 : 1) },
-                    selected ? styles.barChosen : null,
-                    Number(month.total) === 0 && styles.barEmpty,
-                  ]}
-                />
+                {stacked && total > 0 ? (
+                  <View style={[styles.bar, styles.stack, { height }, !selected && styles.stackDim]}>
+                    {stacked.map((part) => {
+                      const amount = Number(month.by_module?.[part.key] ?? 0);
+                      return amount > 0 ? (
+                        <View key={part.key} style={{ flex: amount, backgroundColor: part.color }} />
+                      ) : null;
+                    })}
+                  </View>
+                ) : (
+                  <View
+                    style={[styles.bar, { height }, selected ? styles.barChosen : null, total === 0 && styles.barEmpty]}
+                  />
+                )}
               </View>
               <Text style={[styles.barLabel, selected && styles.barLabelChosen]} numberOfLines={1}>
                 {isWide || index % 2 === months.length % 2 ? monthLabel(month.month) : ''}
@@ -262,6 +290,12 @@ const styles = createStyles(() => ({
     borderTopRightRadius: 4,
   },
   barChosen: { backgroundColor: colors.primary },
+  stack: { flexDirection: 'column-reverse', overflow: 'hidden', backgroundColor: 'transparent' },
+  stackDim: { opacity: 0.55 },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  swatch: { width: 12, height: 12, borderRadius: 3 },
+  legendText: { fontSize: font.small, color: colors.text },
   barEmpty: { backgroundColor: colors.border },
   barLabel: { fontSize: font.caption, color: colors.muted },
   barLabelChosen: { color: colors.text, fontWeight: weight.bold },

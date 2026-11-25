@@ -23,6 +23,7 @@ import { Card } from '../../components/Card';
 import { useConfirm } from '../../components/ConfirmDialog';
 import { DetailError, DetailLayout } from '../../components/DetailLayout';
 import { Dialog } from '../../components/Dialog';
+import { FeatureStar } from '../../components/FeatureStar';
 import { FormError } from '../../components/Field';
 import { FileField } from '../../components/FileField';
 import { Pagination } from '../../components/Pagination';
@@ -34,6 +35,7 @@ import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { Column, Table, TableRow, TwoLineCell } from '../../components/Table';
 import { TextField } from '../../components/TextField';
+import { Toggle } from '../../components/Toggle';
 import { AdminTabParamList } from '../../navigation/types';
 import { colors, createStyles, font, radius, space, useIsWide, weight } from '../../theme';
 import { BOOKING_STATUS, TERMINAL_STATUSES } from '../../utils/bookings';
@@ -759,6 +761,7 @@ const HOTEL_FILTERS: { value: 'all' | 'active' | 'inactive'; label: string }[] =
 ];
 
 const HOTEL_COLUMNS: Column[] = [
+  { label: 'Featured', flex: 0.9 },
   { label: 'Hotel', flex: 2.5 },
   { label: 'Destination', flex: 2 },
   { label: 'Stars', flex: 1 },
@@ -773,14 +776,32 @@ function HotelsTab({ navigation, route }: Props) {
   const close = useCallback(() => navigation.setParams({ id: undefined }), [navigation]);
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [page, setPage] = useState(1);
+  const [featured, setFeatured] = useState(false);
+  const queryClient = useQueryClient();
   const hotels = useQuery({
-    queryKey: ['admin', 'hotels', filter, page],
+    queryKey: ['admin', 'hotels', filter, featured, page],
     queryFn: async () => {
-      const params = { page, ...(filter === 'all' ? {} : { status: filter }) };
+      const params = {
+        page,
+        ...(filter === 'all' ? {} : { status: filter }),
+        ...(featured ? { featured: 'true' } : {}),
+      };
       return (await api.get<Paginated<AdminHotel>>('/admin/hotels', { params })).data;
     },
     placeholderData: keepPreviousData,
   });
+  const feature = useMutation({
+    mutationFn: ({ id, is_featured }: { id: string; is_featured: boolean }) =>
+      api.patch(`/admin/hotels/${id}`, { is_featured }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['admin', 'hotels'] }),
+  });
+  const star = (hotel: AdminHotel) => (
+    <FeatureStar
+      featured={hotel.is_featured}
+      disabled={feature.isPending && feature.variables?.id === hotel.id}
+      onChange={(is_featured) => feature.mutate({ id: hotel.id, is_featured })}
+    />
+  );
   const open = (id: string) => navigation.setParams({ id });
 
   return (
@@ -828,6 +849,15 @@ function HotelsTab({ navigation, route }: Props) {
               setPage(1);
             }}
           />
+          <Toggle
+            label="Featured only"
+            value={featured}
+            onChange={(value) => {
+              setFeatured(value);
+              setPage(1);
+            }}
+          />
+          <FormError message={feature.isError ? errorMessage(feature.error) : null} />
           {hotels.isPending ? (
             <LoadingState />
           ) : hotels.isError ? (
@@ -836,7 +866,7 @@ function HotelsTab({ navigation, route }: Props) {
             <EmptyState
               icon="bed-outline"
               title="No hotels"
-              message={filter === 'all' ? 'Add your first hotel.' : 'No hotels match this filter.'}
+              message={filter === 'all' && !featured ? 'Add your first hotel.' : 'No hotels match this filter.'}
             />
           ) : isWide ? (
             <Table columns={HOTEL_COLUMNS}>
@@ -848,6 +878,7 @@ function HotelsTab({ navigation, route }: Props) {
                   onPress={() => open(hotel.id)}
                   accessibilityLabel={hotel.name}
                   cells={[
+                    <View key="featured">{star(hotel)}</View>,
                     <TwoLineCell key="name" primary={hotel.name} secondary={hotel.address} />,
                     hotel.destination,
                     hotel.star_rating ? `${hotel.star_rating} ★` : '—',
@@ -880,8 +911,9 @@ function HotelsTab({ navigation, route }: Props) {
                   <Text style={styles.text}>
                     {hotel.from_price ? `From ${formatPrice(hotel.from_price)} per night` : 'No prices ahead'}
                   </Text>
-                  <View style={styles.start}>
+                  <View style={styles.between}>
                     <Button title="Open" variant="secondary" onPress={() => open(hotel.id)} />
+                    {star(hotel)}
                   </View>
                 </Card>
               ))}

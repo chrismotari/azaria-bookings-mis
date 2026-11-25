@@ -198,6 +198,11 @@ export function OfferFields({ control, showPublicToggle = true, plain }: Props) 
               </View>
             )}
           />
+          <Controller
+            control={control}
+            name="is_featured"
+            render={({ field }) => <Toggle label="Feature on Explore" value={field.value} onChange={field.onChange} />}
+          />
         </FormSection>
       ) : null}
     </>
