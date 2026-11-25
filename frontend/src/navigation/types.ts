@@ -21,11 +21,15 @@ export type MainTabParamList = {
   /** query: the request whose response led to this offer; passed on to the booking. */
   Explore: { id?: string; query?: string } | undefined;
   Requests: { id?: string } | undefined;
-  Bookings: { id?: string } | undefined;
+  /** id: a flight booking; tour: a tour booking (booked: just made, shows "You're booked"). */
+  Bookings: { id?: string; tour?: string; booked?: 'yes' } | undefined;
   Account: undefined;
   /** Not in the bar: shown under Requests and Explore. */
   QueryNew: QueryPrefill | undefined;
   BookingNew: { offer: string; query?: string };
+  /** Not in the bar: under Explore. */
+  TourDetail: { id: string };
+  TourBook: { id: string };
   /** Account > Support: the customer's chats. */
   Support: { id?: string } | undefined;
 };
@@ -42,6 +46,12 @@ export type AdminTabParamList = {
   /** The desk: chats from the site's visitors and customers. */
   AdminChats: { id?: string } | undefined;
   AdminSettings: undefined;
+  /** booking: a tour booking, opened from the tour. */
+  AdminTours: { id?: string; booking?: string; status?: AdminTourFilter } | undefined;
+  /** Not in the bar: shown under Tours. customer: who the admin books for. */
+  AdminTourNew: undefined;
+  AdminTourEdit: { id: string };
+  AdminTourBook: { id: string; customer: string };
   /** Not in the bar: shown under Offers and Requests. */
   AdminOfferNew: undefined;
   AdminQueryRespond: { id: string };
@@ -53,6 +63,8 @@ export type AdminTabParamList = {
   /** Settings > Support: the agency's chats with the platform. */
   AdminSupport: { id?: string } | undefined;
 };
+
+export type AdminTourFilter = 'all' | 'upcoming' | 'past' | 'inactive' | 'cancelled';
 
 export type AgencyStatusFilter = 'all' | 'active' | 'suspended';
 export type InvoiceStatusFilter = 'all' | 'unpaid' | 'overdue' | 'paid' | 'void';

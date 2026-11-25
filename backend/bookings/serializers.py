@@ -11,7 +11,7 @@ from core.files import check_upload
 from core.models import AppSettings
 from customer_requests.models import Query
 
-from .models import BoardingPass, Booking, BookingEvent
+from .models import BoardingPass, Booking, BookingEvent, Traveller
 
 
 class BookingEventSerializer(serializers.ModelSerializer):
@@ -173,3 +173,59 @@ class AdminBookingCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
         fields = ["user", "offer", "passenger_count", "notes"]
+
+
+class TravellerSerializer(serializers.ModelSerializer):
+    """The shared traveller form: only full_name is required."""
+
+    checked_bags = serializers.IntegerField(min_value=0, max_value=Traveller.MAX_CHECKED_BAGS, default=0)
+    checked_bag_kg = serializers.IntegerField(min_value=1, max_value=100, required=False, allow_null=True)
+    cabin_bag_kg = serializers.IntegerField(min_value=1, max_value=100, required=False, allow_null=True)
+
+    class Meta:
+        model = Traveller
+        fields = [
+            "id",
+            "full_name",
+            "gender",
+            "date_of_birth",
+            "nationality",
+            "document_type",
+            "document_number",
+            "document_expiry",
+            "email",
+            "phone",
+            "checked_bags",
+            "checked_bag_kg",
+            "cabin_bag_kg",
+            "special_requests",
+        ]
+        read_only_fields = ["id"]
+
+    def validate_full_name(self, value):
+        value = " ".join(value.split())
+        if len(value) < 2:
+            raise serializers.ValidationError("Enter the full name as on the travel document.")
+        return value
+
+    def validate_nationality(self, value):
+        value = value.strip().upper()
+        if value and not (len(value) == 2 and value.isascii() and value.isalpha()):
+            raise serializers.ValidationError("Choose a country.")
+        return value
+
+    def validate_document_number(self, value):
+        return value.strip().upper()
+
+    def validate(self, attrs):
+        def current(name):
+            return attrs.get(name, getattr(self.instance, name) if self.instance else None)
+
+        number, expiry, kind = current("document_number"), current("document_expiry"), current("document_type")
+        if number and not kind:
+            raise serializers.ValidationError({"document_type": "Choose the document type."})
+        if expiry and not number:
+            raise serializers.ValidationError({"document_number": "Enter the document number with its expiry."})
+        if number and kind == Traveller.DocumentType.PASSPORT and not expiry:
+            raise serializers.ValidationError({"document_expiry": "Enter the passport's expiry date."})
+        return attrs

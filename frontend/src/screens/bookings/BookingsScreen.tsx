@@ -20,6 +20,7 @@ import { MainTabParamList } from '../../navigation/types';
 import { colors, createStyles, font, space, weight } from '../../theme';
 import { BOOKING_STATUS, bookingDates, bookingRoute, passengersLabel } from '../../utils/bookings';
 import { formatDate, routeCodes, tripDates } from '../../utils/format';
+import { TourBookingsPage } from '../tours/TourBookingsPage';
 import { BookingDetailView } from './BookingDetailView';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Bookings'>;
@@ -28,12 +29,10 @@ export function BookingsScreen(props: Props) {
   return (
     <ModulePages
       label="Bookings"
-      only={props.route.params?.id ? 'flights' : undefined}
+      only={props.route.params?.id ? 'flights' : props.route.params?.tour ? 'tours' : undefined}
       pages={{
         flights: () => <FlightBookings {...props} />,
-        tours: () => (
-          <NotYet icon="map-outline" title="No tour bookings yet" message="Your tour bookings will appear here." />
-        ),
+        tours: () => <TourBookingsPage {...props} />,
         hotels: () => (
           <NotYet icon="bed-outline" title="No hotel bookings yet" message="Your hotel bookings will appear here." />
         ),

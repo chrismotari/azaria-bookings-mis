@@ -706,3 +706,152 @@ export type PlatformTheme = Theme & {
   /** Agencies using it. */
   agency_count: number;
 };
+
+export type TourPhoto = { id: string; url: string };
+
+export type TourOption = {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+  /** 1 for a per-person price, 2 for a couple, 6 for a group of six. */
+  people_per_unit: number;
+  /** Null: limited only by the tour's slots. */
+  units_available: number | null;
+  units_left: number | null;
+};
+
+export type NotBookableReason = 'fully_booked' | 'closed' | 'cancelled';
+
+export type Tour = {
+  id: string;
+  title: string;
+  destination: string;
+  start_date: string;
+  end_date: string;
+  slots: number;
+  booking_deadline: string;
+  cancellation_deadline: string;
+  cancellation_policy: string;
+  summary: string;
+  /** Sanitized HTML. */
+  description: string;
+  included: string[];
+  not_included: string[];
+  meeting_point: string;
+  slots_left: number;
+  duration_days: number;
+  /** Null without an active option. */
+  from_price: string | null;
+  /** Active options, in order. */
+  options: TourOption[];
+  /** The first is the cover. */
+  photos: TourPhoto[];
+  bookable: boolean;
+  not_bookable_reason: NotBookableReason | null;
+};
+
+export type AdminTourOption = TourOption & { units_sold: number; booked: boolean; is_active: boolean };
+
+export type AdminTour = Omit<Tour, 'options'> & {
+  /** Every option, inactive ones too. */
+  options: AdminTourOption[];
+  is_active: boolean;
+  /** People on confirmed bookings. */
+  booked: number;
+  confirmed_bookings: number;
+  cancelled_at: string | null;
+  cancelled_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TourNotice = {
+  id: string;
+  kind: 'change' | 'cancellation';
+  message: string;
+  sent_by: string | null;
+  recipients: number;
+  created_at: string;
+};
+
+export type Gender = '' | 'female' | 'male';
+export type DocumentType = '' | 'passport' | 'national_id';
+
+/** Someone travelling; only full_name is required. */
+export type Traveller = {
+  id: string;
+  full_name: string;
+  gender: Gender;
+  date_of_birth: string | null;
+  nationality: string;
+  document_type: DocumentType;
+  document_number: string;
+  document_expiry: string | null;
+  email: string;
+  phone: string;
+  checked_bags: number;
+  checked_bag_kg: number | null;
+  cabin_bag_kg: number | null;
+  special_requests: string;
+};
+
+export type TravellerInput = Omit<Traveller, 'id'>;
+
+export type TourBookingStatus = 'confirmed' | 'cancelled' | 'completed';
+
+export type TourBookingLine = {
+  id: string;
+  option: string;
+  option_name: string;
+  unit_price: string;
+  people_per_unit: number;
+  quantity: number;
+  people: number;
+  total_price: string;
+  travellers: Traveller[];
+};
+
+export type TourBookingEvent = {
+  id: string;
+  from_status: TourBookingStatus | null;
+  to_status: TourBookingStatus;
+  created_at: string;
+};
+
+export type TourBrief = {
+  id: string;
+  title: string;
+  destination: string;
+  start_date: string;
+  end_date: string;
+  duration_days: number;
+  meeting_point: string;
+  cancellation_policy: string;
+  cancellation_deadline: string;
+  cancelled_at: string | null;
+  cover_url: string | null;
+};
+
+export type TourBooking = {
+  id: string;
+  tour: TourBrief;
+  lines: TourBookingLine[];
+  people: number;
+  travellers_added: number;
+  group_name: string;
+  notes: string;
+  total_price: string;
+  status: TourBookingStatus;
+  cancelled_by: 'customer' | 'admin' | null;
+  /** The admin's message when the agency cancelled. */
+  cancel_reason: string;
+  events: TourBookingEvent[];
+  can_cancel: boolean;
+  can_edit_travellers: boolean;
+  /** While confirmed. */
+  payment_instructions: string | null;
+  created_at: string;
+};
+
+export type AdminTourBooking = TourBooking & { user: User; created_by: string | null };

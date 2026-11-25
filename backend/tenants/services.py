@@ -5,6 +5,7 @@ from django.contrib.auth import password_validation
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.db import transaction
+from django.utils import timezone
 from django_tenants.utils import get_public_schema_name, schema_context, schema_exists
 
 from accounts.models import User
@@ -82,7 +83,15 @@ def open_bookings(tenant, module):
 
         with schema_context(tenant.schema_name):
             return Booking.objects.filter(status__in=Booking.ACTIVE_STATUSES).count(), "open flight booking"
-    # Tours (step 46) and hotels (step 48) have no bookings yet.
+    if module == "tours":
+        from tours.models import TourBooking
+
+        with schema_context(tenant.schema_name):
+            open_tours = TourBooking.objects.filter(
+                status=TourBooking.Status.CONFIRMED, tour__end_date__gte=timezone.localdate()
+            )
+            return open_tours.count(), "open tour booking"
+    # Hotels (step 48) have no bookings yet.
     return 0, ""
 
 

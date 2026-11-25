@@ -65,6 +65,7 @@ TENANT_APPS = [
     "core",
     "support",
     "integrations",
+    "tours",
 ]
 
 INSTALLED_APPS = [*SHARED_APPS, *[app for app in TENANT_APPS if app not in SHARED_APPS]]
@@ -243,5 +244,9 @@ CELERY_BEAT_SCHEDULE = {
     "run-due-route-searches": {
         "task": "integrations.tasks.run_due_route_searches",
         "schedule": timedelta(hours=1),
+    },
+    "complete-finished-tour-bookings": {
+        "task": "tours.tasks.complete_finished_tour_bookings",
+        "schedule": timedelta(days=1),
     },
 }

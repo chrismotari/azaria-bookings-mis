@@ -1,0 +1,11 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hello {{ booking.user.full_name }},</p>
+<p style="margin:0 0 16px 0;">You're booked on <strong>{{ tour.title }}</strong>. You can add or change the travellers' details in the app at any time before the tour.</p>
+{% include "emails/_tour_booking.html" %}
+{% include "emails/_box.html" with title="Pay as your agency instructs" text=payment_instructions|default:"Your agency will tell you how to pay." %}
+<p style="margin:0 0 8px 0;"><strong>Cancellation policy</strong></p>
+<p style="margin:0 0 16px 0;">{{ tour.cancellation_policy|linebreaksbr }}</p>
+<p style="margin:0 0 16px 0;">Free to cancel in the app until {{ cancellation_deadline }}.</p>
+{% with booking_id=booking.id|stringformat:"s" %}{% include "emails/_button.html" with url=frontend_url|add:"/bookings?tour="|add:booking_id label="View your booking" %}{% endwith %}
+{% endblock %}

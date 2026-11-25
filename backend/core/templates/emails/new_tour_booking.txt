@@ -1,0 +1,8 @@
+A customer has booked a tour.
+
+Customer: {{ booking.user.full_name }} <{{ booking.user.email }}>{% if booking.user.phone %}, {{ booking.user.phone }}{% endif %}
+Notes: {{ booking.notes|default:"(none)" }}
+
+{% include "emails/_tour_booking.txt" %}
+Open the booking in the app:
+{{ frontend_url }}/admin/tours/{{ tour.id }}?booking={{ booking.id }}

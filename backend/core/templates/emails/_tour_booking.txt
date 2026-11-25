@@ -1,0 +1,11 @@
+Tour: {{ tour.title }}
+Destination: {{ tour.destination }}
+Dates: {{ dates }}
+{% if tour.meeting_point %}Meeting point: {{ tour.meeting_point }}
+{% endif %}
+Booked:
+{{ lines }}
+{% if booking.group_name %}Group: {{ booking.group_name }}
+{% endif %}People: {{ booking.people }}
+Travellers: {{ travellers }}
+Total: {{ total }}

@@ -1,0 +1,7 @@
+{{ booking.user.full_name }} has cancelled their tour booking. Its slots are free again.
+
+Customer: {{ booking.user.full_name }} <{{ booking.user.email }}>{% if booking.user.phone %}, {{ booking.user.phone }}{% endif %}
+
+{% include "emails/_tour_booking.txt" %}
+Open the booking in the app:
+{{ frontend_url }}/admin/tours/{{ tour.id }}?booking={{ booking.id }}

@@ -1,0 +1,13 @@
+Hello {{ booking.user.full_name }},
+
+There is a change to {{ tour.title }}, which you have booked.
+
+Message from your agency:
+{{ message }}
+
+The tour as it now stands:
+{% include "emails/_tour_booking.txt" %}
+View your booking:
+{{ frontend_url }}/bookings?tour={{ booking.id }}
+
+Azaria Bookings

@@ -1,0 +1,12 @@
+Hello {{ booking.user.full_name }},
+
+{{ tour.title }} has been cancelled, and your booking with it.
+
+Message from your agency:
+{{ message }}
+
+{% include "emails/_tour_booking.txt" %}
+View your booking:
+{{ frontend_url }}/bookings?tour={{ booking.id }}
+
+Azaria Bookings

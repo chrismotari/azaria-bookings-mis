@@ -1,0 +1,11 @@
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px 0;">
+  {% include "emails/_row.html" with label="Tour" value=tour.title %}
+  {% include "emails/_row.html" with label="Destination" value=tour.destination %}
+  {% include "emails/_row.html" with label="Dates" value=dates %}
+  {% if tour.meeting_point %}{% include "emails/_row.html" with label="Meeting point" value=tour.meeting_point %}{% endif %}
+  {% include "emails/_row.html" with label="Booked" value=lines %}
+  {% if booking.group_name %}{% include "emails/_row.html" with label="Group" value=booking.group_name %}{% endif %}
+  {% include "emails/_row.html" with label="People" value=booking.people %}
+  {% include "emails/_row.html" with label="Travellers" value=travellers %}
+  {% include "emails/_row.html" with label="Total" value=total price=True %}
+</table>

@@ -10,20 +10,29 @@ type Props<T extends string> = {
   options: { value: T; label: string }[];
   value: T;
   onChange: (value: T) => void;
+  error?: string;
+  accessibilityLabel?: string;
 };
 
 /** A compact single choice: the browser's select on web, chips on native. */
-export function SelectField<T extends string>({ label, options, value, onChange }: Props<T>) {
+export function SelectField<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+  error,
+  accessibilityLabel = label,
+}: Props<T>) {
   if (Platform.OS !== 'web') {
-    return <OptionChips label={label} options={options} value={value} onChange={onChange} />;
+    return <OptionChips label={label} options={options} value={value} onChange={onChange} error={error} />;
   }
   return (
-    <Field label={label}>
+    <Field label={label} error={error}>
       {createElement(
         'select',
         {
           value,
-          'aria-label': label,
+          'aria-label': accessibilityLabel,
           onChange: (event: { target: { value: string } }) => onChange(event.target.value as T),
           style: {
             ...inputStyle,

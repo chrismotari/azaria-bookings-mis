@@ -230,10 +230,10 @@ All delivered; each was one commit.
 43. Fourth provider: Amadeus (see §23).
 44. Agency themes (see §24).
 45. Modules: flights, tours and hotels per agency (see §25).
+46. Tours (see §26).
 
 Pending (not yet built):
 
-46. Tours (see §26).
 47. Flight passenger details (see §27).
 48. Hotels (see §28).
 49. Dashboard and Explore across modules (see §29).

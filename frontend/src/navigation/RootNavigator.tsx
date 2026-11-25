@@ -22,6 +22,11 @@ import { AdminRoutesScreen } from '../screens/admin/AdminRoutesScreen';
 import { useIntegrations } from '../screens/admin/gds';
 import { AdminSettingsScreen } from '../screens/admin/AdminSettingsScreen';
 import { AdminUsersScreen } from '../screens/admin/AdminUsersScreen';
+import { AdminTourBookScreen } from '../screens/admin/AdminTourBookScreen';
+import { AdminTourEditScreen, AdminTourNewScreen } from '../screens/admin/AdminTourFormScreen';
+import { AdminToursScreen } from '../screens/admin/AdminToursScreen';
+import { TourBookScreen } from '../screens/tours/TourBookScreen';
+import { TourDetailScreen } from '../screens/tours/TourDetailScreen';
 import { BookingNewScreen } from '../screens/bookings/BookingNewScreen';
 import { BookingsScreen } from '../screens/bookings/BookingsScreen';
 import { ForgotPasswordScreen } from '../screens/auth/ForgotPasswordScreen';
@@ -164,12 +169,52 @@ function GatedBookingNew(props: BottomTabScreenProps<MainTabParamList, 'BookingN
   );
 }
 
+function GatedTourBook(props: BottomTabScreenProps<MainTabParamList, 'TourBook'>) {
+  return (
+    <RequireAuth target={{ screen: 'Main', params: { screen: 'TourBook', params: props.route.params } }}>
+      <FreshEachVisit params={props.route.params}>
+        <TourBookScreen {...props} />
+      </FreshEachVisit>
+    </RequireAuth>
+  );
+}
+
+function FreshTourNew(props: BottomTabScreenProps<AdminTabParamList, 'AdminTourNew'>) {
+  return (
+    <FreshEachVisit params={props.route.params}>
+      <AdminTourNewScreen {...props} />
+    </FreshEachVisit>
+  );
+}
+
+function FreshTourEdit(props: BottomTabScreenProps<AdminTabParamList, 'AdminTourEdit'>) {
+  return (
+    <FreshEachVisit params={props.route.params}>
+      <AdminTourEditScreen {...props} />
+    </FreshEachVisit>
+  );
+}
+
+function FreshAdminTourBook(props: BottomTabScreenProps<AdminTabParamList, 'AdminTourBook'>) {
+  return (
+    <FreshEachVisit params={props.route.params}>
+      <AdminTourBookScreen {...props} />
+    </FreshEachVisit>
+  );
+}
+
 // Login-required tabs, left out of the bar for guests.
 const GATED_TABS: (keyof MainTabParamList)[] = ['Requests', 'Bookings', 'Account'];
 
 // Never in the bar; the tab they belong to stays highlighted on them.
-const MAIN_FORM_PAGES: (keyof MainTabParamList)[] = ['QueryNew', 'BookingNew', 'Support'];
-const MAIN_PARENT_ROUTES: Record<string, string> = { QueryNew: 'Requests', BookingNew: 'Explore', Support: 'Account' };
+const MAIN_FORM_PAGES: (keyof MainTabParamList)[] = ['QueryNew', 'BookingNew', 'Support', 'TourDetail', 'TourBook'];
+const MAIN_PARENT_ROUTES: Record<string, string> = {
+  QueryNew: 'Requests',
+  BookingNew: 'Explore',
+  Support: 'Account',
+  TourDetail: 'Explore',
+  TourBook: 'Explore',
+};
 
 function GatedSupport(props: BottomTabScreenProps<MainTabParamList, 'Support'>) {
   return (
@@ -248,6 +293,8 @@ function MainTabsNavigator() {
       <MainTabs.Screen name="QueryNew" component={GatedQueryNew} options={{ title: 'Request options' }} />
       <MainTabs.Screen name="BookingNew" component={GatedBookingNew} options={{ title: 'Book' }} />
       <MainTabs.Screen name="Support" component={GatedSupport} options={{ title: 'Support' }} />
+      <MainTabs.Screen name="TourDetail" component={TourDetailScreen} options={{ title: 'Tour' }} />
+      <MainTabs.Screen name="TourBook" component={GatedTourBook} options={{ title: 'Book tour' }} />
     </MainTabs.Navigator>
   );
 }
@@ -260,6 +307,9 @@ const ADMIN_SETTINGS_PAGES: (keyof AdminTabParamList)[] = [
   'AdminBilling',
   'AdminPlans',
   'AdminSupport',
+  'AdminTourNew',
+  'AdminTourEdit',
+  'AdminTourBook',
 ];
 const ADMIN_PARENT_ROUTES: Record<string, string> = {
   AdminOfferNew: 'AdminOffers',
@@ -268,6 +318,9 @@ const ADMIN_PARENT_ROUTES: Record<string, string> = {
   AdminBilling: 'AdminSettings',
   AdminPlans: 'AdminSettings',
   AdminSupport: 'AdminSettings',
+  AdminTourNew: 'AdminTours',
+  AdminTourEdit: 'AdminTours',
+  AdminTourBook: 'AdminTours',
 };
 
 const ADMIN_FLIGHT_TABS = ['AdminOffers', 'AdminRoutes', 'AdminRequests', 'AdminBookings'];
@@ -278,11 +331,13 @@ function AdminTabsNavigator() {
   const isWide = useIsWide();
   const unreadChats = useDeskUnread(AGENCY_DESK);
   const flights = useHasModule('flights');
+  const tours = useHasModule('tours');
   // Routes only matter once the agency has connected a fare provider.
   const integrations = useIntegrations(flights);
   const hiddenRoutes = [
     ...ADMIN_SETTINGS_PAGES,
     ...(flights ? (integrations.data?.length ? [] : ['AdminRoutes']) : ADMIN_FLIGHT_TABS),
+    ...(tours ? [] : ['AdminTours']),
   ];
   return (
     <AdminTabs.Navigator
@@ -321,6 +376,7 @@ function AdminTabsNavigator() {
         component={AdminBookingsScreen}
         options={tab('Bookings', 'ticket-outline', 'ticket')}
       />
+      <AdminTabs.Screen name="AdminTours" component={AdminToursScreen} options={tab('Tours', 'map-outline', 'map')} />
       <AdminTabs.Screen
         name="AdminUsers"
         component={AdminUsersScreen}
@@ -349,6 +405,9 @@ function AdminTabsNavigator() {
       <AdminTabs.Screen name="AdminBilling" component={AdminBillingScreen} options={{ title: 'Billing' }} />
       <AdminTabs.Screen name="AdminPlans" component={AdminPlansScreen} options={{ title: 'Plans' }} />
       <AdminTabs.Screen name="AdminSupport" component={AdminSupportScreen} options={{ title: 'Support' }} />
+      <AdminTabs.Screen name="AdminTourNew" component={FreshTourNew} options={{ title: 'New tour' }} />
+      <AdminTabs.Screen name="AdminTourEdit" component={FreshTourEdit} options={{ title: 'Edit tour' }} />
+      <AdminTabs.Screen name="AdminTourBook" component={FreshAdminTourBook} options={{ title: 'Book tour' }} />
     </AdminTabs.Navigator>
   );
 }

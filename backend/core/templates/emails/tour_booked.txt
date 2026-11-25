@@ -1,0 +1,17 @@
+Hello {{ booking.user.full_name }},
+
+You're booked on {{ tour.title }}. You can add or change the travellers' details in the app at any time before the tour.
+
+{% include "emails/_tour_booking.txt" %}
+Pay as your agency instructs:
+{{ payment_instructions|default:"Your agency will tell you how to pay." }}
+
+Cancellation policy:
+{{ tour.cancellation_policy }}
+
+Free to cancel in the app until {{ cancellation_deadline }}.
+
+View your booking:
+{{ frontend_url }}/bookings?tour={{ booking.id }}
+
+Azaria Bookings

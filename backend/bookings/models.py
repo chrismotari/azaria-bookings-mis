@@ -139,3 +139,54 @@ class BoardingPass(models.Model):
 
     def __str__(self):
         return self.original_name
+
+
+class Traveller(models.Model):
+    """Someone travelling on a tour booking line (or, from step 47, a flight booking); exactly one of the two."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    class Gender(models.TextChoices):
+        FEMALE = "female", "Female"
+        MALE = "male", "Male"
+
+    class DocumentType(models.TextChoices):
+        PASSPORT = "passport", "Passport"
+        NATIONAL_ID = "national_id", "National ID"
+
+    MAX_CHECKED_BAGS = 5
+
+    tour_line = models.ForeignKey(
+        "tours.TourBookingLine", on_delete=models.CASCADE, null=True, blank=True, related_name="travellers"
+    )
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, null=True, blank=True, related_name="travellers")
+    full_name = models.CharField(max_length=100)
+    gender = models.CharField(max_length=10, choices=Gender.choices, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+    # ISO 3166 alpha-2.
+    nationality = models.CharField(max_length=2, blank=True)
+    document_type = models.CharField(max_length=20, choices=DocumentType.choices, blank=True)
+    document_number = models.CharField(max_length=30, blank=True)
+    document_expiry = models.DateField(null=True, blank=True)
+    email = models.EmailField(blank=True)
+    phone = models.CharField(max_length=30, blank=True)
+    checked_bags = models.PositiveSmallIntegerField(default=0, validators=[MaxValueValidator(MAX_CHECKED_BAGS)])
+    # Per bag; null when not stated.
+    checked_bag_kg = models.PositiveSmallIntegerField(null=True, blank=True, validators=[MinValueValidator(1)])
+    cabin_bag_kg = models.PositiveSmallIntegerField(null=True, blank=True, validators=[MinValueValidator(1)])
+    special_requests = models.TextField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["created_at", "pk"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(tour_line__isnull=False, booking__isnull=True)
+                | models.Q(tour_line__isnull=True, booking__isnull=False),
+                name="traveller_has_one_owner",
+            ),
+        ]
+
+    def __str__(self):
+        return self.full_name

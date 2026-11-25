@@ -189,7 +189,7 @@ type CustomerPickerProps = {
 };
 
 /** Search of active customers by name, email or phone; the value is a chosen customer. */
-function CustomerPicker({ value, onChange, error }: CustomerPickerProps) {
+export function CustomerPicker({ value, onChange, error }: CustomerPickerProps) {
   const [text, setText] = useState('');
   const search = useDebounced(text.trim(), 250);
   const results = useQuery({

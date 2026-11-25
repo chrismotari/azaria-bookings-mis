@@ -27,6 +27,7 @@ import { colors, createStyles, font, radius, space, useIsWide } from '../../them
 import { formatDate, routeCodes } from '../../utils/format';
 import { ExploreFilters } from './ExploreFilters';
 import { ExploreSearchBar } from './ExploreSearchBar';
+import { ToursPage } from '../tours/ToursPage';
 import { OfferDetailView } from './OfferDetailView';
 
 type Ordering = 'departure_date' | 'price' | '-price';
@@ -66,7 +67,7 @@ export function ExploreScreen(props: Props) {
       only={props.route.params?.id ? 'flights' : undefined}
       pages={{
         flights: () => <FlightDeals {...props} />,
-        tours: () => <NotYet icon="map-outline" title="No tours yet" message="Tours will appear here." />,
+        tours: () => <ToursPage />,
         hotels: () => <NotYet icon="bed-outline" title="No hotels yet" message="Hotels will appear here." />,
       }}
     />

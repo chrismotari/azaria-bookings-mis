@@ -1,0 +1,9 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p style="margin:0 0 16px 0;">Hello {{ booking.user.full_name }},</p>
+<p style="margin:0 0 16px 0;">There is a change to <strong>{{ tour.title }}</strong>, which you have booked.</p>
+{% include "emails/_box.html" with title="Message from your agency" text=message %}
+<p style="margin:0 0 8px 0;"><strong>The tour as it now stands</strong></p>
+{% include "emails/_tour_booking.html" %}
+{% with booking_id=booking.id|stringformat:"s" %}{% include "emails/_button.html" with url=frontend_url|add:"/bookings?tour="|add:booking_id label="View your booking" %}{% endwith %}
+{% endblock %}
