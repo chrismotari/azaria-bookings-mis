@@ -102,6 +102,7 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Photo positions start at 0 (the cover); a PATCH of `position` renumbers the rest; photo changes on a cancelled tour answer 409; photos chosen on New tour are uploaded once the tour is created.
 - Admin tours also return `confirmed_bookings` (for "N bookings (M people)" in the notice dialog); the table's status is worked out in the app; filters: upcoming and inactive are not cancelled and not ended, past is ended, cancelled is cancelled. Activate / Deactivate never asks for a notice.
 - URLs: /tours/<id> and /tours/<id>/book; a customer's tour booking is /bookings?tour=<id>; admins have /admin/tours/<id> (a booking: ?booking=<id>), /admin/tours/new, /admin/tours/<id>/edit and /admin/tours/<id>/book?customer=<id>.
+- "City" on the tours search is the tour's new `departure_city` (where it starts); organiser is free text on the tour, not a managed list, and the single `search` filter on tours and hotels is replaced by one filter per search field.
 
 ## Hotels
 - A hotel's from price, and its place in the public list, use only rates that fit the adults and children searched.
