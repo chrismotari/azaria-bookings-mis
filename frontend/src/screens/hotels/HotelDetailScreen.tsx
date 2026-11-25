@@ -234,7 +234,7 @@ export function HotelDetailScreen({ navigation, route }: Props) {
 
 const COLUMNS = { type: 2.2, sleeps: 1, price: 1.6, included: 2, rooms: 0.9 };
 
-function RoomTable({
+export function RoomTable({
   roomTypes,
   adults,
   childrenCount,

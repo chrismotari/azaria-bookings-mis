@@ -556,7 +556,9 @@ function PlatformTabsNavigator() {
 /** The root host: public pages, the owner's sign-in and, once signed in, the owner's screens. */
 function PlatformStack() {
   const { user } = useAuth();
-  const publicPage = { header: () => <PlatformPublicBar /> };
+  const publicPage = {
+    header: ({ route }: { route: { name: string } }) => <PlatformPublicBar route={route.name} />,
+  };
   return (
     <View style={styles.fill}>
       <Stack.Navigator screenOptions={stackScreenOptions()}>

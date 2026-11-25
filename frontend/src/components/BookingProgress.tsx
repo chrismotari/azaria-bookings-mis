@@ -21,7 +21,16 @@ const TERMINAL: Partial<Record<BookingStatus, IconName>> = {
 };
 
 /** A tracker along the normal path, or a single banner for a status that ends the booking. */
-export function BookingProgress({ status, message }: { status: BookingStatus; message?: string }) {
+export function BookingProgress({
+  status,
+  message,
+  lastLabel,
+}: {
+  status: BookingStatus;
+  message?: string;
+  /** Renames the last step (the website's sample tracker). */
+  lastLabel?: string;
+}) {
   const terminalIcon = TERMINAL[status];
   if (terminalIcon) {
     const { label, tone } = BOOKING_STATUS[status];
@@ -70,7 +79,7 @@ export function BookingProgress({ status, message }: { status: BookingStatus; me
               style={[styles.label, (done || isCurrent) && styles.labelActive]}
               aria-current={isCurrent ? 'step' : undefined}
             >
-              {step.label}
+              {index === STEPS.length - 1 && lastLabel ? lastLabel : step.label}
             </Text>
           </View>
         );

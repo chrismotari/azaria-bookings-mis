@@ -36,6 +36,8 @@ type Props = {
   actionLabel: string;
   /** Starts a plan enquiry chat with the platform (payment is outside the system). */
   onEnquire: (plan: PublicPlan, cycle: BillingCycle) => void;
+  /** Only the featured grid, at most three cards (the website's pricing preview). */
+  featuredOnly?: boolean;
 };
 
 /** A plan enquiry's subject, e.g. "Plan enquiry: Starter (annual)". */
@@ -45,7 +47,7 @@ export const enquirySubject = (plan: PublicPlan, cycle: BillingCycle) =>
 export const billed = (cycle: BillingCycle) => (cycle === 'monthly' ? 'monthly' : 'annually');
 
 /** Tagged plans as featured cards, other subscriptions behind "Show all plans", support plans apart. */
-export function PlanShowcase({ plans, currentPlanIds = [], actionLabel, onEnquire }: Props) {
+export function PlanShowcase({ plans, currentPlanIds = [], actionLabel, onEnquire, featuredOnly }: Props) {
   const isWide = useIsWide();
   const [cycle, setCycle] = useState<BillingCycle>('monthly');
   const [showAll, setShowAll] = useState(false);
@@ -53,9 +55,10 @@ export function PlanShowcase({ plans, currentPlanIds = [], actionLabel, onEnquir
   const subscriptions = plans.filter((plan) => plan.kind === 'subscription');
   const featured = FEATURED.flatMap((tag) => subscriptions.filter((plan) => plan.tag === tag));
   // With nothing tagged, every plan is on show and there is nothing to reveal.
-  const grid = featured.length ? featured : [...subscriptions].sort(cheapestFirst);
-  const others = featured.length ? subscriptions.filter((plan) => !plan.tag).sort(cheapestFirst) : [];
-  const support = plans.filter((plan) => plan.kind === 'support').sort(cheapestFirst);
+  const all = featured.length ? featured : [...subscriptions].sort(cheapestFirst);
+  const grid = featuredOnly ? all.slice(0, 3) : all;
+  const others = featured.length && !featuredOnly ? subscriptions.filter((plan) => !plan.tag).sort(cheapestFirst) : [];
+  const support = featuredOnly ? [] : plans.filter((plan) => plan.kind === 'support').sort(cheapestFirst);
 
   const card = (plan: PublicPlan, compact = false) => (
     <PlanCard

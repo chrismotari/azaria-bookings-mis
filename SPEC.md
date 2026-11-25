@@ -178,7 +178,7 @@ Agency app
 - `no_tenant` / `tenant_suspended` responses show a full-page message.
 
 Platform app (root host, web only)
-- Public: home (short introduction, See pricing) and `/pricing` with a slim public bar. `/login`, `/admin` and `admin.<root host>` lead to sign-in; nothing on the public pages links to it.
+- Public: the sales website (§32) at home: hero with an Explore mock, the three products (Flights, Tours, Hotels) each with its own section and mock screen built from the app's real components, features grid, dashboard mock, how it works, pricing preview (PlanShowcase's featured cards), questions accordion, closing call to action and footer; and `/pricing`. Both pages share the website bar (product anchors, Pricing, "Get started" opening the platform desk's chat, or "Open admin" for a signed-in owner; a menu sheet on phones). `/login`, `/admin` and `admin.<root host>` lead to sign-in; nothing on the public pages links to it.
 - Owner: Dashboard (agency counts, revenue, monthly recurring, outstanding/overdue, 12-month bar chart in plain views, agencies per plan, needs attention, fare searches this month per agency against its allowance), Agencies (table; New agency dialog with a Theme dropdown (active themes, the default preselected) and preview; each agency opens beside the slim rail (`/agencies/<id>`) with agency (name, address, its theme with preview, changeable), admins (suspend/restore, send a password reset link), domains, plan & billing, fare searches (used this month, editable allowance)), Plans (kind tabs, tag column, rich-text dialog, link to pricing), Invoices (filters, drawer actions behind confirm dialogs), Chats, Settings (billing and support; Themes: table of swatches, name, agencies using it, Default and Active/Inactive chips, New theme, a create/edit dialog with hex fields, the browser's colour picker, live preview and the four contrast checks (Save disabled while one fails), Make default and Deactivate/Activate; and Exchange rates: latest rate per currency with date, source and stale warning, a manual rate for today, the feed's credit).
 - PlanShowcase (public pricing and agency Plans): Monthly/Annual switch with saving, featured Recommended/Basic/Advanced cards, Show all plans, support plans section, "Your plan" for running plans.
 
@@ -237,9 +237,6 @@ All delivered; each was one commit.
 49. Dashboard and Explore across modules (see §29).
 50. Fully booked tours stay visible (see §30).
 51. Reviews (see §31).
-
-Pending (not yet built):
-
 52. Platform website (see §32).
 
 ## 14. Step 34: Return trips and flight details

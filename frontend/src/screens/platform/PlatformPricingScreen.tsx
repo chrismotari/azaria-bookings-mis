@@ -16,9 +16,11 @@ export function PlatformPricingScreen() {
     queryFn: async () => (await api.get<PublicPlans>('/platform/public-plans')).data,
   });
   return (
-    <Screen maxWidth={1280}>
+    <Screen maxWidth={1200}>
       <View style={styles.header}>
-        <Text style={styles.title}>Plans and pricing</Text>
+        <Text style={styles.title} role="heading" aria-level={1}>
+          Plans and pricing
+        </Text>
         <Text style={styles.lead}>
           Choose the plan that fits your agency. Every plan gives you your own booking site; pay monthly or yearly.
         </Text>
@@ -44,7 +46,7 @@ export function PlatformPricingScreen() {
 }
 
 const styles = createStyles(() => ({
-  header: { alignItems: 'center', gap: space.sm, marginTop: space.lg },
+  header: { alignItems: 'center', gap: space.sm, marginTop: space.xl },
   title: { fontSize: font.display, fontWeight: weight.heavy, color: colors.text, textAlign: 'center' },
   lead: { fontSize: font.heading, color: colors.muted, textAlign: 'center', maxWidth: 640 },
 }));

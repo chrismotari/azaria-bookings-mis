@@ -123,6 +123,9 @@ export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 };
 /** Type scale: every font size in the app comes from here. */
 export const font = { display: 28, title: 22, heading: 18, body: 15, small: 13, caption: 12 };
 
+/** Larger sizes for the platform website's headings and lead paragraphs. */
+export const siteFont = { hero: 52, section: 38, lead: 20 };
+
 /** Weights for the type scale: headings heavy, labels semibold. */
 export const weight = { heavy: '800', bold: '700', semibold: '600', regular: '400' } as const;
 

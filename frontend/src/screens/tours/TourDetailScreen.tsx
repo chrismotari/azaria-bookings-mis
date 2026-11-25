@@ -115,7 +115,7 @@ function Lines({ title, icon, color, lines }: { title: string; icon: IconName; c
   );
 }
 
-function PriceCard({ tour, onBook }: { tour: Tour; onBook: () => void }) {
+export function PriceCard({ tour, onBook }: { tour: Tour; onBook: () => void }) {
   return (
     <Card>
       <Text style={styles.heading}>Prices</Text>

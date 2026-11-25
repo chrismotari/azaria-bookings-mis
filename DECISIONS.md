@@ -232,3 +232,9 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Step 51: the "Rate your trip" card sits right under the booking's status card; on tour and hotel detail the Reviews card follows the description card (after the price card on phones).
 - Step 51: with more than eight items in the wide top bar, items sit closer with smaller labels and the account menu shows only the initials, so the bar fits at 1280 px.
 - Step 51: `request_reviews` also emails bookings that finished before the step was deployed, once each.
+- Step 52: the website's headings use three extra sizes, `siteFont` in `theme.ts` (hero 52, section 38, lead 20); the app's own type scale is unchanged.
+- Step 52: the sample tour and hotel cards show small landscapes drawn as SVG data in the theme's colours, so the mocks are not grey placeholders yet use no image files.
+- Step 52: mock screens are laid out at a fixed desktop-like width (narrower on phones) and scaled down to fit; they are `inert` and `aria-hidden`.
+- Step 52: for a signed-in owner every website "Get started" outside the plan cards becomes "Open admin" and the footer's Contact is hidden, since the owner has no message button.
+- Step 52: the pricing preview shows at most three featured plans (or the three cheapest when none is tagged), without "Show all plans" or support plans; the progress tracker in the flights mock names its last step "Passes sent" through a new optional `lastLabel`.
+- Step 52: bar links from `/pricing` go back to the existing home page (`popTo`) rather than pushing a second one.

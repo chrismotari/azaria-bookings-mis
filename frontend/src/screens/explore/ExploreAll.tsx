@@ -38,35 +38,7 @@ export function ExploreAll({ onOpen }: { onOpen: (module: Module) => void }) {
   return (
     <ScrollView style={styles.scroll}>
       <View style={styles.body}>
-        <View style={styles.hero}>
-          <Text style={styles.agency} accessibilityRole="header">
-            {agency.data?.name ?? ' '}
-          </Text>
-          <View style={[styles.tiles, isWide && styles.tilesWide]}>
-            {modules.map((module) => (
-              <Pressable
-                key={module}
-                accessibilityRole="link"
-                accessibilityLabel={`${HERO[module].title}: ${HERO[module].line.toLowerCase()}`}
-                onPress={() => onOpen(module)}
-                style={({ hovered, pressed }: PressState) => [
-                  styles.tile,
-                  isWide && styles.tileWide,
-                  (hovered || pressed) && styles.tileHovered,
-                ]}
-              >
-                <View style={styles.tileIcon}>
-                  <Icon name={HERO[module].icon} size={28} color={colors.primary} />
-                </View>
-                <View style={styles.tileText}>
-                  <Text style={styles.tileTitle}>{HERO[module].title}</Text>
-                  <Text style={styles.tileLine}>{HERO[module].line}</Text>
-                </View>
-                <Icon name="arrow-forward" size={20} color={colors.primaryText} />
-              </Pressable>
-            ))}
-          </View>
-        </View>
+        <ExploreHero name={agency.data?.name ?? ' '} modules={modules} wide={isWide} onOpen={onOpen} />
 
         {explore.isPending ? (
           <LoadingState />
@@ -90,6 +62,54 @@ export function ExploreAll({ onOpen }: { onOpen: (module: Module) => void }) {
         <GetAppFooter />
       </View>
     </ScrollView>
+  );
+}
+
+/** The agency's name over a tile per module; wide puts the tiles in a row. */
+export function ExploreHero({
+  name,
+  modules,
+  wide,
+  onOpen,
+  heading = true,
+}: {
+  name: string;
+  modules: Module[];
+  wide: boolean;
+  onOpen: (module: Module) => void;
+  /** False where the page has its own headings (the website's sample screen). */
+  heading?: boolean;
+}) {
+  return (
+    <View style={styles.hero}>
+      <Text style={styles.agency} accessibilityRole={heading ? 'header' : undefined}>
+        {name}
+      </Text>
+      <View style={[styles.tiles, wide && styles.tilesWide]}>
+        {modules.map((module) => (
+          <Pressable
+            key={module}
+            accessibilityRole="link"
+            accessibilityLabel={`${HERO[module].title}: ${HERO[module].line.toLowerCase()}`}
+            onPress={() => onOpen(module)}
+            style={({ hovered, pressed }: PressState) => [
+              styles.tile,
+              wide && styles.tileWide,
+              (hovered || pressed) && styles.tileHovered,
+            ]}
+          >
+            <View style={styles.tileIcon}>
+              <Icon name={HERO[module].icon} size={28} color={colors.primary} />
+            </View>
+            <View style={styles.tileText}>
+              <Text style={styles.tileTitle}>{HERO[module].title}</Text>
+              <Text style={styles.tileLine}>{HERO[module].line}</Text>
+            </View>
+            <Icon name="arrow-forward" size={20} color={colors.primaryText} />
+          </Pressable>
+        ))}
+      </View>
+    </View>
   );
 }
 

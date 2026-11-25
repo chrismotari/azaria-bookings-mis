@@ -14,6 +14,7 @@ import { TenantUnavailable } from './src/components/TenantUnavailable';
 import { linking } from './src/navigation/linking';
 import { navigationRef, takePlaceBeforeThemeChange } from './src/navigation/navigationRef';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import { SITE_TITLE } from './src/screens/platform/site';
 import { useThemeVersion } from './src/theme';
 
 function shouldRetry(failureCount: number, error: unknown) {
@@ -41,7 +42,12 @@ function Navigation() {
       linking={linking}
       initialState={initialState}
       documentTitle={{
-        formatter: (options) => (options?.title ? `${options.title} · Azaria Bookings` : 'Azaria Bookings'),
+        formatter: (options, route) =>
+          route?.name === 'PlatformHome'
+            ? SITE_TITLE
+            : options?.title
+              ? `${options.title} · Azaria Bookings`
+              : 'Azaria Bookings',
       }}
     >
       <RootNavigator />
