@@ -814,7 +814,7 @@ API
 App
 - **Tour cards** (Tours list, Featured rows, Explore All): a "Fully booked" chip in the warning colour takes the place of the "N slots left" chip, and the price line stays.
 - **Tour detail**: the price card lists the options as today, with "Sold out" on each limited option that has no units left. In place of Book, it shows "Fully booked" and "This tour has no places left."
-- Admin screens and the dashboard are unchanged. The dashboard's `on_sale.tours.upcoming` still counts bookable tours, and `fully_booked` already counts the rest.
+- Admin screens and the dashboard are unchanged. The dashboard's `on_sale.tours.upcoming` still counts bookable tours; `fully_booked` is corrected in step 51 (§31) to count listed tours that are not bookable.
 
 Tests
 - Backend: the listed and bookable rules at their edges, covering the last slot taken, every limited option sold out with slots left, and a cancelled booking freeing a slot, which makes the tour bookable again. Fully booked tours appear in `tours`, `tours/{id}` and `explore` with `fully_booked`. Closed, cancelled and inactive tours still don't appear. Booking a fully booked tour returns 409.
@@ -863,10 +863,10 @@ App
   - A review opens beside the slim rail (§20) with the full comment, the customer and a link to the booking, Hide or Show, and a reply box (Save reply, Remove reply).
   - The column and filter for kind show only when more than one module is on.
 - Admin tour and hotel detail pages show the rating with a link to Reviews filtered to that item.
-- The dashboard is unchanged.
+- The dashboard has no review figures. One fix carried over from step 50: `on_sale.tours.fully_booked` counts listed tours that are not bookable for want of slots or units (§30). Before this, a tour whose limited options were sold out while slots were left was counted nowhere.
 
 Tests
-- Backend: the review check (exactly one booking, one review per booking); who can review and when, for each kind at its edge (the last segment date, check_out today, tour completion), refused for cancelled, unavailable and not yet finished bookings and for other customers. Edit and delete by the author only, with delete removing the reply. Hide and show, with hidden reviews out of public lists but still in averages, counts and `by_rating`, and visible to the author. Reply rules. Averages and `by_rating`. Reviewer name formatting. Public lists show visible reviews only, and the `rating` and `service_rating` fields are correct, including hidden reviews. Also: `request_reviews` with frozen time (once per booking, only when reviewable); the new-review admin email; `module_off`; isolation between agencies; UUID keys; admin permissions.
+- Backend: the dashboard's `fully_booked` counting a tour whose limited options are sold out while slots are left; the review check (exactly one booking, one review per booking); who can review and when, for each kind at its edge (the last segment date, check_out today, tour completion), refused for cancelled, unavailable and not yet finished bookings and for other customers. Edit and delete by the author only, with delete removing the reply. Hide and show, with hidden reviews out of public lists but still in averages, counts and `by_rating`, and visible to the author. Reply rules. Averages and `by_rating`. Reviewer name formatting. Public lists show visible reviews only, and the `rating` and `service_rating` fields are correct, including hidden reviews. Also: `request_reviews` with frozen time (once per booking, only when reviewable); the new-review admin email; `module_off`; isolation between agencies; UUID keys; admin permissions.
 - Frontend: type-check, lint, format check, web export. Browser check at 1280 and 390 px:
   - a customer reviewing a finished tour, hotel stay and flight booking (with the flight note), then editing and deleting
   - ratings on cards and the Reviews section with a reply
