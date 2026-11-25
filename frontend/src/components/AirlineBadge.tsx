@@ -38,7 +38,8 @@ const styles = createStyles(() => ({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  logoFrame: { backgroundColor: colors.surface, padding: 3 },
+  // Square logos fill the frame edge to edge.
+  logoFrame: { backgroundColor: colors.surface, borderWidth: 0 },
   logo: { width: '100%', height: '100%' },
   codeFrame: { backgroundColor: colors.primaryTint },
   code: { fontSize: font.small, fontWeight: weight.heavy, color: colors.primary },
