@@ -236,6 +236,7 @@ Pending (not yet built):
 46. Tours (see §26).
 47. Flight passenger details (see §27).
 48. Hotels (see §28).
+49. Dashboard and Explore across modules (see §29).
 
 ## 14. Step 34: Return trips and flight details
 
@@ -690,7 +691,7 @@ Tests
 
 ## 28. Step 48: Hotels
 
-Goal: an agency with the hotels module sells stays at the hotels, lodges and camps it works with. Its admin lists each hotel with its room types and rates, priced per night by season. Customers browse hotels on Explore, choose dates, rooms and a rate, and send a booking request. The agency cannot see the hotel's free rooms, so booking works as for flights: the admin checks availability with the hotel and confirms, possibly at a different price; the customer pays outside the system before the deadline; the admin marks the booking paid; then the admin uploads the hotel's voucher with its confirmation number and sends it. Connections to hotel suppliers (bed banks, channel managers) are out of scope until specified. Prices are USD per room per night, optionally plus a charge per adult (for example breakfast), and include taxes; children are not priced separately. The admin dashboard is revised in the next step.
+Goal: an agency with the hotels module sells stays at the hotels, lodges and camps it works with. Its admin lists each hotel with its room types and rates, priced per night by season. Customers browse hotels on Explore, choose dates, rooms and a rate, and send a booking request. The agency cannot see the hotel's free rooms, so booking works as for flights: the admin checks availability with the hotel and confirms, possibly at a different price; the customer pays outside the system before the deadline; the admin marks the booking paid; then the admin uploads the hotel's voucher with its confirmation number and sends it. Connections to hotel suppliers (bed banks, channel managers) are out of scope until specified. Prices are USD per room per night, optionally plus a charge per adult (for example breakfast), and include taxes; children are not priced separately. The admin dashboard is revised in the next step (§29).
 
 Model (per agency, app `hotels`)
 - **Hotel**: name (≤ 120), destination (≤ 120, free text, e.g. "Diani Beach, Kenya"), address (≤ 200), star_rating (1–5, null = not rated), summary (≤ 300, plain text, shown on cards), description (sanitized rich HTML ≤ 10,000, as tours), amenities (a list of ≤ 30 short lines of ≤ 100), check_in_time, check_out_time, cancellation_policy (plain text ≤ 2,000, required), is_active, created_at, updated_at. Never deleted.
@@ -751,3 +752,53 @@ Tests
   - Guests: lead guest required per room, the limit per room, edits by the customer while requested and admins until completed, never visible to other customers; the Traveller check with three owners.
   - Every email (and none on customer cancel or decline, no admin email for admin-made bookings). Photos as tours. Filters and ordering. `module_off` when hotels is off, and turning hotels off refused with open hotel bookings. Isolation between agencies. UUID keys on the new models.
 - Frontend: type-check, lint, format check, web export. Browser check at 1280 and 390 px: Explore Hotels with and without dates, filters and sort; hotel detail prices across a season change and for 1 and 2 adults on a rate with a per-adult charge; requesting two rooms as a guest through the auth gate; the admin confirming with a new total and the customer accepting; mark paid, voucher upload and send; the customer opening the voucher; unavailable with a message; creating a hotel with rooms, rates, periods (an overlap refused) and photos.
+
+## 29. Step 49: Dashboard and Explore across modules
+
+Goal: the admin dashboard and the visitor's first view of Explore cover whichever modules the agency has (§25) and read as one design, whether it has one module or all three. Sections are organised by job (what needs action, what was sold, what is coming up, what is on sale), not by module, and each holds rows from every module that is on. With one module nothing names the module; with more, rows carry a small module icon (plane, map pin, bed) and labels name the module only where two would otherwise read the same. Explore gains featured offers: admins mark flight offers, tours and hotels as featured, and a visitor opening Explore sees them as cards before choosing anything. Figures from a module that is off are left out (its data is kept, §25). When built, §11 and §21 describe the dashboard and Explore as here.
+
+Model
+- **Offer**, **Tour** and **Hotel** gain is_featured (default false). Admins switch it in the item's form and with a star in their tables. There is no limit on how many are featured; Explore shows at most six per module (below).
+
+Definitions
+- **A sale**, in USD, in Nairobi months and days:
+  - Flight booking: as §21 (Paid or Completed, dated by its Paid event, amount its total).
+  - Hotel booking: Paid or Completed, dated by its paid event, amount its total (the new total when changes were accepted).
+  - Tour booking: Confirmed or Completed, dated by its creation, amount its total. Tours have no paid step, so a booking counts when booked and stops counting if it is cancelled.
+- **Featured on Explore**, per module, at most six cards: the featured items customers can see (flights: public bookable offers; tours: bookable tours; hotels: those the public list shows), then, when fewer than six, the rest filled from the other visible items. Order: featured first, then flights by departure date, tours by start date, hotels by from price (no dates, ties by name).
+
+API
+- Public `GET /api/explore`: `{flights, tours, hotels}`, each the module's featured cards (in the shapes its own list returns, with `is_featured`), present only for modules that are on.
+- Admin `offers`, `tours` and `hotels` return and accept `is_featured`; their lists take a `featured` filter.
+- `GET /api/admin/dashboard` returns `modules` and replaces the §21 fields that were flights only:
+  - `needs_action`: counts, each present only when its module is on: flights as today (bookings to confirm, boarding passes due, open requests, awaiting payment, new fares to review); hotels: `hotel_to_confirm` (requested), `hotel_awaiting_payment` (availability confirmed), `hotel_vouchers_due` (paid); tours: `travellers_missing` (confirmed bookings on tours starting in the next 7 days with fewer travellers than people). `overdue_invoice` as §21.
+  - `sales`: `{this_month, this_year, all_time, count_this_month}` across modules on, each amount with `by_module` (`{flights, tours, hotels}`, modules on only).
+  - `sales_by_month`: the last 12 months, oldest first, `{month, total, count, by_module}`.
+  - `payments_due`: flight and hotel bookings awaiting payment with a deadline in the next 48 hours, soonest first, at most 5: `{kind (flight / hotel), id, customer, title (route line or hotel name), total, payment_deadline}`.
+  - `this_week`: what starts in the next 7 days, soonest first (ties: flights, tours, hotels), at most 8: flight departures (Paid and Completed, as §21, with `passenger_count` and `boarding_passes_sent`), tour starts (tours not cancelled with confirmed bookings: `booked`, `slots`, `travellers_missing`) and hotel check-ins (Paid and Completed: `customer`, `nights`, `rooms`, `voucher_sent`); each `{kind, id, date, title, ...}`.
+  - `top_sellers`: this year's sales grouped by route (origin, destination, trip type), tour and hotel, highest total first, at most 5: `{kind, id (tour or hotel; null for routes), title, count, total}`. Ordered by total instead of §21's count, since a tour or hotel booking holds several people.
+  - `customers` as §21.
+  - `on_sale`, per module on: flights `{bookable, public_bookable, expiring_soon, featured}` and `searches` as §21; tours `{upcoming (bookable), fully_booked, seats_sold, seats_total (upcoming tours), featured}`; hotels `{listed, prices_ending (listed hotels with no rate covering any night beyond 30 days from today), featured}`.
+
+Admin dashboard (top to bottom; two columns from 900 px where noted, one on phones)
+- Title and greeting as today.
+- **Needs action**: the overdue invoice tile first when there is one, then the tiles of every module on, in module order, each opening its screen with the matching filter. Labels name the module only when two would read the same: "Bookings to confirm" with one booking module, "Flight bookings to confirm" and "Hotel bookings to confirm" with both. Tiles at zero show as today.
+- **Sales**: the three stat cards across modules on. With more than one module each card has a line underneath, "Flights $X · Tours $Y · Hotels $Z", modules at $0 included.
+- **Sales by month**: the 12-month bar chart. With one module, plain bars as today; with more, each bar is stacked by module in a fixed colour per module (primary, accent and the slate green, shown with a legend), and each bar's accessible label gives the total and each module's amount.
+- Two columns: **Coming up** ("Payments due in 48 hours" and "This week": one list each, rows from every module mixed by date, each with its icon when more than one module is on; a flight row shows customer, route, date, passengers and "Passes not sent"; a tour row shows tour, start date, booked of slots and "N travellers missing"; a hotel row shows customer, hotel, check-in, nights and rooms and "Voucher not sent"; empty lines "Nothing due" and "Nothing this week"; rows open the booking or tour) and **Top sellers this year** (one ranked list of routes, tours and hotels, with icons when more than one module is on; empty: "No sales this year yet").
+- Two columns: **Customers** as today and **On sale**: one block per module on, each a heading and a line or two with links: Flights (bookable offers, how many public, "N expire within 7 days", featured count, and the searches bar as §21 when there is an integration), Tours (upcoming tours, seats sold of seats as a bar, "N fully booked", featured count), Hotels (hotels listed, "N have prices for less than 30 days ahead" in the warning colour, featured count). With one module the block has no heading.
+- Loading and error states through the one request; no horizontal scrolling at 390 px.
+
+Explore
+- **With more than one module**, the module switch (§25) gains a first tab, **All**, the default; the URL keeps the tab. **All** shows:
+  - A hero with the agency's name and one large tile per module on ("Flights: find a flight", "Tours: join a tour", "Hotels: book a stay"), each opening its tab. Side by side on wide screens, stacked on phones.
+  - A section per module on, in module order, titled "Featured flights", "Featured tours", "Featured hotels", each with up to six cards from `explore` and "See all" opening the tab. Three columns on wide screens; on phones a row of cards scrolled sideways within the section (the page itself never scrolls sideways). A module with nothing to show is left out; with nothing in any, "Nothing on offer right now. Check back soon."
+- **With one module**, there is no switch, and that module's page opens with a "Featured" row above its results while no search or filter is applied, hidden once one is.
+- **Cards** share one frame, so the three kinds line up in a grid: a top image area of the same height, then title, a detail line, and the price at the bottom in the price colour, with a "Featured" chip on featured items. Tours and hotels use their cards from §26 and §28. Flight offers get a card: the image area in the primary tint with the route large ("NBO → DXB", or "⇄" for return) and the city names under it, airline badge; then dates, trip type and class, and "$X per person". Each card opens the item's detail.
+
+Admin screens
+- Offers, Tours and Hotels tables gain a star column (filled when featured, toggled in place) and a Featured filter; their forms gain a "Feature on Explore" switch.
+
+Tests
+- Backend: is_featured on the three models and admin endpoints, with the filter; `explore` per module on (featured first, filled to six, only visible items, nothing from modules off, nothing from another agency); each sale rule (hotel paid dating and accepted changes, tour bookings counting when booked and not once cancelled, Nairobi month edges); `by_module` with modules on only; `payments_due`, `this_week` and `top_sellers` mixing kinds with their ordering, limits and windows at the edges; `needs_action` and `on_sale` per module (travellers missing, prices ending); a module turned off drops out of every figure.
+- Frontend: type-check, lint, format check, web export. Browser check at 1280 and 390 px: Explore All with three modules (hero tiles, featured sections, See all, a module with nothing to show), a flights-only agency (Featured row, hidden after a search), a tours-only agency; featuring from an admin table; the dashboard with all three modules (stacked chart and legend, mixed Coming up and Top sellers, label rules) and with one (no icons, headings or breakdown lines), and an empty agency.
