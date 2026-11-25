@@ -233,10 +233,12 @@ All delivered; each was one commit.
 46. Tours (see §26).
 47. Flight passenger details (see §27).
 48. Hotels (see §28).
+49. Dashboard and Explore across modules (see §29).
 
 Pending (not yet built):
 
-49. Dashboard and Explore across modules (see §29).
+50. Fully booked tours stay visible (see §30).
+51. Reviews (see §31).
 
 ## 14. Step 34: Return trips and flight details
 
@@ -793,3 +795,81 @@ Admin screens
 Tests
 - Backend: is_featured on the three models and admin endpoints, with the filter; `explore` per module on (featured first, filled to six, only visible items, nothing from modules off, nothing from another agency); each sale rule (hotel paid dating and accepted changes, tour bookings counting when booked and not once cancelled, Nairobi month edges); `by_module` with modules on only; `payments_due`, `this_week` and `top_sellers` mixing kinds with their ordering, limits and windows at the edges; `needs_action` and `on_sale` per module (travellers missing, prices ending); a module turned off drops out of every figure.
 - Frontend: type-check, lint, format check, web export. Browser check at 1280 and 390 px: Explore All with three modules (hero tiles, featured sections, See all, a module with nothing to show), a flights-only agency (Featured row, hidden after a search), a tours-only agency; featuring from an admin table; the dashboard with all three modules (stacked chart and legend, mixed Coming up and Top sellers, label rules) and with one (no icons, headings or breakdown lines), and an empty agency.
+
+## 30. Step 50: Fully booked tours stay visible
+
+Goal: a tour that has sold out still shows on Explore and in search, marked "Fully booked", so visitors see what the agency runs and come back for the next date. Only selling stops. Everything else in §26 is unchanged.
+
+Rules
+- **Listed** (new, for customers): active, not cancelled, today (Nairobi) on or before booking_deadline and before start_date, and at least one active price option. That is §26's bookable rule without the slot condition.
+- **Bookable** stays as §26, and additionally needs at least one active option with units left (null or above zero). A listed tour that is not bookable for want of slots or units is **fully booked**.
+- Tours whose bookings have closed, and cancelled or inactive tours, stay hidden as today.
+
+API
+- Public `tours` returns listed tours, with `bookable` and `not_bookable_reason` (`fully_booked`) as §26. Filters and ordering are unchanged: fully booked tours keep their place by start date or from price.
+- `tours/{id}`: a listed tour, or any tour the signed-in customer has booked.
+- `explore` (§29): tours are drawn from listed tours, so a featured tour that sells out stays in "Featured tours".
+- The customer booking create still refuses a fully booked tour with 409 "This tour is fully booked".
+
+App
+- **Tour cards** (Tours list, Featured rows, Explore All): a "Fully booked" chip in the warning colour takes the place of the "N slots left" chip, and the price line stays.
+- **Tour detail**: the price card lists the options as today, with "Sold out" on each limited option that has no units left. In place of Book, it shows "Fully booked" and "This tour has no places left."
+- Admin screens and the dashboard are unchanged. The dashboard's `on_sale.tours.upcoming` still counts bookable tours, and `fully_booked` already counts the rest.
+
+Tests
+- Backend: the listed and bookable rules at their edges, covering the last slot taken, every limited option sold out with slots left, and a cancelled booking freeing a slot, which makes the tour bookable again. Fully booked tours appear in `tours`, `tours/{id}` and `explore` with `fully_booked`. Closed, cancelled and inactive tours still don't appear. Booking a fully booked tour returns 409.
+- Frontend: type-check, lint, format check, web export. Browser check at 1280 and 390 px: a fully booked tour's card in the Tours list and on Explore All, and its detail with Book replaced.
+
+## 31. Step 51: Reviews
+
+Goal: customers who have travelled rate what they bought, and the ratings show where other visitors are choosing. Tours and hotels each collect their own reviews. A flight review rates the agency's flight booking service (how the booking was handled), not the airline or the flight, because offers change constantly and the flight is not the agency's product. Reviews go live at once; the admin can hide one and post one public reply to each. Each module's reviews are on only while the module is on (§25). When the module is turned off, its reviews are kept but not shown.
+
+§1's "reviews" exclusion is removed when this step is built.
+
+Model (per agency, `reviews` app)
+- **Review**: exactly one of booking (flight Booking), tour_booking or hotel_booking, enforced by a database check, with one review per booking (unique on each). Also: kind (flight / tour / hotel, set from the booking), tour or hotel (copied from the booking for listing; null for flights), user (the booking's customer), rating (1–5), comment (≤ 2,000, blank allowed), is_hidden (default false), hidden_by, hidden_at, reply (≤ 2,000, blank = none), replied_by, replied_at, created_at, updated_at.
+- **Reviewer name** shown publicly: the customer's first name and the initial of the last name ("Wanjiru K."). Nothing else about the customer is shown.
+
+Rules (`reviews/services.py`)
+- **Can review**: only the booking's customer, once per booking, after the trip has ended:
+  - Flight: status Completed and the last segment's date before today (Nairobi).
+  - Hotel: status Completed and check_out on or before today.
+  - Tour: status Completed (the daily task completes bookings after the tour ends, §26).
+  - Cancelled and unavailable bookings can never be reviewed. There is no time limit.
+- **Customer edits or deletes** their own review at any time. Editing keeps the reply; deleting also removes the reply.
+- **Admin hides or shows** a review. A hidden review's text, name and reply are left out of every public list, but its rating still counts in the average, the count and the bars per star level, so hiding never changes a rating. Its author still sees it, marked "Hidden by the agency". No email is sent either way.
+- **Admin replies**: one reply per review, which can be edited or removed. A reply can be posted on a hidden review, but it stays hidden with it.
+- **Rating** of a tour or hotel: the average of all its reviews, hidden ones included, to one decimal, and their count. The flight service rating is the same over all flight reviews. Nothing is shown when there are no reviews.
+
+Emails
+- Customer: "How was your trip?", sent once per booking when it becomes reviewable, with a "Leave a review" link to the booking. A daily task, `request_reviews`, runs for each agency and records `review_requested_at` on the booking (a new field on Booking, TourBooking and HotelBooking). The flight version says the review is about the booking service.
+- Agency admin (`admin_notification_email`): a new review, with the rating, comment and a link. No email on edits.
+
+API (agency host)
+- Public: `reviews` with exactly one of `tour`, `hotel` or `kind=flight`. It returns visible reviews newest first, paginated 10 per page: `{id, rating, comment, reviewer_name, created_at, reply, replied_at}`. With it, `summary` gives `{average, count, by_rating: {1..5}}` over all reviews, hidden ones included. Tour and hotel list and detail responses (including `explore`) gain `rating` (`{average, count}`, null with none). Offer detail and the Flights list response gain `service_rating` (the same for flight reviews).
+- Signed in (customers): `reviews` (own, with `is_hidden` and the booking), and create with `{booking | tour_booking | hotel_booking, rating, comment}`. `{id}` supports PATCH (rating, comment) and DELETE. Flight, tour and hotel booking responses gain `can_review` and `review` (their own, or null).
+- Admin: `admin/reviews`, with filters kind, tour, hotel, rating, hidden / visible and replied / not replied, newest first. Each review returns its booking reference and the customer's full name and email. Actions are `hide`, `show`, and `reply {reply}` (blank removes the reply).
+- `module_off` for a kind whose module is off.
+
+App
+- **Cards and detail pages**: tour and hotel cards show "★ 4.6 (12)" under the title when rated. Tour and hotel detail pages gain a **Reviews** section under the description:
+  - the average large with stars, the count, and a bar per star level
+  - then the reviews (stars, name, date, comment, and the agency's reply indented under "Response from <agency>"), with "Show more" loading the next 10
+  - with none: "No reviews yet".
+- **Flights**: offer detail and the Explore Flights tab show "Flight booking service ★ 4.8 (40 reviews)", which opens a dialog with the same Reviews section headed "How customers rate our flight booking service". Nothing shows with no reviews.
+- **Writing a review** (customer booking detail, flight, tour or hotel): while `can_review`, a "Rate your trip" card with five tappable stars (required), a comment box and Submit. Once written, the card shows their review with Edit and Delete (confirm dialog), the agency's reply and "Hidden by the agency" when hidden. For flights, the card says: "Rate how we handled your booking: our service, not the airline or the flight itself."
+- **Admin › Reviews** (a nav item while any module is on; on phones it goes under "More"):
+  - A table of stars, item (tour or hotel name, or "Flight booking" with the route line), customer, comment (first line), date, a Replied chip and a Hidden chip, with the filters above.
+  - A review opens beside the slim rail (§20) with the full comment, the customer and a link to the booking, Hide or Show, and a reply box (Save reply, Remove reply).
+  - The column and filter for kind show only when more than one module is on.
+- Admin tour and hotel detail pages show the rating with a link to Reviews filtered to that item.
+- The dashboard is unchanged.
+
+Tests
+- Backend: the review check (exactly one booking, one review per booking); who can review and when, for each kind at its edge (the last segment date, check_out today, tour completion), refused for cancelled, unavailable and not yet finished bookings and for other customers. Edit and delete by the author only, with delete removing the reply. Hide and show, with hidden reviews out of public lists but still in averages, counts and `by_rating`, and visible to the author. Reply rules. Averages and `by_rating`. Reviewer name formatting. Public lists show visible reviews only, and the `rating` and `service_rating` fields are correct, including hidden reviews. Also: `request_reviews` with frozen time (once per booking, only when reviewable); the new-review admin email; `module_off`; isolation between agencies; UUID keys; admin permissions.
+- Frontend: type-check, lint, format check, web export. Browser check at 1280 and 390 px:
+  - a customer reviewing a finished tour, hotel stay and flight booking (with the flight note), then editing and deleting
+  - ratings on cards and the Reviews section with a reply
+  - the flight service rating dialog
+  - Admin › Reviews: filtering, replying and hiding
+  - an agency with no reviews.
