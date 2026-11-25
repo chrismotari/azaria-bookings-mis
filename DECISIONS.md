@@ -220,3 +220,6 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Step 49: the single-module "Featured" row shows the module's `explore` cards as returned (featured first, then filled), is hidden while any search or filter is applied (sorting does not count) and is left out when there are none.
 - Step 49: Explore's tab is the `tab` query parameter (`all`, `flights`, `tours`, `hotels`); without it the All tab shows.
 - Step 49: the table star saves `is_featured` at once and is disabled on cancelled tours (they refuse edits); the Featured filter is a "Featured only" switch above each admin list, kept in screen state; the "Feature on Explore" switch sits in the offer form's Visibility section (not on custom offers in a request response) and at the end of the tour and hotel forms' main section.
+- Step 50: the 409 for a fully booked tour stays "This tour is fully booked." (with the full stop every 409 message carries).
+- Step 50: a tour whose active options are all limited and sold out reports `not_bookable_reason` `fully_booked` (closed and cancelled still win), and the admin Tours status shows it as "Fully booked" rather than "Closed".
+- Step 50: on tour detail, "Sold out" replaces "None left" on a limited option with no units left; the tour-not-found message drops "fully booked" since fully booked tours now open.

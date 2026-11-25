@@ -81,10 +81,55 @@ def test_the_last_slot(make_tour, customer_api, other_customer_api, api):
     assert response.data == {"detail": "Only 1 slot left."}
     assert book(other_customer_api, tour, (option, 1)).status_code == 201
     response = book(other_customer_api, tour, (option, 1))
+    assert response.status_code == 409
     assert response.data == {"detail": "This tour is fully booked."}
-    assert api.get("/api/tours").data["results"] == []
-    detail = other_customer_api.get(f"/api/tours/{tour.pk}").data
+    assert [(row["id"], row["bookable"]) for row in api.get("/api/tours").data["results"]] == [(str(tour.pk), False)]
+    detail = api.get(f"/api/tours/{tour.pk}").data
     assert (detail["slots_left"], detail["not_bookable_reason"]) == (0, "fully_booked")
+    assert Tour.objects.bookable().count() == 0 and Tour.objects.listed().count() == 1
+
+
+def test_every_limited_option_sold_out_with_slots_left_is_fully_booked(make_tour, customer_api, api):
+    tour = make_tour(
+        slots=20,
+        options=[
+            {"name": "VIP", "price": "600", "units_available": 1},
+            {"name": "Couple", "price": "900", "people_per_unit": 2, "units_available": 1},
+        ],
+    )
+    vip, couple = tour.options.all()
+    assert book(customer_api, tour, (vip, 1), (couple, 1)).status_code == 201
+    detail = api.get(f"/api/tours/{tour.pk}").data
+    assert (detail["slots_left"], detail["bookable"], detail["not_bookable_reason"]) == (17, False, "fully_booked")
+    assert [row["id"] for row in api.get("/api/tours").data["results"]] == [str(tour.pk)]
+    assert book(customer_api, tour, (vip, 1)).data == {"detail": "This tour is fully booked."}
+    assert not Tour.objects.bookable().exists()
+    # An inactive option with units left does not keep the tour open.
+    TourPriceOption.objects.create(tour=tour, name="Old", price=1, units_available=5, is_active=False)
+    assert not Tour.objects.bookable().exists()
+    TourPriceOption.objects.create(tour=tour, name="Regular", price=1)
+    assert Tour.objects.bookable().get() == tour
+
+
+def test_a_cancelled_booking_frees_the_last_slot(make_tour, customer_api, other_customer_api, api):
+    tour = make_tour(slots=2)
+    booking = book(customer_api, tour, (tour.options.get(), 2)).data
+    assert api.get(f"/api/tours/{tour.pk}").data["not_bookable_reason"] == "fully_booked"
+    assert customer_api.post(f"/api/tour-bookings/{booking['id']}/cancel").status_code == 200
+    detail = api.get(f"/api/tours/{tour.pk}").data
+    assert (detail["slots_left"], detail["bookable"], detail["not_bookable_reason"]) == (2, True, None)
+    assert book(other_customer_api, tour, (tour.options.get(), 1)).status_code == 201
+
+
+def test_a_fully_booked_tour_that_closes_or_is_cancelled_is_hidden(dated_tour, customer_api, api):
+    tour = dated_tour(slots=1)
+    with freeze_time(datetime(2026, 6, 8, 12, 0, tzinfo=NAIROBI)):
+        assert book(customer_api, tour, (tour.options.get(), 1)).status_code == 201
+        assert len(api.get("/api/tours").data["results"]) == 1
+    with freeze_time(datetime(2026, 6, 9, 0, 0, tzinfo=NAIROBI)):
+        assert api.get("/api/tours").data["results"] == []
+        assert api.get(f"/api/tours/{tour.pk}").status_code == 404
+        assert customer_api.get(f"/api/tours/{tour.pk}").data["not_bookable_reason"] == "closed"
 
 
 def test_the_last_unit_of_a_limited_option(make_tour, customer_api, other_customer_api):

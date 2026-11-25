@@ -54,8 +54,8 @@ def featured_flights(request):
 
 
 def featured_tours(request):
-    bookable = Tour.objects.bookable().values("pk")
-    cards = tours().filter(pk__in=bookable).order_by("-is_featured", "start_date", "title")[:EXPLORE_CARDS]
+    listed = Tour.objects.listed().values("pk")
+    cards = tours().filter(pk__in=listed).order_by("-is_featured", "start_date", "title")[:EXPLORE_CARDS]
     return TourSerializer(cards, many=True, context={"request": request}).data
 
 

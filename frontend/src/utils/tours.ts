@@ -52,7 +52,7 @@ export function adminTourStatus(tour: AdminTour): { label: AdminTourStatus; tone
   if (!tour.is_active) {
     return { label: 'Inactive', tone: 'neutral' };
   }
-  if (tour.slots_left === 0) {
+  if (tour.slots_left === 0 || tour.not_bookable_reason === 'fully_booked') {
     return { label: 'Fully booked', tone: 'warning' };
   }
   if (!tour.bookable) {

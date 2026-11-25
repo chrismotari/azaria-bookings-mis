@@ -46,7 +46,7 @@ function validate(filters: Filters): Partial<Filters> {
   return errors;
 }
 
-/** Explore's Tours tab: bookable tours as cards. */
+/** Explore's Tours tab: listed tours as cards. */
 export function ToursPage() {
   const navigation = useNavigation();
   const compact = !useIsWide();
@@ -230,7 +230,11 @@ export function TourCard({ tour, onPress }: { tour: Tour; onPress: () => void })
       price={
         <View style={styles.between}>
           {tour.from_price ? <CardPrice before="From" amount={tour.from_price} after="per person" /> : null}
-          {tour.slots_left <= 5 ? <StatusChip label={slotsLeftLabel(tour.slots_left)} tone="warning" /> : null}
+          {tour.not_bookable_reason === 'fully_booked' ? (
+            <StatusChip label="Fully booked" tone="warning" />
+          ) : tour.slots_left <= 5 ? (
+            <StatusChip label={slotsLeftLabel(tour.slots_left)} tone="warning" />
+          ) : null}
         </View>
       }
     >

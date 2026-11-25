@@ -11,7 +11,7 @@ from rest_framework.test import APIClient
 from core.tests.helpers import OTHER_DOMAIN, OTHER_SCHEMA, TEST_SCHEMA
 from hotels.tests.conftest import make_hotel  # noqa: F401
 from tenants.models import Tenant
-from tours.models import Tour
+from tours.models import Tour, TourBooking
 from tours.tests.conftest import make_tour  # noqa: F401
 
 pytestmark = pytest.mark.django_db
@@ -58,7 +58,7 @@ def test_flights_featured_first_then_by_departure_filled_to_six(api, make_offer)
 
 
 @freeze_time(NOW)
-def test_tours_featured_first_then_by_start_only_bookable(api, make_tour):
+def test_tours_featured_first_then_by_start_only_listed(api, make_tour, customer):
     modules("tours")
 
     def start(count):
@@ -76,10 +76,14 @@ def test_tours_featured_first_then_by_start_only_bookable(api, make_tour):
     make_tour(title="Closed", is_featured=True, **{**start(1), "booking_deadline": days(-1)})
     Tour.objects.filter(pk=make_tour(title="Cancelled", is_featured=True).pk).update(cancelled_at=timezone.now())
 
+    sold_out = make_tour(title="Sold out", is_featured=True, slots=1, **start(30))
+    TourBooking.objects.create(tour=sold_out, user=customer, people=1)
+
     cards = explore(api)["tours"]
-    assert [card["title"] for card in cards] == ["Featured", "Soon", "Later"]
-    assert [card["id"] for card in cards] == [str(featured.id), str(soon.id), str(later.id)]
-    assert cards[0]["is_featured"] is True and cards[0]["from_price"] == "300.00"
+    assert [card["title"] for card in cards] == ["Sold out", "Featured", "Soon", "Later"]
+    assert [card["id"] for card in cards] == [str(sold_out.id), str(featured.id), str(soon.id), str(later.id)]
+    assert cards[0]["not_bookable_reason"] == "fully_booked" and cards[1]["bookable"] is True
+    assert cards[1]["is_featured"] is True and cards[1]["from_price"] == "300.00"
     assert "booked" not in cards[0]
 
 

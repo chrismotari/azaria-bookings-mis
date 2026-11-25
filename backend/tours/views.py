@@ -71,25 +71,25 @@ class TourFilter(django_filters.FilterSet):
 
 
 class TourListView(generics.ListAPIView):
-    """Bookable tours, soonest first."""
+    """Listed tours, soonest first."""
 
     permission_classes = [AllowAny]
     serializer_class = TourSerializer
     filterset_class = TourFilter
 
     def get_queryset(self):
-        bookable = Tour.objects.bookable().values("pk")
-        return tours().filter(pk__in=bookable).order_by("start_date", "title")
+        listed = Tour.objects.listed().values("pk")
+        return tours().filter(pk__in=listed).order_by("start_date", "title")
 
 
 class TourDetailView(generics.RetrieveAPIView):
-    """A bookable tour, or any tour the signed-in customer has booked."""
+    """A listed tour, or any tour the signed-in customer has booked."""
 
     permission_classes = [AllowAny]
     serializer_class = TourSerializer
 
     def get_queryset(self):
-        visible = Q(pk__in=Tour.objects.bookable().values("pk"))
+        visible = Q(pk__in=Tour.objects.listed().values("pk"))
         user = self.request.user
         if user.is_authenticated:
             visible |= Q(pk__in=TourBooking.objects.filter(user=user).values("tour"))

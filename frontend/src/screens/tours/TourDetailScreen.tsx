@@ -43,7 +43,7 @@ export function TourDetailScreen({ navigation, route }: Props) {
             error={tour.error}
             onRetry={() => tour.refetch()}
             notFound="Tour not found"
-            message="It may be fully booked or no longer offered."
+            message="It may no longer be offered."
           />
         </Card>
       </Screen>
@@ -123,7 +123,7 @@ function PriceCard({ tour, onBook }: { tour: Tour; onBook: () => void }) {
             <Text style={styles.strong}>{option.name}</Text>
             {option.description ? <Text style={styles.muted}>{option.description}</Text> : null}
             {option.units_left !== null ? (
-              <Text style={styles.muted}>{option.units_left ? `${option.units_left} left` : 'None left'}</Text>
+              <Text style={styles.muted}>{option.units_left ? `${option.units_left} left` : 'Sold out'}</Text>
             ) : null}
           </View>
           <Text style={styles.optionPrice}>{unitPrice(option)}</Text>
@@ -137,6 +137,14 @@ function PriceCard({ tour, onBook }: { tour: Tour; onBook: () => void }) {
           </Text>
           <Button title="Book" variant="accent" onPress={onBook} />
         </>
+      ) : tour.not_bookable_reason === 'fully_booked' ? (
+        <View style={styles.closed}>
+          <Icon name="information-circle-outline" size={20} color={colors.warningText} />
+          <View style={styles.optionText}>
+            <Text style={styles.closedText}>Fully booked</Text>
+            <Text style={styles.closedNote}>This tour has no places left.</Text>
+          </View>
+        </View>
       ) : (
         <View style={styles.closed}>
           <Icon name="information-circle-outline" size={20} color={colors.warningText} />
@@ -182,4 +190,5 @@ const styles = createStyles(() => ({
     backgroundColor: colors.warningTint,
   },
   closedText: { color: colors.warningText, fontWeight: weight.semibold, flexShrink: 1 },
+  closedNote: { color: colors.warningText, fontSize: font.small },
 }));

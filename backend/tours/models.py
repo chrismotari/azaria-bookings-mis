@@ -3,7 +3,7 @@ import uuid
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import connection, models, transaction
-from django.db.models import DecimalField, Exists, ExpressionWrapper, F, Min, OuterRef, Subquery, Sum
+from django.db.models import DecimalField, Exists, ExpressionWrapper, F, Min, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Coalesce, Round
 from django.utils import timezone
 
@@ -16,7 +16,8 @@ MAX_PEOPLE = 40
 
 class TourQuerySet(models.QuerySet):
     def with_figures(self):
-        """Annotates booked (people on confirmed bookings) and from_price (null without an active option)."""
+        """Annotates booked (people on confirmed bookings), from_price (null without an active option) and
+        units_open (an active option with units left)."""
         booked = (
             TourBooking.objects.filter(tour=OuterRef("pk"), status=TourBooking.Status.CONFIRMED)
             .values("tour")
@@ -32,12 +33,19 @@ class TourQuerySet(models.QuerySet):
             .annotate(lowest=Min(Round(per_person, 2)))
             .values("lowest")
         )
+        open_options = (
+            TourPriceOption.objects.with_sold()
+            .filter(tour=OuterRef("pk"), is_active=True)
+            .filter(Q(units_available__isnull=True) | Q(units_available__gt=F("sold")))
+        )
         return self.annotate(
             booked=Coalesce(Subquery(booked), 0),
             from_price=Subquery(from_price, output_field=DecimalField(max_digits=10, decimal_places=2)),
+            units_open=Exists(open_options),
         )
 
-    def bookable(self):
+    def listed(self):
+        """Shown to customers: open for booking, fully booked or not."""
         today = timezone.localdate()
         return self.with_figures().filter(
             is_active=True,
@@ -45,8 +53,10 @@ class TourQuerySet(models.QuerySet):
             booking_deadline__gte=today,
             start_date__gt=today,
             from_price__isnull=False,
-            slots__gt=F("booked"),
         )
+
+    def bookable(self):
+        return self.listed().filter(slots__gt=F("booked"), units_open=True)
 
 
 class Tour(models.Model):
@@ -98,7 +108,7 @@ class Tour(models.Model):
             return "cancelled"
         if not self.is_active or self.from_price is None or today > self.booking_deadline or today >= self.start_date:
             return "closed"
-        if self.slots_left <= 0:
+        if self.slots_left <= 0 or not self.units_open:
             return "fully_booked"
         return None
 
