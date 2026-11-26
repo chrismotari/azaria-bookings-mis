@@ -6,4 +6,4 @@ Your booking at {{ hotel.name }} has expired: {% if booking.payment_deadline %}w
 Book again:
 {{ frontend_url }}/hotels/{{ hotel.id }}
 
-Dira Manifest
+{{ sender }}

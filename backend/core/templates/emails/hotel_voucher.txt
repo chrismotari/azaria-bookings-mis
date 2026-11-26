@@ -13,4 +13,4 @@ Open your booking:
 
 Enjoy your stay!
 
-Dira Manifest
+{{ sender }}

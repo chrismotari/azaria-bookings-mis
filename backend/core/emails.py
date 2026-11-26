@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template import engines
@@ -20,6 +22,9 @@ BRAND = {
     "highlight": "#ebe8fd",
 }
 
+PLATFORM_NAME = "Dira Manifest"
+PLATFORM_SITE = "https://diramanifest.com"
+
 EMAIL_TASK_OPTIONS = {
     "autoretry_for": (Exception,),
     "retry_backoff": True,
@@ -27,14 +32,25 @@ EMAIL_TASK_OPTIONS = {
 }
 
 
-def email_brand(platform=False):
-    """Dira Manifest's colours for the platform's emails; the agency's theme for an agency's own."""
+def _is_platform(platform):
     from django.db import connection
     from django_tenants.utils import get_public_schema_name
 
+    return platform or connection.schema_name == get_public_schema_name()
+
+
+def sender_name(platform=False):
+    """The name an email comes from: the agency's, or Dira Manifest for the platform's own emails."""
     from core.tenancy import current_tenant
 
-    if platform or connection.schema_name == get_public_schema_name():
+    return PLATFORM_NAME if _is_platform(platform) else current_tenant().name
+
+
+def email_brand(platform=False):
+    """Dira Manifest's colours for the platform's emails; the agency's theme for an agency's own."""
+    from core.tenancy import current_tenant
+
+    if _is_platform(platform):
         return BRAND
     colors = current_tenant().theme.colors
     return {
@@ -57,7 +73,15 @@ def send_email(template, subject, to, context, attachments=(), platform=False):
     """
     from core.tenancy import frontend_url
 
-    context = {**context, "frontend_url": frontend_url(), "brand": email_brand(platform)}
+    site_url = PLATFORM_SITE if _is_platform(platform) else frontend_url()
+    context = {
+        **context,
+        "frontend_url": frontend_url(),
+        "brand": email_brand(platform),
+        "sender": sender_name(platform),
+        "site_url": site_url,
+        "site_label": urlparse(site_url).netloc,
+    }
     body = engines["emails"].get_template(f"emails/{template}.txt").render(context)
     html = engines["django"].get_template(f"emails/{template}.html").render(context)
     message = EmailMultiAlternatives(subject=subject, body=body, to=[to])

@@ -2,7 +2,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
-from core.emails import EMAIL_TASK_OPTIONS, send_email
+from core.emails import EMAIL_TASK_OPTIONS, send_email, sender_name
 from core.tenancy import agency_code, current_tenant, frontend_url, tenant_task
 
 from .models import User
@@ -32,7 +32,7 @@ def send_password_reset_email(user_id):
         return
     send_email(
         "password_reset",
-        "Reset your Dira Manifest password",
+        f"Reset your {sender_name()} password",
         user.email,
         {"user": user, "reset_url": set_password_url(user)},
     )
@@ -46,7 +46,7 @@ def send_account_created_email(user_id):
         return
     send_email(
         "account_created",
-        "Your Dira Manifest account is ready",
+        f"Your {sender_name()} account is ready",
         user.email,
         {"user": user, "set_password_url": set_password_url(user), **get_app_context()},
     )

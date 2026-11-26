@@ -9,4 +9,4 @@ Message from your agency:
 Find another stay:
 {{ frontend_url }}
 
-Dira Manifest
+{{ sender }}

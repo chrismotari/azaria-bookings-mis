@@ -8,4 +8,4 @@ Our message:
 Open the app to view them:
 {{ frontend_url }}/requests/{{ query.id }}
 
-Dira Manifest
+{{ sender }}

@@ -10,4 +10,4 @@ The tour as it now stands:
 View your booking:
 {{ frontend_url }}/bookings?tour={{ booking.id }}
 
-Dira Manifest
+{{ sender }}

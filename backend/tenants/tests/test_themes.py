@@ -536,6 +536,30 @@ def test_platform_emails_use_dira_manifest_colours():
     assert "#1b3a6b" not in html
 
 
+def test_agency_emails_come_from_the_agency():
+    with schema_context(OTHER_SCHEMA):
+        user = User.objects.create_user(email="kio@example.com", password="Str0ng-pass!", full_name="Kio")
+    account_tasks.send_password_reset_email(OTHER_SCHEMA, user.pk)
+    email = mail.outbox[-1]
+    html = html_part(email)
+    assert email.subject == "Reset your Other Agency password"
+    assert "your Other Agency account" in email.body and email.body.rstrip().endswith("Other Agency")
+    assert "<title>Other Agency</title>" in html and "Other Agency &middot;" in html
+    assert "diramanifest.com" not in html and "Dira Manifest" not in email.body + html.replace("Dira Manifest app", "")
+
+
+def test_platform_emails_come_from_dira_manifest():
+    other = tenant(OTHER_SCHEMA)
+    Tenant.objects.filter(pk=other.pk).update(
+        is_active=False, suspension_reason=Tenant.SuspensionReason.NON_PAYMENT, billing_email="billing@other.test"
+    )
+    tenant_tasks.notify_tenant_suspended_non_payment(other.pk)
+    email = mail.outbox[-1]
+    html = html_part(email)
+    assert email.body.rstrip().endswith("Dira Manifest")
+    assert '<a href="https://diramanifest.com"' in html and "Dira Manifest &middot;" in html
+
+
 def test_theme_ids_are_uuids():
     import uuid
 

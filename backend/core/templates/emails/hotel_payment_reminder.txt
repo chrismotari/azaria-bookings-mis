@@ -11,4 +11,4 @@ If we have not received your payment by then, the hold on these rooms will lapse
 View your booking:
 {{ frontend_url }}/bookings?hotel={{ booking.id }}
 
-Dira Manifest
+{{ sender }}

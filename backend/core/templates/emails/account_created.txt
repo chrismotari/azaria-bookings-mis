@@ -1,10 +1,10 @@
 Hello {{ user.full_name }},
 
-Dira Manifest has created an account for you with this email address. With it you can request flight options, book deals and download your boarding passes.
+{{ sender }} has created an account for you with this email address. With it you can request flight options, book deals and download your boarding passes.
 
 To choose your password and sign in, open this link:
 {{ set_password_url }}
 
 {% include "emails/_get_app.txt" %}
 
-Dira Manifest
+{{ sender }}

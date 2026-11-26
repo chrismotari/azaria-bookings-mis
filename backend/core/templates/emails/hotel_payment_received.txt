@@ -6,4 +6,4 @@ We have received your payment. We will email your hotel voucher once the hotel h
 Open your booking:
 {{ frontend_url }}/bookings?hotel={{ booking.id }}
 
-Dira Manifest
+{{ sender }}

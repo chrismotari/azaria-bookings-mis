@@ -11,4 +11,4 @@ To write to us again, use the message button on our site.
 Read and reply in the app:
 {{ frontend_url }}{{ chat_path }}
 {% endif %}
-Dira Manifest
+{{ sender }}
