@@ -752,3 +752,4 @@ All delivered; each was one commit.
 62. The sign-in, register, forgot and reset password brand panel shows the agency's name (Dira Manifest on the platform).
 63. The sign-in brand panel's tagline and ticks follow the agency's modules.
 64. The agency-unavailable page shows the agency's name; `tenant_suspended` responses carry `agency_name`.
+65. A customer's request shows "Options from <agency name>" over its options.
