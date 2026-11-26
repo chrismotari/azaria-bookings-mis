@@ -45,7 +45,7 @@ Tenancy
 - One PostgreSQL schema per agency (django-tenants), chosen by hostname. Agency: `<schema>.<TENANT_BASE_DOMAIN>` (its primary domain); extra domains can be added.
 - Public schema = the platform: apps `tenants`, `airports`, `airlines`, `rates`, `accounts` (system owner accounts), `support` (platform desk). Agency schemas: `accounts`, `catalog`, `requests`, `bookings`, `core`, `support`, `integrations`, `tours`, `hotels`, `reviews`. The same email may hold separate accounts at different agencies.
 - Root host: the platform's API (`/api/platform/`) and `/django-admin/`. Any other `/api/` path there, or any unknown host, returns 404 `{"code": "no_tenant"}`.
-- Suspended agency (`is_active` false): every `/api/` call returns 403 `tenant_suspended` (non-payment message names the billing contact email); its scheduled jobs and emails are skipped. Agencies are never deleted.
+- Suspended agency (`is_active` false): every `/api/` call returns 403 `tenant_suspended` with the agency's name as `agency_name` (non-payment message names the billing contact email); its scheduled jobs and emails are skipped. Agencies are never deleted.
 - Schema names: 3–30 lowercase letters, digits, hyphens, starting with a letter; reserved `public`, `www`, `api`, `admin`, `app-admin`. Hyphens become underscores in the schema, not in the domain.
 - **App address**: every agency is reachable at `<code>.<TENANT_BASE_DOMAIN>` (its code is its schema name with hyphens, as typed). App links only work on addresses the mobile app declares, and it can declare `*.<TENANT_BASE_DOMAIN>` but not agencies' own custom domains, so every link in agency emails (reset links included) uses the app address, even when the agency's primary domain is a custom one; `FRONTEND_URL`'s `{domain}` is that address.
 - JWTs carry a tenant claim; a token is refused (401) at any other tenant. Reset links are invalid at other agencies.
@@ -470,7 +470,7 @@ Root host, `/api/platform/`
 - Compact route lines (trip cards, admin tables) show "NBO → LHR" for one-way and "NBO ⇄ LHR" for return trips, with both dates.
 - **Sign-in brand panel** (sign-in, register, forgot and reset password, wide screens): the agency's name, a tagline naming the modules on ("Flight deals, tours and hotel stays from our travel agents, booked in a few steps.", with only the modules on) and three ticks taken in turn from each module on. Flights: "Hand-picked flight deals", "Ask us for options when nothing fits", "Boarding passes in the app and your inbox". Tours: "Book your places on a tour instantly", "Options for couples, families and groups", "Tour updates in your inbox". Hotels: "Hotels, lodges and camps we work with", "Prices for your dates and party", "Vouchers in the app and your inbox".
 - Auth gate: login-required actions store the intended action in memory, send the guest to Login/Register, then resume it.
-- `no_tenant` / `tenant_suspended` responses show a full-page message.
+- `no_tenant` / `tenant_suspended` responses show a full-page message under a top bar with the agency's name (from the response, or the agency stored by the mobile app); "Dira Manifest" when there is no agency.
 - A shared **theme preview**: a strip of the top bar in the primary with the agency's name (or "Your agency"), a line of text and a link on the tint, and an accent "Book" button beside a price.
 
 List and detail (`DetailLayout`; Explore has its own split view, §18.2)
@@ -751,3 +751,4 @@ All delivered; each was one commit.
 61. Font sizes swapped: the top bar name 28 px (22 px narrow), the Explore heading card headline 18 px (15 px on phones).
 62. The sign-in, register, forgot and reset password brand panel shows the agency's name (Dira Manifest on the platform).
 63. The sign-in brand panel's tagline and ticks follow the agency's modules.
+64. The agency-unavailable page shows the agency's name; `tenant_suspended` responses carry `agency_name`.
