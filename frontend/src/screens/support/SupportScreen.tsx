@@ -51,7 +51,7 @@ export function AdminSupportScreen({ navigation, route }: BottomTabScreenProps<A
       selected={route.params?.id}
       select={(id) => navigation.setParams({ id })}
       backLabel="Settings"
-      onBack={() => navigation.navigate('AdminSettings')}
+      onBack={() => navigation.navigate('AdminSettings', { section: 'support' })}
       intro="Your agency's chats with Dira Manifest, the platform: questions, plans and billing. Replies also come by email."
     />
   );

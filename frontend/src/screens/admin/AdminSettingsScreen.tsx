@@ -1,46 +1,48 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { z } from 'zod';
 
+import { MODULE_LABELS } from '../../agency/modules';
 import { api } from '../../api/client';
 import { applyServerErrors } from '../../api/errors';
-import { AppSettings } from '../../api/types';
+import { AgencyInfo, AppSettings } from '../../api/types';
+import { BackLink } from '../../components/BackLink';
 import { Button } from '../../components/Button';
 import { FieldGrid, FormError } from '../../components/Field';
-import { FormFooter, FormSection } from '../../components/FormSection';
-import { Screen } from '../../components/Screen';
+import { FormSection } from '../../components/FormSection';
+import { Icon, IconName } from '../../components/Icon';
+import { PressState } from '../../components/pressState';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
-import { colors, createStyles, font, weight } from '../../theme';
+import { AdminTabParamList, SettingsSection } from '../../navigation/types';
+import { colors, createStyles, font, radius, space, useIsWide, weight } from '../../theme';
 import { IntegrationsSection } from './IntegrationsSection';
+import { MailServerSection } from './MailServerSection';
 import { ThemeSection } from './ThemeSection';
 
-const HOURS = /^[1-9]\d{0,4}$/;
-
-// Mirrors the server's rules.
-const schema = z.object({
-  payment_instructions: z.string(),
-  payment_hold_hours: z.string().trim().regex(HOURS, 'Enter a whole number of hours, at least 1.'),
-  reminder_hours_before: z.string().trim().regex(HOURS, 'Enter a whole number of hours, at least 1.'),
-  admin_notification_email: z.email('Enter a valid email address.'),
-});
-
-type FormValues = z.infer<typeof schema>;
-
-const FIELDS = [
-  'payment_instructions',
-  'payment_hold_hours',
-  'reminder_hours_before',
-  'admin_notification_email',
-] as const;
+const SECTIONS: { key: SettingsSection; label: string; icon: IconName }[] = [
+  { key: 'general', label: 'General', icon: 'business-outline' },
+  { key: 'bookings', label: 'Bookings and payments', icon: 'card-outline' },
+  { key: 'notifications', label: 'Notifications', icon: 'notifications-outline' },
+  { key: 'email', label: 'Email sending', icon: 'mail-outline' },
+  { key: 'theme', label: 'Theme', icon: 'color-palette-outline' },
+  { key: 'integrations', label: 'Integrations', icon: 'git-network-outline' },
+  { key: 'billing', label: 'Billing', icon: 'document-text-outline' },
+  { key: 'support', label: 'Support', icon: 'chatbubbles-outline' },
+];
 
 const SETTINGS_KEY = ['admin', 'settings'];
 
-export function AdminSettingsScreen() {
+type Props = BottomTabScreenProps<AdminTabParamList, 'AdminSettings'>;
+
+/** Settings in sections: a list beside the section on wide screens; on phones the list, then each section. */
+export function AdminSettingsScreen({ navigation, route }: Props) {
+  const isWide = useIsWide();
   const settings = useQuery({
     queryKey: SETTINGS_KEY,
     queryFn: async () => (await api.get<AppSettings>('/admin/settings')).data,
@@ -52,174 +54,339 @@ export function AdminSettingsScreen() {
   if (settings.isError) {
     return <ErrorState error={settings.error} onRetry={() => settings.refetch()} />;
   }
-  return <SettingsForm settings={settings.data} />;
+  const sections = SECTIONS.filter((item) => item.key !== 'integrations' || settings.data.modules.includes('flights'));
+  const asked = route.params?.section;
+  const current = sections.find((item) => item.key === asked)?.key;
+  const open = (section: SettingsSection | undefined) => navigation.setParams({ section });
+
+  if (!isWide) {
+    return (
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.narrow}>
+        {current ? (
+          <>
+            <BackLink label="Settings" onPress={() => open(undefined)} />
+            <Section section={current} settings={settings.data} />
+          </>
+        ) : (
+          <>
+            <Text style={styles.title}>Settings</Text>
+            <SectionList sections={sections} onOpen={open} />
+          </>
+        )}
+      </ScrollView>
+    );
+  }
+  return (
+    <View style={styles.wide}>
+      <View style={styles.side}>
+        <Text style={styles.title}>Settings</Text>
+        <SectionList sections={sections} current={current ?? 'general'} onOpen={open} />
+      </View>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        <Section section={current ?? 'general'} settings={settings.data} />
+      </ScrollView>
+    </View>
+  );
 }
 
-function toValues(settings: AppSettings): FormValues {
-  return {
-    payment_instructions: settings.payment_instructions,
-    payment_hold_hours: String(settings.payment_hold_hours),
-    reminder_hours_before: String(settings.reminder_hours_before),
-    admin_notification_email: settings.admin_notification_email,
+function SectionList({
+  sections,
+  current,
+  onOpen,
+}: {
+  sections: typeof SECTIONS;
+  current?: SettingsSection;
+  onOpen: (section: SettingsSection) => void;
+}) {
+  return (
+    <View style={styles.list} accessibilityRole="tablist">
+      {sections.map((item) => {
+        const selected = item.key === current;
+        return (
+          <Pressable
+            key={item.key}
+            accessibilityRole="tab"
+            accessibilityState={{ selected }}
+            onPress={() => onOpen(item.key)}
+          >
+            {(state: PressState) => (
+              <View style={[styles.row, (state.hovered || state.pressed) && styles.rowHover, selected && styles.rowOn]}>
+                <Icon name={item.icon} size={18} color={selected ? colors.primary : colors.muted} />
+                <Text style={[styles.rowText, selected && styles.rowTextOn]}>{item.label}</Text>
+                {current === undefined ? <Icon name="chevron-forward" size={16} color={colors.muted} /> : null}
+              </View>
+            )}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+function Section({ section, settings }: { section: SettingsSection; settings: AppSettings }) {
+  const navigation = useNavigation();
+  const agency = useQuery({
+    queryKey: ['agency'],
+    queryFn: async () => (await api.get<AgencyInfo>('/agency')).data,
+  });
+  const name = agency.data?.name ?? '';
+  switch (section) {
+    case 'general':
+      return <General agency={agency.data} />;
+    case 'bookings':
+      return <BookingsForm settings={settings} />;
+    case 'notifications':
+      return <NotificationsForm settings={settings} />;
+    case 'email':
+      return <MailServerSection base="/admin/mail-server" agencyName={name} repliesTo="your notification email" />;
+    case 'theme':
+      return <ThemeSection current={settings.theme} settingsKey={SETTINGS_KEY} />;
+    case 'integrations':
+      return <IntegrationsSection />;
+    case 'billing':
+      return (
+        <LinkSection
+          title="Billing"
+          description="Your agency's plans with Dira Manifest and their invoices."
+          button="View billing"
+          icon="document-text-outline"
+          onPress={() => navigation.navigate('AdminTabs', { screen: 'AdminBilling' })}
+        />
+      );
+    case 'support':
+      return (
+        <LinkSection
+          title="Support"
+          description="Chat with Dira Manifest, the platform: questions, plans and billing. Replies also come by email."
+          button="Open support"
+          icon="chatbubbles-outline"
+          onPress={() => navigation.navigate('AdminTabs', { screen: 'AdminSupport' })}
+        />
+      );
+  }
+}
+
+function General({ agency }: { agency: AgencyInfo | undefined }) {
+  if (!agency) {
+    return <LoadingState />;
+  }
+  return (
+    <FormSection title="General" description="Set by Dira Manifest. Ask us through Support to change them.">
+      <Detail label="Name" value={agency.name} />
+      <Detail label="Code" value={agency.code} />
+      <Detail label="App address" value={agency.app_address} />
+      <Detail label="Modules" value={agency.modules.map((module) => MODULE_LABELS[module]).join(', ')} />
+    </FormSection>
+  );
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.detail}>
+      <Text style={styles.detailLabel}>{label}</Text>
+      <Text style={styles.detailValue}>{value}</Text>
+    </View>
+  );
+}
+
+function LinkSection(props: {
+  title: string;
+  description: string;
+  button: string;
+  icon: IconName;
+  onPress: () => void;
+}) {
+  return (
+    <FormSection title={props.title} description={props.description}>
+      <View style={styles.start}>
+        <Button title={props.button} variant="secondary" icon={props.icon} onPress={props.onPress} />
+      </View>
+    </FormSection>
+  );
+}
+
+const HOURS = /^[1-9]\d{0,4}$/;
+
+// Mirrors the server's rules.
+const bookingsSchema = z.object({
+  payment_instructions: z.string(),
+  payment_hold_hours: z.string().trim().regex(HOURS, 'Enter a whole number of hours, at least 1.'),
+  reminder_hours_before: z.string().trim().regex(HOURS, 'Enter a whole number of hours, at least 1.'),
+});
+
+const notificationsSchema = z.object({ admin_notification_email: z.email('Enter a valid email address.') });
+
+/** Saves part of the app settings and keeps the cached settings in step. */
+function useSaveSettings() {
+  const queryClient = useQueryClient();
+  return async (values: Partial<AppSettings>) => {
+    const { data } = await api.patch<AppSettings>('/admin/settings', values);
+    queryClient.setQueryData(SETTINGS_KEY, data);
+    return data;
   };
 }
 
-function SettingsForm({ settings }: { settings: AppSettings }) {
-  const navigation = useNavigation();
-  const queryClient = useQueryClient();
+function SaveRow({ saved, loading, onPress }: { saved: boolean; loading: boolean; onPress: () => void }) {
+  return (
+    <View style={styles.saveRow}>
+      <Button title="Save" onPress={onPress} loading={loading} />
+      {saved ? <Text style={styles.saved}>Saved.</Text> : null}
+    </View>
+  );
+}
+
+function BookingsForm({ settings }: { settings: AppSettings }) {
+  const save = useSaveSettings();
   const [formError, setFormError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const { control, handleSubmit, setError, reset, formState } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+  const toValues = (data: AppSettings) => ({
+    payment_instructions: data.payment_instructions,
+    payment_hold_hours: String(data.payment_hold_hours),
+    reminder_hours_before: String(data.reminder_hours_before),
+  });
+  const { control, handleSubmit, setError, reset, formState } = useForm<z.infer<typeof bookingsSchema>>({
+    resolver: zodResolver(bookingsSchema),
     defaultValues: toValues(settings),
   });
-
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
     setSaved(false);
     try {
-      const { data } = await api.patch<AppSettings>('/admin/settings', {
+      const data = await save({
         payment_instructions: values.payment_instructions.trim(),
         payment_hold_hours: Number(values.payment_hold_hours),
         reminder_hours_before: Number(values.reminder_hours_before),
-        admin_notification_email: values.admin_notification_email.trim(),
       });
-      queryClient.setQueryData(SETTINGS_KEY, data);
       reset(toValues(data));
       setSaved(true);
     } catch (error) {
-      setFormError(applyServerErrors(error, setError, FIELDS));
+      setFormError(
+        applyServerErrors(error, setError, ['payment_instructions', 'payment_hold_hours', 'reminder_hours_before']),
+      );
     }
   });
-
+  const text = (name: keyof z.infer<typeof bookingsSchema>, label: string, extra: object = {}) => (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => (
+        <TextField
+          label={label}
+          value={field.value}
+          onChangeText={(value) => {
+            setSaved(false);
+            field.onChange(value);
+          }}
+          onBlur={field.onBlur}
+          error={fieldState.error?.message}
+          {...extra}
+        />
+      )}
+    />
+  );
   return (
-    <Screen maxWidth={760}>
-      <Text style={styles.title}>Settings</Text>
-      <FormSection
-        title="Payment instructions"
-        description="Sent to customers when you confirm availability and in payment reminders."
-      >
-        <Controller
-          control={control}
-          name="payment_instructions"
-          render={({ field, fieldState }) => (
-            <TextField
-              label="Payment instructions"
-              placeholder="e.g. M-Pesa paybill number and account, or bank details"
-              value={field.value}
-              onChangeText={(value) => {
-                setSaved(false);
-                field.onChange(value);
-              }}
-              onBlur={field.onBlur}
-              error={fieldState.error?.message}
-              multiline
-              numberOfLines={6}
-            />
-          )}
-        />
-        {!settings.payment_instructions.trim() ? (
-          <Text style={styles.warning}>Add payment instructions before confirming any booking.</Text>
-        ) : null}
-      </FormSection>
-      <FormSection
-        title="Payment hold"
-        description="After you confirm availability, the customer has the hold period to pay before the booking expires."
-      >
-        <FieldGrid columns={2}>
-          <Controller
-            control={control}
-            name="payment_hold_hours"
-            render={({ field, fieldState }) => (
-              <TextField
-                label="Payment hold (hours)"
-                value={field.value}
-                onChangeText={(value) => {
-                  setSaved(false);
-                  field.onChange(value);
-                }}
-                onBlur={field.onBlur}
-                error={fieldState.error?.message}
-                keyboardType="number-pad"
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="reminder_hours_before"
-            render={({ field, fieldState }) => (
-              <TextField
-                label="Reminder (hours before deadline)"
-                value={field.value}
-                onChangeText={(value) => {
-                  setSaved(false);
-                  field.onChange(value);
-                }}
-                onBlur={field.onBlur}
-                error={fieldState.error?.message}
-                keyboardType="number-pad"
-              />
-            )}
-          />
-        </FieldGrid>
-      </FormSection>
-      <FormSection title="Notifications" description="New requests and bookings are emailed here.">
-        <Controller
-          control={control}
-          name="admin_notification_email"
-          render={({ field, fieldState }) => (
-            <TextField
-              label="Notification email"
-              value={field.value}
-              onChangeText={(value) => {
-                setSaved(false);
-                field.onChange(value);
-              }}
-              onBlur={field.onBlur}
-              error={fieldState.error?.message}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-          )}
-        />
-      </FormSection>
+    <FormSection
+      title="Bookings and payments"
+      description="Payment instructions go to customers when you confirm availability and in payment reminders. After you confirm, the customer has the hold period to pay before the booking expires."
+    >
+      {text('payment_instructions', 'Payment instructions', {
+        placeholder: 'e.g. M-Pesa paybill number and account, or bank details',
+        multiline: true,
+        numberOfLines: 6,
+      })}
+      {!settings.payment_instructions.trim() ? (
+        <Text style={styles.warning}>Add payment instructions before confirming any booking.</Text>
+      ) : null}
+      <FieldGrid columns={2}>
+        {text('payment_hold_hours', 'Payment hold (hours)', { keyboardType: 'number-pad' })}
+        {text('reminder_hours_before', 'Reminder (hours before deadline)', { keyboardType: 'number-pad' })}
+      </FieldGrid>
       <FormError message={formError} />
-      <FormFooter>
-        {saved ? <Text style={styles.saved}>Settings saved.</Text> : null}
-        <Button title="Save settings" onPress={onSubmit} loading={formState.isSubmitting} />
-      </FormFooter>
-      <ThemeSection current={settings.theme} settingsKey={SETTINGS_KEY} />
-      {settings.modules.includes('flights') ? <IntegrationsSection /> : null}
-      <FormSection title="Billing" description="Your agency's plans with Dira Manifest and their invoices.">
-        <View style={styles.billing}>
-          <Button
-            title="View billing"
-            variant="secondary"
-            icon="document-text-outline"
-            onPress={() => navigation.navigate('AdminTabs', { screen: 'AdminBilling' })}
+      <SaveRow saved={saved} loading={formState.isSubmitting} onPress={onSubmit} />
+    </FormSection>
+  );
+}
+
+function NotificationsForm({ settings }: { settings: AppSettings }) {
+  const save = useSaveSettings();
+  const [formError, setFormError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const { control, handleSubmit, setError, reset, formState } = useForm<z.infer<typeof notificationsSchema>>({
+    resolver: zodResolver(notificationsSchema),
+    defaultValues: { admin_notification_email: settings.admin_notification_email },
+  });
+  const onSubmit = handleSubmit(async (values) => {
+    setFormError(null);
+    setSaved(false);
+    try {
+      const data = await save({ admin_notification_email: values.admin_notification_email.trim() });
+      reset({ admin_notification_email: data.admin_notification_email });
+      setSaved(true);
+    } catch (error) {
+      setFormError(applyServerErrors(error, setError, ['admin_notification_email']));
+    }
+  });
+  return (
+    <FormSection
+      title="Notifications"
+      description="New requests, bookings, reviews and support messages are emailed here. Customers' replies to your emails come here too when you use Dira Manifest's mail server."
+    >
+      <Controller
+        control={control}
+        name="admin_notification_email"
+        render={({ field, fieldState }) => (
+          <TextField
+            label="Notification email"
+            value={field.value}
+            onChangeText={(value) => {
+              setSaved(false);
+              field.onChange(value);
+            }}
+            onBlur={field.onBlur}
+            error={fieldState.error?.message}
+            keyboardType="email-address"
+            autoCapitalize="none"
           />
-        </View>
-      </FormSection>
-      <FormSection
-        title="Support"
-        description="Chat with Dira Manifest, the platform: questions, plans and billing. Replies also come by email."
-      >
-        <View style={styles.billing}>
-          <Button
-            title="Open support"
-            variant="secondary"
-            icon="chatbubbles-outline"
-            onPress={() => navigation.navigate('AdminTabs', { screen: 'AdminSupport' })}
-          />
-        </View>
-      </FormSection>
-    </Screen>
+        )}
+      />
+      <FormError message={formError} />
+      <SaveRow saved={saved} loading={formState.isSubmitting} onPress={onSubmit} />
+    </FormSection>
   );
 }
 
 const styles = createStyles(() => ({
-  billing: { alignItems: 'flex-start' },
+  scroll: { flex: 1, backgroundColor: colors.background },
+  narrow: { padding: space.lg, gap: space.lg },
+  wide: { flex: 1, flexDirection: 'row', backgroundColor: colors.background },
+  side: {
+    width: 220,
+    padding: space.lg,
+    gap: space.md,
+    borderRightWidth: 1,
+    borderRightColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  content: { padding: space.lg, gap: space.lg, width: '100%', maxWidth: 760 + 2 * space.lg },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
+  list: { gap: 2 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    paddingVertical: space.sm,
+    paddingHorizontal: space.sm,
+    borderRadius: radius.md,
+  },
+  rowHover: { backgroundColor: colors.background },
+  rowOn: { backgroundColor: colors.primaryTint },
+  rowText: { flex: 1, fontSize: font.body, color: colors.text },
+  rowTextOn: { color: colors.primary, fontWeight: weight.semibold },
+  detail: { gap: 2 },
+  detailLabel: { fontSize: font.small, color: colors.muted },
+  detailValue: { fontSize: font.body, color: colors.text },
+  start: { alignItems: 'flex-start' },
   warning: { color: colors.danger },
   saved: { color: colors.success, fontWeight: weight.semibold },
+  saveRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
 }));

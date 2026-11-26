@@ -14,6 +14,7 @@ from tours.models import Tour
 from tours.serializers import TourSerializer
 from tours.views import tours
 
+from . import mail_server
 from .models import AppSettings
 from .permissions import IsAdminRole
 from .serializers import AppSettingsSerializer
@@ -26,6 +27,26 @@ class AdminSettingsView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return AppSettings.get()
+
+
+class AdminMailServerView(APIView):
+    permission_classes = [IsAdminRole]
+
+    def get(self, request):
+        return Response(mail_server.read())
+
+    def put(self, request):
+        return mail_server.save(request.data)
+
+    def delete(self, request):
+        return mail_server.remove()
+
+
+class AdminMailServerTestView(APIView):
+    permission_classes = [IsAdminRole]
+
+    def post(self, request):
+        return mail_server.send_test(request.user.email)
 
 
 class AdminThemeListView(generics.ListAPIView):

@@ -21,6 +21,7 @@ import { TextField } from '../../components/TextField';
 import { PLATFORM_HOST } from '../../config';
 import { colors, createStyles, font, radius, space, useIsWide, weight } from '../../theme';
 import { formatDate, formatDateTime } from '../../utils/format';
+import { MailServerSection } from '../admin/MailServerSection';
 import { AgencyBilling } from './AgencyBilling';
 import { AgencyModules, ModuleCheckboxes } from './AgencyModules';
 import { AgencyTheme, ThemePicker, themeChoices, usePlatformThemes } from './AgencyTheme';
@@ -118,6 +119,11 @@ function Agency({ tenant }: { tenant: TenantDetail }) {
       </Card>
       <AgencyModules tenant={tenant} onSaved={refresh} />
       <Admins tenant={tenant} />
+      <MailServerSection
+        base={`/platform/tenants/${tenant.id}/mail-server`}
+        agencyName={tenant.name}
+        repliesTo="the agency's notification email"
+      />
       <Domains tenant={tenant} />
     </>
   );

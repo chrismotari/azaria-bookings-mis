@@ -1,3 +1,5 @@
+from email.utils import formataddr, parseaddr
+from smtplib import SMTPException
 from urllib.parse import urlparse
 
 from django.conf import settings
@@ -88,8 +90,52 @@ def send_email(template, subject, to, context, attachments=(), platform=False):
     message.attach_alternative(html, "text/html")
     for attachment in attachments:
         message.attach(*attachment)
-    message.send()
+    if _is_platform(platform):
+        message.send()
+        return message
+    from core.models import AppSettings, MailServer
+
+    server = MailServer.current()
+    if server is None:
+        message.from_email = formataddr((context["sender"], parseaddr(settings.DEFAULT_FROM_EMAIL)[1]))
+        notify = AppSettings.get().admin_notification_email
+        message.reply_to = [notify] if notify else []
+        message.send()
+        return message
+    message.from_email = formataddr((server.from_name or context["sender"], server.from_email))
+    try:
+        agency_connection(server).send_messages([message])
+    except (SMTPException, OSError) as exc:
+        record_failure(server, exc)
+        raise
+    record_success(server)
     return message
+
+
+def agency_connection(server):
+    """An SMTP connection to the agency's own server."""
+    from django.core.mail.backends.smtp import EmailBackend
+
+    return EmailBackend(
+        alias="agency",
+        host=server.host,
+        port=server.port,
+        username=server.username,
+        password=server.get_password(),
+        use_tls=server.security == server.Security.STARTTLS,
+        use_ssl=server.security == server.Security.SSL,
+        timeout=15,
+    )
+
+
+def record_success(server):
+    now = timezone.now()
+    type(server).objects.filter(pk=server.pk).update(last_success_at=now, last_failure_at=None, last_failure="")
+
+
+def record_failure(server, exc):
+    message = (str(exc) or type(exc).__name__)[:500]
+    type(server).objects.filter(pk=server.pk).update(last_failure_at=timezone.now(), last_failure=message)
 
 
 def format_price(amount):

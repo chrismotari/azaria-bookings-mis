@@ -10,6 +10,10 @@ import {
   TripType,
 } from '../api/types';
 
+/** The agency admin's Settings sections, each at /settings/<section>. */
+export type SettingsSection =
+  'general' | 'bookings' | 'notifications' | 'email' | 'theme' | 'integrations' | 'billing' | 'support';
+
 /** Prefilled request-for-options criteria (airports as IATA codes), e.g. from Explore's filters. */
 export type QueryPrefill = {
   origin?: string;
@@ -59,7 +63,7 @@ export type AdminTabParamList = {
   AdminUsers: { id?: string; role?: 'admin' } | undefined;
   /** The desk: chats from the site's visitors and customers. */
   AdminChats: { id?: string } | undefined;
-  AdminSettings: undefined;
+  AdminSettings: { section?: SettingsSection } | undefined;
   /** booking: a tour booking, opened from the tour. */
   AdminTours: { id?: string; booking?: string; status?: AdminTourFilter } | undefined;
   /** Not in the bar: shown under Tours. customer: who the admin books for. */

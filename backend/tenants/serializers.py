@@ -156,6 +156,7 @@ class TenantSerializer(serializers.ModelSerializer):
     modules = modules_field()
     primary_domain = serializers.SerializerMethodField()
     searches_this_month = serializers.SerializerMethodField()
+    mail_server = serializers.SerializerMethodField()
 
     class Meta:
         model = Tenant
@@ -170,6 +171,7 @@ class TenantSerializer(serializers.ModelSerializer):
             "billing_email",
             "monthly_search_allowance",
             "searches_this_month",
+            "mail_server",
             "theme",
             "modules",
             "created_at",
@@ -181,6 +183,7 @@ class TenantSerializer(serializers.ModelSerializer):
             "suspension_reason",
             "suspended_at",
             "searches_this_month",
+            "mail_server",
             "created_at",
         ]
 
@@ -190,6 +193,12 @@ class TenantSerializer(serializers.ModelSerializer):
     def get_primary_domain(self, tenant):
         # From the prefetched domains, so a page of tenants costs one query for all of them.
         return next((domain.domain for domain in tenant.domains.all() if domain.is_primary), None)
+
+    def get_mail_server(self, tenant):
+        from core import mail_server
+
+        with schema_context(tenant.schema_name):
+            return mail_server.status_of()
 
     def get_searches_this_month(self, tenant):
         from integrations.services import searches_this_month

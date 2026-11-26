@@ -48,7 +48,7 @@ export function AdminBillingScreen() {
         <Button
           title="← Settings"
           variant="link"
-          onPress={() => navigation.navigate('AdminTabs', { screen: 'AdminSettings' })}
+          onPress={() => navigation.navigate('AdminTabs', { screen: 'AdminSettings', params: { section: 'billing' } })}
         />
       </View>
       <Text style={styles.title}>Billing</Text>

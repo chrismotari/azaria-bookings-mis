@@ -12,6 +12,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from accounts.models import User
 from accounts.tasks import send_password_reset_email
+from core import mail_server
 from core.throttling import IPScopedRateThrottle
 
 from . import billing, services
@@ -202,6 +203,39 @@ class PlatformDomainMakePrimaryView(APIView):
                 domain.is_primary = True
                 domain.save(update_fields=["is_primary"])
         return Response(DomainSerializer(domain).data)
+
+
+# An agency's own mail server, set by the owner as its admins would (in its schema).
+
+
+class PlatformAgencyMailServerView(APIView):
+    permission_classes = [IsPlatformOwner]
+
+    def get(self, request, pk):
+        tenant = get_object_or_404(agencies(), pk=pk)
+        with schema_context(tenant.schema_name):
+            return Response(mail_server.read())
+
+    def put(self, request, pk):
+        tenant = get_object_or_404(agencies(), pk=pk)
+        with schema_context(tenant.schema_name):
+            return mail_server.save(request.data)
+
+    def delete(self, request, pk):
+        tenant = get_object_or_404(agencies(), pk=pk)
+        with schema_context(tenant.schema_name):
+            return mail_server.remove()
+
+
+class PlatformAgencyMailServerTestView(APIView):
+    """The test email goes to the owner who asked."""
+
+    permission_classes = [IsPlatformOwner]
+
+    def post(self, request, pk):
+        tenant = get_object_or_404(agencies(), pk=pk)
+        with schema_context(tenant.schema_name):
+            return mail_server.send_test(request.user.email)
 
 
 # An agency's admins (role admin in its schema): suspend or restore them, or email them a reset link.

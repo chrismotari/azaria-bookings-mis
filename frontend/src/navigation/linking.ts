@@ -44,7 +44,7 @@ const agencyLinking: LinkingOptions<RootStackParamList> = {
           AdminBookings: 'bookings/:id?',
           AdminUsers: 'users/:id?',
           AdminChats: 'chats/:id?',
-          AdminSettings: 'settings',
+          AdminSettings: 'settings/:section?',
           AdminTours: 'tours/:id?',
           AdminTourNew: 'tours/new',
           AdminTourEdit: 'tours/:id/edit',

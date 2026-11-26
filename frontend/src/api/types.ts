@@ -402,6 +402,25 @@ export type AppSettings = {
   modules: Module[];
 };
 
+export type MailSecurity = 'starttls' | 'ssl' | 'none';
+
+/** The agency's own SMTP server (in_use false: none, emails go through the platform's server). */
+export type MailServer = {
+  host: string;
+  port: number;
+  security: MailSecurity;
+  username: string;
+  from_email: string;
+  from_name: string;
+  has_password: boolean;
+  in_use: boolean;
+  last_success_at: string | null;
+  last_failure_at: string | null;
+  last_failure: string;
+};
+
+export type MailServerStatus = { in_use: boolean; last_failure_at: string | null; last_failure: string };
+
 export type AdminCustomer = {
   id: string;
   email: string;
@@ -433,6 +452,7 @@ export type Tenant = {
   /** Fare searches allowed per calendar month. */
   monthly_search_allowance: number;
   searches_this_month: number;
+  mail_server: MailServerStatus;
   /** Its theme's id. */
   theme: string;
   modules: Module[];

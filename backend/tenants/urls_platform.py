@@ -17,6 +17,8 @@ urlpatterns = [
     path("tenants/<uuid:pk>/domains", views.PlatformDomainListView.as_view()),
     path("tenants/<uuid:pk>/domains/<uuid:domain_id>", views.PlatformDomainDetailView.as_view()),
     path("tenants/<uuid:pk>/domains/<uuid:domain_id>/make-primary", views.PlatformDomainMakePrimaryView.as_view()),
+    path("tenants/<uuid:pk>/mail-server", views.PlatformAgencyMailServerView.as_view()),
+    path("tenants/<uuid:pk>/mail-server/test", views.PlatformAgencyMailServerTestView.as_view()),
     path("tenants/<uuid:pk>/admins", views.PlatformAgencyAdminListView.as_view()),
     path("tenants/<uuid:pk>/admins/<uuid:admin_id>", views.PlatformAgencyAdminDetailView.as_view()),
     path(

@@ -1,0 +1,5 @@
+Hello,
+
+This is a test email from {{ sender }}. Emails to customers now go out through {{ host }}.
+
+{{ sender }}
