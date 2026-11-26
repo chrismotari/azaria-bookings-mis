@@ -15,7 +15,6 @@ import { PriceTag } from '../../components/PriceTag';
 import { FlightServiceRating } from '../../components/Reviews';
 import { RouteLine } from '../../components/RouteLine';
 import { StatusChip } from '../../components/StatusChip';
-import { TENANT_BASE_DOMAIN } from '../../config';
 import { colors, createStyles, font, radius, shadowDialog, space, useIsWide, weight } from '../../theme';
 import { formatDate, formatPrice } from '../../utils/format';
 import { ExploreHero } from '../explore/ExploreAll';
@@ -235,7 +234,7 @@ export function MockFrame({ width, children }: { width: number; children: ReactN
         <View style={styles.address}>
           <Icon name="lock-closed" size={11} color={colors.muted} />
           <Text style={styles.addressText} numberOfLines={1}>
-            youragency.{TENANT_BASE_DOMAIN}
+            youragency.diramanifest.com
           </Text>
         </View>
         <View style={styles.dots} />
