@@ -1,7 +1,7 @@
 import type { ThemeColors } from '../theme';
 
 /**
- * A theme's colours from its primary and accent, and its contrast checks, for the live preview while the owner edits
+ * A theme's colours from the ones the owner chooses, and its contrast checks, for the live preview while the owner edits
  * a theme. The same rules as the server's (backend/tenants/themes.py), which checks every save again.
  */
 
@@ -13,6 +13,7 @@ const BACKGROUND = '#f2f4f7';
 export const MIN_CONTRAST = 4.5;
 const TINT_AMOUNT = 0.09;
 const HOVER_WHITE = 0.12;
+const HOVER_DARK = 0.1;
 
 function rgb(color: string): number[] {
   return [1, 3, 5].map((index) => parseInt(color.slice(index, index + 2), 16));
@@ -46,28 +47,71 @@ export function ratioLabel(ratio: number): string {
   return `${(Math.floor(ratio * 10) / 10).toFixed(1)}:1`;
 }
 
-export function deriveThemeColors(primary: string, accent: string): ThemeColors {
-  const p = primary.toLowerCase();
+/** Whether a text colour is light (white-ish) rather than dark. */
+export function isLightColor(color: string): boolean {
+  return contrast(color, '#000000') > contrast(color, WHITE);
+}
+
+/** The hover shade of a filled colour: lighter under light text, darker under dark text. */
+function hover(color: string, text: string): string {
+  return isLightColor(text) ? blend(WHITE, HOVER_WHITE, color) : blend(DARK_TEXT, HOVER_DARK, color);
+}
+
+function autoText(color: string): string {
+  return contrast(WHITE, color) >= MIN_CONTRAST ? WHITE : DARK_TEXT;
+}
+
+/** The colours an owner chooses; the optional ones are blank for automatic. */
+export type ThemeChoice = {
+  primary: string;
+  accent: string;
+  bar: string;
+  primary_text: string;
+  bar_text: string;
+  accent_text: string;
+};
+
+export function deriveThemeColors(choice: ThemeChoice): ThemeColors {
+  const primary = choice.primary.toLowerCase();
+  const primaryText = (choice.primary_text || WHITE).toLowerCase();
+  const primaryHover = hover(primary, primaryText);
+  const bar = choice.bar.toLowerCase();
+  const barText = bar ? (choice.bar_text || autoText(bar)).toLowerCase() : primaryText;
   return {
-    primary: p,
-    primary_text: WHITE,
-    primary_tint: blend(p, TINT_AMOUNT),
-    primary_hover: blend(WHITE, HOVER_WHITE, p),
-    accent: accent.toLowerCase(),
-    accent_text: DARK_TEXT,
+    primary,
+    primary_text: primaryText,
+    primary_tint: blend(primary, TINT_AMOUNT),
+    primary_hover: primaryHover,
+    bar: bar || primary,
+    bar_text: barText,
+    bar_hover: bar ? hover(bar, barText) : primaryHover,
+    accent: choice.accent.toLowerCase(),
+    accent_text: (choice.accent_text || DARK_TEXT).toLowerCase(),
   };
 }
 
 export type ContrastCheck = { label: string; ratio: number; passes: boolean };
 
-/** The five rules, for valid #rrggbb colours. */
-export function contrastChecks(primary: string, accent: string): ContrastCheck[] {
-  const colors = deriveThemeColors(primary, accent);
-  return [
-    { label: 'White text on the primary', ratio: contrast(WHITE, colors.primary) },
-    { label: "White text on the primary's hover shade", ratio: contrast(WHITE, colors.primary_hover) },
-    { label: 'The primary on its tint', ratio: contrast(colors.primary, colors.primary_tint) },
-    { label: 'The primary on the page background', ratio: contrast(colors.primary, BACKGROUND) },
-    { label: 'Dark text on the accent', ratio: contrast(DARK_TEXT, colors.accent) },
-  ].map((check) => ({ ...check, passes: check.ratio >= MIN_CONTRAST }));
+function textName(text: string): string {
+  return text === WHITE ? 'White text' : text === DARK_TEXT ? 'Dark text' : 'The text colour';
+}
+
+/** The rules, for valid #rrggbb colours (the optional ones blank or valid). */
+export function contrastChecks(choice: ThemeChoice): ContrastCheck[] {
+  const c = deriveThemeColors(choice);
+  const primaryText = textName(c.primary_text);
+  const checks = [
+    { label: `${primaryText} on the primary`, ratio: contrast(c.primary_text, c.primary) },
+    { label: `${primaryText} on the primary's hover shade`, ratio: contrast(c.primary_text, c.primary_hover) },
+    { label: 'The primary on its tint', ratio: contrast(c.primary, c.primary_tint) },
+    { label: 'The primary on the page background', ratio: contrast(c.primary, BACKGROUND) },
+  ];
+  if (choice.bar) {
+    checks.push(
+      { label: 'Text on the bar colour', ratio: contrast(c.bar_text, c.bar) },
+      { label: "Text on the bar colour's hover shade", ratio: contrast(c.bar_text, c.bar_hover) },
+    );
+  }
+  checks.push({ label: `${textName(c.accent_text)} on the accent`, ratio: contrast(c.accent_text, c.accent) });
+  return checks.map((check) => ({ ...check, passes: check.ratio >= MIN_CONTRAST }));
 }

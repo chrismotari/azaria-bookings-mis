@@ -144,7 +144,7 @@ function AccountMenu({ compact }: { compact?: boolean }) {
             {user?.full_name}
           </Text>
         ) : null}
-        <Icon name="chevron-down" size={16} color={colors.primaryText} />
+        <Icon name="chevron-down" size={16} color={colors.barText} />
       </Pressable>
       <Modal transparent visible={open} onRequestClose={close} animationType="none">
         <Pressable accessibilityLabel="Close menu" style={styles.backdrop} onPress={close}>
@@ -230,7 +230,7 @@ function MenuItem({ label, icon, onPress }: { label: string; icon: IconName; onP
 }
 
 const styles = createStyles(() => ({
-  bar: { backgroundColor: colors.primary },
+  bar: { backgroundColor: colors.bar, borderBottomWidth: 1, borderBottomColor: colors.barEdge },
   inner: {
     height: APP_BAR_HEIGHT,
     flexDirection: 'row',
@@ -239,7 +239,7 @@ const styles = createStyles(() => ({
     paddingHorizontal: space.lg,
   },
   innerNarrow: { gap: space.sm, paddingHorizontal: space.md },
-  brand: { fontSize: font.heading, fontWeight: weight.bold, color: colors.primaryText },
+  brand: { fontSize: font.heading, fontWeight: weight.bold, color: colors.barText },
   brandNarrow: { fontSize: font.body },
   brandTag: { fontWeight: weight.regular, opacity: 0.8 },
   textNarrow: { fontSize: font.small },
@@ -253,9 +253,9 @@ const styles = createStyles(() => ({
     borderBottomColor: 'transparent',
   },
   itemCompact: { paddingHorizontal: space.sm, gap: space.xs },
-  itemHovered: { backgroundColor: colors.primaryHover },
+  itemHovered: { backgroundColor: colors.barHover },
   itemFocused: { borderBottomColor: colors.accent },
-  itemText: { fontSize: font.body, color: colors.primaryText, opacity: 0.85 },
+  itemText: { fontSize: font.body, color: colors.barText, opacity: 0.85 },
   itemTextCompact: { fontSize: font.small },
   itemTextFocused: { fontWeight: weight.bold, opacity: 1 },
   itemBadge: {
@@ -270,7 +270,7 @@ const styles = createStyles(() => ({
   itemBadgeText: { color: colors.accentText, fontSize: font.caption, fontWeight: weight.bold },
   actions: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   link: { paddingHorizontal: space.xs, paddingVertical: space.sm },
-  linkText: { color: colors.primaryText, fontWeight: weight.semibold, fontSize: font.body },
+  linkText: { color: colors.barText, fontWeight: weight.semibold, fontSize: font.body },
   cta: {
     backgroundColor: colors.accent,
     borderRadius: radius.sm,
@@ -288,7 +288,7 @@ const styles = createStyles(() => ({
     borderRadius: radius.pill,
     maxWidth: 260,
   },
-  accountHovered: { backgroundColor: colors.primaryHover },
+  accountHovered: { backgroundColor: colors.barHover },
   shrink: { flexShrink: 1 },
   avatar: {
     width: 32,

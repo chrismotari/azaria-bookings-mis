@@ -1,12 +1,17 @@
 import { useSyncExternalStore } from 'react';
 import { StyleSheet, useWindowDimensions } from 'react-native';
 
+import { isLightColor } from './utils/themeColors';
+
 /** What a theme sets, as the API sends it (GET /agency, the theme lists). */
 export type ThemeColors = {
   primary: string;
   primary_text: string;
   primary_tint: string;
   primary_hover: string;
+  bar: string;
+  bar_text: string;
+  bar_hover: string;
   accent: string;
   accent_text: string;
 };
@@ -22,12 +27,18 @@ const AZARIA = {
   primaryTint: '#ebe8fd',
   /** Hover on the primary bar. */
   primaryHover: 'rgba(255, 255, 255, 0.12)',
+  /** The filled brand surfaces (top bar, heading cards, sign-in panel); the primary's colours unless a theme sets a bar. */
+  bar: '#1800d2',
+  barText: '#ffffff',
+  barHover: 'rgba(255, 255, 255, 0.12)',
+  /** The bar's edge against the page: a neutral line on a light bar, invisible otherwise. */
+  barEdge: 'transparent',
   accent: '#ffb400',
   accentText: '#252525',
 };
 
 /**
- * The app's colours. The six brand ones follow the agency's theme (applyTheme); the rest are the same everywhere.
+ * The app's colours. The brand ones follow the agency's theme (applyTheme); the rest are the same everywhere.
  * Status text shades are darker than the brand status colours so text on their tints meets WCAG AA (4.5:1).
  * Read them while rendering, or in createStyles, never into a constant when a file loads: they change with the theme.
  */
@@ -73,6 +84,10 @@ export function applyTheme(theme: ThemeColors | null) {
         primaryText: theme.primary_text,
         primaryTint: theme.primary_tint,
         primaryHover: theme.primary_hover,
+        bar: theme.bar,
+        barText: theme.bar_text,
+        barHover: theme.bar_hover,
+        barEdge: isLightColor(theme.bar_text) ? 'transparent' : '#a8b1b5',
         accent: theme.accent,
         accentText: theme.accent_text,
       }

@@ -4,29 +4,29 @@ import { Text, View } from 'react-native';
 import { colors, createStyles, font, radius, weight } from '../theme';
 import { Icon } from './Icon';
 
-const OnPrimaryContext = createContext(false);
+const OnBarContext = createContext(false);
 
-/** Fields inside it sit on the primary: white labels and errors. */
-export function OnPrimary({ children }: { children: ReactNode }) {
-  return <OnPrimaryContext.Provider value>{children}</OnPrimaryContext.Provider>;
+/** Fields inside it sit on the bar: labels and errors in its text colour. */
+export function OnBar({ children }: { children: ReactNode }) {
+  return <OnBarContext.Provider value>{children}</OnBarContext.Provider>;
 }
 
-/** The input's style; on the primary an error also turns its border to the danger colour. */
+/** The input's style; on the bar an error also turns its border to the danger colour. */
 export function useInputStyle(error?: string) {
-  const onPrimary = useContext(OnPrimaryContext);
-  return onPrimary && error ? { ...inputStyle, borderColor: colors.danger, borderWidth: 2 } : inputStyle;
+  const onBar = useContext(OnBarContext);
+  return onBar && error ? { ...inputStyle, borderColor: colors.danger, borderWidth: 2 } : inputStyle;
 }
 
 export function Field({ label, error, children }: { label: string; error?: string; children: ReactNode }) {
-  const onPrimary = useContext(OnPrimaryContext);
+  const onBar = useContext(OnBarContext);
   return (
     <View style={styles.field}>
-      <Text style={[styles.label, onPrimary && styles.onPrimary]}>{label}</Text>
+      <Text style={[styles.label, onBar && styles.onBar]}>{label}</Text>
       {children}
-      {error && onPrimary ? (
+      {error && onBar ? (
         <View style={styles.errorRow}>
-          <Icon name="alert-circle" size={16} color={colors.primaryText} />
-          <Text style={[styles.error, styles.onPrimary]}>{error}</Text>
+          <Icon name="alert-circle" size={16} color={colors.barText} />
+          <Text style={[styles.error, styles.onBar]}>{error}</Text>
         </View>
       ) : error ? (
         <Text style={styles.error}>{error}</Text>
@@ -71,6 +71,6 @@ const styles = createStyles(() => ({
   label: { fontSize: font.small, fontWeight: weight.semibold, color: colors.muted },
   error: { fontSize: font.small, color: colors.danger },
   formError: { fontSize: font.small },
-  onPrimary: { color: colors.primaryText },
+  onBar: { color: colors.barText },
   errorRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
 }));

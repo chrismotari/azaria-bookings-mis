@@ -57,18 +57,25 @@ class ThemeSerializer(serializers.ModelSerializer):
         return theme.colors
 
 
+COLOR_FIELDS = ["primary", "accent", "bar", "primary_text", "bar_text", "accent_text"]
+
+
 class PlatformThemeSerializer(ThemeSerializer):
     """The owner's view: create and change themes. Every save passes the contrast rules (tenants.themes)."""
 
     # Declared so validate_name's message (and its case-insensitive check) replaces the model's unique check.
     name = serializers.CharField(max_length=40)
-    primary = serializers.CharField(write_only=True)
-    accent = serializers.CharField(write_only=True)
+    primary = serializers.CharField()
+    accent = serializers.CharField()
+    bar = serializers.CharField(required=False, allow_blank=True)
+    primary_text = serializers.CharField(required=False, allow_blank=True)
+    bar_text = serializers.CharField(required=False, allow_blank=True)
+    accent_text = serializers.CharField(required=False, allow_blank=True)
     agency_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Theme
-        fields = ["id", "name", "colors", "primary", "accent", "is_active", "is_default", "agency_count"]
+        fields = ["id", "name", "colors", *COLOR_FIELDS, "is_active", "is_default", "agency_count"]
         read_only_fields = ["id", "colors", "is_default", "agency_count"]
 
     def validate_name(self, value):
@@ -84,17 +91,40 @@ class PlatformThemeSerializer(ThemeSerializer):
             raise serializers.ValidationError("Enter a colour as #rrggbb.")
         return value.strip().lower()
 
+    def _optional_color(self, value):
+        return self._color(value) if value.strip() else ""
+
     def validate_primary(self, value):
-        value = self._color(value)
-        if problems := themes.primary_problems(value):
-            raise serializers.ValidationError(problems)
-        return value
+        return self._color(value)
 
     def validate_accent(self, value):
-        value = self._color(value)
-        if problems := themes.accent_problems(value):
-            raise serializers.ValidationError(problems)
-        return value
+        return self._color(value)
+
+    validate_bar = validate_primary_text = validate_bar_text = validate_accent_text = _optional_color
+
+    def validate(self, attrs):
+        current = {name: getattr(self.instance, name, "") for name in COLOR_FIELDS}
+        c = {**current, **{name: attrs[name] for name in COLOR_FIELDS if name in attrs}}
+        errors = {}
+
+        def refuse(field, problems):
+            if problems:
+                errors.setdefault(field, []).extend(problems)
+
+        text_field = "primary_text" if c["primary_text"] else "primary"
+        refuse(text_field, themes.primary_text_problems(c["primary"], c["primary_text"] or themes.WHITE))
+        refuse("primary", themes.primary_surface_problems(c["primary"]))
+        if c["bar"]:
+            refuse("bar_text" if c["bar_text"] else "bar", themes.bar_problems(c["bar"], c["bar_text"]))
+        elif c["bar_text"]:
+            refuse("bar_text", ["Choose a bar colour for this text colour."])
+        refuse(
+            "accent_text" if c["accent_text"] else "accent",
+            themes.accent_problems(c["accent"], c["accent_text"] or themes.DARK_TEXT),
+        )
+        if errors:
+            raise serializers.ValidationError(errors)
+        return attrs
 
     def validate_is_active(self, value):
         if not value and self.instance is not None and self.instance.is_default:

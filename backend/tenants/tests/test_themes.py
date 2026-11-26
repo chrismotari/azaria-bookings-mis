@@ -65,6 +65,9 @@ def test_colours_are_derived_from_primary_and_accent():
         "primary_text": "#ffffff",
         "primary_tint": "#eae8fb",
         "primary_hover": "#341fd7",
+        "bar": "#1800d2",
+        "bar_text": "#ffffff",
+        "bar_hover": "#341fd7",
         "accent": "#ffb400",
         "accent_text": "#252525",
     }
@@ -114,6 +117,120 @@ def test_a_primary_can_fail_only_the_hover_shade_rule():
     assert themes.primary_problems("#686868") == ["White text on this primary's hover shade is 4.2:1; it needs 4.5:1."]
 
 
+# Bar and text colours
+
+NAVY = "#1b3a6b"
+
+
+@pytest.mark.parametrize(
+    ("bar", "text", "hover"),
+    [
+        ("#ffd100", "#252525", themes.blend("#252525", 0.10, over="#ffd100")),
+        ("#f8c8dc", "#252525", themes.blend("#252525", 0.10, over="#f8c8dc")),
+        ("#ffffff", "#252525", themes.blend("#252525", 0.10, over="#ffffff")),
+        ("#7b1e3a", "#ffffff", themes.blend("#ffffff", 0.12, over="#7b1e3a")),
+    ],
+)
+def test_a_bar_gets_white_or_dark_text_and_a_hover_shade_that_follows_it(bar, text, hover):
+    colors = themes.derived_colors(NAVY, "#f2c14e", bar=bar)
+    assert (colors["bar"], colors["bar_text"], colors["bar_hover"]) == (bar, text, hover)
+    assert (colors["primary"], colors["primary_text"]) == (NAVY, "#ffffff")
+
+
+def test_the_automatic_bar_text_flips_at_the_4_5_edge():
+    # #767676 is the lightest grey white still reaches 4.5:1 on; one step lighter takes dark text.
+    assert themes.auto_text("#767676") == "#ffffff"
+    assert themes.auto_text("#777777") == "#252525"
+
+
+def test_without_a_bar_the_bar_colours_are_the_primarys():
+    colors = theme("Navy & Gold").colors
+    assert (colors["bar"], colors["bar_text"], colors["bar_hover"]) == (
+        colors["primary"],
+        colors["primary_text"],
+        colors["primary_hover"],
+    )
+
+
+def test_chosen_text_colours_are_returned_and_move_the_hover_shade(platform):
+    body = {
+        **NEW,
+        "primary": NAVY,
+        "primary_text": "#FFF8E7",
+        "bar": "#FFD100",
+        "bar_text": "#1B3A6B",
+        "accent": "#1E5631",
+        "accent_text": "#FFFFFF",
+    }
+    response = platform.post("/api/platform/themes", body, format="json")
+    assert response.status_code == 201, response.data
+    colors = response.data["colors"]
+    assert colors["primary_text"] == "#fff8e7"
+    assert colors["primary_hover"] == themes.blend("#ffffff", 0.12, over=NAVY)
+    assert (colors["bar"], colors["bar_text"]) == ("#ffd100", "#1b3a6b")
+    assert colors["bar_hover"] == themes.blend("#252525", 0.10, over="#ffd100")
+    assert (colors["accent"], colors["accent_text"]) == ("#1e5631", "#ffffff")
+    assert APIClient().get("/api/agency").data["theme"]["colors"]["bar"] == "#1800d2"
+    created = theme("Pine & Honey")
+    assert (created.bar, created.primary_text, created.bar_text, created.accent_text) == (
+        "#ffd100",
+        "#fff8e7",
+        "#1b3a6b",
+        "#ffffff",
+    )
+    # Blank goes back to automatic.
+    response = platform.patch(f"/api/platform/themes/{created.pk}", {"bar_text": "", "bar": ""}, format="json")
+    assert response.status_code == 200, response.data
+    assert response.data["colors"]["bar"] == NAVY
+
+
+@pytest.mark.parametrize(
+    ("changes", "field", "message"),
+    [
+        (
+            {"primary": NAVY, "primary_text": "#252525"},
+            "primary_text",
+            "Dark text on this primary is 1.3:1; it needs 4.5:1.",
+        ),
+        # Readable on the primary, but not on its lighter hover shade.
+        (
+            {"primary": NAVY, "primary_text": "#b8c4d6"},
+            "primary_text",
+            "This text colour on this primary's hover shade is 4.4:1; it needs 4.5:1.",
+        ),
+        # Mid grey: white and dark text both fall short, so the automatic text cannot pass.
+        ({"bar": "#808080"}, "bar", "Text on this bar colour is 3.8:1; it needs 4.5:1."),
+        ({"bar": "#ffd100", "bar_text": "#ffffff"}, "bar_text", "Text on this bar colour is 1.4:1; it needs 4.5:1."),
+        (
+            {"bar": "#ffffff", "bar_text": "#6c7171"},
+            "bar_text",
+            "Text on this bar colour's hover shade is 4.0:1; it needs 4.5:1.",
+        ),
+        ({"bar_text": "#252525"}, "bar_text", "Choose a bar colour for this text colour."),
+        (
+            {"accent": "#f2c14e", "accent_text": "#ffffff"},
+            "accent_text",
+            "White text on this accent is 1.6:1; it needs 4.5:1.",
+        ),
+    ],
+)
+def test_bar_and_text_colour_rules_refuse_with_their_ratio(platform, changes, field, message):
+    response = platform.post("/api/platform/themes", {**NEW, **changes}, format="json")
+    assert response.status_code == 400
+    assert message in response.data[field]
+    navy = theme("Navy & Gold")
+    response = platform.patch(f"/api/platform/themes/{navy.pk}", changes, format="json")
+    assert response.status_code == 400
+    assert message in response.data[field]
+
+
+def test_a_light_text_colour_on_a_dark_accent_is_accepted(platform):
+    response = platform.post(
+        "/api/platform/themes", {**NEW, "accent": "#1e5631", "accent_text": "#ffffff"}, format="json"
+    )
+    assert response.status_code == 201, response.data
+
+
 @pytest.mark.parametrize("color", ["1b3a6b", "#1b3a6", "#gggggg", "navy"])
 def test_colours_must_be_hex(platform, color):
     response = platform.post("/api/platform/themes", {**NEW, "primary": color}, format="json")
@@ -136,7 +253,20 @@ def test_the_owner_lists_themes_with_inactive_ones_default_first(platform):
     assert rows["Indigo & Amber"]["agency_count"] == 1
     assert rows["Teal & Coral"]["agency_count"] == 1
     assert rows["Old"]["is_active"] is False
-    assert set(rows["Indigo & Amber"]) == {"id", "name", "colors", "is_active", "is_default", "agency_count"}
+    assert set(rows["Indigo & Amber"]) == {
+        "id",
+        "name",
+        "colors",
+        "primary",
+        "accent",
+        "bar",
+        "primary_text",
+        "bar_text",
+        "accent_text",
+        "is_active",
+        "is_default",
+        "agency_count",
+    }
 
 
 def test_creating_a_theme_stores_lowercase_colours_and_derives_the_rest(platform):
@@ -154,6 +284,9 @@ def test_creating_a_theme_stores_lowercase_colours_and_derives_the_rest(platform
         "primary_text": "#ffffff",
         "primary_tint": themes.blend("#1f4d3a", 0.09),
         "primary_hover": themes.blend("#ffffff", 0.12, over="#1f4d3a"),
+        "bar": "#1f4d3a",
+        "bar_text": "#ffffff",
+        "bar_hover": themes.blend("#ffffff", 0.12, over="#1f4d3a"),
         "accent": "#f5c26b",
         "accent_text": "#252525",
     }
@@ -361,6 +494,17 @@ def test_agency_emails_use_the_agencys_colours():
     assert f"background-color:{colors['primary']}" in html
     assert f"background-color:{colors['accent']}" in html
     assert "#1800d2" not in html and "#ffb400" not in html
+
+
+def test_the_email_header_uses_the_bar():
+    navy = theme("Navy & Gold")
+    Theme.objects.filter(pk=navy.pk).update(bar="#ffd100")
+    Tenant.objects.filter(schema_name=OTHER_SCHEMA).update(theme=navy)
+    with schema_context(OTHER_SCHEMA):
+        user = User.objects.create_user(email="ama@example.com", password="Str0ng-pass!", full_name="Ama")
+    account_tasks.send_welcome_email(OTHER_SCHEMA, user.pk)
+    html = html_part(mail.outbox[-1])
+    assert "background-color:#ffd100; color:#252525;" in html
 
 
 def test_platform_emails_use_azarias_colours():

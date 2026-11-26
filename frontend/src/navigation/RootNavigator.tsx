@@ -301,8 +301,8 @@ const GET_APP_SCREEN = IS_NATIVE ? null : (
 /** Read while rendering: the header follows the agency's theme. */
 function stackScreenOptions() {
   return {
-    headerStyle: { backgroundColor: colors.primary },
-    headerTintColor: colors.primaryText,
+    headerStyle: { backgroundColor: colors.bar },
+    headerTintColor: colors.barText,
   };
 }
 

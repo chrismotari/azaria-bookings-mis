@@ -58,14 +58,16 @@ const styles = createStyles(() => ({
   split: { flexDirection: 'row', gap: space.xl, marginTop: space.xl, alignItems: 'stretch' },
   panel: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: colors.bar,
+    borderWidth: 1,
+    borderColor: colors.barEdge,
     borderRadius: radius.lg,
     padding: space.xxl,
     gap: space.lg,
     justifyContent: 'center',
   },
-  brand: { fontSize: font.display, fontWeight: weight.heavy, color: colors.primaryText },
-  tagline: { fontSize: font.heading, color: colors.primaryText, opacity: 0.9 },
+  brand: { fontSize: font.display, fontWeight: weight.heavy, color: colors.barText },
+  tagline: { fontSize: font.heading, color: colors.barText, opacity: 0.9 },
   benefits: { gap: space.md, marginTop: space.sm },
   benefit: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   benefitIcon: {
@@ -76,7 +78,7 @@ const styles = createStyles(() => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  benefitText: { flexShrink: 1, fontSize: font.body, color: colors.primaryText },
+  benefitText: { flexShrink: 1, fontSize: font.body, color: colors.barText },
   formColumn: { flex: 1, justifyContent: 'center' },
   title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
 }));

@@ -78,7 +78,7 @@ export function ResponsiveTabBar({
           <AppBarItem
             key={route.key}
             label={route.label}
-            icon={route.icon(colors.primaryText)}
+            icon={route.icon(colors.barText)}
             focused={route.focused}
             onPress={route.onPress}
             badge={route.badge}

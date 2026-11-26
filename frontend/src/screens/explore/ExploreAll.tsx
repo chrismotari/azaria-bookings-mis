@@ -104,7 +104,7 @@ export function ExploreHero({
               <Text style={styles.tileTitle}>{HERO[module].title}</Text>
               <Text style={styles.tileLine}>{HERO[module].line}</Text>
             </View>
-            <Icon name="arrow-forward" size={20} color={colors.primaryText} />
+            <Icon name="arrow-forward" size={20} color={colors.barText} />
           </Pressable>
         ))}
       </View>
@@ -129,12 +129,12 @@ const styles = createStyles(() => ({
     gap: space.md,
     padding: space.lg,
     borderRadius: radius.md,
-    backgroundColor: colors.primaryHover,
+    backgroundColor: colors.barHover,
     borderWidth: 1,
-    borderColor: colors.primaryHover,
+    borderColor: colors.barHover,
   },
   tileWide: { flex: 1, minWidth: 0, minHeight: 120 },
-  tileHovered: { borderColor: colors.primaryText, ...shadowRaised },
+  tileHovered: { borderColor: colors.barText, ...shadowRaised },
   tileIcon: {
     width: 52,
     height: 52,
@@ -144,6 +144,6 @@ const styles = createStyles(() => ({
     justifyContent: 'center',
   },
   tileText: { flex: 1, minWidth: 0, gap: 2 },
-  tileTitle: { fontSize: font.heading, fontWeight: weight.heavy, color: colors.primaryText },
-  tileLine: { fontSize: font.body, color: colors.primaryText },
+  tileTitle: { fontSize: font.heading, fontWeight: weight.heavy, color: colors.barText },
+  tileLine: { fontSize: font.body, color: colors.barText },
 }));

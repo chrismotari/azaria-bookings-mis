@@ -155,6 +155,7 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Plan enquiries open the floating panel on the pricing page and a dialog in the agency app, after which the admin lands on the chat in Settings > Support.
 
 ## Platform
+- Theme colours: a bar text colour without a bar colour is refused ("Choose a bar colour for this text colour."); a failing text-vs-surface rule is reported on the chosen text field when there is one, else on the colour field. The ThemesSection API returns the raw colour fields so the form can tell chosen from automatic.
 - Subscription stores its plan's kind so "one running plan per kind" is a DB constraint; a plan's kind can't change.
 - Periods keep the start day of month, clamped to shorter months (31 Jan → 28 Feb → 31 Mar).
 - "More than a month past due" means `due_on` + one calendar month < today.

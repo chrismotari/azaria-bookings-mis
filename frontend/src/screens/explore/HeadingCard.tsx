@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
-import { OnPrimary } from '../../components/Field';
+import { OnBar } from '../../components/Field';
 import { colors, createStyles, font, radius, space, useIsWide, weight } from '../../theme';
 
 /** Every heading card's height on wide screens: a headline and two rows of inputs. */
@@ -16,7 +16,7 @@ type Props = {
   compact?: boolean;
 };
 
-/** The primary card that opens each Explore tab: a large headline over the tab's search or tiles. */
+/** The bar-coloured card that opens each Explore tab: a large headline over the tab's search or tiles. */
 export function HeadingCard({ title, children, heading = true, compact }: Props) {
   const wide = useIsWide();
   const narrow = compact ?? !wide;
@@ -37,17 +37,24 @@ export function HeadingCard({ title, children, heading = true, compact }: Props)
 /** The search fields' block on a heading card, in the theme's hover shade. */
 export function SearchPanel({ children }: { children: ReactNode }) {
   return (
-    <OnPrimary>
+    <OnBar>
       <View style={styles.panel}>{children}</View>
-    </OnPrimary>
+    </OnBar>
   );
 }
 
 const styles = createStyles(() => ({
-  card: { backgroundColor: colors.primary, borderRadius: radius.lg, padding: space.xl, gap: space.lg },
+  card: {
+    backgroundColor: colors.bar,
+    borderWidth: 1,
+    borderColor: colors.barEdge,
+    borderRadius: radius.lg,
+    padding: space.xl,
+    gap: space.lg,
+  },
   cardCompact: { padding: space.lg, gap: space.md },
   fixed: { height: HEIGHT, justifyContent: 'center' },
-  headline: { fontSize: font.display, fontWeight: weight.heavy, color: colors.primaryText },
+  headline: { fontSize: font.display, fontWeight: weight.heavy, color: colors.barText },
   headlineCompact: { fontSize: font.title },
-  panel: { backgroundColor: colors.primaryHover, borderRadius: radius.md, padding: space.lg, gap: space.md },
+  panel: { backgroundColor: colors.barHover, borderRadius: radius.md, padding: space.lg, gap: space.md },
 }));

@@ -8,6 +8,8 @@ from django.utils import timezone
 BRAND = {
     "primary": "#1800d2",
     "primary_text": "#ffffff",
+    "bar": "#1800d2",
+    "bar_text": "#ffffff",
     "accent": "#ffb400",
     "accent_text": "#252525",
     "text": "#252525",
@@ -39,6 +41,8 @@ def email_brand(platform=False):
         **BRAND,
         "primary": colors["primary"],
         "primary_text": colors["primary_text"],
+        "bar": colors["bar"],
+        "bar_text": colors["bar_text"],
         "accent": colors["accent"],
         "accent_text": colors["accent_text"],
         "highlight": colors["primary_tint"],

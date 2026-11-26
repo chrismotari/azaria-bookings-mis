@@ -17,6 +17,11 @@ class Theme(models.Model):
     # #rrggbb, stored lowercase; every save passes the contrast rules (checked by the serializer).
     primary = models.CharField(max_length=7)
     accent = models.CharField(max_length=7)
+    # Optional; blank = the primary for the bar, automatic for the text colours.
+    bar = models.CharField(max_length=7, blank=True, default="")
+    primary_text = models.CharField(max_length=7, blank=True, default="")
+    bar_text = models.CharField(max_length=7, blank=True, default="")
+    accent_text = models.CharField(max_length=7, blank=True, default="")
     # An inactive theme is no longer offered; agencies already using it keep it.
     is_active = models.BooleanField(default=True)
     is_default = models.BooleanField(default=False)
@@ -35,7 +40,7 @@ class Theme(models.Model):
 
     @property
     def colors(self):
-        return derived_colors(self.primary, self.accent)
+        return derived_colors(self.primary, self.accent, self.bar, self.primary_text, self.bar_text, self.accent_text)
 
     @classmethod
     def default(cls):

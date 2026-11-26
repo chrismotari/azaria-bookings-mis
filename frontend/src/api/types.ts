@@ -763,6 +763,14 @@ export type Theme = {
 
 /** The system owner's view of a theme. */
 export type PlatformTheme = Theme & {
+  primary: string;
+  accent: string;
+  /** Blank: the primary's. */
+  bar: string;
+  /** Blank: automatic. */
+  primary_text: string;
+  bar_text: string;
+  accent_text: string;
   is_active: boolean;
   is_default: boolean;
   /** Agencies using it. */

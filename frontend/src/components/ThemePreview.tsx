@@ -2,6 +2,7 @@ import { Text, View } from 'react-native';
 
 import { colors, createStyles, font, radius, space, ThemeColors, weight } from '../theme';
 import { formatPrice } from '../utils/format';
+import { isLightColor } from '../utils/themeColors';
 
 type Props = {
   /** The theme shown, which need not be the one in use. */
@@ -14,8 +15,16 @@ type Props = {
 export function ThemePreview({ theme, name }: Props) {
   return (
     <View style={styles.frame} accessibilityLabel="Theme preview">
-      <View style={[styles.bar, { backgroundColor: theme.primary }]}>
-        <Text style={[styles.brand, { color: theme.primary_text }]} numberOfLines={1}>
+      <View
+        style={[
+          styles.bar,
+          {
+            backgroundColor: theme.bar,
+            borderBottomColor: isLightColor(theme.bar_text) ? 'transparent' : colors.light,
+          },
+        ]}
+      >
+        <Text style={[styles.brand, { color: theme.bar_text }]} numberOfLines={1}>
           {name?.trim() || 'Your agency'}
         </Text>
       </View>
@@ -44,7 +53,7 @@ const styles = createStyles(() => ({
     overflow: 'hidden',
     backgroundColor: colors.background,
   },
-  bar: { paddingVertical: space.md, paddingHorizontal: space.lg },
+  bar: { paddingVertical: space.md, paddingHorizontal: space.lg, borderBottomWidth: 1 },
   brand: { fontSize: font.heading, fontWeight: weight.heavy },
   body: { padding: space.md, gap: space.md },
   tint: { borderRadius: radius.sm, padding: space.md },
