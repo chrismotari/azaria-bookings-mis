@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Text, View } from 'react-native';
 
+import { useAgencyName } from '../../agency/agency';
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
 import { QueryDetail } from '../../api/types';
@@ -25,6 +26,7 @@ export function QueryDetailView({ id }: { id: string }) {
   const [width, setWidth] = useState(0);
   const queryClient = useQueryClient();
   const confirm = useConfirm();
+  const agencyName = useAgencyName();
   const query = useQuery({
     queryKey: ['queries', 'detail', id],
     queryFn: async () => (await api.get<QueryDetail>(`/queries/${id}`)).data,
@@ -75,7 +77,7 @@ export function QueryDetailView({ id }: { id: string }) {
         ) : null}
       </Card>
 
-      <Text style={styles.section}>Options from Dira Manifest</Text>
+      <Text style={styles.section}>Options from {agencyName}</Text>
       {data.responses.length === 0 ? (
         <Text style={styles.muted}>No options yet. We will email you as soon as we have some.</Text>
       ) : (
