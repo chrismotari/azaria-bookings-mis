@@ -468,6 +468,7 @@ Root host, `/api/platform/`
 - Every list has loading, empty and error states; zod mirrors server validation; dates via a web date input; uploads and file opening are web only.
 - Airline badge: the airline's logo, or its IATA code (e.g. "KQ") when it has none or the logo fails to load, in the same fixed square frame. Country flags (bundled flag-icons SVGs) only in airport pickers, offer detail header and connection rows, decorative.
 - Compact route lines (trip cards, admin tables) show "NBO → LHR" for one-way and "NBO ⇄ LHR" for return trips, with both dates.
+- **Sign-in brand panel** (sign-in, register, forgot and reset password, wide screens): the agency's name, a tagline naming the modules on ("Flight deals, tours and hotel stays from our travel agents, booked in a few steps.", with only the modules on) and three ticks taken in turn from each module on. Flights: "Hand-picked flight deals", "Ask us for options when nothing fits", "Boarding passes in the app and your inbox". Tours: "Book your places on a tour instantly", "Options for couples, families and groups", "Tour updates in your inbox". Hotels: "Hotels, lodges and camps we work with", "Prices for your dates and party", "Vouchers in the app and your inbox".
 - Auth gate: login-required actions store the intended action in memory, send the guest to Login/Register, then resume it.
 - `no_tenant` / `tenant_suspended` responses show a full-page message.
 - A shared **theme preview**: a strip of the top bar in the primary with the agency's name (or "Your agency"), a line of text and a link on the tint, and an accent "Book" button beside a price.
@@ -749,3 +750,4 @@ All delivered; each was one commit.
 60. The top bar shows the agency's name instead of the system name.
 61. Font sizes swapped: the top bar name 28 px (22 px narrow), the Explore heading card headline 18 px (15 px on phones).
 62. The sign-in, register, forgot and reset password brand panel shows the agency's name (Dira Manifest on the platform).
+63. The sign-in brand panel's tagline and ticks follow the agency's modules.
