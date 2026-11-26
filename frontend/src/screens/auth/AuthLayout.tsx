@@ -1,10 +1,12 @@
 import { ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
+import { useAgencyName } from '../../agency/agency';
 import { GetAppFooter } from '../../agency/GetAppFooter';
 import { Card } from '../../components/Card';
 import { Icon, IconName } from '../../components/Icon';
 import { Screen } from '../../components/Screen';
+import { IS_PLATFORM } from '../../config';
 import { colors, createStyles, font, radius, space, useIsWide, weight } from '../../theme';
 
 const BENEFITS: { icon: IconName; text: string }[] = [
@@ -16,6 +18,7 @@ const BENEFITS: { icon: IconName; text: string }[] = [
 /** Wide: brand panel beside the form. Narrow: the form card alone. */
 export function AuthLayout({ title, children }: { title: string; children: ReactNode }) {
   const isWide = useIsWide();
+  const agencyName = useAgencyName();
   const form = (
     <Card>
       <Text style={styles.title}>{title}</Text>
@@ -34,7 +37,7 @@ export function AuthLayout({ title, children }: { title: string; children: React
     <Screen maxWidth={960}>
       <View style={styles.split}>
         <View style={styles.panel}>
-          <Text style={styles.brand}>Dira Manifest</Text>
+          <Text style={styles.brand}>{IS_PLATFORM ? 'Dira Manifest' : agencyName}</Text>
           <Text style={styles.tagline}>Flight deals from our travel agents, booked in a few steps.</Text>
           <View style={styles.benefits}>
             {BENEFITS.map((benefit) => (
