@@ -4,28 +4,27 @@ import { useNavigation } from '@react-navigation/native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { z } from 'zod';
 
 import { MODULE_LABELS } from '../../agency/modules';
 import { api } from '../../api/client';
 import { applyServerErrors } from '../../api/errors';
 import { AgencyInfo, AppSettings } from '../../api/types';
-import { BackLink } from '../../components/BackLink';
 import { Button } from '../../components/Button';
 import { FieldGrid, FormError } from '../../components/Field';
 import { FormSection } from '../../components/FormSection';
-import { Icon, IconName } from '../../components/Icon';
-import { PressState } from '../../components/pressState';
+import { IconName } from '../../components/Icon';
+import { SettingsLayout, SettingsSectionItem } from '../../components/SettingsLayout';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
 import { AdminTabParamList, SettingsSection } from '../../navigation/types';
-import { colors, createStyles, font, radius, space, useIsWide, weight } from '../../theme';
+import { colors, createStyles, font, space, weight } from '../../theme';
 import { IntegrationsSection } from './IntegrationsSection';
 import { MailServerSection } from './MailServerSection';
 import { ThemeSection } from './ThemeSection';
 
-const SECTIONS: { key: SettingsSection; label: string; icon: IconName }[] = [
+const SECTIONS: SettingsSectionItem<SettingsSection>[] = [
   { key: 'general', label: 'General', icon: 'business-outline' },
   { key: 'bookings', label: 'Bookings and payments', icon: 'card-outline' },
   { key: 'notifications', label: 'Notifications', icon: 'notifications-outline' },
@@ -40,9 +39,7 @@ const SETTINGS_KEY = ['admin', 'settings'];
 
 type Props = BottomTabScreenProps<AdminTabParamList, 'AdminSettings'>;
 
-/** Settings in sections: a list beside the section on wide screens; on phones the list, then each section. */
 export function AdminSettingsScreen({ navigation, route }: Props) {
-  const isWide = useIsWide();
   const settings = useQuery({
     queryKey: SETTINGS_KEY,
     queryFn: async () => (await api.get<AppSettings>('/admin/settings')).data,
@@ -54,72 +51,13 @@ export function AdminSettingsScreen({ navigation, route }: Props) {
   if (settings.isError) {
     return <ErrorState error={settings.error} onRetry={() => settings.refetch()} />;
   }
-  const sections = SECTIONS.filter((item) => item.key !== 'integrations' || settings.data.modules.includes('flights'));
-  const asked = route.params?.section;
-  const current = sections.find((item) => item.key === asked)?.key;
-  const open = (section: SettingsSection | undefined) => navigation.setParams({ section });
-
-  if (!isWide) {
-    return (
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.narrow}>
-        {current ? (
-          <>
-            <BackLink label="Settings" onPress={() => open(undefined)} />
-            <Section section={current} settings={settings.data} />
-          </>
-        ) : (
-          <>
-            <Text style={styles.title}>Settings</Text>
-            <SectionList sections={sections} onOpen={open} />
-          </>
-        )}
-      </ScrollView>
-    );
-  }
   return (
-    <View style={styles.wide}>
-      <View style={styles.side}>
-        <Text style={styles.title}>Settings</Text>
-        <SectionList sections={sections} current={current ?? 'general'} onOpen={open} />
-      </View>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        <Section section={current ?? 'general'} settings={settings.data} />
-      </ScrollView>
-    </View>
-  );
-}
-
-function SectionList({
-  sections,
-  current,
-  onOpen,
-}: {
-  sections: typeof SECTIONS;
-  current?: SettingsSection;
-  onOpen: (section: SettingsSection) => void;
-}) {
-  return (
-    <View style={styles.list} accessibilityRole="tablist">
-      {sections.map((item) => {
-        const selected = item.key === current;
-        return (
-          <Pressable
-            key={item.key}
-            accessibilityRole="tab"
-            accessibilityState={{ selected }}
-            onPress={() => onOpen(item.key)}
-          >
-            {(state: PressState) => (
-              <View style={[styles.row, (state.hovered || state.pressed) && styles.rowHover, selected && styles.rowOn]}>
-                <Icon name={item.icon} size={18} color={selected ? colors.primary : colors.muted} />
-                <Text style={[styles.rowText, selected && styles.rowTextOn]}>{item.label}</Text>
-                {current === undefined ? <Icon name="chevron-forward" size={16} color={colors.muted} /> : null}
-              </View>
-            )}
-          </Pressable>
-        );
-      })}
-    </View>
+    <SettingsLayout
+      sections={SECTIONS.filter((item) => item.key !== 'integrations' || settings.data.modules.includes('flights'))}
+      current={route.params?.section}
+      onOpen={(section) => navigation.setParams({ section })}
+      renderSection={(section) => <Section section={section} settings={settings.data} />}
+    />
   );
 }
 
@@ -356,32 +294,6 @@ function NotificationsForm({ settings }: { settings: AppSettings }) {
 }
 
 const styles = createStyles(() => ({
-  scroll: { flex: 1, backgroundColor: colors.background },
-  narrow: { padding: space.lg, gap: space.lg },
-  wide: { flex: 1, flexDirection: 'row', backgroundColor: colors.background },
-  side: {
-    width: 220,
-    padding: space.lg,
-    gap: space.md,
-    borderRightWidth: 1,
-    borderRightColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  content: { padding: space.lg, gap: space.lg, width: '100%', maxWidth: 760 + 2 * space.lg },
-  title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
-  list: { gap: 2 },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.sm,
-    paddingVertical: space.sm,
-    paddingHorizontal: space.sm,
-    borderRadius: radius.md,
-  },
-  rowHover: { backgroundColor: colors.background },
-  rowOn: { backgroundColor: colors.primaryTint },
-  rowText: { flex: 1, fontSize: font.body, color: colors.text },
-  rowTextOn: { color: colors.primary, fontWeight: weight.semibold },
   detail: { gap: 2 },
   detailLabel: { fontSize: font.small, color: colors.muted },
   detailValue: { fontSize: font.body, color: colors.text },

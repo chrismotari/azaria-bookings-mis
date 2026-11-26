@@ -14,6 +14,9 @@ import {
 export type SettingsSection =
   'general' | 'bookings' | 'notifications' | 'email' | 'theme' | 'integrations' | 'billing' | 'support';
 
+/** The platform owner's Settings sections, each at /settings/<section>. */
+export type PlatformSettingsSection = 'billing' | 'support' | 'themes' | 'exchange-rates';
+
 /** Prefilled request-for-options criteria (airports as IATA codes), e.g. from Explore's filters. */
 export type QueryPrefill = {
   origin?: string;
@@ -116,7 +119,7 @@ export type PlatformTabParamList = {
   PlatformInvoices: { status?: InvoiceStatusFilter; id?: string } | undefined;
   /** The platform's desk: chats from visitors and agencies' admins. */
   PlatformChats: { id?: string } | undefined;
-  PlatformSettings: undefined;
+  PlatformSettings: { section?: PlatformSettingsSection } | undefined;
 };
 
 export type RootStackParamList = {

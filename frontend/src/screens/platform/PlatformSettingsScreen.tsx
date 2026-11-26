@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -11,10 +12,11 @@ import { PlatformSettings } from '../../api/types';
 import { Button } from '../../components/Button';
 import { FieldGrid, FormError } from '../../components/Field';
 import { FormFooter, FormSection } from '../../components/FormSection';
-import { Screen } from '../../components/Screen';
+import { SettingsLayout, SettingsSectionItem } from '../../components/SettingsLayout';
 import { ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
-import { colors, createStyles, font, weight } from '../../theme';
+import { PlatformSettingsSection, PlatformTabParamList } from '../../navigation/types';
+import { colors, createStyles, weight } from '../../theme';
 import { ExchangeRates } from './ExchangeRates';
 import { ThemesSection } from './ThemesSection';
 
@@ -43,7 +45,16 @@ const FIELDS = [
 
 const SETTINGS_KEY = ['platform', 'settings'];
 
-export function PlatformSettingsScreen() {
+type Props = BottomTabScreenProps<PlatformTabParamList, 'PlatformSettings'>;
+
+const SECTIONS: SettingsSectionItem<PlatformSettingsSection>[] = [
+  { key: 'billing', label: 'Billing', icon: 'document-text-outline' },
+  { key: 'support', label: 'Support', icon: 'chatbubbles-outline' },
+  { key: 'themes', label: 'Themes', icon: 'color-palette-outline' },
+  { key: 'exchange-rates', label: 'Exchange rates', icon: 'swap-horizontal-outline' },
+];
+
+export function PlatformSettingsScreen({ navigation, route }: Props) {
   const settings = useQuery({
     queryKey: SETTINGS_KEY,
     queryFn: async () => (await api.get<PlatformSettings>('/platform/settings')).data,
@@ -54,7 +65,25 @@ export function PlatformSettingsScreen() {
   if (settings.isError) {
     return <ErrorState error={settings.error} onRetry={() => settings.refetch()} />;
   }
-  return <SettingsForm settings={settings.data} />;
+  return (
+    <SettingsLayout
+      sections={SECTIONS}
+      current={route.params?.section}
+      onOpen={(section) => navigation.setParams({ section })}
+      renderSection={(section) => {
+        switch (section) {
+          case 'billing':
+            return <SettingsForm key="billing" settings={settings.data} part="billing" />;
+          case 'support':
+            return <SettingsForm key="support" settings={settings.data} part="support" />;
+          case 'themes':
+            return <ThemesSection />;
+          case 'exchange-rates':
+            return <ExchangeRates />;
+        }
+      }}
+    />
+  );
 }
 
 function toValues(settings: PlatformSettings): FormValues {
@@ -68,7 +97,8 @@ function toValues(settings: PlatformSettings): FormValues {
   };
 }
 
-function SettingsForm({ settings }: { settings: PlatformSettings }) {
+/** One section's fields; saving sends the whole settings form, so the other section's values stay as they are. */
+function SettingsForm({ settings, part }: { settings: PlatformSettings; part: 'billing' | 'support' }) {
   const queryClient = useQueryClient();
   const [formError, setFormError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -129,9 +159,39 @@ function SettingsForm({ settings }: { settings: PlatformSettings }) {
     />
   );
 
+  const footer = (
+    <>
+      <FormError message={formError} />
+      {saved && !formState.isDirty ? <Text style={styles.saved}>Settings saved.</Text> : null}
+      <FormFooter>
+        <Button
+          title="Save settings"
+          onPress={onSubmit}
+          loading={formState.isSubmitting}
+          disabled={!formState.isDirty}
+        />
+      </FormFooter>
+    </>
+  );
+
+  if (part === 'support') {
+    return (
+      <>
+        <FormSection
+          title="Support"
+          description="New chats and messages on the platform's desk (from visitors, plan enquiries and agencies' admins) are emailed here; answer them in Chats."
+        >
+          {field('support_email', 'Support email')}
+          {!settings.support_email ? (
+            <Text style={styles.warning}>Add a support email to be told about new chats.</Text>
+          ) : null}
+        </FormSection>
+        {footer}
+      </>
+    );
+  }
   return (
-    <Screen maxWidth={760}>
-      <Text style={styles.title}>Settings</Text>
+    <>
       <Text style={styles.muted}>Billing for every agency. Amounts are in {settings.currency}.</Text>
       <FormSection title="On every invoice" description="Printed on the PDF and repeated in the invoice email.">
         {field('issuer_details', 'Issuer details', {
@@ -151,12 +211,8 @@ function SettingsForm({ settings }: { settings: PlatformSettings }) {
         description="Invoices are issued the lead days before a period starts and are due the due days after they are issued. An agency is suspended once an invoice is more than a month past its due date."
       >
         <FieldGrid columns={2}>
-          {field('invoice_lead_days', 'Issue (days before the period)', {
-            numeric: true,
-          })}
-          {field('invoice_due_days', 'Due (days after issue)', {
-            numeric: true,
-          })}
+          {field('invoice_lead_days', 'Issue (days before the period)', { numeric: true })}
+          {field('invoice_due_days', 'Due (days after issue)', { numeric: true })}
         </FieldGrid>
       </FormSection>
       <FormSection
@@ -165,33 +221,12 @@ function SettingsForm({ settings }: { settings: PlatformSettings }) {
       >
         {field('billing_contact_email', 'Billing contact email')}
       </FormSection>
-      <FormSection
-        title="Support"
-        description="New chats and messages on the platform's desk (from visitors, plan enquiries and agencies' admins) are emailed here; answer them in Chats."
-      >
-        {field('support_email', 'Support email')}
-        {!settings.support_email ? (
-          <Text style={styles.warning}>Add a support email to be told about new chats.</Text>
-        ) : null}
-      </FormSection>
-      <FormError message={formError} />
-      {saved && !formState.isDirty ? <Text style={styles.saved}>Settings saved.</Text> : null}
-      <FormFooter>
-        <Button
-          title="Save settings"
-          onPress={onSubmit}
-          loading={formState.isSubmitting}
-          disabled={!formState.isDirty}
-        />
-      </FormFooter>
-      <ThemesSection />
-      <ExchangeRates />
-    </Screen>
+      {footer}
+    </>
   );
 }
 
 const styles = createStyles(() => ({
-  title: { fontSize: font.title, fontWeight: weight.heavy, color: colors.text },
   muted: { color: colors.muted },
   warning: { color: colors.warningText, fontWeight: weight.semibold },
   saved: { color: colors.successText, fontWeight: weight.semibold },

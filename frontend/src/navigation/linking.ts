@@ -80,7 +80,7 @@ const platformLinking: LinkingOptions<RootStackParamList> = {
           PlatformPlans: 'plans',
           PlatformInvoices: 'invoices/:id?',
           PlatformChats: 'chats/:id?',
-          PlatformSettings: 'settings',
+          PlatformSettings: 'settings/:section?',
         },
       },
     },
