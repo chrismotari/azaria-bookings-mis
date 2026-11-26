@@ -9,7 +9,6 @@ from core.tenancy import agency_code, app_address
 from .serializers import ThemeSerializer
 
 NO_TENANT = {"detail": "There is no agency at this address.", "code": "no_tenant"}
-SUSPENDED = {"detail": "This agency is not available at the moment.", "code": "tenant_suspended"}
 
 
 def no_tenant(request, *args, **kwargs):
@@ -18,14 +17,14 @@ def no_tenant(request, *args, **kwargs):
 
 
 def suspended_body(tenant):
-    """The tenant_suspended response; a suspension for non-payment says whom to contact."""
+    """The tenant_suspended response with the agency's name; a suspension for non-payment says whom to contact."""
+    detail = "This agency is not available at the moment."
     if tenant.suspension_reason == tenant.SuspensionReason.NON_PAYMENT:
         from .models import PlatformSettings
 
         contact = PlatformSettings.get().billing_contact_email
         detail = "This agency's account is suspended for non-payment." + (f" Contact {contact}." if contact else "")
-        return {"detail": detail, "code": "tenant_suspended"}
-    return SUSPENDED
+    return {"detail": detail, "code": "tenant_suspended", "agency_name": tenant.name}
 
 
 class AgencyView(APIView):

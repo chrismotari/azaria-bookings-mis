@@ -1,18 +1,19 @@
 import { Text, View } from 'react-native';
 
-import { switchAgency } from '../agency/agency';
+import { switchAgency, useAgencyName } from '../agency/agency';
 import { IS_NATIVE } from '../config';
 import { colors, createStyles, font, space, weight } from '../theme';
 import { Button } from './Button';
 import { Card } from './Card';
 import { EmptyState } from './StatusViews';
 
-/** Replaces the whole app when this address has no agency or the agency is suspended. */
-export function TenantUnavailable({ message }: { message: string }) {
+/** Replaces the whole app when this address has no agency or the agency is suspended; named when known. */
+export function TenantUnavailable({ message, agencyName }: { message: string; agencyName: string | null }) {
+  const storedName = useAgencyName();
   return (
     <View style={styles.page}>
       <View style={styles.bar}>
-        <Text style={styles.brand}>Dira Manifest</Text>
+        <Text style={styles.brand}>{agencyName || storedName || 'Dira Manifest'}</Text>
       </View>
       <View style={styles.body}>
         <View style={styles.box}>

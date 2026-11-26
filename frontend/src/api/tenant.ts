@@ -3,20 +3,25 @@ import { useSyncExternalStore } from 'react';
 import { IS_PLATFORM } from '../config';
 
 /** Set when the API says this address has no agency (no_tenant) or the agency is suspended (tenant_suspended). */
-let problem: string | null = null;
+type TenantProblem = { message: string; agencyName: string | null };
+
+let problem: TenantProblem | null = null;
 const listeners = new Set<() => void>();
 
 const TENANT_CODES = ['no_tenant', 'tenant_suspended'];
 
 /** Records a tenant error from an API response body; returns whether it was one. */
 export function reportTenantProblem(body: unknown): boolean {
-  const { code, detail } = (body ?? {}) as { code?: unknown; detail?: unknown };
+  const { code, detail, agency_name } = (body ?? {}) as { code?: unknown; detail?: unknown; agency_name?: unknown };
   // The platform is not an agency: it never shows the no-agency page.
   if (IS_PLATFORM || typeof code !== 'string' || !TENANT_CODES.includes(code)) {
     return false;
   }
   if (problem === null) {
-    problem = typeof detail === 'string' ? detail : 'This agency is not available.';
+    problem = {
+      message: typeof detail === 'string' ? detail : 'This agency is not available.',
+      agencyName: typeof agency_name === 'string' ? agency_name : null,
+    };
     listeners.forEach((listener) => listener());
   }
   return true;
@@ -29,8 +34,8 @@ function subscribe(listener: () => void) {
   };
 }
 
-/** The server's message when the app cannot be used at this address, otherwise null. */
-export function useTenantProblem(): string | null {
+/** The server's message (and a suspended agency's name) when the app cannot be used here, otherwise null. */
+export function useTenantProblem(): TenantProblem | null {
   return useSyncExternalStore(subscribe, () => problem);
 }
 

@@ -31,7 +31,7 @@ function Navigation() {
   // Native: after a theme change the app mounts again where the user was (on the web the page reloads instead).
   const [initialState] = useState(takePlaceBeforeThemeChange);
   if (tenantProblem) {
-    return <TenantUnavailable message={tenantProblem} />;
+    return <TenantUnavailable message={tenantProblem.message} agencyName={tenantProblem.agencyName} />;
   }
   if (!ready) {
     return <LoadingState />;

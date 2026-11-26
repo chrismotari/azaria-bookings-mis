@@ -301,6 +301,7 @@ def test_suspension_only_a_month_past_the_due_date(agency, django_capture_on_com
     assert response.json() == {
         "detail": "This agency's account is suspended for non-payment. Contact billing@azaria.test.",
         "code": "tenant_suspended",
+        "agency_name": "Other Agency",
     }
 
 

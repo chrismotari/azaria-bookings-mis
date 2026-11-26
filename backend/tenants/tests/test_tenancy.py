@@ -146,7 +146,11 @@ def test_a_suspended_agency_refuses_the_api(other_api, api):
     suspend(OTHER_SCHEMA)
     response = other_api.get("/api/offers")
     assert response.status_code == 403
-    assert response.json() == {"detail": "This agency is not available at the moment.", "code": "tenant_suspended"}
+    assert response.json() == {
+        "detail": "This agency is not available at the moment.",
+        "code": "tenant_suspended",
+        "agency_name": "Other Agency",
+    }
     assert api.get("/api/offers").status_code == 200
 
 
