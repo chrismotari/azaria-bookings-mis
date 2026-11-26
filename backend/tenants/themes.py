@@ -13,6 +13,8 @@ WHITE = "#ffffff"
 DARK_TEXT = "#252525"
 BACKGROUND = "#f2f4f7"
 MIN_CONTRAST = 4.5
+# Accent buttons sit on the bar: their edge needs this much contrast with it.
+MIN_ACCENT_ON_BAR = 3
 # The tint is the primary blended this much over white; the hover shade is the primary with this much white over it
 # (what the bar's hover looked like before themes: white at 12% over the primary).
 TINT_AMOUNT = 0.09
@@ -95,12 +97,8 @@ def _text_name(text):
     return {WHITE: "White text", DARK_TEXT: "Dark text"}.get(text, "This text colour")
 
 
-def _failing(checks):
-    return [
-        f"{label} is {ratio_label(ratio)}; it needs {MIN_CONTRAST}:1."
-        for label, ratio in checks
-        if ratio < MIN_CONTRAST
-    ]
+def _failing(checks, minimum=MIN_CONTRAST):
+    return [f"{label} is {ratio_label(ratio)}; it needs {minimum}:1." for label, ratio in checks if ratio < minimum]
 
 
 def primary_text_problems(primary, text=WHITE):
@@ -146,3 +144,9 @@ def bar_problems(bar, text=""):
 def accent_problems(accent, text=DARK_TEXT):
     text = text.lower()
     return _failing([(f"{_text_name(text)} on this accent", contrast(text, accent.lower()))])
+
+
+def accent_on_bar_problems(accent, primary, bar=""):
+    """The accent against the bar it sits on (the primary when there is no bar)."""
+    label = "This accent on the bar colour" if bar else "This accent on the primary"
+    return _failing([(label, contrast(accent.lower(), (bar or primary).lower()))], MIN_ACCENT_ON_BAR)

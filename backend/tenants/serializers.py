@@ -122,6 +122,7 @@ class PlatformThemeSerializer(ThemeSerializer):
             "accent_text" if c["accent_text"] else "accent",
             themes.accent_problems(c["accent"], c["accent_text"] or themes.DARK_TEXT),
         )
+        refuse("accent", themes.accent_on_bar_problems(c["accent"], c["primary"], c["bar"]))
         if errors:
             raise serializers.ValidationError(errors)
         return attrs

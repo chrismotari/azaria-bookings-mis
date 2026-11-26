@@ -18,7 +18,7 @@ import { TextField } from '../../components/TextField';
 import { ThemePreview } from '../../components/ThemePreview';
 import { Card } from '../../components/Card';
 import { colors, createStyles, font, radius, space, useIsWide, weight } from '../../theme';
-import { contrastChecks, deriveThemeColors, HEX_COLOR, MIN_CONTRAST, ratioLabel } from '../../utils/themeColors';
+import { contrastChecks, deriveThemeColors, HEX_COLOR, ratioLabel } from '../../utils/themeColors';
 import { usePlatformThemes } from './AgencyTheme';
 import { AGENCIES_KEY, THEMES_KEY } from './keys';
 
@@ -358,7 +358,7 @@ function ThemeDialog({ theme, onClose }: { theme: PlatformTheme | null; onClose:
         <>
           <Text style={styles.subheading}>Preview</Text>
           <ThemePreview theme={derived ?? deriveThemeColors(choice)} />
-          <Text style={styles.subheading}>Contrast (each needs {MIN_CONTRAST}:1)</Text>
+          <Text style={styles.subheading}>Contrast</Text>
           <View style={styles.checks}>
             {checks.map((check) => (
               <View key={check.label} style={styles.check}>
@@ -369,7 +369,9 @@ function ThemeDialog({ theme, onClose }: { theme: PlatformTheme | null; onClose:
                   label={check.passes ? 'Passes' : 'Fails'}
                 />
                 <Text style={[styles.text, styles.shrink]}>{check.label}</Text>
-                <Text style={[styles.ratio, !check.passes && styles.failing]}>{ratioLabel(check.ratio)}</Text>
+                <Text style={[styles.ratio, !check.passes && styles.failing]}>
+                  {ratioLabel(check.ratio)} (needs {check.min}:1)
+                </Text>
               </View>
             ))}
           </View>

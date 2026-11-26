@@ -20,7 +20,7 @@ pytestmark = pytest.mark.django_db
 STARTING = {
     "Indigo & Amber": ("#1800d2", "#ffb400"),
     "Navy & Gold": ("#1b3a6b", "#f2c14e"),
-    "Teal & Coral": ("#00676b", "#ff8a65"),
+    "Teal & Coral": ("#00676b", "#ff9a7a"),
     "Forest & Lime": ("#1e5631", "#a4de02"),
     "Burgundy & Sand": ("#7b1e3a", "#f4d58d"),
     "Plum & Peach": ("#5b2a86", "#ffb38a"),
@@ -51,6 +51,7 @@ def test_the_migration_creates_eight_themes_that_pass_every_rule():
         assert starting.is_active
         assert themes.primary_problems(starting.primary) == []
         assert themes.accent_problems(starting.accent) == []
+        assert themes.accent_on_bar_problems(starting.accent, starting.primary) == []
 
 
 def test_indigo_and_amber_is_the_one_default_and_every_agency_has_it():
@@ -85,6 +86,8 @@ def test_colours_are_derived_from_primary_and_accent():
         ({"primary": "#767676"}, "primary", "This primary on the page background is 4.1:1; it needs 4.5:1."),
         ({"primary": "#686868"}, "primary", "White text on this primary's hover shade is 4.2:1; it needs 4.5:1."),
         ({"accent": "#7a5c00"}, "accent", "Dark text on this accent is 2.4:1; it needs 4.5:1."),
+        # Readable with dark text, but too close to the primary for a button edge to show.
+        ({"primary": "#00676b", "accent": "#ff8a65"}, "accent", "This accent on the primary is 2.8:1; it needs 3:1."),
     ],
 )
 def test_every_contrast_rule_refuses_a_failing_colour_on_create_and_on_change(platform, changes, field, message):
@@ -179,9 +182,13 @@ def test_chosen_text_colours_are_returned_and_move_the_hover_shade(platform):
         "#ffffff",
     )
     # Blank goes back to automatic.
-    response = platform.patch(f"/api/platform/themes/{created.pk}", {"bar_text": "", "bar": ""}, format="json")
+    response = platform.patch(f"/api/platform/themes/{created.pk}", {"bar_text": ""}, format="json")
     assert response.status_code == 200, response.data
-    assert response.data["colors"]["bar"] == NAVY
+    assert response.data["colors"]["bar_text"] == "#252525"
+    # Without the bar, the dark green accent would sit on the navy primary.
+    response = platform.patch(f"/api/platform/themes/{created.pk}", {"bar": ""}, format="json")
+    assert response.status_code == 400
+    assert "This accent on the primary is 1.3:1; it needs 3:1." in response.data["accent"]
 
 
 @pytest.mark.parametrize(
@@ -207,6 +214,7 @@ def test_chosen_text_colours_are_returned_and_move_the_hover_shade(platform):
             "Text on this bar colour's hover shade is 4.0:1; it needs 4.5:1.",
         ),
         ({"bar_text": "#252525"}, "bar_text", "Choose a bar colour for this text colour."),
+        ({"bar": "#ffd100", "accent": "#f2c14e"}, "accent", "This accent on the bar colour is 1.1:1; it needs 3:1."),
         (
             {"accent": "#f2c14e", "accent_text": "#ffffff"},
             "accent_text",
@@ -224,9 +232,16 @@ def test_bar_and_text_colour_rules_refuse_with_their_ratio(platform, changes, fi
     assert message in response.data[field]
 
 
+def test_the_accent_on_the_bar_passes_at_3_to_1():
+    assert themes.accent_on_bar_problems("#ff9a7a", "#00676b") == []
+    assert themes.accent_on_bar_problems("#ff8a65", "#00676b") == ["This accent on the primary is 2.8:1; it needs 3:1."]
+    # With a bar, the accent is checked against the bar, not the primary.
+    assert themes.accent_on_bar_problems("#ff8a65", "#00676b", bar="#1b3a6b") == []
+
+
 def test_a_light_text_colour_on_a_dark_accent_is_accepted(platform):
     response = platform.post(
-        "/api/platform/themes", {**NEW, "accent": "#1e5631", "accent_text": "#ffffff"}, format="json"
+        "/api/platform/themes", {**NEW, "bar": "#ffd100", "accent": "#1e5631", "accent_text": "#ffffff"}, format="json"
     )
     assert response.status_code == 201, response.data
 

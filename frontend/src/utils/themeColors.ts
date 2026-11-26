@@ -11,6 +11,8 @@ const WHITE = '#ffffff';
 const DARK_TEXT = '#252525';
 const BACKGROUND = '#f2f4f7';
 export const MIN_CONTRAST = 4.5;
+/** Accent buttons on the bar need this much contrast with it. */
+export const MIN_ACCENT_ON_BAR = 3;
 const TINT_AMOUNT = 0.09;
 const HOVER_WHITE = 0.12;
 const HOVER_DARK = 0.1;
@@ -90,7 +92,7 @@ export function deriveThemeColors(choice: ThemeChoice): ThemeColors {
   };
 }
 
-export type ContrastCheck = { label: string; ratio: number; passes: boolean };
+export type ContrastCheck = { label: string; ratio: number; min: number; passes: boolean };
 
 function textName(text: string): string {
   return text === WHITE ? 'White text' : text === DARK_TEXT ? 'Dark text' : 'The text colour';
@@ -113,5 +115,11 @@ export function contrastChecks(choice: ThemeChoice): ContrastCheck[] {
     );
   }
   checks.push({ label: `${textName(c.accent_text)} on the accent`, ratio: contrast(c.accent_text, c.accent) });
-  return checks.map((check) => ({ ...check, passes: check.ratio >= MIN_CONTRAST }));
+  const withMin = checks.map((check) => ({ ...check, min: MIN_CONTRAST }));
+  withMin.push({
+    label: choice.bar ? 'The accent on the bar colour' : 'The accent on the primary',
+    ratio: contrast(c.accent, c.bar),
+    min: MIN_ACCENT_ON_BAR,
+  });
+  return withMin.map((check) => ({ ...check, passes: check.ratio >= check.min }));
 }
