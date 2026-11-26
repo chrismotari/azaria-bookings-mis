@@ -306,7 +306,7 @@ Screen (Admins › Dashboard), top to bottom; two columns from 900 px where note
 
 ## 13. Emails
 
-HTML (one base layout, table-based, inline CSS, no images; an agency's emails in its theme's colours (the header bar and anything else that uses the primary or accent), the platform's in Dira Manifest's own) plus plain-text fallback, via `EmailMultiAlternatives`. Tasks take ids only, retry with backoff (max 5), and reload and re-check state before sending (a suspended agency or a module that is off drops them). Every link uses the agency's app address (§3).
+HTML (one base layout, table-based, inline CSS, no images; an agency's emails in its theme's colours (the header bar and anything else that uses the primary or accent), the platform's in Dira Manifest's own; an agency's emails come from the agency's name (header, title, sign-off, the account emails' subjects and the footer, which links to its app address), the platform's from Dira Manifest with diramanifest.com; only the mobile app keeps its name, "the Dira Manifest app") plus plain-text fallback, via `EmailMultiAlternatives`. Tasks take ids only, retry with backoff (max 5), and reload and re-check state before sending (a suspended agency or a module that is off drops them). Every link uses the agency's app address (§3).
 
 Content rules
 - Flight emails show the itinerary per direction (flight numbers, local times, connections), baggage and fare conditions, as text in both parts, and list the passengers' names (never documents).
@@ -753,3 +753,4 @@ All delivered; each was one commit.
 63. The sign-in brand panel's tagline and ticks follow the agency's modules.
 64. The agency-unavailable page shows the agency's name; `tenant_suspended` responses carry `agency_name`.
 65. A customer's request shows "Options from <agency name>" over its options.
+66. Agency emails come from the agency's name (header, sign-off, footer with its address, account subjects); platform emails from Dira Manifest.

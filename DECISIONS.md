@@ -143,7 +143,7 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 
 ## Emails
 - Emails' highlighted box is the primary's tint with a primary left edge; shared pieces are includes under `emails/`.
-- Platform emails sent in an agency's schema (invoice, suspension, the platform desk's reply) are marked as platform emails and keep Dira Manifest's colours; the email header text stays "Dira Manifest" (only colours are themed).
+- Platform emails sent in an agency's schema (invoice, suspension, the platform desk's reply) are marked as platform emails and keep Dira Manifest's colours and name.
 
 ## Support
 - `Conversation.requester` is a plain UUID because on the platform desk it names a user in an agency's schema; `Conversation.agency` has no DB constraint because the table exists in every schema.
