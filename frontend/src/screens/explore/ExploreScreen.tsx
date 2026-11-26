@@ -1,13 +1,11 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { View } from 'react-native';
 
-import { GetAppFooter } from '../../agency/GetAppFooter';
 import { api } from '../../api/client';
 import { OfferList } from '../../api/types';
 import { useAuthGate } from '../../auth/gate';
-import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { FlightRow } from '../../components/FlightRow';
 import {
@@ -25,10 +23,11 @@ import { SegmentedControl } from '../../components/SegmentedControl';
 import { ColumnResults, SplitView } from '../../components/SplitView';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { MainTabParamList, QueryPrefill } from '../../navigation/types';
-import { colors, createStyles, font, radius, space, useIsWide } from '../../theme';
+import { createStyles, space, useIsWide } from '../../theme';
 import { routeCodes } from '../../utils/format';
 import { ExploreFilters } from './ExploreFilters';
 import { ExploreSearchBar } from './ExploreSearchBar';
+import { ExploreTab } from './ExploreTab';
 import { HotelsPage } from '../hotels/HotelsPage';
 import { ToursPage } from '../tours/ToursPage';
 import { ExploreAll } from './ExploreAll';
@@ -97,7 +96,6 @@ function FlightDeals({ navigation, route }: Props) {
   const [filters, setFilters] = useState<OfferFilterValues>(EMPTY_OFFER_FILTERS);
   const [ordering, setOrdering] = useState<Ordering>('departure_date');
   const [page, setPage] = useState(1);
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const requireAuth = useAuthGate();
 
   const offers = useQuery({
@@ -113,9 +111,6 @@ function FlightDeals({ navigation, route }: Props) {
     const found = validateOfferFilters(draft);
     setErrors(found);
     if (Object.keys(found).length > 0) {
-      if (SIDEBAR_FIELDS.some((name) => found[name])) {
-        setFiltersOpen(true);
-      }
       return;
     }
     setFilters(draft);
@@ -141,25 +136,6 @@ function FlightDeals({ navigation, route }: Props) {
   };
 
   const activeFilters = SIDEBAR_FIELDS.filter((name) => filters[name]).length;
-  const sidebar = (
-    <ExploreFilters value={draft} onChange={setDraft} errors={errors} onApply={applySidebar} onClear={clearSidebar} />
-  );
-  const sort = (
-    <SegmentedControl
-      label="Sort by"
-      options={ORDERING_OPTIONS}
-      value={ordering}
-      onChange={(value) => {
-        setOrdering(value);
-        setPage(1);
-      }}
-    />
-  );
-  const count = offers.data ? (
-    <Text style={styles.count}>
-      {offers.data.count} deal{offers.data.count === 1 ? '' : 's'}
-    </Text>
-  ) : null;
 
   return (
     <SplitView
@@ -190,97 +166,79 @@ function FlightDeals({ navigation, route }: Props) {
       onPage={setPage}
       detail={selected ? <OfferDetailView key={selected} id={selected} query={route.params?.query} /> : null}
       list={
-        <ScrollView style={styles.scroll}>
-          <ExploreSearchBar value={draft} onChange={setDraft} errors={errors} onSearch={search} compact={compact} />
-          {single && JSON.stringify(filters) === JSON.stringify(EMPTY_OFFER_FILTERS) ? (
-            <View style={styles.featured}>
+        <ExploreTab
+          band={
+            <ExploreSearchBar value={draft} onChange={setDraft} errors={errors} onSearch={search} compact={compact} />
+          }
+          featured={
+            single && JSON.stringify(filters) === JSON.stringify(EMPTY_OFFER_FILTERS) ? (
               <FeaturedRow module="flights" />
-            </View>
-          ) : null}
-          <View style={[styles.body, !compact && styles.columns]}>
-            {!compact ? (
-              <View style={styles.sidebar}>
-                <Card>{sidebar}</Card>
-              </View>
-            ) : null}
-            <View style={styles.results}>
-              <Card>
-                {compact ? (
-                  <>
-                    <View style={styles.toolbar}>
-                      <Button
-                        title={activeFilters > 0 ? `Filters (${activeFilters})` : 'Filters'}
-                        icon="options-outline"
-                        variant="secondary"
-                        onPress={() => setFiltersOpen((open) => !open)}
-                      />
-                      {count}
-                    </View>
-                    {filtersOpen ? <View style={styles.panel}>{sidebar}</View> : null}
-                    {sort}
-                  </>
-                ) : (
-                  <View style={styles.toolbar}>
-                    <View style={styles.sort}>{sort}</View>
-                    {count}
-                  </View>
-                )}
-
-                <FlightServiceRating rating={offers.data?.service_rating} />
-                {offers.isPending ? (
-                  <LoadingState />
-                ) : offers.isError ? (
-                  <ErrorState error={offers.error} onRetry={() => offers.refetch()} />
-                ) : offers.data.results.length === 0 ? (
-                  <EmptyState
-                    icon="airplane-outline"
-                    title="No deals found"
-                    message="No flight deals match your search right now. Tell us what you need and we will find options for you."
-                    action={{
-                      title: 'Request options',
-                      onPress: () =>
-                        requireAuth({ screen: 'Main', params: { screen: 'QueryNew', params: queryPrefill(filters) } }),
-                    }}
-                  />
-                ) : (
-                  <>
-                    <View style={styles.rows}>
-                      {offers.data.results.map((offer) => (
-                        <FlightRow
-                          key={offer.id}
-                          offer={offer}
-                          compact={compact}
-                          selected={offer.id === selected}
-                          onPress={() => navigation.setParams({ id: offer.id, query: undefined })}
-                        />
-                      ))}
-                    </View>
-                    <Pagination page={page} count={offers.data.count} onChange={setPage} />
-                  </>
-                )}
-              </Card>
-            </View>
-          </View>
-          <View style={styles.footer}>
-            <GetAppFooter />
-          </View>
-        </ScrollView>
+            ) : null
+          }
+          filters={
+            <ExploreFilters
+              value={draft}
+              onChange={setDraft}
+              errors={errors}
+              onApply={applySidebar}
+              onClear={clearSidebar}
+            />
+          }
+          activeFilters={activeFilters}
+          filtersInvalid={SIDEBAR_FIELDS.some((name) => errors[name])}
+          sort={
+            <SegmentedControl
+              label="Sort by"
+              options={ORDERING_OPTIONS}
+              value={ordering}
+              onChange={(value) => {
+                setOrdering(value);
+                setPage(1);
+              }}
+            />
+          }
+          count={offers.data ? `${offers.data.count} deal${offers.data.count === 1 ? '' : 's'}` : null}
+        >
+          <Card>
+            <FlightServiceRating rating={offers.data?.service_rating} />
+            {offers.isPending ? (
+              <LoadingState />
+            ) : offers.isError ? (
+              <ErrorState error={offers.error} onRetry={() => offers.refetch()} />
+            ) : offers.data.results.length === 0 ? (
+              <EmptyState
+                icon="airplane-outline"
+                title="No deals found"
+                message="No flight deals match your search right now. Tell us what you need and we will find options for you."
+                action={{
+                  title: 'Request options',
+                  onPress: () =>
+                    requireAuth({ screen: 'Main', params: { screen: 'QueryNew', params: queryPrefill(filters) } }),
+                }}
+              />
+            ) : (
+              <>
+                <View style={styles.rows}>
+                  {offers.data.results.map((offer) => (
+                    <FlightRow
+                      key={offer.id}
+                      offer={offer}
+                      compact={compact}
+                      selected={offer.id === selected}
+                      onPress={() => navigation.setParams({ id: offer.id, query: undefined })}
+                    />
+                  ))}
+                </View>
+                <Pagination page={page} count={offers.data.count} onChange={setPage} />
+              </>
+            )}
+          </Card>
+        </ExploreTab>
       }
     />
   );
 }
 
 const styles = createStyles(() => ({
-  scroll: { flex: 1, backgroundColor: colors.background },
-  body: { width: '100%', maxWidth: 1100 + 2 * space.lg, alignSelf: 'center', padding: space.lg, gap: space.lg },
-  columns: { flexDirection: 'row', alignItems: 'flex-start' },
-  sidebar: { width: 260 },
-  results: { flex: 1, minWidth: 0 },
-  toolbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
-  sort: { flex: 1, maxWidth: 480 },
-  count: { fontSize: font.small, color: colors.muted },
-  panel: { padding: space.lg, borderRadius: radius.md, backgroundColor: colors.background },
   rows: { gap: space.md },
-  featured: { width: '100%', maxWidth: 1100 + 2 * space.lg, alignSelf: 'center', padding: space.lg, paddingBottom: 0 },
-  footer: { width: '100%', maxWidth: 1100 + 2 * space.lg, alignSelf: 'center', padding: space.lg, paddingTop: 0 },
 }));

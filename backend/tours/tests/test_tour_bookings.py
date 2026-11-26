@@ -584,7 +584,9 @@ def test_public_list_filters_and_ordering(make_tour, api):
         end_date=today + timedelta(days=12),
         options=[{"name": "R", "price": "900"}],
     )
-    later = make_tour(title="Mara", options=[{"name": "R", "price": "300"}])
+    later = make_tour(
+        title="Mara", departure_city="Nairobi", organiser="Savanna Trails", options=[{"name": "R", "price": "300"}]
+    )
 
     def ids(**params):
         return [row["id"] for row in api.get("/api/tours", params).data["results"]]
@@ -592,8 +594,14 @@ def test_public_list_filters_and_ordering(make_tour, api):
     assert ids() == [str(soon.pk), str(later.pk)]
     assert ids(ordering="from_price") == [str(later.pk), str(soon.pk)]
     assert ids(ordering="-from_price") == [str(soon.pk), str(later.pk)]
-    assert ids(search="kwale") == [str(soon.pk)]
-    assert ids(search="MARA") == [str(later.pk)]
+    assert ids(destination="kwale") == [str(soon.pk)]
+    assert ids(title="MARA") == [str(later.pk)]
+    assert ids(departure_city="nairo") == [str(later.pk)]
+    assert ids(organiser="savanna") == [str(later.pk)]
+    assert ids(title="mara", organiser="savanna") == [str(later.pk)]
+    assert ids(title="diani", organiser="savanna") == []
+    detail = api.get(f"/api/tours/{later.pk}").data
+    assert (detail["departure_city"], detail["organiser"]) == ("Nairobi", "Savanna Trails")
     assert ids(price_min="500") == [str(soon.pk)]
     assert ids(price_max="500") == [str(later.pk)]
     assert ids(date_from=(today + timedelta(days=20)).isoformat()) == [str(later.pk)]

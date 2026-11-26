@@ -127,6 +127,8 @@ function sampleTour(fullyBooked = false): Tour {
     included: [],
     not_included: [],
     meeting_point: '',
+    departure_city: '',
+    organiser: '',
     slots_left: fullyBooked ? 0 : 3,
     duration_days: fullyBooked ? 2 : 3,
     from_price: fullyBooked ? '260.00' : '380.00',

@@ -11,6 +11,7 @@ import { PressState } from '../../components/pressState';
 import { SegmentedControl } from '../../components/SegmentedControl';
 import { SelectField } from '../../components/SelectField';
 import { colors, createStyles, font, radius, shadow, space, weight } from '../../theme';
+import { EXPLORE_WIDTH } from './ExploreTab';
 
 const CLASS_OPTIONS: { value: '' | TicketClass; label: string }[] = [{ value: '', label: 'Any' }, ...TICKET_CLASSES];
 
@@ -175,7 +176,7 @@ const styles = createStyles(() => ({
     paddingBottom: space.xxl,
   },
   bandCompact: { paddingTop: space.lg, paddingBottom: space.xl },
-  inner: { width: '100%', maxWidth: 1100, alignSelf: 'center', gap: space.lg },
+  inner: { width: '100%', maxWidth: EXPLORE_WIDTH, alignSelf: 'center', gap: space.lg },
   headline: { fontSize: font.display, fontWeight: weight.heavy, color: colors.primaryText },
   headlineCompact: { fontSize: font.title },
   bar: {

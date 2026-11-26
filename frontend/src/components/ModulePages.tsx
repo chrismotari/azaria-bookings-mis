@@ -1,10 +1,11 @@
 import { ReactNode, useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { MODULE_LABELS, useModules } from '../agency/modules';
 import { Module } from '../api/types';
-import { colors, createStyles, space } from '../theme';
-import { SegmentedControl } from './SegmentedControl';
+import { colors, createStyles, font, radius, shadowRaised, space, useIsWide, weight } from '../theme';
+import { Icon, IconName } from './Icon';
+import { PressState } from './pressState';
 
 export type ModuleTab = Module | 'all';
 
@@ -34,16 +35,53 @@ export function ModulePages({ label, pages, only, all, tab, onTab, hideSwitch }:
   return (
     <View style={styles.fill}>
       <View style={[styles.bar, hideSwitch && styles.hidden]}>
-        <View style={styles.switch}>
-          <SegmentedControl
-            label={label}
-            options={tabs.map((value) => ({ value, label: value === 'all' ? 'All' : MODULE_LABELS[value] }))}
-            value={current}
-            onChange={onTab ?? setOwn}
-          />
-        </View>
+        <ModuleSwitch label={label} tabs={tabs} value={current} onChange={onTab ?? setOwn} />
       </View>
       <View style={styles.fill}>{current === 'all' && all ? all() : pages[current as Module]()}</View>
+    </View>
+  );
+}
+
+const ICONS: Record<ModuleTab, IconName> = {
+  all: 'grid-outline',
+  flights: 'airplane-outline',
+  tours: 'map-outline',
+  hotels: 'bed-outline',
+};
+
+type SwitchProps = { label: string; tabs: ModuleTab[]; value: ModuleTab; onChange: (tab: ModuleTab) => void };
+
+function ModuleSwitch({ label, tabs, value, onChange }: SwitchProps) {
+  const compact = !useIsWide();
+  return (
+    <View style={[styles.switch, compact && styles.switchCompact]} accessibilityRole="tablist" aria-label={label}>
+      {tabs.map((tab) => {
+        const selected = tab === value;
+        return (
+          <Pressable
+            key={tab}
+            accessibilityRole="tab"
+            accessibilityState={{ selected }}
+            onPress={() => onChange(tab)}
+            style={({ hovered, focused }: PressState) => [
+              styles.tab,
+              compact && styles.tabCompact,
+              hovered && !selected && styles.tabHovered,
+              selected && styles.tabSelected,
+              compact && styles.tabSelectedCompact,
+              focused && styles.focused,
+            ]}
+          >
+            <Icon name={ICONS[tab]} size={18} color={selected ? colors.primaryText : colors.muted} />
+            <Text
+              style={[styles.tabText, compact && styles.tabTextCompact, selected && styles.tabTextSelected]}
+              numberOfLines={1}
+            >
+              {tab === 'all' ? 'All' : MODULE_LABELS[tab]}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
@@ -52,5 +90,33 @@ const styles = createStyles(() => ({
   fill: { flex: 1 },
   hidden: { display: 'none' },
   bar: { backgroundColor: colors.background, paddingHorizontal: space.lg, paddingTop: space.lg },
-  switch: { width: '100%', maxWidth: 480, alignSelf: 'center' },
+  switch: {
+    flexDirection: 'row',
+    alignSelf: 'center',
+    gap: space.xs,
+    padding: space.xs,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    ...shadowRaised,
+  },
+  switchCompact: { alignSelf: 'stretch', borderRadius: radius.lg },
+  tab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: space.sm,
+    paddingVertical: space.sm,
+    paddingHorizontal: space.xl,
+    borderRadius: radius.pill,
+  },
+  tabCompact: { flex: 1, minWidth: 0, flexDirection: 'column', gap: 2, paddingHorizontal: space.xs },
+  tabHovered: { backgroundColor: colors.primaryTint },
+  tabSelected: { backgroundColor: colors.primary },
+  tabSelectedCompact: { borderRadius: radius.md },
+  tabText: { fontSize: font.body, fontWeight: weight.bold, color: colors.muted },
+  tabTextCompact: { fontSize: font.caption },
+  tabTextSelected: { color: colors.primaryText },
+  focused: { outlineColor: colors.primary, outlineStyle: 'solid', outlineWidth: 2, outlineOffset: 2 },
 }));

@@ -801,6 +801,8 @@ export type Tour = {
   included: string[];
   not_included: string[];
   meeting_point: string;
+  departure_city: string;
+  organiser: string;
   slots_left: number;
   duration_days: number;
   /** Null without an active option. */

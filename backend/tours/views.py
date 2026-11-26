@@ -53,7 +53,10 @@ def tour_bookings():
 
 
 class TourFilter(django_filters.FilterSet):
-    search = django_filters.CharFilter(method="filter_search")
+    departure_city = django_filters.CharFilter(lookup_expr="icontains")
+    destination = django_filters.CharFilter(lookup_expr="icontains")
+    title = django_filters.CharFilter(lookup_expr="icontains")
+    organiser = django_filters.CharFilter(lookup_expr="icontains")
     date_from = django_filters.DateFilter(field_name="start_date", lookup_expr="gte")
     date_to = django_filters.DateFilter(field_name="start_date", lookup_expr="lte")
     price_min = django_filters.NumberFilter(field_name="from_price", lookup_expr="gte")
@@ -63,12 +66,6 @@ class TourFilter(django_filters.FilterSet):
     class Meta:
         model = Tour
         fields = []
-
-    def filter_search(self, queryset, name, value):
-        value = value.strip()
-        if not value:
-            return queryset
-        return queryset.filter(Q(title__icontains=value) | Q(destination__icontains=value))
 
 
 class TourListView(generics.ListAPIView):

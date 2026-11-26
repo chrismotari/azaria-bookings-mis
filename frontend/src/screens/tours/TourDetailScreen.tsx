@@ -102,6 +102,8 @@ function TourDetailView({ id }: { id: string }) {
           <Card>
             <Text style={styles.title}>{data.title}</Text>
             <Fact icon="location-outline" text={data.destination} />
+            {data.departure_city ? <Fact icon="navigate-outline" text={`Departs from ${data.departure_city}`} /> : null}
+            {data.organiser ? <Fact icon="business-outline" text={`Organised by ${data.organiser}`} /> : null}
             <Fact icon="calendar-outline" text={tourDates(data)} />
             {data.meeting_point ? <Fact icon="flag-outline" text={`Meeting point: ${data.meeting_point}`} /> : null}
             <Text style={styles.summary}>{data.summary}</Text>

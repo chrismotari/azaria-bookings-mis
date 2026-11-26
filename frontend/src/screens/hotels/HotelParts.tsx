@@ -64,42 +64,55 @@ export function stayFrom(params: HotelStay | undefined): Stay {
   };
 }
 
-/** Check-in, check-out and guests. */
-export function StayFields({
-  value,
-  onChange,
-  errors,
-}: {
-  value: Stay;
-  onChange: (value: Stay) => void;
-  errors: StayErrors;
-}) {
-  return (
-    <FieldGrid>
+type StayProps = { value: Stay; onChange: (value: Stay) => void; errors: StayErrors };
+
+/** The stay's four inputs, for a caller that lays them out itself. */
+export function stayInputs({ value, onChange, errors }: StayProps) {
+  return {
+    checkIn: (
       <DateField
         label="Check-in"
         value={value.check_in}
         onChange={(check_in) => onChange({ ...value, check_in })}
         error={errors.check_in}
       />
+    ),
+    checkOut: (
       <DateField
         label="Check-out"
         value={value.check_out}
         onChange={(check_out) => onChange({ ...value, check_out })}
         error={errors.check_out}
       />
+    ),
+    adults: (
       <SelectField
         label="Adults"
         options={ADULTS}
         value={value.adults}
         onChange={(adults) => onChange({ ...value, adults })}
       />
+    ),
+    children: (
       <SelectField
         label="Children"
         options={CHILDREN}
         value={value.children}
         onChange={(children) => onChange({ ...value, children })}
       />
+    ),
+  };
+}
+
+/** Check-in, check-out and guests. */
+export function StayFields(props: StayProps) {
+  const inputs = stayInputs(props);
+  return (
+    <FieldGrid>
+      {inputs.checkIn}
+      {inputs.checkOut}
+      {inputs.adults}
+      {inputs.children}
     </FieldGrid>
   );
 }

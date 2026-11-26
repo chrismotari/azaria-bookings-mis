@@ -1,8 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { GetAppFooter } from '../../agency/GetAppFooter';
 import { useModules } from '../../agency/modules';
 import { Tour } from '../../api/types';
 import { Button } from '../../components/Button';
@@ -15,9 +14,10 @@ import { SegmentedControl } from '../../components/SegmentedControl';
 import { StatusChip } from '../../components/StatusChip';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { TextField } from '../../components/TextField';
-import { colors, createStyles, font, space, useIsWide, weight } from '../../theme';
+import { colors, createStyles, font, space, weight } from '../../theme';
 import { slotsLeftLabel, tourDates } from '../../utils/tours';
 import { EMPTY_TOUR_FILTERS, TourFilters, TourOrdering, useTourList } from '../explore/exploreLists';
+import { ExploreTab } from '../explore/ExploreTab';
 import { FeaturedRow } from '../explore/Featured';
 
 type Filters = TourFilters;
@@ -27,6 +27,9 @@ const ORDERING_OPTIONS: { value: TourOrdering; label: string }[] = [
   { value: 'start_date', label: 'Soonest' },
   { value: 'from_price', label: 'Lowest price' },
 ];
+
+const SEARCH_NAMES = ['departure_city', 'destination', 'title', 'organiser'] as const;
+type SearchName = (typeof SEARCH_NAMES)[number];
 
 const PRICE = /^\d+(\.\d{1,2})?$/;
 
@@ -46,12 +49,10 @@ function validate(filters: Filters): Partial<Filters> {
 /** Explore's Tours tab: listed tours as cards. */
 export function ToursPage() {
   const navigation = useNavigation();
-  const compact = !useIsWide();
   const { list, update, results: tours } = useTourList();
   const { filters, ordering, page } = list;
   const [draft, setDraft] = useState<Filters>(filters);
   const [errors, setErrors] = useState<Partial<Filters>>({});
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const [width, setWidth] = useState(0);
   const single = useModules().length === 1;
 
@@ -59,7 +60,8 @@ export function ToursPage() {
     const found = validate(next);
     setErrors(found);
     if (Object.keys(found).length === 0) {
-      update({ filters: { ...next, search: next.search.trim() }, page: 1 });
+      const trimmed = Object.fromEntries(SEARCH_NAMES.map((name) => [name, next[name].trim()]));
+      update({ filters: { ...next, ...trimmed }, page: 1 });
     }
   };
   const clear = () => {
@@ -112,91 +114,77 @@ export function ToursPage() {
   const columns = width >= 840 ? 3 : width >= 520 ? 2 : 1;
   const cardWidth = columns > 1 ? (width - space.lg * (columns - 1)) / columns : undefined;
   const active = ['date_from', 'date_to', 'price_min', 'price_max'].filter((name) => filters[name as keyof Filters]);
+  const searchField = (name: SearchName, label: string, placeholder: string) => (
+    <View style={styles.searchField}>
+      <TextField
+        label={label}
+        placeholder={placeholder}
+        value={draft[name]}
+        onChangeText={(text) => setDraft({ ...draft, [name]: text })}
+        onSubmitEditing={() => apply()}
+        returnKeyType="search"
+      />
+    </View>
+  );
 
   return (
-    <ScrollView style={styles.scroll}>
-      <View style={styles.body}>
+    <ExploreTab
+      header={
         <Card>
           <View style={styles.searchRow}>
-            <View style={styles.searchField}>
-              <TextField
-                label="Search tours"
-                placeholder="Destination or name, e.g. Maasai Mara"
-                value={draft.search}
-                onChangeText={(search) => setDraft({ ...draft, search })}
-                onSubmitEditing={() => apply()}
-                returnKeyType="search"
-              />
-            </View>
+            {searchField('departure_city', 'Departs from', 'e.g. Nairobi')}
+            {searchField('destination', 'Destination', 'e.g. Maasai Mara')}
+          </View>
+          <View style={styles.searchRow}>
+            {searchField('title', 'Tour name', 'e.g. Great Migration safari')}
+            {searchField('organiser', 'Organiser', 'e.g. Savanna Trails')}
             <Button title="Search" variant="accent" icon="search" onPress={() => apply()} />
           </View>
         </Card>
-        {single && JSON.stringify(filters) === JSON.stringify(EMPTY) ? <FeaturedRow module="tours" /> : null}
-        <View style={[styles.main, !compact && styles.columns]}>
-          {!compact ? (
-            <View style={styles.sidebar}>
-              <Card>{sidebar}</Card>
-            </View>
-          ) : null}
-          <View style={styles.results}>
-            <View style={styles.toolbar}>
-              {compact ? (
-                <Button
-                  title={active.length ? `Filters (${active.length})` : 'Filters'}
-                  icon="options-outline"
-                  variant="secondary"
-                  onPress={() => setFiltersOpen((open) => !open)}
-                />
-              ) : null}
-              <View style={styles.sort}>
-                <SegmentedControl
-                  label="Sort by"
-                  options={ORDERING_OPTIONS}
-                  value={ordering}
-                  onChange={(value) => update({ ordering: value, page: 1 })}
+      }
+      featured={single && JSON.stringify(filters) === JSON.stringify(EMPTY) ? <FeaturedRow module="tours" /> : null}
+      filters={sidebar}
+      activeFilters={active.length}
+      sort={
+        <SegmentedControl
+          label="Sort by"
+          options={ORDERING_OPTIONS}
+          value={ordering}
+          onChange={(value) => update({ ordering: value, page: 1 })}
+        />
+      }
+      count={tours.data ? `${tours.data.count} tour${tours.data.count === 1 ? '' : 's'}` : null}
+    >
+      <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
+        {tours.isPending ? (
+          <LoadingState />
+        ) : tours.isError ? (
+          <ErrorState error={tours.error} onRetry={() => tours.refetch()} />
+        ) : tours.data.results.length === 0 ? (
+          <Card>
+            <EmptyState
+              icon="map-outline"
+              title="No tours right now"
+              message="No tours match your search. Try other dates or clear the filters."
+            />
+          </Card>
+        ) : (
+          <View style={styles.grid}>
+            {tours.data.results.map((tour) => (
+              <View key={tour.id} style={cardWidth ? { width: cardWidth } : styles.full}>
+                <TourCard
+                  tour={tour}
+                  onPress={() => navigation.navigate('Main', { screen: 'TourDetail', params: { id: tour.id } })}
                 />
               </View>
-              {tours.data ? (
-                <Text style={styles.count}>
-                  {tours.data.count} tour{tours.data.count === 1 ? '' : 's'}
-                </Text>
-              ) : null}
-            </View>
-            {compact && filtersOpen ? <Card>{sidebar}</Card> : null}
-            <View onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
-              {tours.isPending ? (
-                <LoadingState />
-              ) : tours.isError ? (
-                <ErrorState error={tours.error} onRetry={() => tours.refetch()} />
-              ) : tours.data.results.length === 0 ? (
-                <Card>
-                  <EmptyState
-                    icon="map-outline"
-                    title="No tours right now"
-                    message="No tours match your search. Try other dates or clear the filters."
-                  />
-                </Card>
-              ) : (
-                <View style={styles.grid}>
-                  {tours.data.results.map((tour) => (
-                    <View key={tour.id} style={cardWidth ? { width: cardWidth } : styles.full}>
-                      <TourCard
-                        tour={tour}
-                        onPress={() => navigation.navigate('Main', { screen: 'TourDetail', params: { id: tour.id } })}
-                      />
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-            {tours.data ? (
-              <Pagination page={page} count={tours.data.count} onChange={(next) => update({ page: next })} />
-            ) : null}
+            ))}
           </View>
-        </View>
-        <GetAppFooter />
+        )}
       </View>
-    </ScrollView>
+      {tours.data ? (
+        <Pagination page={page} count={tours.data.count} onChange={(next) => update({ page: next })} />
+      ) : null}
+    </ExploreTab>
   );
 }
 
@@ -229,17 +217,8 @@ export function TourCard({ tour, onPress, selected }: { tour: Tour; onPress: () 
 }
 
 const styles = createStyles(() => ({
-  scroll: { flex: 1, backgroundColor: colors.background },
-  body: { width: '100%', maxWidth: 1100 + 2 * space.lg, alignSelf: 'center', padding: space.lg, gap: space.lg },
   searchRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.md, flexWrap: 'wrap' },
   searchField: { flexGrow: 1, flexBasis: 220 },
-  main: { gap: space.lg },
-  columns: { flexDirection: 'row', alignItems: 'flex-start' },
-  sidebar: { width: 260 },
-  results: { flex: 1, minWidth: 0, gap: space.md },
-  toolbar: { flexDirection: 'row', alignItems: 'center', gap: space.md, flexWrap: 'wrap' },
-  sort: { flexGrow: 1, maxWidth: 360 },
-  count: { fontSize: font.small, color: colors.muted },
   filters: { gap: space.md },
   between: {
     flexDirection: 'row',

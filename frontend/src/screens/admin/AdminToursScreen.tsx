@@ -293,6 +293,8 @@ function AdminTourDetailView({ id, onEdit, onOpenBooking, onBookFor, onOpenRevie
         <Fact label="Last day to book" value={formatDate(data.booking_deadline)} />
         <Fact label="Last day to cancel" value={formatDate(data.cancellation_deadline)} />
         <Fact label="Meeting point" value={data.meeting_point || '—'} />
+        <Fact label="Departs from" value={data.departure_city || '—'} />
+        <Fact label="Organiser" value={data.organiser || '—'} />
         <Fact label="From price" value={data.from_price ? `${formatPrice(data.from_price)} per person` : '—'} />
         <Fact label="Summary" value={data.summary} />
         <RichText html={data.description} />

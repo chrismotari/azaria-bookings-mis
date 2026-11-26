@@ -82,10 +82,11 @@ class HotelListView(APIView):
         context = stay_context(request.query_params)
         stay = (context.get("check_in"), context.get("check_out"), context.get("adults"), context.get("children"))
         params = request.query_params
-        search = params.get("search", "").strip().lower()
+        destination = params.get("destination", "").strip().lower()
+        name = params.get("name", "").strip().lower()
         hotels = []
         for hotel in pricing.public_hotels():
-            if search and search not in hotel.name.lower() and search not in hotel.destination.lower():
+            if destination not in hotel.destination.lower() or name not in hotel.name.lower():
                 continue
             hotel.listed_price = pricing.from_price(hotel, *stay)
             if hotel.listed_price is None:

@@ -67,6 +67,8 @@ TOUR_FIELDS = [
     "included",
     "not_included",
     "meeting_point",
+    "departure_city",
+    "organiser",
 ]
 
 

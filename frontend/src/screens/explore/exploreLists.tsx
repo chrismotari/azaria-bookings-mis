@@ -5,15 +5,35 @@ import { api } from '../../api/client';
 import { Hotel, Paginated, Tour } from '../../api/types';
 import { EMPTY_STAY, Stay, stayParams } from '../hotels/HotelParts';
 
-export type TourFilters = { search: string; date_from: string; date_to: string; price_min: string; price_max: string };
+export type TourFilters = {
+  departure_city: string;
+  destination: string;
+  title: string;
+  organiser: string;
+  date_from: string;
+  date_to: string;
+  price_min: string;
+  price_max: string;
+};
 export type TourOrdering = 'start_date' | 'from_price';
-export const EMPTY_TOUR_FILTERS: TourFilters = { search: '', date_from: '', date_to: '', price_min: '', price_max: '' };
+export const EMPTY_TOUR_FILTERS: TourFilters = {
+  departure_city: '',
+  destination: '',
+  title: '',
+  organiser: '',
+  date_from: '',
+  date_to: '',
+  price_min: '',
+  price_max: '',
+};
 type TourList = { filters: TourFilters; ordering: TourOrdering; page: number };
 
 export type HotelFilters = { stars: string; price_min: string; price_max: string };
 export type HotelOrdering = 'from_price' | '-star_rating' | 'name';
 export const EMPTY_HOTEL_FILTERS: HotelFilters = { stars: '', price_min: '', price_max: '' };
-type HotelList = { search: string; stay: Stay; filters: HotelFilters; ordering: HotelOrdering; page: number };
+export type HotelSearch = { destination: string; name: string };
+export const EMPTY_HOTEL_SEARCH: HotelSearch = { destination: '', name: '' };
+type HotelList = { search: HotelSearch; stay: Stay; filters: HotelFilters; ordering: HotelOrdering; page: number };
 
 type Lists = {
   tours: TourList;
@@ -28,7 +48,7 @@ const ListsContext = createContext<Lists | null>(null);
 export function ExploreListsProvider({ children }: { children: ReactNode }) {
   const [tours, setTourState] = useState<TourList>({ filters: EMPTY_TOUR_FILTERS, ordering: 'start_date', page: 1 });
   const [hotels, setHotelState] = useState<HotelList>({
-    search: '',
+    search: EMPTY_HOTEL_SEARCH,
     stay: EMPTY_STAY,
     filters: EMPTY_HOTEL_FILTERS,
     ordering: 'from_price',
@@ -80,7 +100,7 @@ export function useHotelList() {
     queryFn: async () => {
       const query = Object.fromEntries(
         Object.entries({
-          search: hotels.search,
+          ...hotels.search,
           ...stayParams(hotels.stay),
           ...hotels.filters,
           ordering: hotels.ordering,

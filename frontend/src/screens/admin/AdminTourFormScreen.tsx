@@ -57,6 +57,8 @@ type Values = {
   included: string[];
   not_included: string[];
   meeting_point: string;
+  departure_city: string;
+  organiser: string;
   is_featured: boolean;
   options: OptionDraft[];
 };
@@ -77,6 +79,8 @@ const FIELDS: (keyof Values)[] = [
   'included',
   'not_included',
   'meeting_point',
+  'departure_city',
+  'organiser',
   'is_featured',
   'options',
 ];
@@ -109,6 +113,8 @@ const EMPTY: Values = {
   included: [],
   not_included: [],
   meeting_point: '',
+  departure_city: '',
+  organiser: '',
   is_featured: false,
   options: [{ ...newOption(), name: 'Regular' }],
 };
@@ -128,6 +134,8 @@ function toValues(tour: AdminTour): Values {
     included: tour.included,
     not_included: tour.not_included,
     meeting_point: tour.meeting_point,
+    departure_city: tour.departure_city,
+    organiser: tour.organiser,
     is_featured: tour.is_featured,
     options: tour.options.map((option) => ({
       id: option.id,
@@ -231,6 +239,8 @@ function toBody(values: Values) {
     cancellation_policy: values.cancellation_policy.trim(),
     summary: values.summary.trim(),
     meeting_point: values.meeting_point.trim(),
+    departure_city: values.departure_city.trim(),
+    organiser: values.organiser.trim(),
     included: values.included.map((line) => line.trim()).filter(Boolean),
     not_included: values.not_included.map((line) => line.trim()).filter(Boolean),
     options: values.options.map((option) => ({
@@ -391,6 +401,24 @@ function TourForm({ tour, initial, onCancel, onSaved }: FormProps) {
             onChangeText={(text) => set('meeting_point', text)}
             error={errors.meeting_point}
             maxLength={200}
+          />
+        </FieldGrid>
+        <FieldGrid>
+          <TextField
+            label="Departs from (optional)"
+            placeholder="e.g. Nairobi"
+            value={values.departure_city}
+            onChangeText={(text) => set('departure_city', text)}
+            error={errors.departure_city}
+            maxLength={80}
+          />
+          <TextField
+            label="Organiser (optional)"
+            placeholder="e.g. Savanna Trails"
+            value={values.organiser}
+            onChangeText={(text) => set('organiser', text)}
+            error={errors.organiser}
+            maxLength={120}
           />
         </FieldGrid>
         <FieldGrid>

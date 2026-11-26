@@ -76,6 +76,8 @@ class Tour(models.Model):
     included = models.JSONField(default=list, blank=True)
     not_included = models.JSONField(default=list, blank=True)
     meeting_point = models.CharField(max_length=200, blank=True)
+    departure_city = models.CharField(max_length=80, blank=True)
+    organiser = models.CharField(max_length=120, blank=True)
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
     cancelled_at = models.DateTimeField(null=True, blank=True)
