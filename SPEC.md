@@ -463,7 +463,7 @@ Root host, `/api/platform/`
 ### 18.1 Look and layout
 
 - Colours only as tokens in `src/theme.ts`, read while rendering and in `createStyles` style sheets, never into constants: primary and accent (with the primary's tint and hover) come from the agency's theme, applied before the first screen; Dira Manifest's own primary indigo #1800d2 and amber #ffb400 (prices and main calls to action, dark text) wherever there is no agency (§16.2). No screen may keep Dira Manifest's colours once a theme is applied, including styles built when a file loads. The rest is the same in every theme: slate green #4a6660, neutrals (#252525, #2d3434, #6c7171, #a8b1b5, background #f2f4f7, surface #fff), status (success #51d77a, warning #faba2f, danger #fe455f, info #2275ff) with AA-contrast chip tints. Typography scale 28/22/18/15/13/12, system font.
-- Wide (≥ 900 px): top bar in the primary with brand, nav items with icons, account menu (initials). Narrow: slim top bar plus bottom tabs; with more than five tabs, four stay in the bar and the rest go under a "More" tab (a menu carrying their badges). No horizontal scrolling at 390 or 1280 px.
+- Wide (≥ 900 px): top bar in the primary with the agency's name (on the platform, "Dira Manifest Platform"), nav items with icons, account menu (initials). Narrow: slim top bar plus bottom tabs; with more than five tabs, four stay in the bar and the rest go under a "More" tab (a menu carrying their badges). No horizontal scrolling at 390 or 1280 px.
 - Forms that start new work (Book, Book tour, Request booking, Request options, New offer, New tour, New hotel, Respond) are full pages; short tasks use a shared Dialog (small/large, focus-managed, full screen on phones).
 - Every list has loading, empty and error states; zod mirrors server validation; dates via a web date input; uploads and file opening are web only.
 - Airline badge: the airline's logo, or its IATA code (e.g. "KQ") when it has none or the logo fails to load, in the same fixed square frame. Country flags (bundled flag-icons SVGs) only in airport pickers, offer detail header and connection rows, decorative.
@@ -746,3 +746,4 @@ All delivered; each was one commit.
 57. Theme bar colour so light brand colours work (bar, bar_text, bar_hover), and optional text colours for the primary, the bar and the accent.
 58. Accent buttons stand out from the bar: the accent at least 3:1 against the bar (or primary); Teal & Coral's accent becomes #ff9a7a by migration.
 59. Rebrand to Dira Manifest (diramanifest.com): every name, email, page title and footer; mobile bundle id and package `com.diramanifest.app`, link scheme `dira`, stored keys `dira.*` (signed-in users sign in once more).
+60. The top bar shows the agency's name instead of the system name.
