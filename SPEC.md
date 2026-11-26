@@ -633,7 +633,7 @@ Owner
 - **Plans**: kind tabs, tag column, rich-text dialog, link to pricing.
 - **Invoices**: filters, drawer actions behind confirm dialogs.
 - **Chats**.
-- **Settings**: billing and support; **Themes**: a table of themes (the two colours as swatches, name, agencies using it, a Default chip, Active or Inactive), New theme, and a create/edit dialog with the name, each colour as a hex field with the browser's colour picker beside it (web only), the live preview, and the four contrast checks with their ratios, each passing or failing as the colours change (Save disabled while one fails; the server checks again); rows offer Make default (active themes) and Deactivate or Activate (not on the default). **Exchange rates**: the currencies seen, each with its latest rate, date, source and a stale warning, a manual rate entry for today, and the feed's credit.
+- **Settings**: in sections with the agency's layout (§18.2: the same section list, `/settings/<section>`, default Billing): **Billing** (invoice details, timing, billing contact), **Support** (the support email), **Themes**: a table of themes (the two colours as swatches, name, agencies using it, a Default chip, Active or Inactive), New theme, and a create/edit dialog with the name, each colour as a hex field with the browser's colour picker beside it (web only), the live preview, and the four contrast checks with their ratios, each passing or failing as the colours change (Save disabled while one fails; the server checks again); rows offer Make default (active themes) and Deactivate or Activate (not on the default). **Exchange rates**: the currencies seen, each with its latest rate, date, source and a stale warning, a manual rate entry for today, and the feed's credit.
 
 ### 18.4 Mobile app
 
@@ -765,3 +765,4 @@ All delivered; each was one commit.
 65. A customer's request shows "Options from <agency name>" over its options.
 66. Agency emails come from the agency's name (header, sign-off, footer with its address, account subjects); platform emails from Dira Manifest.
 67. Agency settings in sections (General, Bookings and payments, Notifications, Email sending, Theme, Integrations, Billing, Support) and the agency's own SMTP server for its emails, set by its admins or by the owner from the agency's page, with a test email; without one, the platform's server in the agency's name with Reply-To the agency.
+68. Platform Settings in sections (Billing, Support, Themes, Exchange rates) with the same layout as the agency's.
