@@ -371,7 +371,7 @@ Each agency gives its site, app and emails its own look by choosing a theme from
 
 - A theme sets **primary** (top bar, links, selected states; white text on it) and **accent** (prices and main calls to action; dark text #252525 on it). The server derives (`tenants/themes.py`) the primary's **tint** (chat bubbles, highlights; the primary blended 9% over white) and its **hover** shade (white 12% over the primary), so the owner enters only the two colours. Everything else is the same in every theme (§18.1).
 - **Theme** (public schema): name (unique, ≤ 40 characters), primary and accent (`#rrggbb`, stored lowercase), is_active, is_default, created_at. Exactly one theme is the default, and it is active; the default cannot be deactivated, and an inactive theme cannot be made default. Themes are never deleted.
-- Contrast rules, checked on create and on every change, with the WCAG contrast ratio: the primary at least 4.5:1 against white, against its tint and against the background #f2f4f7; the accent at least 4.5:1 against #252525. A failing save is refused with 400 naming the rule and the ratio (for example "White text on this primary is 3.1:1; it needs 4.5:1.").
+- Contrast rules, checked on create and on every change, with the WCAG contrast ratio: the primary at least 4.5:1 against white, against its tint and against the background #f2f4f7; white at least 4.5:1 against the hover shade (white text sits on it in Explore's heading cards and tiles); the accent at least 4.5:1 against #252525. A failing save is refused with 400 naming the rule and the ratio (for example "White text on this primary is 3.1:1; it needs 4.5:1.").
 - **Tenant.theme**: FK Theme, protected, required. Choosing a theme for an agency: an active theme, or the one it already has; anything else is refused with 400.
 - Eight starting themes (all of which pass the rules):
   - Indigo & Amber (#1800d2 / #ffb400), the default and Azaria's own colours
@@ -739,4 +739,4 @@ All delivered; each was one commit.
 53. Explore split view, plane photo on flight cards, airline codes in badges.
 54. Airline logos from Travelpayouts.
 55. Explore: wider tabs with filters on the left, one results toolbar, new module switch, two-row tour and hotel search, tour departure city and organiser.
-56. Explore heading cards: one primary card per tab, content width, large headline, fixed height.
+56. Explore heading cards: one primary card per tab, content width, large headline, fixed height, search panels on the hover shade; white on the hover shade added to the theme contrast rules.
