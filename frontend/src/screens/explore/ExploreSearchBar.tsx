@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { TICKET_CLASSES, TicketClass } from '../../api/types';
 import { AirportSearchField } from '../../components/AirportPicker';
@@ -10,8 +10,8 @@ import { OfferFilterErrors, OfferFilterValues, TRIP_TYPE_OPTIONS } from '../../c
 import { PressState } from '../../components/pressState';
 import { SegmentedControl } from '../../components/SegmentedControl';
 import { SelectField } from '../../components/SelectField';
-import { colors, createStyles, font, radius, shadow, space, weight } from '../../theme';
-import { EXPLORE_WIDTH } from './ExploreTab';
+import { colors, createStyles, space } from '../../theme';
+import { HeadingCard, SearchPanel } from './HeadingCard';
 
 const CLASS_OPTIONS: { value: '' | TicketClass; label: string }[] = [{ value: '', label: 'Any' }, ...TICKET_CLASSES];
 
@@ -24,7 +24,7 @@ type Props = {
   compact: boolean;
 };
 
-/** Indigo band with the headline and the white search bar (trip type, route, dates, class). */
+/** Flights' heading card: the headline and the search panel (trip type, route, dates, class). */
 export function ExploreSearchBar({ value, onChange, errors, onSearch, compact }: Props) {
   const set = <K extends keyof OfferFilterValues>(key: K, fieldValue: OfferFilterValues[K]) =>
     onChange({ ...value, [key]: fieldValue });
@@ -72,7 +72,7 @@ export function ExploreSearchBar({ value, onChange, errors, onSearch, compact }:
   );
   const search = <Button title="Search" variant="accent" icon="search" onPress={onSearch} />;
   const tripType = (
-    <View style={styles.tripType}>
+    <View style={compact ? undefined : styles.tripType}>
       <SegmentedControl
         label="Trip type"
         options={TRIP_TYPE_OPTIONS}
@@ -100,11 +100,10 @@ export function ExploreSearchBar({ value, onChange, errors, onSearch, compact }:
   );
 
   return (
-    <View style={[styles.band, compact && styles.bandCompact]}>
-      <View style={styles.inner}>
-        <Text style={[styles.headline, compact && styles.headlineCompact]}>Find your next flight deal</Text>
+    <HeadingCard title="Find your next flight deal" compact={compact}>
+      <SearchPanel>
         {compact ? (
-          <View style={styles.bar}>
+          <>
             {tripType}
             {from}
             <View style={styles.swapRow}>
@@ -123,29 +122,27 @@ export function ExploreSearchBar({ value, onChange, errors, onSearch, compact }:
             ) : null}
             {ticketClass}
             {search}
-          </View>
+          </>
         ) : (
-          <View style={styles.bar}>
-            {tripType}
+          <>
             <View style={styles.barRow}>
+              {tripType}
               <View style={styles.airport}>{from}</View>
               <SwapButton onPress={swap} />
               <View style={styles.airport}>{to}</View>
+            </View>
+            <View style={styles.barRow}>
               <View style={styles.date}>{dateFrom}</View>
               <View style={styles.date}>{dateTo}</View>
+              {returning ? <View style={styles.date}>{returnFrom}</View> : null}
+              {returning ? <View style={styles.date}>{returnTo}</View> : null}
               <View style={styles.ticketClass}>{ticketClass}</View>
               {search}
             </View>
-            {returning ? (
-              <View style={styles.barRow}>
-                <View style={styles.returnDate}>{returnFrom}</View>
-                <View style={styles.returnDate}>{returnTo}</View>
-              </View>
-            ) : null}
-          </View>
+          </>
         )}
-      </View>
-    </View>
+      </SearchPanel>
+    </HeadingCard>
   );
 }
 
@@ -169,30 +166,12 @@ function SwapButton({ onPress, vertical }: { onPress: () => void; vertical?: boo
 const SWAP = 36;
 
 const styles = createStyles(() => ({
-  band: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: space.lg,
-    paddingTop: space.xl,
-    paddingBottom: space.xxl,
-  },
-  bandCompact: { paddingTop: space.lg, paddingBottom: space.xl },
-  inner: { width: '100%', maxWidth: EXPLORE_WIDTH, alignSelf: 'center', gap: space.lg },
-  headline: { fontSize: font.display, fontWeight: weight.heavy, color: colors.primaryText },
-  headlineCompact: { fontSize: font.title },
-  bar: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: space.lg,
-    gap: space.md,
-    ...shadow,
-  },
   // Aligned on the inputs' bottom edge so the swap and search buttons line up with them.
   barRow: { flexDirection: 'row', alignItems: 'flex-end', gap: space.sm },
   airport: { flex: 1.4, minWidth: 0 },
   date: { flex: 1, minWidth: 0 },
   ticketClass: { flex: 1, minWidth: 0 },
-  tripType: { maxWidth: 320 },
-  returnDate: { width: 200 },
+  tripType: { width: 260, marginBottom: 1 },
   swapRow: { alignItems: 'flex-end', marginVertical: -space.sm },
   swap: {
     width: SWAP,

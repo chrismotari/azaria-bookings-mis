@@ -10,7 +10,9 @@ import { Icon, IconName } from '../../components/Icon';
 import { PressState } from '../../components/pressState';
 import { EmptyState, ErrorState, LoadingState } from '../../components/StatusViews';
 import { colors, createStyles, font, radius, shadowRaised, space, useIsWide, weight } from '../../theme';
+import { EXPLORE_WIDTH } from './ExploreTab';
 import { CardSection, cardCount, useExplore } from './Featured';
+import { HeadingCard } from './HeadingCard';
 
 const HERO: Record<Module, { title: string; line: string; icon: IconName }> = {
   flights: { title: 'Flights', line: 'Find a flight', icon: 'airplane' },
@@ -81,10 +83,7 @@ export function ExploreHero({
   heading?: boolean;
 }) {
   return (
-    <View style={styles.hero}>
-      <Text style={styles.agency} accessibilityRole={heading ? 'header' : undefined}>
-        {name}
-      </Text>
+    <HeadingCard title={name} heading={heading} compact={!wide}>
       <View style={[styles.tiles, wide && styles.tilesWide]}>
         {modules.map((module) => (
           <Pressable
@@ -109,15 +108,19 @@ export function ExploreHero({
           </Pressable>
         ))}
       </View>
-    </View>
+    </HeadingCard>
   );
 }
 
 const styles = createStyles(() => ({
   scroll: { flex: 1, backgroundColor: colors.background },
-  body: { width: '100%', maxWidth: 1100 + 2 * space.lg, alignSelf: 'center', padding: space.lg, gap: space.xl },
-  hero: { backgroundColor: colors.primary, borderRadius: radius.lg, padding: space.xl, gap: space.lg },
-  agency: { fontSize: font.display, fontWeight: weight.heavy, color: colors.primaryText },
+  body: {
+    width: '100%',
+    maxWidth: EXPLORE_WIDTH + 2 * space.lg,
+    alignSelf: 'center',
+    padding: space.lg,
+    gap: space.xl,
+  },
   tiles: { gap: space.md },
   tilesWide: { flexDirection: 'row' },
   tile: {

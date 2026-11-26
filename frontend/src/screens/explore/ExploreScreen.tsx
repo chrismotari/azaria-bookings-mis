@@ -167,7 +167,7 @@ function FlightDeals({ navigation, route }: Props) {
       detail={selected ? <OfferDetailView key={selected} id={selected} query={route.params?.query} /> : null}
       list={
         <ExploreTab
-          band={
+          header={
             <ExploreSearchBar value={draft} onChange={setDraft} errors={errors} onSearch={search} compact={compact} />
           }
           featured={

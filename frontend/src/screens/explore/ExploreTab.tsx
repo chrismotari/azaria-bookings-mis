@@ -12,9 +12,7 @@ const RESULTS = 1100;
 export const EXPLORE_WIDTH = SIDEBAR + space.lg + RESULTS;
 
 type Props = {
-  /** A full-width band above the content (the flights search). */
-  band?: ReactNode;
-  /** The search card at the top of the content. */
+  /** The heading card at the top of the content. */
   header?: ReactNode;
   featured?: ReactNode;
   filters: ReactNode;
@@ -29,7 +27,7 @@ type Props = {
 
 /** A module tab of Explore: search, featured row, filters on the left, toolbar and results. */
 export function ExploreTab(props: Props) {
-  const { band, header, featured, filters, activeFilters, filtersInvalid, sort, count, children } = props;
+  const { header, featured, filters, activeFilters, filtersInvalid, sort, count, children } = props;
   const compact = !useIsWide();
   const [filtersOpen, setFiltersOpen] = useState(false);
   useEffect(() => {
@@ -41,7 +39,6 @@ export function ExploreTab(props: Props) {
 
   return (
     <ScrollView style={styles.scroll}>
-      {band}
       <View style={styles.body}>
         {header}
         {featured}

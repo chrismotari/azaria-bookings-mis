@@ -60,11 +60,12 @@ export function deriveThemeColors(primary: string, accent: string): ThemeColors 
 
 export type ContrastCheck = { label: string; ratio: number; passes: boolean };
 
-/** The four rules, for valid #rrggbb colours. */
+/** The five rules, for valid #rrggbb colours. */
 export function contrastChecks(primary: string, accent: string): ContrastCheck[] {
   const colors = deriveThemeColors(primary, accent);
   return [
     { label: 'White text on the primary', ratio: contrast(WHITE, colors.primary) },
+    { label: "White text on the primary's hover shade", ratio: contrast(WHITE, colors.primary_hover) },
     { label: 'The primary on its tint', ratio: contrast(colors.primary, colors.primary_tint) },
     { label: 'The primary on the page background', ratio: contrast(colors.primary, BACKGROUND) },
     { label: 'Dark text on the accent', ratio: contrast(DARK_TEXT, colors.accent) },

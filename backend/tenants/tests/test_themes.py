@@ -80,6 +80,7 @@ def test_colours_are_derived_from_primary_and_accent():
         # White text passes on this one (4.5:1), but it is too close to its tint and to the page background.
         ({"primary": "#767676"}, "primary", "This primary on its tint is 4.0:1; it needs 4.5:1."),
         ({"primary": "#767676"}, "primary", "This primary on the page background is 4.1:1; it needs 4.5:1."),
+        ({"primary": "#686868"}, "primary", "White text on this primary's hover shade is 4.2:1; it needs 4.5:1."),
         ({"accent": "#7a5c00"}, "accent", "Dark text on this accent is 2.4:1; it needs 4.5:1."),
     ],
 )
@@ -101,9 +102,16 @@ def test_a_primary_can_fail_only_the_tint_and_background_rules():
     # White text passes at 4.5:1 or more, but the primary is too close to its own tint and the page background.
     assert themes.contrast("#ffffff", "#767676") >= 4.5
     assert [problem.split(" is ")[0] for problem in themes.primary_problems("#767676")] == [
+        "White text on this primary's hover shade",
         "This primary on its tint",
         "This primary on the page background",
     ]
+
+
+def test_a_primary_can_fail_only_the_hover_shade_rule():
+    # White passes on the primary itself, but the lighter hover shade under the heading cards' labels is too pale.
+    assert themes.contrast("#ffffff", "#686868") >= 4.5
+    assert themes.primary_problems("#686868") == ["White text on this primary's hover shade is 4.2:1; it needs 4.5:1."]
 
 
 @pytest.mark.parametrize("color", ["1b3a6b", "#1b3a6", "#gggggg", "navy"])

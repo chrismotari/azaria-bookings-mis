@@ -19,6 +19,7 @@ import { slotsLeftLabel, tourDates } from '../../utils/tours';
 import { EMPTY_TOUR_FILTERS, TourFilters, TourOrdering, useTourList } from '../explore/exploreLists';
 import { ExploreTab } from '../explore/ExploreTab';
 import { FeaturedRow } from '../explore/Featured';
+import { HeadingCard, SearchPanel } from '../explore/HeadingCard';
 
 type Filters = TourFilters;
 const EMPTY = EMPTY_TOUR_FILTERS;
@@ -130,17 +131,19 @@ export function ToursPage() {
   return (
     <ExploreTab
       header={
-        <Card>
-          <View style={styles.searchRow}>
-            {searchField('departure_city', 'Departs from', 'e.g. Nairobi')}
-            {searchField('destination', 'Destination', 'e.g. Maasai Mara')}
-          </View>
-          <View style={styles.searchRow}>
-            {searchField('title', 'Tour name', 'e.g. Great Migration safari')}
-            {searchField('organiser', 'Organiser', 'e.g. Savanna Trails')}
-            <Button title="Search" variant="accent" icon="search" onPress={() => apply()} />
-          </View>
-        </Card>
+        <HeadingCard title="Find your next tour">
+          <SearchPanel>
+            <View style={styles.searchRow}>
+              {searchField('departure_city', 'Departs from', 'e.g. Nairobi')}
+              {searchField('destination', 'Destination', 'e.g. Maasai Mara')}
+            </View>
+            <View style={styles.searchRow}>
+              {searchField('title', 'Tour name', 'e.g. Great Migration safari')}
+              {searchField('organiser', 'Organiser', 'e.g. Savanna Trails')}
+              <Button title="Search" variant="accent" icon="search" onPress={() => apply()} />
+            </View>
+          </SearchPanel>
+        </HeadingCard>
       }
       featured={single && JSON.stringify(filters) === JSON.stringify(EMPTY) ? <FeaturedRow module="tours" /> : null}
       filters={sidebar}

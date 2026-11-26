@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { Platform, TextInput } from 'react-native';
 
 import { WEB_SYSTEM_FONT } from '../theme';
-import { Field, inputStyle } from './Field';
+import { Field, useInputStyle } from './Field';
 
 type Props = {
   label: string;
@@ -15,6 +15,7 @@ type Props = {
 
 /** "YYYY-MM-DD" value. The browser's date input on web, a plain text input on native. */
 export function DateField({ label, value, onChange, error, accessibilityLabel = label }: Props) {
+  const input = useInputStyle(error);
   return (
     <Field label={label} error={error}>
       {Platform.OS === 'web' ? (
@@ -24,7 +25,7 @@ export function DateField({ label, value, onChange, error, accessibilityLabel = 
           'aria-label': accessibilityLabel,
           onChange: (event: { target: { value: string } }) => onChange(event.target.value),
           style: {
-            ...inputStyle,
+            ...input,
             fontFamily: WEB_SYSTEM_FONT,
             borderStyle: 'solid',
             boxSizing: 'border-box',
@@ -33,7 +34,7 @@ export function DateField({ label, value, onChange, error, accessibilityLabel = 
         })
       ) : (
         <TextInput
-          style={inputStyle}
+          style={input}
           value={value}
           onChangeText={onChange}
           placeholder="YYYY-MM-DD"

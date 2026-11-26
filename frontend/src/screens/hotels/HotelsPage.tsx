@@ -14,6 +14,7 @@ import { nightsBetween } from '../../utils/hotels';
 import { EMPTY_HOTEL_FILTERS, HotelFilters, HotelOrdering, HotelSearch, useHotelList } from '../explore/exploreLists';
 import { ExploreTab } from '../explore/ExploreTab';
 import { FeaturedRow } from '../explore/Featured';
+import { HeadingCard, SearchPanel } from '../explore/HeadingCard';
 import { HotelCard, Stay, StayErrors, stayInputs, stayParams, validateStay } from './HotelParts';
 
 type Filters = HotelFilters;
@@ -131,22 +132,24 @@ export function HotelsPage() {
   return (
     <ExploreTab
       header={
-        <Card>
-          <View style={styles.searchRow}>
-            <View style={styles.field}>{searchField('destination', 'City', 'e.g. Diani Beach')}</View>
-            <View style={styles.field}>{searchField('name', 'Hotel', 'e.g. Coral Palace')}</View>
-            <View style={styles.field}>{stay.checkIn}</View>
-            <View style={styles.field}>{stay.checkOut}</View>
-          </View>
-          <View style={styles.searchRow}>
-            <View style={styles.field}>{stay.adults}</View>
-            <View style={styles.field}>{stay.children}</View>
-            <View style={[styles.field, styles.searchCell]}>
-              <Button title="Search" variant="accent" icon="search" onPress={runSearch} />
+        <HeadingCard title="Find your next stay">
+          <SearchPanel>
+            <View style={styles.searchRow}>
+              <View style={styles.field}>{searchField('destination', 'City', 'e.g. Diani Beach')}</View>
+              <View style={styles.field}>{searchField('name', 'Hotel', 'e.g. Coral Palace')}</View>
+              <View style={styles.field}>{stay.checkIn}</View>
+              <View style={styles.field}>{stay.checkOut}</View>
             </View>
-            {wide ? <View style={styles.field} /> : null}
-          </View>
-        </Card>
+            <View style={styles.searchRow}>
+              <View style={styles.field}>{stay.adults}</View>
+              <View style={styles.field}>{stay.children}</View>
+              <View style={[styles.field, styles.searchCell]}>
+                <Button title="Search" variant="accent" icon="search" onPress={runSearch} />
+              </View>
+              {wide ? <View style={styles.field} /> : null}
+            </View>
+          </SearchPanel>
+        </HeadingCard>
       }
       featured={single && !searching ? <FeaturedRow module="hotels" /> : null}
       filters={sidebar}

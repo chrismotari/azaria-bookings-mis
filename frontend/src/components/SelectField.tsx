@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { Platform } from 'react-native';
 
 import { WEB_SYSTEM_FONT } from '../theme';
-import { Field, inputStyle } from './Field';
+import { Field, useInputStyle } from './Field';
 import { OptionChips } from './OptionChips';
 
 type Props<T extends string> = {
@@ -23,6 +23,7 @@ export function SelectField<T extends string>({
   error,
   accessibilityLabel = label,
 }: Props<T>) {
+  const input = useInputStyle(error);
   if (Platform.OS !== 'web') {
     return <OptionChips label={label} options={options} value={value} onChange={onChange} error={error} />;
   }
@@ -35,7 +36,7 @@ export function SelectField<T extends string>({
           'aria-label': accessibilityLabel,
           onChange: (event: { target: { value: string } }) => onChange(event.target.value as T),
           style: {
-            ...inputStyle,
+            ...input,
             fontFamily: WEB_SYSTEM_FONT,
             borderStyle: 'solid',
             boxSizing: 'border-box',

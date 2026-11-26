@@ -1,0 +1,53 @@
+import { ReactNode } from 'react';
+import { Text, View } from 'react-native';
+
+import { OnPrimary } from '../../components/Field';
+import { colors, createStyles, font, radius, space, useIsWide, weight } from '../../theme';
+
+/** Every heading card's height on wide screens: a headline and two rows of inputs. */
+const HEIGHT = 280;
+
+type Props = {
+  title: string;
+  children: ReactNode;
+  /** False where the page has its own headings (the website's sample screen). */
+  heading?: boolean;
+  /** Defaults to the screen's width. */
+  compact?: boolean;
+};
+
+/** The primary card that opens each Explore tab: a large headline over the tab's search or tiles. */
+export function HeadingCard({ title, children, heading = true, compact }: Props) {
+  const wide = useIsWide();
+  const narrow = compact ?? !wide;
+  return (
+    <View style={[styles.card, narrow ? styles.cardCompact : styles.fixed]}>
+      <Text
+        style={[styles.headline, narrow && styles.headlineCompact]}
+        accessibilityRole={heading ? 'header' : undefined}
+        numberOfLines={narrow ? undefined : 1}
+      >
+        {title}
+      </Text>
+      {children}
+    </View>
+  );
+}
+
+/** The search fields' block on a heading card, in the theme's hover shade. */
+export function SearchPanel({ children }: { children: ReactNode }) {
+  return (
+    <OnPrimary>
+      <View style={styles.panel}>{children}</View>
+    </OnPrimary>
+  );
+}
+
+const styles = createStyles(() => ({
+  card: { backgroundColor: colors.primary, borderRadius: radius.lg, padding: space.xl, gap: space.lg },
+  cardCompact: { padding: space.lg, gap: space.md },
+  fixed: { height: HEIGHT, justifyContent: 'center' },
+  headline: { fontSize: font.display, fontWeight: weight.heavy, color: colors.primaryText },
+  headlineCompact: { fontSize: font.title },
+  panel: { backgroundColor: colors.primaryHover, borderRadius: radius.md, padding: space.lg, gap: space.md },
+}));

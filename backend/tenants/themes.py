@@ -68,6 +68,7 @@ def primary_problems(primary):
     primary = primary.lower()
     checks = [
         ("White text on this primary", contrast(WHITE, primary)),
+        ("White text on this primary's hover shade", contrast(WHITE, blend(WHITE, HOVER_WHITE, over=primary))),
         ("This primary on its tint", contrast(primary, blend(primary, TINT_AMOUNT))),
         ("This primary on the page background", contrast(primary, BACKGROUND)),
     ]
