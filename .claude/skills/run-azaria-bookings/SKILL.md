@@ -1,9 +1,9 @@
 ---
 name: run-azaria-bookings
-description: Run, start, drive and screenshot Azaria Bookings (Django API + Celery + Expo web app). Use when asked to run the app, start its processes, click through a flow in the browser, take a screenshot of a screen, do the end-to-end walkthrough, or check a UI change in the real app.
+description: Run, start, drive and screenshot Dira Manifest (Django API + Celery + Expo web app). Use when asked to run the app, start its processes, click through a flow in the browser, take a screenshot of a screen, do the end-to-end walkthrough, or check a UI change in the real app.
 ---
 
-Azaria Bookings is a Django REST API (`backend/`), Celery worker and beat, and an Expo web-first app (`frontend/`). An agent drives it with headless Chrome through **`.claude/skills/run-azaria-bookings/driver/`** (playwright-core + small scripts). `flow.mjs` runs the whole booking flow; `shot.mjs` screenshots any URL as any role.
+Dira Manifest is a Django REST API (`backend/`), Celery worker and beat, and an Expo web-first app (`frontend/`). An agent drives it with headless Chrome through **`.claude/skills/run-azaria-bookings/driver/`** (playwright-core + small scripts). `flow.mjs` runs the whole booking flow; `shot.mjs` screenshots any URL as any role.
 
 All paths are relative to the repo root.
 

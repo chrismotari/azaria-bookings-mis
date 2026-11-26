@@ -50,7 +50,7 @@ export function GetAppScreen() {
           </View>
           <View style={styles.headerText}>
             <Text style={styles.title}>Get the app</Text>
-            <Text style={styles.subtitle}>Use {name} on your phone with the Azaria Bookings app.</Text>
+            <Text style={styles.subtitle}>Use {name} on your phone with the Dira Manifest app.</Text>
           </View>
         </View>
         <View style={styles.codeBox}>

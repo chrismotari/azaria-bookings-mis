@@ -20,8 +20,8 @@ REGISTER = {"email": "nia@example.com", "password": "Tr1cky-horse-77", "full_nam
 
 @pytest.fixture
 def app_settings(settings):
-    settings.IOS_APP_ID = "ABCDE12345.com.azariabookings.app"
-    settings.ANDROID_PACKAGE = "com.azariabookings.app"
+    settings.IOS_APP_ID = "ABCDE12345.com.diramanifest.app"
+    settings.ANDROID_PACKAGE = "com.diramanifest.app"
     settings.ANDROID_CERT_FINGERPRINTS = ["14:6D:E9", "AA:BB:CC"]
     return settings
 
@@ -92,7 +92,7 @@ def test_verification_files_with_settings(app_settings, host):
     assert aasa.status_code == 200
     assert aasa["Content-Type"] == "application/json"
     assert aasa.json() == {
-        "applinks": {"details": [{"appIDs": ["ABCDE12345.com.azariabookings.app"], "components": [{"/": "*"}]}]}
+        "applinks": {"details": [{"appIDs": ["ABCDE12345.com.diramanifest.app"], "components": [{"/": "*"}]}]}
     }
     links = client.get(ASSETLINKS)
     assert links.status_code == 200
@@ -102,7 +102,7 @@ def test_verification_files_with_settings(app_settings, host):
             "relation": ["delegate_permission/common.handle_all_urls"],
             "target": {
                 "namespace": "android_app",
-                "package_name": "com.azariabookings.app",
+                "package_name": "com.diramanifest.app",
                 "sha256_cert_fingerprints": ["14:6D:E9", "AA:BB:CC"],
             },
         }

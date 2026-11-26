@@ -282,7 +282,7 @@ def test_admin_reads_and_updates_settings(admin_api, settings):
         "payment_instructions": "Bank transfer to Azaria Ltd.",
         "payment_hold_hours": 48,
         "reminder_hours_before": 6,
-        "admin_notification_email": "bookings@azariabookings.com",
+        "admin_notification_email": "bookings@diramanifest.com",
     }
     response = admin_api.patch("/api/admin/settings", payload, format="json")
     assert response.status_code == 200
@@ -290,7 +290,7 @@ def test_admin_reads_and_updates_settings(admin_api, settings):
     app_settings = AppSettings.get()
     assert (app_settings.payment_hold_hours, app_settings.admin_notification_email) == (
         48,
-        "bookings@azariabookings.com",
+        "bookings@diramanifest.com",
     )
     assert AppSettings.objects.count() == 1
 

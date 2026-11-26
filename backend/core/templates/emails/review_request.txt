@@ -9,4 +9,4 @@ Your review takes a minute and helps other travellers choose.{% endif %}
 Leave a review:
 {{ frontend_url }}{{ path }}
 
-Azaria Bookings
+Dira Manifest

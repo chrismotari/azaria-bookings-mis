@@ -9,4 +9,4 @@ Message from your agency:
 View your booking:
 {{ frontend_url }}/bookings?tour={{ booking.id }}
 
-Azaria Bookings
+Dira Manifest

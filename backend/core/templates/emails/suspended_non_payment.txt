@@ -13,4 +13,4 @@ Access returns as soon as your payment is recorded.
 {% if billing_contact_email %}
 Questions about billing: {{ billing_contact_email }}
 {% endif %}
-Azaria Bookings
+Dira Manifest

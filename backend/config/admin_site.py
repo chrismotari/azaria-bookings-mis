@@ -10,5 +10,5 @@ class SuperuserAdminSite(AdminSite):
 
 # On the root host: the system owner manages tenants, domains, airports and the platform's own accounts.
 platform_site = SuperuserAdminSite(name="platform_admin")
-platform_site.site_header = "Azaria Bookings platform"
+platform_site.site_header = "Dira Manifest platform"
 platform_site.site_title = "Platform admin"

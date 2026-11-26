@@ -17,4 +17,4 @@ You can also download {{ pass_count|pluralize:"it,them" }} from your booking in 
 
 Have a good flight!
 
-Azaria Bookings
+Dira Manifest

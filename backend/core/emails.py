@@ -3,7 +3,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.template import engines
 from django.utils import timezone
 
-# Azaria's own colours for the HTML emails (the app's theme.ts), passed to every template as `brand`. Platform
+# Dira Manifest's own colours for the HTML emails (the app's theme.ts), passed to every template as `brand`. Platform
 # emails use them as they are; an agency's emails use its theme's colours instead (email_brand).
 BRAND = {
     "primary": "#1800d2",
@@ -28,7 +28,7 @@ EMAIL_TASK_OPTIONS = {
 
 
 def email_brand(platform=False):
-    """Azaria's colours for the platform's emails; the agency's theme for an agency's own."""
+    """Dira Manifest's colours for the platform's emails; the agency's theme for an agency's own."""
     from django.db import connection
     from django_tenants.utils import get_public_schema_name
 
@@ -52,8 +52,8 @@ def email_brand(platform=False):
 def send_email(template, subject, to, context, attachments=(), platform=False):
     """Render core/templates/emails/<template>.txt and .html and send them as text plus an HTML alternative.
 
-    attachments: (filename, content, mimetype) tuples. platform: the platform's own email (Azaria's colours), even
-    when sent in an agency's schema for its links.
+    attachments: (filename, content, mimetype) tuples. platform: the platform's own email (Dira Manifest's colours),
+    even when sent in an agency's schema for its links.
     """
     from core.tenancy import frontend_url
 

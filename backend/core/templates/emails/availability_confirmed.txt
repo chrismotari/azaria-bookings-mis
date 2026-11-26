@@ -30,4 +30,4 @@ Please pay by {{ deadline }}. If we have not received your payment by then, the 
 View your booking:
 {{ frontend_url }}/bookings/{{ booking.id }}
 
-Azaria Bookings
+Dira Manifest

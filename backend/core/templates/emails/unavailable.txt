@@ -22,4 +22,4 @@ See {{ option_count|pluralize:"it,them" }} and book in the app:
 You can ask us for other options in the app and we will find you alternatives:
 {{ frontend_url }}/requests/new
 {% endif %}
-Azaria Bookings
+Dira Manifest

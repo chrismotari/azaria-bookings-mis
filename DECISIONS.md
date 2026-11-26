@@ -143,7 +143,7 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 
 ## Emails
 - Emails' highlighted box is the primary's tint with a primary left edge; shared pieces are includes under `emails/`.
-- Platform emails sent in an agency's schema (invoice, suspension, the platform desk's reply) are marked as platform emails and keep Azaria's colours; the email header text stays "Azaria Bookings" (only colours are themed).
+- Platform emails sent in an agency's schema (invoice, suspension, the platform desk's reply) are marked as platform emails and keep Dira Manifest's colours; the email header text stays "Dira Manifest" (only colours are themed).
 
 ## Support
 - `Conversation.requester` is a plain UUID because on the platform desk it names a user in an agency's schema; `Conversation.agency` has no DB constraint because the table exists in every schema.
@@ -195,7 +195,7 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - Paged lists return to page 1 when the filter changes or the page no longer exists. Platform Agencies and Invoices keep their status filter in the URL.
 - Preview first decides by file extension (pdf, png, jpg, jpeg, webp, gif) so the tab opens during the click (later tabs are blocked as pop-ups). The tab shows a blob: URL, so its title is the browser's.
 - Theming: `applyTheme` replaces the brand colours in `colors`, every style sheet is made with `createStyles(() => ...)`, which rebuilds after a theme change; a theme change re-mounts the screens below the agency (native keeps the navigation state; the web reloads the page instead).
-- When GET /api/agency fails on web the app starts in Azaria's colours; on native a failed theme refresh keeps the stored theme.
+- When GET /api/agency fails on web the app starts in Dira Manifest's colours; on native a failed theme refresh keeps the stored theme.
 - With more than eight items in the wide top bar, items sit closer with smaller labels and the account menu shows only the initials, so the bar fits at 1280 px.
 - The web Flag component is `Flag.tsx` (Metro picks `Flag.native.tsx` on native); `flagCodes.ts` and `flags.native.ts` are generated from `public/flags/`.
 - `@expo/metro-config` is a dev dependency so react-native-svg-transformer can find Expo's Babel transformer.
@@ -203,9 +203,9 @@ Choices made where [SPEC.md](SPEC.md) is ambiguous or silent, one line each.
 - TipTap: link and underline come with the starter kit. The H1/H2 buttons produce h3/h4; links use the browser prompt; toolbar buttons cancel mousedown to keep focus in the text.
 - Web form elements (select, date input, rich text) use `WEB_SYSTEM_FONT` from `theme.ts`.
 - Mobile app: the verification files are served on the root host too, since Android verifies a `*.<base>` intent filter there.
-- Mobile app: the bundle id and Android package are `com.azariabookings.app`, fixed in `app.config.ts`; without `EXPO_PUBLIC_TENANT_BASE_DOMAIN` the build declares no link domains.
+- Mobile app: the bundle id and Android package are `com.diramanifest.app`, fixed in `app.config.ts`; without `EXPO_PUBLIC_TENANT_BASE_DOMAIN` the build declares no link domains.
 - Mobile app: guests switch agency from the sign-in screen ("Signing in to <agency> · Switch agency"), and the "Agency not available" page offers Switch agency, so a suspended or wrong agency never traps the app.
-- Mobile app: switching agency, or signing out to follow a password link, rebuilds the whole session (query cache, auth, navigation); a link to `/app` or `azaria://open` opens the app's home, and an admin link while signed out reopens after sign-in, as on the web.
+- Mobile app: switching agency, or signing out to follow a password link, rebuilds the whole session (query cache, auth, navigation); a link to `/app` or `dira://open` opens the app's home, and an admin link while signed out reopens after sign-in, as on the web.
 - Mobile app: link prompts are the platform's native alerts; Find your agency and link handling are native-only files, so the web bundle does not contain them.
 
 ## Tests and tooling

@@ -522,7 +522,7 @@ def test_the_email_header_uses_the_bar():
     assert "background-color:#ffd100; color:#252525;" in html
 
 
-def test_platform_emails_use_azarias_colours():
+def test_platform_emails_use_dira_manifest_colours():
     other = tenant(OTHER_SCHEMA)
     Tenant.objects.filter(pk=other.pk).update(
         theme=theme("Navy & Gold"),

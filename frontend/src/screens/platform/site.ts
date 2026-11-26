@@ -1,9 +1,9 @@
 import { openChat } from '../../support/launcher';
 
-export const SITE_TITLE = 'Azaria Bookings: booking sites for travel agencies';
+export const SITE_TITLE = 'Dira Manifest: booking sites for travel agencies';
 
 export const SITE_DESCRIPTION =
-  'Sell flights, tours and hotel stays from your own booking site and app. Azaria Bookings gives travel agencies ' +
+  'Sell flights, tours and hotel stays from your own booking site and app. Dira Manifest gives travel agencies ' +
   'their own address, colours and admin, one product or all three.';
 
 export type SectionId = 'products' | 'flights' | 'tours' | 'hotels';
@@ -47,8 +47,8 @@ export function scrollToSection(id: SectionId, smooth = true) {
 /** Opens the platform desk's chat, prefilled as a getting-started enquiry. */
 export function getStarted() {
   openChat({
-    subject: 'Getting started with Azaria Bookings',
-    message: 'I would like to get started with Azaria Bookings for my travel agency.',
+    subject: 'Getting started with Dira Manifest',
+    message: 'I would like to get started with Dira Manifest for my travel agency.',
   });
 }
 

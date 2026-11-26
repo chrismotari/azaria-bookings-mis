@@ -7,4 +7,4 @@ Visit our site:
 
 {% include "emails/_get_app.txt" %}
 
-Azaria Bookings
+Dira Manifest

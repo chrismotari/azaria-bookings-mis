@@ -12,7 +12,7 @@ export function TenantUnavailable({ message }: { message: string }) {
   return (
     <View style={styles.page}>
       <View style={styles.bar}>
-        <Text style={styles.brand}>Azaria Bookings</Text>
+        <Text style={styles.brand}>Dira Manifest</Text>
       </View>
       <View style={styles.body}>
         <View style={styles.box}>

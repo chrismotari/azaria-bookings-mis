@@ -9,7 +9,7 @@ import { setModules } from './modules';
 
 /**
  * Web: the address decides the agency, so there is nothing to find (see AgencyGate.native.tsx); its theme and
- * modules are applied before the first screen, which waits in Azaria's own colours. The platform keeps Azaria's colours.
+ * modules are applied before the first screen, which waits in Dira Manifest's own colours. The platform keeps Dira Manifest's colours.
  */
 export function AgencyGate({ render }: { render: (session: number) => ReactNode }) {
   const [ready, setReady] = useState(IS_PLATFORM);
@@ -23,7 +23,7 @@ export function AgencyGate({ render }: { render: (session: number) => ReactNode 
         applyTheme(data.theme.colors);
         setModules(data.modules);
       })
-      // No agency here, or it is suspended: the app shows the server's message (in Azaria's colours).
+      // No agency here, or it is suspended: the app shows the server's message (in Dira Manifest's colours).
       .catch(() => undefined)
       .finally(() => setReady(true));
   }, []);

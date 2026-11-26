@@ -125,7 +125,7 @@ await run(`customer-${stamp}`, async ({ page, shot }) => {
   await seen(page, 'Request flight options').waitFor();
   await shot('request-prefilled');
   await button(page, 'Send request').click();
-  await seen(page, 'Options from Azaria Bookings').waitFor();
+  await seen(page, 'Options from Dira Manifest').waitFor();
   queryId = uuidFromUrl(page.url());
   console.log('request', queryId, 'from', CUSTOMER.email);
 });

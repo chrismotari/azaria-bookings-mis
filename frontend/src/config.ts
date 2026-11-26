@@ -29,7 +29,7 @@ export const APP_STORE_URL = process.env.EXPO_PUBLIC_APP_STORE_URL ?? '';
 export const PLAY_STORE_URL = process.env.EXPO_PUBLIC_PLAY_STORE_URL ?? '';
 
 /** The app's own link scheme, for browsers that do not hand https links to the app. */
-export const APP_SCHEME = 'azaria';
+export const APP_SCHEME = 'dira';
 
 /** The root host serves the platform rather than an agency. Web only: native builds always talk to an agency. */
 export const PLATFORM_HOST = process.env.EXPO_PUBLIC_PLATFORM_HOST ?? '';

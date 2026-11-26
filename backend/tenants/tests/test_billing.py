@@ -23,7 +23,7 @@ MONTHLY, ANNUAL = BillingCycle.MONTHLY, BillingCycle.ANNUAL
 @pytest.fixture(autouse=True)
 def platform_settings():
     PlatformSettings.objects.update(
-        issuer_details="Azaria Platform Ltd\nNairobi",
+        issuer_details="Dira Manifest Ltd\nNairobi",
         payment_instructions="Bank transfer to account 123, quoting the invoice number.",
         invoice_due_days=14,
         invoice_lead_days=7,
@@ -140,7 +140,7 @@ def test_starting_issues_the_first_invoice_at_once(agency, django_capture_on_com
     # Links point at the agency's own domain.
     [email] = mail.outbox
     assert email.to == ["accounts@other.test"]
-    assert email.subject == "Invoice INV-2026-0001 from Azaria Bookings"
+    assert email.subject == "Invoice INV-2026-0001 from Dira Manifest"
     [(name, content, mimetype)] = email.attachments
     assert name == "INV-2026-0001.pdf" and mimetype == "application/pdf" and content.startswith(b"%PDF")
     assert "USD 100.00" in email.body and "Bank transfer" in email.body

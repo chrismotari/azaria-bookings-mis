@@ -39,8 +39,8 @@ export function AdminPlansScreen() {
         </View>
         <Text style={styles.title}>Plans</Text>
         <Text style={styles.muted}>
-          Your agency's plan is marked. To change plans, ask us: your request goes to Azaria Bookings as a chat
-          (Settings › Support), and we update your billing from the next invoice.
+          Your agency's plan is marked. To change plans, ask us: your request goes to Dira Manifest as a chat (Settings
+          › Support), and we update your billing from the next invoice.
         </Text>
       </View>
       {plans.isPending ? (

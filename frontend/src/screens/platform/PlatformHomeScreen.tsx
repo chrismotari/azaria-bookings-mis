@@ -191,7 +191,7 @@ function useLayout() {
   return { wide: width >= WIDE, roomy: width >= 1100, columns: width >= 1024 ? 3 : width >= 640 ? 2 : 1 };
 }
 
-/** The root host's public home page: Azaria's sales website. */
+/** The root host's public home page: Dira Manifest's sales website. */
 export function PlatformHomeScreen() {
   const navigation = useNavigation();
   const { wide, roomy } = useLayout();
@@ -605,7 +605,7 @@ function Footer() {
             {user ? null : link('Contact', () => openChat())}
           </View>
         </View>
-        <Text style={styles.copyright}>© {new Date().getFullYear()} Azaria Bookings</Text>
+        <Text style={styles.copyright}>© {new Date().getFullYear()} Dira Manifest</Text>
       </View>
     </View>
   );

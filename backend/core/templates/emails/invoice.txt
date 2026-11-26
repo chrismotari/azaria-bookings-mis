@@ -15,4 +15,4 @@ Please include the invoice number with your payment. Your admins can also see th
 {% if billing_contact_email %}
 Questions about billing: {{ billing_contact_email }}
 {% endif %}
-Azaria Bookings
+Dira Manifest

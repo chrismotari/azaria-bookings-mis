@@ -14,4 +14,4 @@ Free to cancel in the app until {{ cancellation_deadline }}.
 View your booking:
 {{ frontend_url }}/bookings?tour={{ booking.id }}
 
-Azaria Bookings
+Dira Manifest

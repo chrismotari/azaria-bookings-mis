@@ -6,7 +6,7 @@ import { RootStackParamList } from './types';
 
 const agencyLinking: LinkingOptions<RootStackParamList> = {
   // Native: the agency's links arrive through agency/links.ts, which checks the agency first and hands on each
-  // link's screen as an azaria:// URL.
+  // link's screen as an dira:// URL.
   ...(IS_NATIVE ? { prefixes: [`${APP_SCHEME}://`], ...nativeLinking } : { prefixes: [] }),
   config: {
     screens: {

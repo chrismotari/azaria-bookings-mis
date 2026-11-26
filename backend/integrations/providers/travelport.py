@@ -98,7 +98,7 @@ class TravelportProvider(Provider):
             f"{{{SYSTEM}}}PingReq", {"TraceId": uuid.uuid4().hex, "TargetBranch": self.credentials["target_branch"]}
         )
         _add(request, SYSTEM_COMMON, "BillingPointOfSaleInfo", OriginApplication="UAPI")
-        _add(request, SYSTEM, "Payload", "Azaria Bookings connection test")
+        _add(request, SYSTEM, "Payload", "Dira Manifest connection test")
         self._call("SystemService", request)
         return "Connected to Travelport."
 

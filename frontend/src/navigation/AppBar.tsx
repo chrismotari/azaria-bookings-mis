@@ -47,7 +47,7 @@ export function AppBar({
       <View style={[styles.inner, !isWide && styles.innerNarrow]}>
         <Pressable accessibilityRole="link" onPress={goHome}>
           <Text style={[styles.brand, !isWide && styles.brandNarrow]} numberOfLines={1}>
-            Azaria Bookings
+            Dira Manifest
             {IS_PLATFORM ? <Text style={styles.brandTag}> Platform</Text> : null}
           </Text>
         </Pressable>

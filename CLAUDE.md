@@ -1,4 +1,4 @@
-# Azaria Bookings
+# Dira Manifest
 
 Monorepo: Django REST API in `backend/`, Expo (React Native, web-first) app in `frontend/`.
 

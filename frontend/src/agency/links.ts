@@ -14,7 +14,7 @@ import {
   signOutAndOpen,
 } from './agency';
 
-/** A link the app was opened with: the agency it is for and its screen as an azaria:// URL. */
+/** A link the app was opened with: the agency it is for and its screen as an dira:// URL. */
 type AgencyLink = { code: string; url: string; path: string };
 
 // Paths that only show the app: the "Get the app" page and the scheme's open link.
@@ -29,7 +29,7 @@ function toLink(code: string, path: string, query: string): AgencyLink | null {
 }
 
 /**
- * https://<code>.<base>/<path>?<query> (universal and app links), or azaria://<path>?agency=<code>&... (the scheme
+ * https://<code>.<base>/<path>?<query> (universal and app links), or dira://<path>?agency=<code>&... (the scheme
  * link on the web app's /app page). Anything else, including the root host, is not an agency link.
  */
 export function parseAgencyLink(raw: string): AgencyLink | null {

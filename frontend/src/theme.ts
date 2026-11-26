@@ -17,11 +17,11 @@ export type ThemeColors = {
 };
 
 /**
- * Azaria's own colours (from azariabookings.com, assets/css/sections/variables.css): wherever there is no agency
+ * Dira Manifest's own colours (from diramanifest.com, assets/css/sections/variables.css): wherever there is no agency
  * (the platform app, the web app's loading state, the mobile Find your agency screen). An agency's theme replaces
  * exactly these.
  */
-const AZARIA = {
+const DIRA = {
   primary: '#1800d2',
   primaryText: '#ffffff',
   primaryTint: '#ebe8fd',
@@ -43,7 +43,7 @@ const AZARIA = {
  * Read them while rendering, or in createStyles, never into a constant when a file loads: they change with the theme.
  */
 export const colors = {
-  ...AZARIA,
+  ...DIRA,
   tertiary: '#4a6660',
   text: '#252525',
   dark: '#2d3434',
@@ -76,7 +76,7 @@ export const colors = {
 let themeVersion = 0;
 const listeners = new Set<() => void>();
 
-/** Applies an agency's theme, or Azaria's own colours with null. Nothing happens when the colours are the same. */
+/** Applies an agency's theme, or Dira Manifest's own colours with null. Nothing happens when the colours are the same. */
 export function applyTheme(theme: ThemeColors | null) {
   const next = theme
     ? {
@@ -91,7 +91,7 @@ export function applyTheme(theme: ThemeColors | null) {
         accent: theme.accent,
         accentText: theme.accent_text,
       }
-    : AZARIA;
+    : DIRA;
   if ((Object.keys(next) as (keyof typeof next)[]).every((key) => colors[key] === next[key])) {
     return;
   }

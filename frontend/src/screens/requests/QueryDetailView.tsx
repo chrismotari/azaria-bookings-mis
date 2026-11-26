@@ -75,7 +75,7 @@ export function QueryDetailView({ id }: { id: string }) {
         ) : null}
       </Card>
 
-      <Text style={styles.section}>Options from Azaria Bookings</Text>
+      <Text style={styles.section}>Options from Dira Manifest</Text>
       {data.responses.length === 0 ? (
         <Text style={styles.muted}>No options yet. We will email you as soon as we have some.</Text>
       ) : (

@@ -68,7 +68,7 @@ export function PlatformPublicBar({ route }: { route: string }) {
   return (
     <View style={[styles.bar, { paddingTop: insets.top }]}>
       <View style={[styles.inner, !isWide && styles.innerNarrow]}>
-        <Pressable accessibilityRole="link" accessibilityLabel="Azaria Bookings, home" onPress={goHome}>
+        <Pressable accessibilityRole="link" accessibilityLabel="Dira Manifest, home" onPress={goHome}>
           <Brand />
         </Pressable>
         <View style={styles.fill} />
@@ -146,7 +146,7 @@ export function Brand({ inverse }: { inverse?: boolean }) {
         <Icon name="paper-plane" size={17} color={inverse ? colors.primary : colors.primaryText} />
       </View>
       <Text style={[styles.brandText, inverse && styles.brandTextInverse]} numberOfLines={1}>
-        Azaria Bookings
+        Dira Manifest
       </Text>
     </View>
   );

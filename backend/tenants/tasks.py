@@ -42,7 +42,7 @@ def send_invoice(invoice_id):
         _send_to_agency(
             invoice.tenant,
             "invoice",
-            f"Invoice {invoice.number} from Azaria Bookings",
+            f"Invoice {invoice.number} from Dira Manifest",
             context,
             [(f"{invoice.number}.pdf", content, "application/pdf")],
         )

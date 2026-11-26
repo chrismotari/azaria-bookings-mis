@@ -145,7 +145,7 @@ export async function findAgency(code: string): Promise<AgencyInfo> {
   }
 }
 
-// A link's screen waiting for the navigation to start (or start afresh), as an azaria:// URL.
+// A link's screen waiting for the navigation to start (or start afresh), as an dira:// URL.
 let pendingUrl: string | null = null;
 // The navigation's link listener while it is mounted.
 let deliver: ((url: string) => void) | null = null;
@@ -205,7 +205,7 @@ export async function switchAgency() {
   await signOutEverywhere();
   await agencyStorage.clear();
   pendingUrl = null;
-  // Find your agency is in Azaria's own colours.
+  // Find your agency is in Dira Manifest's own colours.
   applyTheme(null);
   update({ agency: null, session: state.session + 1 });
 }

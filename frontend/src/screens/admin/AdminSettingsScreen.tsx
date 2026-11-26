@@ -190,7 +190,7 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
       </FormFooter>
       <ThemeSection current={settings.theme} settingsKey={SETTINGS_KEY} />
       {settings.modules.includes('flights') ? <IntegrationsSection /> : null}
-      <FormSection title="Billing" description="Your agency's plans with Azaria Bookings and their invoices.">
+      <FormSection title="Billing" description="Your agency's plans with Dira Manifest and their invoices.">
         <View style={styles.billing}>
           <Button
             title="View billing"
@@ -202,7 +202,7 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
       </FormSection>
       <FormSection
         title="Support"
-        description="Chat with Azaria Bookings, the platform: questions, plans and billing. Replies also come by email."
+        description="Chat with Dira Manifest, the platform: questions, plans and billing. Replies also come by email."
       >
         <View style={styles.billing}>
           <Button

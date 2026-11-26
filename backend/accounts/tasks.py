@@ -32,7 +32,7 @@ def send_password_reset_email(user_id):
         return
     send_email(
         "password_reset",
-        "Reset your Azaria Bookings password",
+        "Reset your Dira Manifest password",
         user.email,
         {"user": user, "reset_url": set_password_url(user)},
     )
@@ -46,7 +46,7 @@ def send_account_created_email(user_id):
         return
     send_email(
         "account_created",
-        "Your Azaria Bookings account is ready",
+        "Your Dira Manifest account is ready",
         user.email,
         {"user": user, "set_password_url": set_password_url(user), **get_app_context()},
     )

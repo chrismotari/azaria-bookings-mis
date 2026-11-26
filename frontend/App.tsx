@@ -46,8 +46,8 @@ function Navigation() {
           route?.name === 'PlatformHome'
             ? SITE_TITLE
             : options?.title
-              ? `${options.title} · Azaria Bookings`
-              : 'Azaria Bookings',
+              ? `${options.title} · Dira Manifest`
+              : 'Dira Manifest',
       }}
     >
       <RootNavigator />

@@ -317,7 +317,7 @@ def render_pdf(invoice, platform):
 
     pdf.set_font("Helvetica", "", 10)
     top = pdf.get_y()
-    pdf.multi_cell(width / 2 - 5, 5, _latin1(platform.issuer_details or "Azaria Bookings"))
+    pdf.multi_cell(width / 2 - 5, 5, _latin1(platform.issuer_details or "Dira Manifest"))
     left_bottom = pdf.get_y()
     pdf.set_xy(pdf.l_margin + width / 2, top)
     pdf.set_font("Helvetica", "B", 10)

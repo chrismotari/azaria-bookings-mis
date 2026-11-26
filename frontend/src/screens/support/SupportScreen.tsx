@@ -43,7 +43,7 @@ export function SupportScreen({ navigation, route }: BottomTabScreenProps<MainTa
   );
 }
 
-/** Settings > Support: the agency admin's chats with the platform (Azaria Bookings). */
+/** Settings > Support: the agency admin's chats with the platform (Dira Manifest). */
 export function AdminSupportScreen({ navigation, route }: BottomTabScreenProps<AdminTabParamList, 'AdminSupport'>) {
   return (
     <SupportChats
@@ -52,7 +52,7 @@ export function AdminSupportScreen({ navigation, route }: BottomTabScreenProps<A
       select={(id) => navigation.setParams({ id })}
       backLabel="Settings"
       onBack={() => navigation.navigate('AdminSettings')}
-      intro="Your agency's chats with Azaria Bookings, the platform: questions, plans and billing. Replies also come by email."
+      intro="Your agency's chats with Dira Manifest, the platform: questions, plans and billing. Replies also come by email."
     />
   );
 }

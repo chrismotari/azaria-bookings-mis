@@ -55,7 +55,7 @@ export function FindAgencyScreen() {
   return (
     <View style={styles.page}>
       <View style={[styles.bar, { paddingTop: insets.top + space.md }]}>
-        <Text style={styles.brand}>Azaria Bookings</Text>
+        <Text style={styles.brand}>Dira Manifest</Text>
       </View>
       <Screen maxWidth={440}>
         <Card>

@@ -24,4 +24,4 @@ If we have not received your payment by then, the hold on these seats will lapse
 View your booking:
 {{ frontend_url }}/bookings/{{ booking.id }}
 
-Azaria Bookings
+Dira Manifest

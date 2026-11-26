@@ -23,7 +23,7 @@ PUBLIC_SCHEMA_URLCONF = "config.urls_public"
 DEFAULT_NOT_FOUND_TENANT_VIEW = "tenants.views.no_tenant"
 
 # The mobile app, for the link verification files under /.well-known/ (each file answers 404 while unset).
-# IOS_APP_ID: Apple Team ID and bundle id, e.g. ABCDE12345.com.azariabookings.app.
+# IOS_APP_ID: Apple Team ID and bundle id, e.g. ABCDE12345.com.diramanifest.app.
 IOS_APP_ID = env("IOS_APP_ID", default="")
 ANDROID_PACKAGE = env("ANDROID_PACKAGE", default="")
 # SHA-256 fingerprints of the Android signing certificates (comma-separated, e.g. 14:6D:E9:...).

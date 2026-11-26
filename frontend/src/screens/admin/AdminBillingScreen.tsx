@@ -53,8 +53,8 @@ export function AdminBillingScreen() {
       </View>
       <Text style={styles.title}>Billing</Text>
       <Text style={styles.muted}>
-        Your agency's plans with Azaria Bookings and their invoices. Invoices are also emailed to your billing email;
-        pay them as their payment instructions say.
+        Your agency's plans with Dira Manifest and their invoices. Invoices are also emailed to your billing email; pay
+        them as their payment instructions say.
       </Text>
       <Card>
         <Text style={styles.section}>Plans</Text>

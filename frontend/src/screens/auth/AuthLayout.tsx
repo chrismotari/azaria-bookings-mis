@@ -34,7 +34,7 @@ export function AuthLayout({ title, children }: { title: string; children: React
     <Screen maxWidth={960}>
       <View style={styles.split}>
         <View style={styles.panel}>
-          <Text style={styles.brand}>Azaria Bookings</Text>
+          <Text style={styles.brand}>Dira Manifest</Text>
           <Text style={styles.tagline}>Flight deals from our travel agents, booked in a few steps.</Text>
           <View style={styles.benefits}>
             {BENEFITS.map((benefit) => (

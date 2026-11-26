@@ -6,10 +6,10 @@ import type { Module } from './types';
 
 // localStorage on web, expo-secure-store on native.
 
-const ACCESS_KEY = 'azaria.access';
-const REFRESH_KEY = 'azaria.refresh';
+const ACCESS_KEY = 'dira.access';
+const REFRESH_KEY = 'dira.refresh';
 // Native only: the agency the shared app serves, as JSON {code, name, theme}.
-const AGENCY_KEY = 'azaria.agency';
+const AGENCY_KEY = 'dira.agency';
 
 async function getItem(key: string): Promise<string | null> {
   if (Platform.OS === 'web') {

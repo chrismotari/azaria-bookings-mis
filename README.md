@@ -1,6 +1,6 @@
-# Azaria Bookings
+# Dira Manifest
 
-A multitenant SaaS for tours and travel agencies ([azariabookings.com](https://azariabookings.com)). Each agency gets its own site, app and data, and sells any of three modules (flights, tours, hotels), which the platform owner switches on per agency.
+A multitenant SaaS for tours and travel agencies ([diramanifest.com](https://diramanifest.com)). Each agency gets its own site, app and data, and sells any of three modules (flights, tours, hotels), which the platform owner switches on per agency.
 
 The full specification is in [SPEC.md](SPEC.md); choices made where it is silent are in [DECISIONS.md](DECISIONS.md).
 
@@ -22,7 +22,7 @@ The full specification is in [SPEC.md](SPEC.md); choices made where it is silent
 - Agency themes: each agency picks its colours from a list of contrast-checked themes.
 - One shared mobile app for every agency, which finds its agency from an email link or a typed code.
 
-**Platform.** On the root host, the system owner manages agencies (domains, modules, theme, search allowance, admins), themes, plans and invoices, exchange rates, and answers platform support chats. Agencies pay outside the system: the owner marks invoices paid, and agencies with long-overdue invoices are suspended automatically. The root host's public pages are Azaria's sales website and pricing.
+**Platform.** On the root host, the system owner manages agencies (domains, modules, theme, search allowance, admins), themes, plans and invoices, exchange rates, and answers platform support chats. Agencies pay outside the system: the owner marks invoices paid, and agencies with long-overdue invoices are suspended automatically. The root host's public pages are Dira Manifest's sales website and pricing.
 
 Payment integrations are planned, so payments are recorded by hand for now.
 
@@ -75,7 +75,7 @@ python manage.py seed_airports
 python manage.py seed_airlines
 python manage.py fetch_airline_logos   # optional: logos by IATA code; check them in /django-admin/
 python manage.py createsuperuser   # the platform owner
-python manage.py create_agency --schema azaria --name "Azaria Bookings" \
+python manage.py create_agency --schema azaria --name "Azaria Travel" \
     --admin-email owner@example.com --admin-password '<strong password>' --admin-name "Agency Owner"
 ```
 
@@ -157,10 +157,10 @@ Agencies add their own provider credentials under Settings › Integrations; not
 
 ## Mobile app
 
-One shared "Azaria Bookings" app serves every agency. It learns its agency from a link (`https://<code>.<base>/...`, or `azaria://open?agency=<code>` from the web app's `/app` page) or from the agency code typed on first launch, and keeps it with the sign-in tokens. "Switch agency" in the account menu (or on the sign-in screen) signs out and asks again. On the web, the address decides the agency.
+One shared "Dira Manifest" app serves every agency. It learns its agency from a link (`https://<code>.<base>/...`, or `dira://open?agency=<code>` from the web app's `/app` page) or from the agency code typed on first launch, and keeps it with the sign-in tokens. "Switch agency" in the account menu (or on the sign-in screen) signs out and asks again. On the web, the address decides the agency.
 
-- **Ids:** bundle id and Android package `com.azariabookings.app` (`frontend/app.config.ts`). The build reads `EXPO_PUBLIC_TENANT_BASE_DOMAIN` to declare `applinks:*.<base>` (iOS) and an auto-verified intent filter for `*.<base>` (Android).
-- **Verification files:** set `IOS_APP_ID` (Apple Team ID plus bundle id, e.g. `ABCDE12345.com.azariabookings.app`), `ANDROID_PACKAGE` (`com.azariabookings.app`) and `ANDROID_CERT_FINGERPRINTS` (the SHA-256 fingerprints of the signing certificates, comma-separated; for Play App Signing take them from the Play Console). Django then serves `/.well-known/apple-app-site-association` and `/.well-known/assetlinks.json` on every agency host and on the root host; in production the reverse proxy must send `/.well-known/` to the API over HTTPS, without redirects.
+- **Ids:** bundle id and Android package `com.diramanifest.app` (`frontend/app.config.ts`). The build reads `EXPO_PUBLIC_TENANT_BASE_DOMAIN` to declare `applinks:*.<base>` (iOS) and an auto-verified intent filter for `*.<base>` (Android).
+- **Verification files:** set `IOS_APP_ID` (Apple Team ID plus bundle id, e.g. `ABCDE12345.com.diramanifest.app`), `ANDROID_PACKAGE` (`com.diramanifest.app`) and `ANDROID_CERT_FINGERPRINTS` (the SHA-256 fingerprints of the signing certificates, comma-separated; for Play App Signing take them from the Play Console). Django then serves `/.well-known/apple-app-site-association` and `/.well-known/assetlinks.json` on every agency host and on the root host; in production the reverse proxy must send `/.well-known/` to the API over HTTPS, without redirects.
 - **Builds:** `cd frontend && npx expo run:ios` / `npx expo run:android` locally, or EAS Build for store builds. Universal and app links need HTTPS on a real domain, so test them on a staging base domain rather than `localhost`.
 - **Custom domains:** links only open the app on `<code>.<base>`, which is why every email link uses that address. An agency that wants links on its own custom domain to open an app needs a separate app of its own: a build that declares that domain (and its own bundle id, package and store listings), with the verification files served for that app. The shared app cannot declare agencies' custom domains.
 
