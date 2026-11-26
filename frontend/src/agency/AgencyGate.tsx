@@ -5,6 +5,7 @@ import { AgencyInfo } from '../api/types';
 import { LoadingState } from '../components/StatusViews';
 import { IS_PLATFORM } from '../config';
 import { applyTheme } from '../theme';
+import { setWebAgencyName } from './agency';
 import { setModules } from './modules';
 
 /**
@@ -22,6 +23,7 @@ export function AgencyGate({ render }: { render: (session: number) => ReactNode 
       .then(({ data }) => {
         applyTheme(data.theme.colors);
         setModules(data.modules);
+        setWebAgencyName(data.name);
       })
       // No agency here, or it is suspended: the app shows the server's message (in Dira Manifest's colours).
       .catch(() => undefined)

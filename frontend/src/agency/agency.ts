@@ -19,9 +19,11 @@ type State = {
   loaded: boolean;
   /** Bumped whenever the agency or the session is replaced: the app below the agency gate starts afresh. */
   session: number;
+  /** The web page's agency name (the address decides the agency there). */
+  webName: string;
 };
 
-let state: State = { agency: null, loaded: !IS_NATIVE, session: 0 };
+let state: State = { agency: null, loaded: !IS_NATIVE, session: 0, webName: '' };
 const listeners = new Set<() => void>();
 
 function update(next: Partial<State>) {
@@ -38,6 +40,16 @@ function subscribe(listener: () => void) {
 
 export function useAgencyState(): State {
   return useSyncExternalStore(subscribe, () => state);
+}
+
+/** The agency's name: the stored agency's on native, the page's on the web. */
+export function useAgencyName(): string {
+  const { agency, webName } = useAgencyState();
+  return agency?.name ?? webName;
+}
+
+export function setWebAgencyName(name: string) {
+  update({ webName: name });
 }
 
 export function currentAgency(): StoredAgency | null {

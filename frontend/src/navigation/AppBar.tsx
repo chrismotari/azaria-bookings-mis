@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '../auth/AuthContext';
 import { useSignOut } from '../auth/useSignOut';
-import { switchAgency } from '../agency/agency';
+import { switchAgency, useAgencyName } from '../agency/agency';
 import { IS_NATIVE, IS_PLATFORM } from '../config';
 import { Icon, IconName } from '../components/Icon';
 import { colors, createStyles, font, radius, shadow, space, useIsWide, weight } from '../theme';
@@ -26,6 +26,7 @@ export function AppBar({
 }) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const agencyName = useAgencyName();
   const { user } = useAuth();
   const isWide = useIsWide();
   const goHome = () => {
@@ -47,8 +48,13 @@ export function AppBar({
       <View style={[styles.inner, !isWide && styles.innerNarrow]}>
         <Pressable accessibilityRole="link" onPress={goHome}>
           <Text style={[styles.brand, !isWide && styles.brandNarrow]} numberOfLines={1}>
-            Dira Manifest
-            {IS_PLATFORM ? <Text style={styles.brandTag}> Platform</Text> : null}
+            {IS_PLATFORM ? (
+              <>
+                Dira Manifest<Text style={styles.brandTag}> Platform</Text>
+              </>
+            ) : (
+              agencyName
+            )}
           </Text>
         </Pressable>
         <View style={styles.items} accessibilityRole="tablist">
