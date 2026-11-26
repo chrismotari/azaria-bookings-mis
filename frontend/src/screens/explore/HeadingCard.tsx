@@ -54,7 +54,7 @@ const styles = createStyles(() => ({
   },
   cardCompact: { padding: space.lg, gap: space.md },
   fixed: { height: HEIGHT, justifyContent: 'center' },
-  headline: { fontSize: font.display, fontWeight: weight.heavy, color: colors.barText },
-  headlineCompact: { fontSize: font.title },
+  headline: { fontSize: font.heading, fontWeight: weight.heavy, color: colors.barText },
+  headlineCompact: { fontSize: font.body },
   panel: { backgroundColor: colors.barHover, borderRadius: radius.md, padding: space.lg, gap: space.md },
 }));
